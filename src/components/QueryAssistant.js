@@ -113,7 +113,7 @@ const QueryAssistant = () => {
 
       {answer && (
         <div className="answer-container">
-          <h3>AI-Powered Answer</h3>
+          <h3>Answer</h3>
           <div className="answer-content">
             {answer.split('\n').map((line, idx) => (
               <p key={idx}>{line}</p>
