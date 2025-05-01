@@ -49,10 +49,11 @@ const SkinDiseaseDetector = () => {
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
 
-      // Process the prediction data to remove "Photos" from labels
+      // Process the prediction data to remove "Photos" from labels and ensure confidence never exceeds 100%
       const preds = response.data.prediction.map(p => ({
         ...p,
-        label: p.label.replace(/\s+Photos/g, '')
+        label: p.label.replace(/\s+Photos/g, ''),
+        confidence: Math.min(p.confidence, 1.0) // Ensure confidence is never greater than 1.0
       })) || [];
       
       setPrediction(preds);
@@ -81,9 +82,12 @@ const SkinDiseaseDetector = () => {
 
   // Circular Progress component
   const CircularProgress = ({ percentage, color, label }) => {
+    // Ensure percentage never exceeds 100%
+    const safePercentage = Math.min(percentage, 100);
+    
     const radius = 60;
     const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+    const strokeDashoffset = circumference - (safePercentage / 100) * circumference;
     
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0 15px', width: '200px' }}>
@@ -141,7 +145,7 @@ const SkinDiseaseDetector = () => {
             fontWeight: 'bold',
             color: '#1a365d'
           }}>
-            {percentage.toFixed(0)}%
+            {safePercentage.toFixed(0)}%
           </div>
         </div>
       </div>
