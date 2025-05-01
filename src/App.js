@@ -18,7 +18,7 @@ function App() {
           <nav>
             <ul>
               <li><Link to="/">Protocol Generator</Link></li>
-              <li><Link to="/ind-modules">IND Modules</Link></li>
+              <li><Link to="/ind-modules">Regulatory Document Generator</Link></li>
               <li><Link to="/query">Query Assistant</Link></li>
               <li><Link to="/skin-disease-detector">Skin Disease Detector</Link></li>
               <li><Link to="/upload">Text/Audio Analysis</Link></li>  {/* ← new tab */}
