@@ -1,8 +1,104 @@
+// src/services/openaiService.js
+
 import axios from 'axios';
 
 const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
 
 const openaiService = {
+  /**
+   * Transcribes audio files via OpenAI Whisper.
+   * @param {File} file - An audio File object (mp3, wav, etc.)
+   * @returns {Promise<string>} - The transcribed text
+   */
+  transcribeAudio: async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("model", "whisper-1");
+    const response = await axios.post(
+      "https://api.openai.com/v1/audio/transcriptions",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+      }
+    );
+    return response.data.text;
+  },
+
+  /**
+   * Given a doctor–patient transcript, suggest the most likely diagnosis.
+   * @param {string} transcript - Full text of the conversation.
+   * @returns {Promise<string>} - GPT’s diagnostic suggestion.
+   */
+  diagnoseConversation: async (transcript) => {
+    try {
+      const response = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `
+You are a board-certified dermatologist with extensive clinical experience. You will receive a raw transcript of skin-related symptoms and patient descriptions.
+
+1) Write a single, informative paragraph that includes:
+   - A clear diagnosis based on the symptoms described
+   - Scientific information about this skin condition (pathophysiology, prevalence, etc.)
+   - Brief explanation of why this diagnosis fits the symptoms
+   - Use medical terminology but ensure it remains understandable
+
+2) Then, on a new line, write EXACTLY these seven lines (with real newline characters, one field per line). Do NOT wrap them in quotes or commas:
+
+Extracted Metadata:
+Age: <value or Unknown>
+Gender: <value or Unknown>
+Race: <value or Unknown>
+Skin Color: <value or Unknown>
+Skin Type: <value or Unknown>
+Condition Description: <value or Unknown>
+
+Example of desired output format:
+
+Based on your symptoms, you likely have atopic dermatitis, a chronic inflammatory skin condition affecting approximately 15-20% of children and 1-3% of adults worldwide. The condition involves a defective skin barrier function and dysregulation of the immune system, particularly involving Th2 cytokines and IgE-mediated responses. Your description of recurrent intense itching, redness, and family history of allergies strongly supports this diagnosis.
+
+Extracted Metadata:
+Age: 34
+Gender: Female
+Race: Caucasian
+Skin Color: Light
+Skin Type: Dry
+Condition Description: Recurrent itchy, red patches in elbow creases and behind knees, worse in winter, family history of asthma`
+
+            },
+            {
+              role: "user",
+              content: transcript
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 500
+        },
+        {
+          headers: {
+            "Authorization": `Bearer ${OPENAI_API_KEY}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      return response.data.choices[0].message.content.trim();
+    } catch (error) {
+      console.error("Error in diagnoseConversation:", error);
+      throw error;
+    }
+  },
+  /**
+   * Generates an executive summary protocol for a given disease.
+   * @param {object} diseaseData - { disease_name: string, … }
+   * @returns {Promise<{answer: string}>}
+   */
   generateProtocol: async (diseaseData) => {
     try {
       const response = await axios.post(
@@ -513,7 +609,12 @@ const openaiService = {
               - Provide detailed, technically accurate information while keeping explanations accessible.
               - For complex topics, include examples from approved protocols or regulatory precedents.
               - Consider both standard and edge cases in your responses.
-              - When discussing clinical endpoints or assessments, reference validated instruments appropriate to the therapeutic area.`  
+              - When discussing clinical endpoints or assessments, reference validated instruments appropriate to the therapeutic area.
+              -Do NOT use markdown formatting such as ## for headers or ** for emphasis
+              -Use ONLY plain text with proper indentation and spacing
+              -No special characters or markdown syntax whatsoever`  
+
+              
             },
             {
               role: "user",

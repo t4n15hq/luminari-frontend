@@ -49,7 +49,12 @@ const SkinDiseaseDetector = () => {
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
 
-      const preds = response.data.prediction || [];
+      // Process the prediction data to remove "Photos" from labels
+      const preds = response.data.prediction.map(p => ({
+        ...p,
+        label: p.label.replace(/\s+Photos/g, '')
+      })) || [];
+      
       setPrediction(preds);
 
       if (preds.length > 0) {
@@ -72,6 +77,75 @@ const SkinDiseaseDetector = () => {
       localStorage.setItem('detectedDisease', prediction[0].label);
     }
     window.location.href = path;
+  };
+
+  // Circular Progress component
+  const CircularProgress = ({ percentage, color, label }) => {
+    const radius = 60;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0 15px', width: '200px' }}>
+        <div style={{ 
+          backgroundColor: '#f0f0f0', 
+          borderRadius: '8px', 
+          padding: '10px 8px',
+          marginBottom: '15px',
+          width: '100%',
+          color: '#333',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+        }}>
+          {label}
+        </div>
+        <div style={{ position: 'relative', width: `${radius * 2}px`, height: `${radius * 2}px` }}>
+          <svg
+            width={radius * 2}
+            height={radius * 2}
+            viewBox={`0 0 ${radius * 2} ${radius * 2}`}
+          >
+            {/* Background circle */}
+            <circle
+              cx={radius}
+              cy={radius}
+              r={radius - 10}
+              fill="transparent"
+              stroke="#e6e6e6"
+              strokeWidth="12"
+            />
+            {/* Progress circle */}
+            <circle
+              cx={radius}
+              cy={radius}
+              r={radius - 10}
+              fill="transparent"
+              stroke={color}
+              strokeWidth="12"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              transform={`rotate(-90 ${radius} ${radius})`}
+              strokeLinecap="round"
+            />
+          </svg>
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: '#1a365d'
+          }}>
+            {percentage.toFixed(0)}%
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -129,19 +203,36 @@ const SkinDiseaseDetector = () => {
       </button>
 
       {prediction.length > 0 && (
-        <div className="prediction-results" style={{ marginTop: 20 }}>
-          <h3>Top Predictions</h3>
-          <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
-            {prediction.map((p, i) => (
-              <li key={i} style={{ marginBottom: 10 }}>
-                <strong>{i + 1}. {p.label}</strong>
-                <div style={{ background: '#eee', height: 10, borderRadius: 5, overflow: 'hidden' }}>
-                  <div style={{ width: `${(p.confidence * 100).toFixed(2)}%`, background: '#4c51bf', height: '100%' }} />
-                </div>
-                <span>{(p.confidence * 100).toFixed(2)}%</span>
-              </li>
+        <div className="prediction-results" style={{ marginTop: 30 }}>
+          <h3 style={{ 
+            textAlign: 'center', 
+            marginBottom: 15, 
+            color: '#2d3748', 
+            fontSize: '1.5rem', 
+            fontWeight: 'bold' 
+          }}>
+            Top Predictions
+          </h3>
+          
+          {/* Circular Progress Indicators */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            flexWrap: 'wrap',
+            marginBottom: 30,
+            backgroundColor: '#ffffff',
+            padding: '30px 20px',
+            borderRadius: 8
+          }}>
+            {prediction.slice(0, 3).map((p, i) => (
+              <CircularProgress 
+                key={i} 
+                percentage={(p.confidence * 100)} 
+                color={i === 0 ? '#f687b3' : i === 1 ? '#90cdf4' : '#e2e8f0'} 
+                label={p.label}
+              />
             ))}
-          </ul>
+          </div>
 
           <div style={{ marginTop: 20 }}>
             <p>Next Steps:</p>
