@@ -1,12 +1,35 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 
+import HomePage from './components/HomePage';
 import ProtocolGenerator from './components/ProtocolGenerator';
 import IndModuleGenerator from './components/IndModuleGenerator';
 import QueryAssistant from './components/QueryAssistant';
 import SkinDiseaseDetector from './components/SkinDiseaseDetector';
-import UploadTab from './components/UploadTab';        // ← import your new tab
+import DiseaseDiagnosis from './components/DiseaseDiagnosis';
 import './App.css';
+
+// Navigation component that only shows on non-landing pages
+const Navigation = () => {
+  const location = useLocation();
+  
+  // Don't show navigation on the landing page
+  if (location.pathname === '/') {
+    return null;
+  }
+  
+  return (
+    <nav>
+      <ul>
+        <li><Link to="/" className="home-link">Home</Link></li>
+        <li><Link to="/protocol">Protocol Generator</Link></li>
+        <li><Link to="/ind-modules">Regulatory Document Generator</Link></li>
+        <li><Link to="/query">Query Assistant</Link></li>
+        <li><Link to="/diagnosis">Disease Diagnosis</Link></li>
+      </ul>
+    </nav>
+  );
+};
 
 function App() {
   return (
@@ -15,24 +38,26 @@ function App() {
         <header className="App-header">
           <h1>Luminari Protocol Generator</h1>
           <p>AI-driven clinical protocol generator</p>
-          <nav>
-            <ul>
-              <li><Link to="/">Protocol Generator</Link></li>
-              <li><Link to="/ind-modules">Regulatory Document Generator</Link></li>
-              <li><Link to="/query">Query Assistant</Link></li>
-              <li><Link to="/skin-disease-detector">Skin Disease Detector</Link></li>
-              <li><Link to="/upload">Text/Audio Analysis</Link></li>  {/* ← new tab */}
-            </ul>
-          </nav>
+          <Navigation />
         </header>
 
         <main>
           <Routes>
-            <Route path="/"                       element={<ProtocolGenerator />} />
-            <Route path="/ind-modules"            element={<IndModuleGenerator />} />
-            <Route path="/query"                  element={<QueryAssistant />} />
-            <Route path="/skin-disease-detector"  element={<SkinDiseaseDetector />} />
-            <Route path="/upload"                 element={<UploadTab />} />          {/* ← route */}
+            {/* Home Page as default landing page */}
+            <Route path="/" element={<HomePage />} />
+            
+            {/* Main tool routes */}
+            <Route path="/protocol" element={<ProtocolGenerator />} />
+            <Route path="/ind-modules" element={<IndModuleGenerator />} />
+            <Route path="/query" element={<QueryAssistant />} />
+            
+            {/* Disease Diagnosis routes */}
+            <Route path="/diagnosis" element={<DiseaseDiagnosis />} />
+            <Route path="/diagnosis/dermatology" element={<SkinDiseaseDetector />} />
+            
+            {/* Legacy routes with redirects */}
+            <Route path="/skin-disease-detector" element={<Navigate to="/diagnosis/dermatology" replace />} />
+            <Route path="/upload" element={<Navigate to="/diagnosis/dermatology" replace />} />
           </Routes>
         </main>
         
