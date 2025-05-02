@@ -4,11 +4,46 @@ import { Link } from 'react-router-dom';
 const DiseaseDiagnosis = () => {
   // List of medical specialties - currently only Dermatology is active
   const specialties = [
-    { id: 'dermatology', name: 'Dermatology', isActive: true, icon: '🔍', description: 'Skin disease detection and analysis' },
-    { id: 'neurology', name: 'Neurology', isActive: false, icon: '🧠', description: 'Coming soon' },
-    { id: 'cardiology', name: 'Cardiology', isActive: false, icon: '❤️', description: 'Coming soon' },
-    { id: 'pulmonology', name: 'Pulmonology', isActive: false, icon: '🫁', description: 'Coming soon' },
-    { id: 'gastroenterology', name: 'Gastroenterology', isActive: false, icon: '胃', description: 'Coming soon' }
+    { 
+      id: 'dermatology', 
+      name: 'Dermatology', 
+      isActive: true, 
+      icon: '🔍', 
+      description: 'Skin disease detection and analysis',
+      color: 'var(--color-dermatology)' 
+    },
+    { 
+      id: 'neurology', 
+      name: 'Neurology', 
+      isActive: false, 
+      icon: '🧠', 
+      description: 'Coming soon',
+      color: 'var(--color-neurology)' 
+    },
+    { 
+      id: 'cardiology', 
+      name: 'Cardiology', 
+      isActive: false, 
+      icon: '❤️', 
+      description: 'Coming soon',
+      color: 'var(--color-cardiology)' 
+    },
+    { 
+      id: 'pulmonology', 
+      name: 'Pulmonology', 
+      isActive: false, 
+      icon: '🫁', 
+      description: 'Coming soon',
+      color: 'var(--color-pulmonology)' 
+    },
+    { 
+      id: 'gastroenterology', 
+      name: 'Gastroenterology', 
+      isActive: false, 
+      icon: '胃', 
+      description: 'Coming soon',
+      color: 'var(--color-gastroenterology)' 
+    }
   ];
 
   return (
@@ -21,6 +56,7 @@ const DiseaseDiagnosis = () => {
           <div 
             key={specialty.id} 
             className={`specialty-card ${specialty.isActive ? 'active' : 'inactive'}`}
+            style={{ borderLeft: `4px solid ${specialty.color}` }}
           >
             <div className="specialty-icon">{specialty.icon}</div>
             <h3>{specialty.name}</h3>

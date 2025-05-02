@@ -10,7 +10,7 @@ const HomePage = () => {
       description: 'Generate comprehensive clinical protocols for various diseases and conditions',
       path: '/protocol',
       color: '#ebf8ff',
-      borderColor: '#4299e1',
+      borderColor: 'var(--color-info)',
       textColor: '#2b6cb0'
     },
     {
@@ -20,7 +20,7 @@ const HomePage = () => {
       description: 'Create regulatory documents and IND modules for pharmaceutical development',
       path: '/ind-modules',
       color: '#f0fff4',
-      borderColor: '#48bb78',
+      borderColor: 'var(--color-success)',
       textColor: '#276749'
     },
     {
@@ -30,8 +30,8 @@ const HomePage = () => {
       description: 'AI-powered tools for diagnosing conditions across multiple medical specialties',
       path: '/diagnosis',
       color: '#ebf4ff',
-      borderColor: '#667eea',
-      textColor: '#4c51bf'
+      borderColor: 'var(--color-primary)',
+      textColor: 'var(--color-primary-dark)'
     },
     {
       id: 'query',
@@ -47,7 +47,7 @@ const HomePage = () => {
 
   return (
     <div className="home-page">
-      <div className="hero-section">
+      <div className="hero-section fade-in">
         <h1>Luminari AI Clinical Platform</h1>
         <p>
           Advanced AI tools for clinical protocol development, regulatory documentation, 
@@ -107,10 +107,14 @@ const HomePage = () => {
       <div className="about-section">
         <h2>About Luminari</h2>
         <p>
-          Luminari is an advanced AI platform designed to streamline clinical research and 
-          pharmaceutical development. Our tools leverage cutting-edge artificial intelligence 
+          Luminari is an AI platform designed to streamline clinical research and 
+          pharmaceutical development. Our tools leverage artificial intelligence 
           to generate high-quality, regulatory-compliant documentation and assist with 
           medical diagnoses across multiple specialties.
+        </p>
+        <p>
+          Our mission is to accelerate medical innovation and improve patient outcomes by
+          reducing the time and complexity involved in clinical research documentation.
         </p>
       </div>
     </div>

@@ -1,0 +1,54 @@
+/* src/variables.css */
+:root {
+    /* Primary colors */
+    --color-primary: #4361ee;
+    --color-primary-light: #4895ef;
+    --color-primary-dark: #3a0ca3;
+    
+    /* Secondary colors */
+    --color-secondary: #4cc9f0;
+    --color-secondary-light: #7bdff2;
+    --color-secondary-dark: #0096c7;
+    
+    /* Neutral colors */
+    --color-text: #2d3748;
+    --color-text-light: #4a5568;
+    --color-background: #f8f9fa;
+    --color-card-bg: #ffffff;
+    --color-border: #e2e8f0;
+    
+    /* Feedback colors */
+    --color-success: #0cce6b;
+    --color-warning: #ff9e00;
+    --color-error: #e53e3e;
+    --color-info: #3182ce;
+    
+    /* Specialty colors */
+    --color-dermatology: #4c51bf;
+    --color-neurology: #5a67d8;
+    --color-cardiology: #e53e3e;
+    --color-pulmonology: #38b2ac;
+    --color-gastroenterology: #dd6b20;
+    
+    /* Spacing system */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    
+    /* Border radius */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.05);
+    
+    /* Typography */
+    --font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+  }

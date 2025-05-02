@@ -653,7 +653,11 @@ Condition Description: Recurrent throbbing headaches preceded by zigzag lines in
               - When discussing clinical endpoints or assessments, reference validated instruments appropriate to the therapeutic area.
               -Do NOT use markdown formatting such as ## for headers or ** for emphasis
               -Use ONLY plain text with proper indentation and spacing
-              -No special characters or markdown syntax whatsoever`  
+              -No special characters or markdown syntax whatsoever
+              3. Do NOT use markdown formatting such as ## for headers or ** for emphasis
+              4. Do NOT use bullet points with * or - characters; use standard numbers or letters instead
+              5. Use ONLY plain text with proper indentation and spacing
+              6. No special characters or markdown syntax whatsoever`  
 
               
             },

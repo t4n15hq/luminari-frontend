@@ -215,23 +215,28 @@ const SkinDiseaseDetector = () => {
 
   return (
     <div className="skin-disease-detector">
-      {/* Breadcrumb Navigation */}
-      <div className="breadcrumb">
-        <Link to="/">Home</Link>
-        <span className="separator">/</span>
-        <Link to="/diagnosis">Disease Diagnosis</Link>
-        <span className="separator">/</span>
-        <span>Dermatology</span>
-      </div>
-      
-      <div className="dermatology-header">
-        <Link to="/diagnosis" className="back-link">
-          <span className="back-arrow">←</span> Back to Specialties
+      {/* Top Navigation Section */}
+      <div className="page-navigation">
+        {/* Breadcrumb */}
+        <div className="breadcrumb">
+          <Link to="/">Home</Link>
+          <span className="separator">/</span>
+          <Link to="/diagnosis">Disease Diagnosis</Link>
+          <span className="separator">/</span>
+          <span>Dermatology</span>
+        </div>
+        
+        {/* Back Button - left aligned */}
+        <Link to="/diagnosis" className="back-to-specialties">
+          Back to Specialties
         </Link>
       </div>
 
-      <h2>Skin Disease Detector</h2>
-      <p>Analyze skin conditions using image or text/audio input</p>
+      {/* Page Header Section */}
+      <div className="page-header">
+        <h1>Skin Disease Detector</h1>
+        <p>Analyze skin conditions using image or text/audio input</p>
+      </div>
 
       {/* Analysis Type Tabs */}
       <div className="analysis-tabs">
