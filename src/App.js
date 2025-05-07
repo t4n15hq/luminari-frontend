@@ -22,9 +22,9 @@ const Navigation = () => {
     <nav>
       <ul>
         <li><Link to="/" className="home-link">Home</Link></li>
-        <li><Link to="/protocol" className={location.pathname === '/protocol' ? 'active' : ''}>Protocol Generator</Link></li>
+        <li><Link to="/protocol" className={location.pathname === '/protocol' ? 'active' : ''}>Protocol & Study Design Generator</Link></li>
         <li><Link to="/ind-modules" className={location.pathname === '/ind-modules' ? 'active' : ''}>Regulatory Document Generator</Link></li>
-        <li><Link to="/query" className={location.pathname === '/query' ? 'active' : ''}>Query Assistant</Link></li>
+        <li><Link to="/query" className={location.pathname === '/query' ? 'active' : ''}>ASK LUMINA ©</Link></li>
         <li><Link to="/diagnosis" className={location.pathname.includes('/diagnosis') ? 'active' : ''}>Disease Diagnosis</Link></li>
       </ul>
     </nav>
@@ -37,7 +37,7 @@ function App() {
       <div className="App">
         <header className="App-header">
           <div className="container">
-            <h1>Luminari</h1>
+            <h1>LumiPath ©</h1>
             <p className="tagline">AI-driven clinical tools platform</p>
             <Navigation />
           </div>

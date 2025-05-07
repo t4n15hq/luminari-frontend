@@ -5,7 +5,7 @@ const HomePage = () => {
   const featureCards = [
     {
       id: 'protocol',
-      title: 'Protocol Generator',
+      title: 'Protocol & Study Design Generator',
       icon: '📝',
       description: 'Generate comprehensive clinical protocols for various diseases and conditions',
       path: '/protocol',
@@ -35,7 +35,7 @@ const HomePage = () => {
     },
     {
       id: 'query',
-      title: 'Query Assistant',
+      title: 'ASK LUMINA©',
       icon: '❓',
       description: 'Get expert answers to complex questions about clinical trials and protocols',
       path: '/query',
@@ -48,7 +48,7 @@ const HomePage = () => {
   return (
     <div className="home-page">
       <div className="hero-section fade-in">
-        <h1>Luminari AI Clinical Platform</h1>
+        <h1>LumiPath©</h1>
         <p>
           Advanced AI tools for clinical protocol development, regulatory documentation, 
           and disease diagnosis
