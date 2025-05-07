@@ -60,7 +60,7 @@ const QueryAssistant = () => {
 
   return (
     <div className="query-assistant">
-      <h2>ASK LUMINA ©</h2>
+      <h2>Ask Lumina ©</h2>
       <p>Ask targeted questions about clinical protocols, endpoints, or trial designs</p>
 
       <form onSubmit={handleSubmit}>
