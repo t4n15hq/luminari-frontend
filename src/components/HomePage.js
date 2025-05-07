@@ -35,7 +35,7 @@ const HomePage = () => {
     },
     {
       id: 'query',
-      title: 'ASK LUMINA©',
+      title: 'ASK LUMINA ©',
       icon: '❓',
       description: 'Get expert answers to complex questions about clinical trials and protocols',
       path: '/query',
