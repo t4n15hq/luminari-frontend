@@ -21,28 +21,68 @@ const DiseaseDiagnosis = () => {
       color: 'var(--color-neurology)' 
     },
     { 
-      id: 'cardiology', 
-      name: 'Cardiology', 
+      id: 'oncology', 
+      name: 'Oncology', 
       isActive: false, 
-      icon: '❤️', 
+      icon: '🔬', 
       description: 'Coming soon',
-      color: 'var(--color-cardiology)' 
+      color: '#E64980' 
     },
     { 
-      id: 'pulmonology', 
-      name: 'Pulmonology', 
+      id: 'raredisease', 
+      name: 'Rare Disease', 
+      isActive: false, 
+      icon: '🧬', 
+      description: 'Coming soon',
+      color: '#6B46C1' 
+    },
+    { 
+      id: 'respiratory', 
+      name: 'Respiratory', 
       isActive: false, 
       icon: '🫁', 
       description: 'Coming soon',
       color: 'var(--color-pulmonology)' 
     },
     { 
-      id: 'gastroenterology', 
-      name: 'Gastroenterology', 
+      id: 'mentalhealth', 
+      name: 'Mental Health Conditions', 
+      isActive: false, 
+      icon: '🧠', 
+      description: 'Coming soon',
+      color: '#805AD5' 
+    },
+    { 
+      id: 'digestive', 
+      name: 'Digestive Diseases', 
       isActive: false, 
       icon: '胃', 
       description: 'Coming soon',
       color: 'var(--color-gastroenterology)' 
+    },
+    { 
+      id: 'infectious', 
+      name: 'Infectious Diseases', 
+      isActive: false, 
+      icon: '🦠', 
+      description: 'Coming soon',
+      color: '#F6AD55' 
+    },
+    { 
+      id: 'diabetes', 
+      name: 'Diabetes', 
+      isActive: false, 
+      icon: '💉', 
+      description: 'Coming soon',
+      color: '#4299E1' 
+    },
+    { 
+      id: 'other', 
+      name: 'Other', 
+      isActive: false, 
+      icon: '➕', 
+      description: 'Coming soon',
+      color: '#718096' 
     }
   ];
 
