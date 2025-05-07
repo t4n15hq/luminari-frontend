@@ -297,7 +297,7 @@ const ProtocolGenerator = () => {
             disabled={loading || !disease}
             className="submit-btn"
           >
-            {loading ? 'Generating...' : 'Generate Professional Documentation'}
+            {loading ? 'Generating...' : 'Generate Document'}
           </button>
           
           {loading && (
