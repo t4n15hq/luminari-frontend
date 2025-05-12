@@ -1938,8 +1938,16 @@ textarea.is-valid {
   box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
 }
 
-.brand-name .copyright {
-  font-size: 0.7em; /* Make symbol smaller than the text */
+.brand-name .copyright, h1 .copyright, h2 .copyright {
+  font-size: 0.4em; /* Make symbol smaller than the text */
   vertical-align: super; /* Position as superscript */
   margin-left: 2px; /* Add spacing */
+  font-weight: normal; /* Normal weight even in headings */
+}
+
+.copyright {
+  font-size: 0.4em;
+  vertical-align: super;
+  margin-left: 1px;
+  font-weight: normal;
 }
