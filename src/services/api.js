@@ -1,4 +1,5 @@
 import openaiService from './openaiService';
+import dossierService from './dossierService';
 import axios from 'axios';
 
 // Backend prediction endpoint
@@ -42,7 +43,9 @@ const apiService = {
       console.error('Prediction API error:', error);
       throw error;
     }
-  }
+  },
+
+  compileDossier: dossierService.compileDossier
 };
 
 export default apiService;
