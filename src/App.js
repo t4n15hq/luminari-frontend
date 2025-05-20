@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } f
 
 import HomePage from './components/HomePage';
 import ProtocolGenerator from './components/ProtocolGenerator';
-import IndModuleGenerator from './components/IndModuleGenerator';
+import RegulatoryDocumentGenerator from './components/RegulatoryDocumentGenerator';
 import ClinicalDossierCompiler from './components/ClinicalDossierCompiler';
 import QueryAssistant from './components/QueryAssistant';
 import SkinDiseaseDetector from './components/SkinDiseaseDetector';
@@ -24,7 +24,7 @@ const Navigation = () => {
       <ul>
         <li><Link to="/" className="home-link">Home</Link></li>
         <li><Link to="/protocol" className={location.pathname === '/protocol' ? 'active' : ''}>Protocol & Study Design Generator</Link></li>
-        <li><Link to="/ind-modules" className={location.pathname === '/ind-modules' ? 'active' : ''}>IND Module Generator</Link></li>
+        <li><Link to="/ind-modules" className={location.pathname === '/ind-modules' ? 'active' : ''}>Regulatory Document Generator</Link></li>
         <li><Link to="/clinical-dossier" className={location.pathname === '/clinical-dossier' ? 'active' : ''}>Clinical Dossier Compiler</Link></li>
         <li><Link to="/query" className={location.pathname === '/query' ? 'active' : ''}>Ask Lumina <span className="copyright">©</span></Link></li>
         <li><Link to="/diagnosis" className={location.pathname.includes('/diagnosis') ? 'active' : ''}>Disease Diagnosis</Link></li>
@@ -53,7 +53,7 @@ function App() {
               
               {/* Main tool routes */}
               <Route path="/protocol" element={<ProtocolGenerator />} />
-              <Route path="/ind-modules" element={<IndModuleGenerator />} />
+              <Route path="/ind-modules" element={<RegulatoryDocumentGenerator />} />
               <Route path="/clinical-dossier" element={<ClinicalDossierCompiler />} />
               <Route path="/query" element={<QueryAssistant />} />
               
@@ -64,6 +64,7 @@ function App() {
               {/* Legacy routes with redirects */}
               <Route path="/skin-disease-detector" element={<Navigate to="/diagnosis/dermatology" replace />} />
               <Route path="/upload" element={<Navigate to="/diagnosis/dermatology" replace />} />
+              <Route path="/regulatory-documents" element={<Navigate to="/ind-modules" replace />} />
             </Routes>
           </div>
         </main>

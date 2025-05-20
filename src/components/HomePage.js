@@ -14,10 +14,10 @@ const HomePage = () => {
       textColor: '#2b6cb0'
     },
     {
-      id: 'ind-modules',
-      title: 'Regulatory Documents',
+      id: 'regulatory',
+      title: 'Regulatory Document Generator',
       icon: '📋',
-      description: 'Create regulatory documents and IND modules for pharmaceutical development',
+      description: 'Create regulatory documents for pharmaceutical development across global markets',
       path: '/ind-modules',
       color: '#f0fff4',
       borderColor: 'var(--color-success)',
