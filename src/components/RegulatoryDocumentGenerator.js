@@ -22,7 +22,7 @@ const RegulatoryDocumentGenerator = () => {
   
   // For navigation
   const location = useLocation();
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
   
   // Regions and countries
   const regions = {
@@ -98,6 +98,7 @@ const RegulatoryDocumentGenerator = () => {
     if (selectedDocuments.length > 0) {
       const primaryDoc = selectedDocuments[0];
       setDocumentType(primaryDoc.name);
+      console.log(`Selected document: ${primaryDoc.name}, Country: ${selectedCountry}`);
     }
     
     setViewMode('form');
@@ -139,14 +140,27 @@ const RegulatoryDocumentGenerator = () => {
     }
   }, [location.state, disease]);
 
-  // Main form submit handler
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Main form submit handler - IMPROVED VERSION
+  const handleSubmit = async () => {
     setLoading(true);
     setError('');
     setResult(null);
 
     try {
+      // Log parameters for debugging
+      console.log("Starting document generation with parameters:", {
+        disease: disease,
+        drugClass: drugClass,
+        mechanism: mechanism,
+        country: country,
+        documentType: documentType
+      });
+      
+      if (!disease || disease.trim() === '') {
+        throw new Error('Disease/Condition is required');
+      }
+
+      // Call the API with the correct parameters
       const response = await apiService.generateIndModule({
         disease_name: disease.trim(),
         additional_parameters: {
@@ -156,10 +170,94 @@ const RegulatoryDocumentGenerator = () => {
           document_type: documentType || undefined
         }
       });
-      setResult(response);
+      
+      console.log("API response received, response keys:", Object.keys(response));
+      
+      // Check structure of response to handle both response formats
+      if (response.document_content) {
+        // For document types that return a single content field (like BLA, NDA, etc.)
+        console.log("Response has document_content, handling this format");
+        
+        // Split document content into CMC and CLINICAL sections for display compatibility
+        const content = response.document_content;
+        let cmcSection = "";
+        let clinicalSection = "";
+        
+        // Try to find a logical dividing point based on section headers
+        const possibleDividers = [
+          "CLINICAL OVERVIEW", "CLINICAL SECTION", "CLINICAL STUDY", 
+          "NONCLINICAL OVERVIEW", "3. NONCLINICAL", "4. CLINICAL", 
+          "CLINICAL TRIAL", "EFFICACY AND SAFETY"
+        ];
+        
+        let dividerIndex = -1;
+        let dividerLength = 0;
+        
+        // Find the earliest occurrence of any divider
+        for (const divider of possibleDividers) {
+          const index = content.indexOf(divider);
+          if (index !== -1 && (dividerIndex === -1 || index < dividerIndex)) {
+            dividerIndex = index;
+            dividerLength = divider.length;
+          }
+        }
+        
+        if (dividerIndex !== -1) {
+          cmcSection = content.substring(0, dividerIndex);
+          clinicalSection = content.substring(dividerIndex);
+          
+          // If CMC section is very short, it might be incorrect - better to have a fallback
+          if (cmcSection.length < 500) {
+            const backupDivider = Math.floor(content.length * 0.4); // 40% mark
+            const breakpoint = content.indexOf("\n", backupDivider);
+            if (breakpoint !== -1) {
+              cmcSection = content.substring(0, breakpoint);
+              clinicalSection = content.substring(breakpoint);
+            }
+          }
+        } else {
+          // Fallback: split at approximately 40% of the document
+          const dividePoint = Math.floor(content.length * 0.4);
+          const breakPoint = content.indexOf("\n\n", dividePoint);
+          
+          if (breakPoint !== -1) {
+            cmcSection = content.substring(0, breakPoint);
+            clinicalSection = content.substring(breakPoint);
+          } else {
+            // Just split in the middle if no good breakpoint
+            const midpoint = Math.floor(content.length / 2);
+            cmcSection = content.substring(0, midpoint);
+            clinicalSection = content.substring(midpoint);
+          }
+        }
+        
+        console.log(`Split document_content - CMC length: ${cmcSection.length}, Clinical length: ${clinicalSection.length}`);
+        
+        setResult({
+          cmc_section: cmcSection,
+          clinical_section: clinicalSection
+        });
+      } else if (response.cmc_section || response.clinical_section) {
+        // Original format with split sections (IndModule, etc.)
+        console.log("Response has separate cmc_section and clinical_section");
+        console.log(`CMC length: ${response.cmc_section?.length || 0}, Clinical length: ${response.clinical_section?.length || 0}`);
+        setResult(response);
+      } else {
+        console.error("Unexpected response format:", response);
+        throw new Error('Response format not recognized. Please check the console for details.');
+      }
+      
+      // Scroll to results
+      setTimeout(() => {
+        document.querySelector('.result-container')?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 100);
+      
     } catch (err) {
-      console.error(err);
-      setError('❌ Failed to generate regulatory documents. Please try again.');
+      console.error("Document generation error:", err);
+      setError(`Failed to generate regulatory documents: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -176,27 +274,45 @@ const RegulatoryDocumentGenerator = () => {
     setError('');
   };
 
+  // Improved content rendering to handle large texts
+  const renderContent = (content) => {
+    if (!content) return <p>No content available.</p>;
+    
+    // Split content into chunks to avoid performance issues with large texts
+    const paragraphs = content.split('\n');
+    
+    return (
+      <div className="content-text">
+        {paragraphs.map((para, idx) => (
+          para.trim() ? 
+            <p key={idx} className="content-paragraph">{para}</p> : 
+            <br key={idx} />
+        ))}
+      </div>
+    );
+  };
+
   // Render the form view
   const renderForm = () => (
-    <div className="ind-module-generator">
+    <div className="regulatory-selector">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-2xl font-bold">Regulatory Document Generator</h2>
-          <p className="text-gray-600">Generate regulatory documentation for drug development and approval</p>
+          <h2>Regulatory Document Generator</h2>
+          <p>Generate regulatory documentation for drug development and approval</p>
         </div>
         
         <button 
           onClick={() => setViewMode('regions')}
-          className="px-4 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200"
+          className="view-button"
         >
-          Select Country/Region
+          Select Document by Region/Country
         </button>
       </div>
 
       {/* Show country and document type if they were preselected */}
       {(country || documentType) && (
-        <div className="selected-params p-4 mb-4 bg-blue-50 border border-blue-200 rounded-md">
-          <h3 className="text-lg font-medium mb-2">Selected Parameters</h3>
+        <div className="info-box mb-4">
+          <h4>Selected Parameters</h4>
           {country && (
             <div className="mb-2">
               <span className="font-medium">Country:</span> {country}
@@ -219,7 +335,7 @@ const RegulatoryDocumentGenerator = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <div className="regulatory-form">
         <div className="form-group">
           <label htmlFor="disease">Disease/Condition <span className="required">*</span></label>
           <input
@@ -229,7 +345,6 @@ const RegulatoryDocumentGenerator = () => {
             onChange={(e) => setDisease(e.target.value)}
             placeholder="e.g., Psoriasis, Eczema, Atopic Dermatitis"
             required
-            maxLength="100"
           />
         </div>
 
@@ -242,10 +357,9 @@ const RegulatoryDocumentGenerator = () => {
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               placeholder="e.g., USA, EU, Japan"
-              maxLength="50"
             />
             <div className="form-hint">
-              Use the "Select Country/Region" button above to browse available regulatory documents by geography
+              Use the "Select Document by Region/Country" button above to browse available regulatory documents by geography
             </div>
           </div>
         )}
@@ -258,7 +372,6 @@ const RegulatoryDocumentGenerator = () => {
             value={drugClass}
             onChange={(e) => setDrugClass(e.target.value)}
             placeholder="e.g., Corticosteroid, Biologics, Small molecule"
-            maxLength="100"
           />
         </div>
 
@@ -270,62 +383,69 @@ const RegulatoryDocumentGenerator = () => {
             value={mechanism}
             onChange={(e) => setMechanism(e.target.value)}
             placeholder="e.g., PDE4 inhibition, JAK-STAT pathway"
-            maxLength="100"
           />
         </div>
 
-        <div className="button-group">
-          <button type="submit" disabled={loading || !disease}>
+        <div className="action-buttons">
+          <button 
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading || !disease}
+            className="generate-button"
+          >
             {loading ? 'Generating...' : `Generate ${documentType || 'Regulatory Documents'}`}
           </button>
-          <button type="button" onClick={resetForm}>
+          <button 
+            type="button" 
+            onClick={resetForm}
+            className="reset-button"
+          >
             Reset Form
           </button>
         </div>
-      </form>
+      </div>
 
       {error && <div className="error-message" aria-live="polite">{error}</div>}
 
-      {loading && <div className="loader">⏳ Generating regulatory documentation...</div>}
+      {loading && <div className="loading-indicator">
+        <div className="spinner"></div>
+        <p>Generating regulatory documentation...</p>
+      </div>}
 
       {result && (
         <div className="result-container" aria-live="polite">
           <div className="tabs">
             <button
-              className={activeTab === 'cmc' ? 'active' : ''}
+              className={`tab-btn ${activeTab === 'cmc' ? 'active' : ''}`}
               onClick={() => setActiveTab('cmc')}
             >
               CMC Section
             </button>
             <button
-              className={activeTab === 'clinical' ? 'active' : ''}
+              className={`tab-btn ${activeTab === 'clinical' ? 'active' : ''}`}
               onClick={() => setActiveTab('clinical')}
             >
               Clinical Section
             </button>
           </div>
 
-          {activeTab === 'cmc' && (
-            <div className="module-content">
-              <h3>Chemistry, Manufacturing, and Controls (CMC)</h3>
-              <div className="content-area">
-                {(result?.cmc_section || '').split('\n').map((para, idx) => (
-                  <p key={idx}>{para}</p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'clinical' && (
-            <div className="module-content">
-              <h3>Clinical Pharmacology Section</h3>
-              <div className="content-area">
-                {(result?.clinical_section || '').split('\n').map((para, idx) => (
-                  <p key={idx}>{para}</p>
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="module-content">
+            {activeTab === 'cmc' ? (
+              <>
+                <h3>Chemistry, Manufacturing, and Controls (CMC)</h3>
+                <div className="content-area">
+                  {renderContent(result.cmc_section)}
+                </div>
+              </>
+            ) : (
+              <>
+                <h3>Clinical Section</h3>
+                <div className="content-area">
+                  {renderContent(result.clinical_section)}
+                </div>
+              </>
+            )}
+          </div>
 
           <div className="action-buttons">
             <button
@@ -336,6 +456,7 @@ const RegulatoryDocumentGenerator = () => {
                 navigator.clipboard.writeText(content);
                 alert('✅ Current section copied!');
               }}
+              className="view-button"
             >
               Copy Current Section
             </button>
@@ -346,6 +467,7 @@ const RegulatoryDocumentGenerator = () => {
                 );
                 alert('✅ All sections copied!');
               }}
+              className="view-button"
             >
               Copy All
             </button>
@@ -363,6 +485,7 @@ const RegulatoryDocumentGenerator = () => {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
               }}
+              className="view-button"
             >
               Download as Text
             </button>
@@ -374,31 +497,31 @@ const RegulatoryDocumentGenerator = () => {
 
   // Render region selection view
   const renderRegionSelection = () => (
-    <div className="ind-module-generator">
-      <div className="flex items-center mb-4">
-        <button 
-          onClick={() => setViewMode('form')}
-          className="mr-4 flex items-center text-blue-600 hover:text-blue-800"
-        >
-          <span className="mr-1">←</span> Back to Form
-        </button>
-        <h2 className="text-2xl font-bold">Select Region</h2>
-      </div>
+    <div className="regulatory-selector">
+      <a href="#" onClick={(e) => {
+          e.preventDefault();
+          setViewMode('form');
+        }}
+        className="back-button"
+      >
+        Back to Form
+      </a>
+      <h2>Select Region</h2>
       <p>Choose a geographic region to browse available regulatory documents</p>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+      <div className="region-grid">
         {Object.keys(regions).map(region => (
           <div 
             key={region}
-            className="p-4 rounded-lg cursor-pointer transition-all bg-white border border-gray-200 hover:border-blue-500 hover:shadow-md"
+            className="region-card"
             onClick={() => {
               setSelectedRegion(region);
               setViewMode('countries');
             }}
           >
-            <h4 className="text-lg font-medium mb-2">{region}</h4>
-            <p className="text-sm text-gray-600">{regions[region].length} countries</p>
-            <button className="mt-3 text-sm text-blue-600 hover:underline">
+            <h3>{region}</h3>
+            <p>{regions[region].length} countries</p>
+            <button className="view-button">
               View countries
             </button>
           </div>
@@ -409,33 +532,35 @@ const RegulatoryDocumentGenerator = () => {
 
   // Render country selection view
   const renderCountrySelection = () => (
-    <div className="ind-module-generator">
-      <div className="flex items-center mb-4">
-        <button 
-          onClick={() => setViewMode('regions')}
-          className="mr-4 flex items-center text-blue-600 hover:text-blue-800"
-        >
-          <span className="mr-1">←</span> Back to Regions
-        </button>
-        <h2 className="text-2xl font-bold">{selectedRegion}</h2>
-      </div>
+    <div className="regulatory-selector">
+      <a 
+        href="#" 
+        onClick={(e) => {
+          e.preventDefault();
+          setViewMode('regions');
+        }}
+        className="back-button"
+      >
+        Back to Regions
+      </a>
+      <h2>{selectedRegion}</h2>
       <p>Select a country to view available regulatory documents</p>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+      <div className="country-grid">
         {regions[selectedRegion].map(country => (
           <div 
             key={country}
-            className="p-4 rounded-lg cursor-pointer transition-all bg-white border border-gray-200 hover:border-blue-500 hover:shadow-md"
+            className="country-card"
             onClick={() => {
               setSelectedCountry(country);
               setViewMode('documents');
             }}
           >
-            <h4 className="text-lg font-medium">{country}</h4>
+            <h3>{country}</h3>
             {regulatoryData[country] && (
-              <p className="mt-2 text-sm text-gray-600">{regulatoryData[country].length} document types available</p>
+              <p>{regulatoryData[country].length} document types available</p>
             )}
-            <button className="mt-3 text-sm text-blue-600 hover:underline">
+            <button className="view-button">
               View documents
             </button>
           </div>
@@ -449,52 +574,49 @@ const RegulatoryDocumentGenerator = () => {
     const documents = getDocumentsForCountry();
     
     return (
-      <div className="ind-module-generator">
-        <div className="flex items-center mb-4">
-          <button 
-            onClick={() => setViewMode('countries')}
-            className="mr-4 flex items-center text-blue-600 hover:text-blue-800"
-          >
-            <span className="mr-1">←</span> Back to Countries
-          </button>
-          <h2 className="text-2xl font-bold">{selectedCountry}</h2>
-        </div>
+      <div className="regulatory-selector">
+        <a 
+          href="#" 
+          onClick={(e) => {
+            e.preventDefault();
+            setViewMode('countries');
+          }}
+          className="back-button"
+        >
+          Back to Countries
+        </a>
+        <h2>{selectedCountry}</h2>
         <p>Select documents to generate for {selectedCountry}</p>
         
         {documents.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 gap-3 mt-6">
+            <div className="document-grid mt-lg">
               {documents.map(doc => (
                 <div 
                   key={doc.id}
-                  className={`
-                    p-4 rounded-lg cursor-pointer transition-all
-                    ${selectedDocuments.some(d => d.id === doc.id) 
-                      ? 'bg-blue-50 border-2 border-blue-300' 
-                      : 'bg-white border border-gray-200 hover:border-blue-500'}
-                  `}
+                  className={`document-card ${selectedDocuments.some(d => d.id === doc.id) ? 'selected' : ''}`}
                   onClick={() => handleDocumentSelect(doc)}
                 >
-                  <div className="flex items-start">
+                  <div className="document-card-checkbox">
                     <input
                       type="checkbox"
                       checked={selectedDocuments.some(d => d.id === doc.id)}
                       onChange={() => {}}
-                      className="mt-1 mr-3 h-4 w-4"
+                      className="form-checkbox h-5 w-5"
                     />
-                    <div>
-                      <h4 className="text-lg font-medium">{doc.name}</h4>
-                      <p className="mt-1 text-sm text-gray-600">{doc.purpose}</p>
-                    </div>
+                  </div>
+                  <div className="document-card-content">
+                    <h4 className="document-card-title">{doc.name}</h4>
+                    <p className="document-card-description">{doc.purpose}</p>
                   </div>
                 </div>
               ))}
             </div>
             
-            <div className="flex justify-end gap-4 mt-8">
+            <div className="action-buttons">
               <button 
                 onClick={() => setViewMode('form')}
-                className="px-4 py-2 border rounded-md hover:bg-gray-100"
+                className="reset-button"
               >
                 Cancel
               </button>
@@ -502,27 +624,22 @@ const RegulatoryDocumentGenerator = () => {
               <button 
                 onClick={applyDocumentSelections}
                 disabled={selectedDocuments.length === 0}
-                className={`
-                  px-4 py-2 rounded-md text-white
-                  ${selectedDocuments.length === 0 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700'}
-                `}
+                className={`generate-button ${selectedDocuments.length === 0 ? 'disabled' : ''}`}
               >
                 Apply {selectedDocuments.length} Selected Document{selectedDocuments.length !== 1 ? 's' : ''}
               </button>
             </div>
           </>
         ) : (
-          <div className="mt-8 p-4 border border-yellow-200 bg-yellow-50 rounded-md">
-            <p className="text-yellow-800">No specific regulatory documents found for {selectedCountry}.</p>
+          <div className="info-box">
+            <p>No specific regulatory documents found for {selectedCountry}.</p>
             <p className="mt-2">
               <button 
                 onClick={() => {
                   setCountry(selectedCountry);
                   setViewMode('form');
                 }}
-                className="text-blue-600 hover:underline"
+                className="view-button"
               >
                 Continue with {selectedCountry}
               </button>
