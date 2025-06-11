@@ -4,8 +4,9 @@ import openaiService from './openaiService';
 import dossierService from './dossierService';
 import axios from 'axios';
 
-// Backend prediction endpoint
+// Backend prediction endpoints
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://luminari-uic-skin-disease-detection.hf.space';
+const LUNG_CANCER_API_URL = process.env.REACT_APP_LUNG_CANCER_API_URL || 'https://lung-cancer-backend-n84h.onrender.com';
 
 // In-memory protocol storage for listProtocols
 const protocolHistory = [];
@@ -132,6 +133,8 @@ const apiService = {
     return protocolHistory;
   },
 
+  // SKIN DISEASE PREDICTION METHODS
+  
   // Predict skin disease from image
   predictSkinDisease: async (formData) => {
     try {
@@ -143,6 +146,107 @@ const apiService = {
       console.error('Prediction API error:', error);
       throw error;
     }
+  },
+
+  // LUNG CANCER PREDICTION METHODS
+  
+  // Predict lung cancer risk from clinical data
+  predictLungCancerClinical: async (clinicalData) => {
+    try {
+      console.log('Calling lung cancer clinical prediction API with data:', clinicalData);
+      
+      const response = await axios.post(`${LUNG_CANCER_API_URL}/predict`, clinicalData, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 60000 // 60 second timeout for cold starts
+      });
+      
+      console.log('Lung cancer clinical prediction response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Lung cancer clinical prediction API error:', error);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+      }
+      throw error;
+    }
+  },
+
+  // Predict lung cancer risk from text
+  predictLungCancerText: async (textData) => {
+    try {
+      console.log('Calling lung cancer text prediction API with data:', textData);
+      
+      const response = await axios.post(`${LUNG_CANCER_API_URL}/predict_text`, textData, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 60000 // 60 second timeout for cold starts
+      });
+      
+      console.log('Lung cancer text prediction response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Lung cancer text prediction API error:', error);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+      }
+      throw error;
+    }
+  },
+
+  // Check lung cancer API health
+  checkLungCancerApiHealth: async () => {
+    try {
+      const response = await axios.get(`${LUNG_CANCER_API_URL}/health`, {
+        timeout: 30000 // 30 second timeout
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Lung cancer API health check failed:', error);
+      throw error;
+    }
+  },
+
+  // Get lung cancer API model status
+  getLungCancerModelStatus: async () => {
+    try {
+      const response = await axios.get(`${LUNG_CANCER_API_URL}/model/status`, {
+        timeout: 30000 // 30 second timeout
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Lung cancer model status check failed:', error);
+      throw error;
+    }
+  },
+
+  // UTILITY METHODS
+  
+  // Test all API connections
+  testApiConnections: async () => {
+    const results = {
+      skinDisease: false,
+      lungCancer: false,
+      timestamp: new Date().toISOString()
+    };
+
+    // Test skin disease API
+    try {
+      await axios.get(`${BACKEND_URL}/`, { timeout: 10000 });
+      results.skinDisease = true;
+    } catch (error) {
+      console.warn('Skin disease API not available:', error.message);
+    }
+
+    // Test lung cancer API
+    try {
+      await apiService.checkLungCancerApiHealth();
+      results.lungCancer = true;
+    } catch (error) {
+      console.warn('Lung cancer API not available:', error.message);
+    }
+
+    return results;
   },
 
   // Compile clinical dossier

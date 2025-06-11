@@ -7,6 +7,7 @@ import RegulatoryDocumentGenerator from './components/RegulatoryDocumentGenerato
 import ClinicalDossierCompiler from './components/ClinicalDossierCompiler';
 import QueryAssistant from './components/QueryAssistant';
 import SkinDiseaseDetector from './components/SkinDiseaseDetector';
+import LungCancerDetector from './components/LungCancerDetector'; // NEW IMPORT
 import DiseaseDiagnosis from './components/DiseaseDiagnosis';
 import './App.css';
 
@@ -27,7 +28,7 @@ const Navigation = () => {
         <li><Link to="/ind-modules" className={location.pathname === '/ind-modules' ? 'active' : ''}>Regulatory Document Generator</Link></li>
         <li><Link to="/clinical-dossier" className={location.pathname === '/clinical-dossier' ? 'active' : ''}>Clinical Dossier Compiler</Link></li>
         <li><Link to="/query" className={location.pathname === '/query' ? 'active' : ''}>Ask Lumina <span className="copyright">©</span></Link></li>
-        <li><Link to="/diagnosis" className={location.pathname.includes('/diagnosis') ? 'active' : ''}>Disease Diagnosis</Link></li>
+        <li><Link to="/diagnosis" className={location.pathname.includes('/diagnosis') ? 'active' : ''}>Disease Screening</Link></li>
       </ul>
     </nav>
   );
@@ -60,6 +61,7 @@ function App() {
               {/* Disease Diagnosis routes */}
               <Route path="/diagnosis" element={<DiseaseDiagnosis />} />
               <Route path="/diagnosis/dermatology" element={<SkinDiseaseDetector />} />
+              <Route path="/diagnosis/pulmonology" element={<LungCancerDetector />} /> {/* NEW ROUTE */}
               
               {/* Legacy routes with redirects */}
               <Route path="/skin-disease-detector" element={<Navigate to="/diagnosis/dermatology" replace />} />
