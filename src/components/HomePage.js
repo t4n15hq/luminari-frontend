@@ -25,7 +25,7 @@ const HomePage = () => {
     },
     {
       id: 'diagnosis',
-      title: 'Disease Diagnosis',
+      title: 'Disease Screening',
       icon: '🔍',
       description: 'AI-powered tools for diagnosing conditions across multiple medical specialties',
       path: '/diagnosis',
