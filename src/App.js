@@ -27,7 +27,7 @@ const Navigation = () => {
         <li><Link to="/protocol" className={location.pathname === '/protocol' ? 'active' : ''}>Protocol & Study Design Generator</Link></li>
         <li><Link to="/ind-modules" className={location.pathname === '/ind-modules' ? 'active' : ''}>Regulatory Document Generator</Link></li>
         <li><Link to="/clinical-dossier" className={location.pathname === '/clinical-dossier' ? 'active' : ''}>Clinical Dossier Compiler</Link></li>
-        <li><Link to="/query" className={location.pathname === '/query' ? 'active' : ''}>Ask Lumina <span className="copyright">©</span></Link></li>
+        <li><Link to="/query" className={location.pathname === '/query' ? 'active' : ''}>Ask Lumina<span className="trademark">™</span></Link></li>
         <li><Link to="/diagnosis" className={location.pathname.includes('/diagnosis') ? 'active' : ''}>Disease Screening</Link></li>
       </ul>
     </nav>
@@ -40,7 +40,7 @@ function App() {
       <div className="App">
         <header className="App-header">
           <div className="container">
-            <h1>LumiPath <span className="copyright">©</span></h1>
+            <h1>LumiPath<span className="trademark">™</span></h1>
             <p className="tagline">AI-driven clinical tools platform</p>
             <Navigation />
           </div>
@@ -73,7 +73,7 @@ function App() {
         
         <footer>
           <div className="container">
-            <p>&copy; {new Date().getFullYear()} Luminari. All rights reserved.</p>
+            <p><span className="copyright">©</span> {new Date().getFullYear()} Luminari. All rights reserved.</p>
           </div>
         </footer>
       </div>
