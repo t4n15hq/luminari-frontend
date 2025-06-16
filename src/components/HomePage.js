@@ -35,7 +35,7 @@ const HomePage = () => {
     },
     {
       id: 'query',
-      title: <>Ask Lumina<span className="copyright">©</span></>,
+      title: <>Ask Lumina<span className="trademark">™</span></>,
       icon: '❓',
       description: 'Get expert answers to complex questions about clinical trials and protocols',
       path: '/query',
@@ -48,7 +48,7 @@ const HomePage = () => {
   return (
     <div className="home-page">
       <div className="hero-section fade-in">
-      <h1>LumiPath<span className="copyright">©</span></h1>
+        <h1>LumiPath<span className="trademark">™</span></h1>
         <p>
           Advanced AI tools for clinical protocol development, regulatory documentation, 
           and disease diagnosis
@@ -105,9 +105,9 @@ const HomePage = () => {
       </div>
 
       <div className="about-section">
-      <h2>About LumiPath<span className="copyright">©</span></h2>
+        <h2>About LumiPath<span className="trademark">™</span></h2>
         <p>
-        LumiPath<span className="copyright">©</span> is an AI platform designed to streamline clinical research and 
+          LumiPath<span className="trademark">™</span> is an AI platform designed to streamline clinical research and 
           pharmaceutical development. Our tools leverage artificial intelligence 
           to generate high-quality, regulatory-compliant documentation and assist with 
           medical diagnoses across multiple specialties.
