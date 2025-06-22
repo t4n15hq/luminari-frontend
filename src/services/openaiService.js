@@ -1324,77 +1324,125 @@ Condition Description: Recurrent throbbing headaches preceded by zigzag lines in
     }
   },
   
-  queryAssistant: async (queryData) => {
-    try {
-      const response = await openaiApi.post(
-        'chat/completions',
-        {
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: `You are a clinical protocol and regulatory expert providing precise, well-structured, and professionally formatted answers.
-              Your expertise spans all aspects of clinical trial design, regulatory submissions, and pharmaceutical development.
-              
-              IMPORTANT RULES:
-              - Respond ONLY in plain text with NO markdown symbols.
-              - Use ALL CAPS sparingly for emphasis (e.g., section titles).
-              - Structure responses with indentation and clear paragraphing.
-              - Avoid unnecessary filler text—be precise and direct.
-              - If the question involves a specific disease or protocol, tailor the answer accordingly.
-              - If a protocol is referenced, assume you have access to its details and incorporate them.
-              - If asked about endpoints, list them clearly and explain their relevance.
-              - If asked about regulatory strategy, provide actionable advice.
-              - Cite relevant guidelines (ICH, FDA, EMA) when appropriate.
-              
-              EXAMPLE QUESTION:
-              "What are key efficacy endpoints for a Phase 3 trial in Psoriasis, referencing protocol XYZ-123?"
-              
-              EXAMPLE ANSWER FORMAT:
-              
-              Based on standard practices for Phase 3 Psoriasis trials and considering Protocol XYZ-123, key efficacy endpoints typically include:
-              
-              PRIMARY ENDPOINT:
-                1. PASI 75 Response Rate at Week 16:
-                   - Definition: Proportion of subjects achieving at least a 75% reduction in Psoriasis Area and Severity Index (PASI) score from baseline.
-                   - Relevance: Standard primary endpoint in psoriasis trials, recognized by regulatory agencies.
-              
-              KEY SECONDARY ENDPOINTS:
-                1. sPGA Score of 0 (Clear) or 1 (Almost Clear) at Week 16:
-                   - Definition: Proportion of subjects achieving a static Physician's Global Assessment (sPGA) score of 0 or 1.
-                   - Relevance: Complements PASI, provides physician's overall assessment.
-              
-                2. PASI 90 and PASI 100 Response Rates at Week 16:
-                   - Definition: Proportion of subjects achieving 90% or 100% reduction in PASI score.
-                   - Relevance: Measures higher levels of skin clearance.
-              
-                3. Change from Baseline in Dermatology Life Quality Index (DLQI) at Week 16:
-                   - Definition: Mean change in patient-reported quality of life.
-                   - Relevance: Captures patient perspective and impact on daily life.
-              
-              Protocol XYZ-123 specifically mentions these endpoints and may include additional exploratory measures related to biomarkers or long-term maintenance.
-              
-              These endpoints are consistent with FDA and EMA guidelines for psoriasis drug development.`
-            },
-            {
-              role: "user",
-              content: `Question: ${queryData.question}
-              ${queryData.disease_context ? `Disease Context: ${queryData.disease_context}` : ''}
-              ${queryData.protocol_id ? `Reference Protocol ID: ${queryData.protocol_id}` : ''}`
-            }
-          ],
-          temperature: 0.3, // Slightly higher for more nuanced answers but still factual
-          max_tokens: 1000 // Allow for comprehensive answers
-        }
-      );
+queryAssistant: async (queryData) => {
+  try {
+    // First, ask GPT if the question is relevant to clinical/regulatory topics
+    const relevanceCheck = await openaiApi.post(
+      'chat/completions',
+      {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a relevance checker. Determine if a question is related to clinical trials, medical protocols, regulatory affairs, pharmaceutical development, or healthcare research.
+
+            Respond with ONLY one word:
+            - "RELEVANT" if the question is about clinical trials, medical research, drug development, regulatory submissions, medical conditions, treatments, or pharmaceutical topics
+            - "IRRELEVANT" if the question is about cooking, weather, entertainment, sports, travel, technology, politics, or other non-medical topics
+
+            Examples:
+            - "What are efficacy endpoints for psoriasis?" → RELEVANT
+            - "Key endpoints for banana bread?" → IRRELEVANT  
+            - "How to design inclusion criteria?" → RELEVANT
+            - "What's the weather today?" → IRRELEVANT`
+          },
+          {
+            role: "user",
+            content: queryData.question
+          }
+        ],
+        temperature: 0,
+        max_tokens: 10
+      }
+    );
+
+    const relevance = relevanceCheck.data.choices[0].message.content.trim();
+
+    // If irrelevant, return standardized response
+    if (relevance === "IRRELEVANT") {
       return {
-        answer: response.data.choices[0].message.content.trim()
+        answer: `CLINICAL ASSISTANT - OFF-TOPIC QUERY
+
+I'm Lumina™, your specialized clinical protocol assistant. Your question appears to be outside my area of clinical and regulatory expertise.
+
+MY SPECIALIZED CAPABILITIES:
+- Clinical trial protocol design and optimization
+- Regulatory document generation (IND, NDA, BLA, CTD, eCTD)
+- Endpoint selection and statistical considerations
+- Patient population definitions and inclusion/exclusion criteria
+- Safety monitoring and adverse event assessment
+- Regulatory compliance guidance (FDA, EMA, ICH guidelines)
+
+EXAMPLES OF RELEVANT QUESTIONS:
+- "What are appropriate primary endpoints for a Phase 2 atopic dermatitis trial?"
+- "How should I structure inclusion criteria for a lung cancer study?"
+- "What safety assessments are required for immunotherapy trials?"
+- "How do I design a bioequivalence study?"
+
+Please ask a question related to clinical trials, protocols, or regulatory affairs, and I'll provide detailed, professional guidance.`
       };
-    } catch (error) {
-      console.error('Error in queryAssistant:', error.response?.data || error.message);
-      throw error;
     }
+
+    // If relevant, proceed with normal OpenAI response
+    const response = await openaiApi.post(
+      'chat/completions',
+      {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a clinical protocol and regulatory expert providing precise, well-structured, and professionally formatted answers.
+            Your expertise spans all aspects of clinical trial design, regulatory submissions, and pharmaceutical development.
+            
+            CRITICAL FORMATTING RULES - FOLLOW EXACTLY:
+            - Use ONLY plain text - NO markdown, NO asterisks (*), NO bold (**), NO italics, NO special characters
+            - Do NOT use ** for bold text or * for bullet points
+            - Use simple dashes (-) or numbers (1., 2., 3.) for lists
+            - Use ALL CAPS only for major section headings
+            - Use normal text with clear line breaks and indentation for structure
+            - No formatting symbols whatsoever - treat this as if you're writing in a basic text editor
+            
+            CONTENT RULES:
+            - Structure responses with clear paragraphing and indentation
+            - Be precise and direct - avoid unnecessary filler text
+            - If the question involves a specific disease or protocol, tailor the answer accordingly
+            - If asked about endpoints, list them clearly and explain their relevance
+            - If asked about regulatory strategy, provide actionable advice
+            - Cite relevant guidelines (ICH, FDA, EMA) when appropriate
+            
+            EXAMPLE FORMAT (NO ASTERISKS):
+            KEY EFFICACY ENDPOINTS FOR PSORIASIS TRIALS:
+            
+            PRIMARY ENDPOINTS:
+                1. PASI 75 Response Rate at Week 16
+                   - Definition: Proportion achieving 75% reduction in PASI score
+                   - Relevance: Standard regulatory endpoint
+            
+            SECONDARY ENDPOINTS:
+                1. Static Physician Global Assessment (sPGA)
+                   - Clear (0) or Almost Clear (1) skin
+                   - Physician assessment of overall improvement`
+          },
+          {
+            role: "user",
+            content: `Question: ${queryData.question}
+            ${queryData.disease_context ? `Disease Context: ${queryData.disease_context}` : ''}
+            ${queryData.protocol_id ? `Reference Protocol ID: ${queryData.protocol_id}` : ''}`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 1000
+      }
+    );
+    
+    return {
+      answer: response.data.choices[0].message.content.trim()
+    };
+  } catch (error) {
+    console.error('Error in queryAssistant:', error.response?.data || error.message);
+    throw error;
   }
+}
 };
 
 export default openaiService;
