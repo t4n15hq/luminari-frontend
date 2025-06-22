@@ -347,7 +347,7 @@ const SkinDiseaseDetector = () => {
       </div>
 
       {/* Analysis Type Tabs */}
-      <div className="analysis-tabs">
+            <div className="analysis-tabs">
         <button
           className={`tab-button ${analysisMode === 'image' ? 'active' : ''}`}
           onClick={() => setAnalysisMode('image')}
@@ -365,6 +365,13 @@ const SkinDiseaseDetector = () => {
           onClick={() => setAnalysisMode('textAudio')}
         >
           Text/Audio Analysis
+        </button>
+        <button
+          className={`tab-button ${analysisMode === 'video' ? 'active' : ''}`}
+          onClick={() => setAnalysisMode('video')}
+          style={{ opacity: 0.6, cursor: 'not-allowed' }}
+        >
+          Video/Motion Analysis
         </button>
       </div>
 
@@ -647,6 +654,8 @@ const SkinDiseaseDetector = () => {
     </div>
   );
 };
+
+
 
 const nextBtnStyle = (bg, color) => ({
   padding: '10px',
