@@ -270,6 +270,13 @@ const LungCancerDetector = () => {
         >
           Batch Processing
         </button>
+
+        <button
+    className={`tab-button ${analysisMode === 'video' ? 'active' : ''}`}
+    onClick={() => setAnalysisMode('video')}
+  >
+    Video Analysis (In Development)
+  </button>
       </div>
 
       {/* Single Analysis Section */}
@@ -501,22 +508,7 @@ const LungCancerDetector = () => {
             </div>
           )}
 
-          {/* Information Box */}
-          {!textPrediction && (
-            <div className="info-box" style={{ marginTop: '30px' }}>
-              <h4>💡 How It Works</h4>
-              <p>
-                This AI-powered tool analyzes medical text and audio recordings to identify potential lung cancer indicators. 
-                The system evaluates symptoms, medical history, and clinical language patterns to provide an assessment.
-              </p>
-              <ul style={{ paddingLeft: '20px', lineHeight: '1.6' }}>
-                <li><strong>Text Analysis:</strong> Paste medical notes, consultation transcripts, or patient descriptions</li>
-                <li><strong>Audio Processing:</strong> Upload MP3/WAV files of medical consultations or patient interviews</li>
-                <li><strong>AI Assessment:</strong> Advanced natural language processing identifies cancer-related indicators</li>
-                <li><strong>Clinical Integration:</strong> Results can be used to generate protocols and regulatory documents</li>
-              </ul>
-            </div>
-          )}
+
         </div>
       )}
 
@@ -551,6 +543,7 @@ const LungCancerDetector = () => {
               + Add Manual Text Entry
             </button>
           </div>
+          
 
           {batchFiles.length > 0 && (
             <div className="batch-files-container" style={{ marginTop: '20px' }}>
@@ -652,6 +645,8 @@ const LungCancerDetector = () => {
                   </div>
                 ))}
               </div>
+
+              
 
               <div style={{ marginTop: '20px', textAlign: 'center' }}>
                 <button
