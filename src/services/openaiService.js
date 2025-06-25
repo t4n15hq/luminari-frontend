@@ -1921,64 +1921,1691 @@ Please ask a question related to clinical trials, protocols, or regulatory affai
   /**
    * Korean NDA Application - ENHANCED
    */
-  generateNDA_KR: async (diseaseData) => {
-    try {
-      const response = await openaiApi.post('chat/completions', {
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `You are a senior regulatory affairs expert with experience in Korean New Drug Applications for MFDS submission.
-            Your task is to generate a comprehensive Korean NDA summary.
+generateNDA_KR: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in Korean New Drug Applications for MFDS submission.
+           Your task is to generate a comprehensive Korean NDA summary.
 
-            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of comprehensive Korean regulatory content
-            - Each section must contain extensive detail with specific data, methodologies, and Korean regulatory compliance analysis
-            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
-            - Provide complete regulatory rationale and marketing authorization justification according to MFDS standards
-            - Reference specific Korean regulatory framework, MFDS requirements, and Korean healthcare considerations extensively
-            - Include both Korean terminology and detailed English explanations
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Korean regulatory content
+           - Each section must contain extensive detail with specific data, methodologies, and Korean regulatory compliance analysis
+           - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
+           - Provide complete regulatory rationale and marketing authorization justification according to MFDS standards
+           - Reference specific Korean regulatory framework, MFDS requirements, and Korean healthcare considerations extensively
+           - Include both Korean terminology and detailed English explanations
 
-            STRUCTURE FOR KOREAN NDA (EXTREMELY DETAILED):
-            1. 행정 정보 및 제품 정보 요약 (Administrative Information and Product Information Summary)
-               1.1. 신청 개요 (Application Overview) - Complete regulatory strategy and Korean submission framework
-               1.2. 제안된 제품 정보 (Proposed Product Information) - Detailed Korean labeling and prescribing information
-            2. 품질 정보 요약 (Quality Information Summary)
-               2.1. 원료의약품 요약 (Drug Substance Summary) - Comprehensive chemical and analytical characterization
-               2.2. 완제의약품 요약 (Drug Product Summary) - Detailed formulation and Korean manufacturing compliance
-            3. 비임상 정보 요약 (Non-clinical Information Summary)
-               3.1. 약리학 및 약동학 요약 (Pharmacology and Pharmacokinetics Summary) - Comprehensive preclinical pharmacology package
-               3.2. 독성학 요약 (Toxicology Summary) - Detailed toxicological assessment and safety evaluation
-            4. 임상 정보 요약 (Clinical Information Summary)
-               4.1. 임상 개요 (Clinical Overview) - Complete clinical development summary
-               4.2. 임상 유효성 요약 (Clinical Efficacy Summary) - Detailed efficacy analysis for Korean healthcare context
-               4.3. 임상 안전성 요약 (Clinical Safety Summary) - Comprehensive safety profile and risk assessment
-               4.4. 한국 인구에 대한 이익-위험 평가 (Benefit-Risk Assessment for Korean Population) - Detailed benefit-risk analysis for Korean patients
-            5. 한국 특별 고려사항 (Korea-Specific Considerations) - Complete Korean regulatory framework and market considerations
+           STRUCTURE FOR KOREAN NDA (EXTREMELY DETAILED):
+           1. 행정 정보 및 제품 정보 요약 (Administrative Information and Product Information Summary)
+              1.1. 신청 개요 (Application Overview) - Complete regulatory strategy and Korean submission framework
+              1.2. 제안된 제품 정보 (Proposed Product Information) - Detailed Korean labeling and prescribing information
+           2. 품질 정보 요약 (Quality Information Summary)
+              2.1. 원료의약품 요약 (Drug Substance Summary) - Comprehensive chemical and analytical characterization
+              2.2. 완제의약품 요약 (Drug Product Summary) - Detailed formulation and Korean manufacturing compliance
+           3. 비임상 정보 요약 (Non-clinical Information Summary)
+              3.1. 약리학 및 약동학 요약 (Pharmacology and Pharmacokinetics Summary) - Comprehensive preclinical pharmacology package
+              3.2. 독성학 요약 (Toxicology Summary) - Detailed toxicological assessment and safety evaluation
+           4. 임상 정보 요약 (Clinical Information Summary)
+              4.1. 임상 개요 (Clinical Overview) - Complete clinical development summary
+              4.2. 임상 유효성 요약 (Clinical Efficacy Summary) - Detailed efficacy analysis for Korean healthcare context
+              4.3. 임상 안전성 요약 (Clinical Safety Summary) - Comprehensive safety profile and risk assessment
+              4.4. 한국 인구에 대한 이익-위험 평가 (Benefit-Risk Assessment for Korean Population) - Detailed benefit-risk analysis for Korean patients
+           5. 한국 특별 고려사항 (Korea-Specific Considerations) - Complete Korean regulatory framework and market considerations
 
-            Use plain text formatting only - NO MARKDOWN.
-            Reference Korean regulatory framework and MFDS requirements.`
-          },
-          {
-            role: "user",
-            content: `Generate a Korean NDA summary for MFDS approval of ${diseaseData.disease_name} treatment.
-            
-            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
-            ).filter(Boolean).join('\n')}
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Korean regulatory framework and MFDS requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate a Korean NDA summary for MFDS approval of ${diseaseData.disease_name} treatment.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
 
-            This NDA summary must meet MFDS expectations for Korean marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-          }
-        ],
-        temperature: 0.2,
-        max_tokens: 8000
-      });
-      return { document_content: response.data.choices[0].message.content.trim() };
-    } catch (error) {
-      console.error('Error in generateNDA_KR:', error.response?.data || error.message);
-      throw error;
-    }
-  
+           This NDA summary must meet MFDS expectations for Korean marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateNDA_KR:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * Korean GMP Certificate - ENHANCED
+  */
+ generateKGMP: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a quality assurance expert with experience in Korean GMP certification requirements for MFDS.
+           Your task is to generate supporting documentation for Korean GMP certificate application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 4,000-5,000 words of comprehensive Korean GMP regulatory content
+           - Each section must contain extensive detail with specific quality systems, procedures, and Korean regulatory compliance analysis
+           - Include detailed subsections with quality data, validation protocols, and regulatory justification
+           - Provide complete regulatory rationale and quality assurance justification according to MFDS standards
+           - Reference specific Korean GMP requirements, MFDS guidelines, and Korean manufacturing standards extensively
+           - Include both Korean terminology and detailed English explanations
+
+           STRUCTURE FOR KOREAN GMP CERTIFICATE (EXTREMELY DETAILED):
+           1. 제조업체 일반 정보 (General Manufacturing Information)
+              1.1. 제조시설 정보 (Manufacturing Facility Information) - Complete facility description and Korean qualification
+              1.2. 조직 구조 (Organizational Structure) - Detailed personnel qualifications and Korean regulatory responsibilities
+              1.3. 품질 시스템 (Quality System) - Comprehensive quality management system for Korean compliance
+           2. 제조 공정 (Manufacturing Processes)
+              2.1. 제조 공정 설명 (Manufacturing Process Description) - Complete process validation and Korean control standards
+              2.2. 품질 관리 (Quality Control) - Detailed analytical methods and Korean quality testing requirements
+              2.3. 공정 검증 (Process Validation) - Comprehensive validation protocols and Korean documentation standards
+           3. 한국 GMP 요구사항 준수 (Korean GMP Requirements Compliance)
+              3.1. 한국 표준 준수 (Korean Standards Compliance) - Complete Korean regulatory compliance framework
+              3.2. 문서 시스템 (Documentation System) - Detailed Korean documentation control and record keeping
+              3.3. 직원 교육 (Personnel Training) - Comprehensive Korean training programs and qualifications
+           4. 검사 및 감사 준비 (Inspection and Audit Preparedness) - Complete Korean inspection preparedness and audit protocols
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Korean GMP requirements and MFDS manufacturing standards.`
+         },
+         {
+           role: "user",
+           content: `Generate Korean GMP Certificate supporting documentation for manufacturing authorization of ${diseaseData.disease_name} treatment in South Korea.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This documentation must support Korean GMP certification requirements with EXTREMELY DETAILED content and comprehensive quality analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateKGMP:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ // =============================================================================
+ // AUSTRALIA DOCUMENTS - ENHANCED
+ // =============================================================================
+
+ /**
+  * Australian Clinical Trial Notification (TGA) - ENHANCED
+  */
+ generateCTN_AU: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in Australian Clinical Trial Notifications for submission to the TGA.
+           Your task is to generate key sections for an Australian CTN application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Australian regulatory content
+           - Each section must contain extensive detail with specific methodologies, procedures, and Australian regulatory compliance analysis
+           - Include detailed subsections with quantitative data, protocols, and regulatory justification
+           - Provide complete regulatory rationale and scientific justification according to TGA standards
+           - Reference specific Australian regulatory requirements, TGA guidelines, and Australian healthcare framework extensively
+
+           STRUCTURE FOR AUSTRALIAN CTN (EXTREMELY DETAILED):
+           1. CTN APPLICATION OVERVIEW
+              1.1. Trial Information (CTN number if available, Trial title) - Complete study identification and Australian regulatory framework
+              1.2. Sponsor Information - Comprehensive sponsor qualifications and Australian regulatory standing
+              1.3. Study Overview and Australian considerations - Detailed study design and Australian healthcare integration
+           2. THERAPEUTIC GOODS INFORMATION
+              2.1. Product Description and TGA Classification - Comprehensive product characterization and Australian regulatory classification
+              2.2. Quality Information Summary (Australian GMP considerations) - Detailed quality control and Australian manufacturing standards
+              2.3. Non-clinical Information Summary - Complete preclinical package with Australian regulatory analysis
+              2.4. Previous Clinical Experience - Comprehensive global and Australian-relevant clinical data
+           3. CLINICAL TRIAL PROTOCOL SYNOPSIS (AUSTRALIA-FOCUSED)
+              3.1. Study Objectives and Design - Complete methodology and statistical planning
+              3.2. Australian Patient Population and Eligibility - Detailed demographic analysis and Australian healthcare considerations
+              3.3. Treatment Plan and Duration - Comprehensive treatment protocols and monitoring
+              3.4. Efficacy and Safety Assessments - Detailed assessment protocols and Australian-specific considerations
+           4. AUSTRALIAN INVESTIGATOR QUALIFICATIONS AND SITE INFORMATION
+              4.1. Principal Investigator Information - Complete Australian investigator qualifications and experience
+              4.2. Australian Site Information - Detailed Australian site capabilities and regulatory compliance
+           5. TGA AND HREC COMPLIANCE - Comprehensive Australian regulatory and ethical compliance framework
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Australian regulatory requirements and TGA guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate an Australian Clinical Trial Notification (CTN) for ${diseaseData.disease_name} research.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This CTN must meet TGA requirements for clinical trial notification in Australia with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateCTN_AU:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * Australian Submission (AUS) - ENHANCED
+  */
+ generateAUS: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in Australian submissions for TGA approval.
+           Your task is to generate a comprehensive AUS summary for ARTG registration.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Australian regulatory content
+           - Each section must contain extensive detail with specific data, methodologies, and Australian regulatory compliance analysis
+           - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
+           - Provide complete regulatory rationale and marketing authorization justification according to TGA standards
+           - Reference specific Australian regulatory framework, TGA requirements, and Australian healthcare considerations extensively
+
+           STRUCTURE FOR AUSTRALIAN SUBMISSION (EXTREMELY DETAILED):
+           1. ADMINISTRATIVE INFORMATION AND PROPOSED PRODUCT INFORMATION
+              1.1. Application Overview - Complete regulatory strategy and Australian submission framework
+              1.2. Proposed Australian Product Information (PI) - Detailed Australian prescribing information and labeling
+           2. QUALITY INFORMATION SUMMARY
+              2.1. Drug Substance Summary - Comprehensive chemical and analytical characterization
+              2.2. Drug Product Summary (Australian manufacturing considerations) - Detailed formulation and Australian manufacturing compliance
+           3. NON-CLINICAL INFORMATION SUMMARY
+              3.1. Pharmacology and Pharmacokinetics Summary - Comprehensive preclinical pharmacology package
+              3.2. Toxicology Summary - Detailed toxicological assessment and safety evaluation
+           4. CLINICAL INFORMATION SUMMARY
+              4.1. Clinical Overview - Complete clinical development summary
+              4.2. Clinical Efficacy Summary (relevance to Australian population) - Detailed efficacy analysis for Australian healthcare context
+              4.3. Clinical Safety Summary - Comprehensive safety profile and risk assessment
+              4.4. Benefit-Risk Assessment for Australian Population - Detailed benefit-risk analysis for Australian patients
+           5. AUSTRALIAN-SPECIFIC REGULATORY CONSIDERATIONS - Complete Australian regulatory framework and TGA considerations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Australian regulatory framework and TGA requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate an Australian Submission (AUS) summary for TGA approval and ARTG registration of ${diseaseData.disease_name} treatment.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This AUS summary must meet TGA expectations for Australian marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateAUS:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * TGA GMP Certificate - ENHANCED
+  */
+ generateTGA_GMP: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a quality assurance expert with experience in TGA GMP certification requirements.
+           Your task is to generate supporting documentation for TGA GMP certificate application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 4,000-5,000 words of comprehensive Australian GMP regulatory content
+           - Each section must contain extensive detail with specific quality systems, procedures, and Australian regulatory compliance analysis
+           - Include detailed subsections with quality data, validation protocols, and regulatory justification
+           - Provide complete regulatory rationale and quality assurance justification according to TGA standards
+           - Reference specific Australian GMP requirements, TGA guidelines, and Australian manufacturing standards extensively
+
+           STRUCTURE FOR TGA GMP CERTIFICATE (EXTREMELY DETAILED):
+           1. MANUFACTURING FACILITY GENERAL INFORMATION
+              1.1. Australian Manufacturing Site Information - Complete facility description and Australian qualification
+              1.2. Organizational Structure - Detailed personnel qualifications and Australian regulatory responsibilities
+              1.3. Quality System - Comprehensive quality management system for Australian compliance
+           2. MANUFACTURING PROCESSES
+              2.1. Manufacturing Process Description - Complete process validation and Australian control standards
+              2.2. Quality Control - Detailed analytical methods and Australian quality testing requirements
+              2.3. Process Validation - Comprehensive validation protocols and Australian documentation standards
+           3. AUSTRALIAN GMP REQUIREMENTS COMPLIANCE
+              3.1. Australian Standards Compliance - Complete Australian regulatory compliance framework
+              3.2. Documentation System - Detailed Australian documentation control and record keeping
+              3.3. Personnel Training - Comprehensive Australian training programs and qualifications
+           4. TGA INSPECTION AND AUDIT PREPAREDNESS - Complete Australian inspection preparedness and audit protocols
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Australian GMP requirements and TGA manufacturing standards.`
+         },
+         {
+           role: "user",
+           content: `Generate TGA GMP Certificate supporting documentation for Australian manufacturing authorization of ${diseaseData.disease_name} treatment.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This documentation must support TGA GMP certification requirements with EXTREMELY DETAILED content and comprehensive quality analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateTGA_GMP:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ // =============================================================================
+ // SINGAPORE DOCUMENTS - ENHANCED
+ // =============================================================================
+
+ /**
+  * Singapore Clinical Trial Certificate (HSA) - ENHANCED
+  */
+ generateCTA_SG: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in Singapore Clinical Trial Certificates for HSA submission.
+           Your task is to generate key sections for a Singapore CTC application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Singapore regulatory content
+           - Each section must contain extensive detail with specific methodologies, procedures, and Singapore regulatory compliance analysis
+           - Include detailed subsections with quantitative data, protocols, and regulatory justification
+           - Provide complete regulatory rationale and scientific justification according to HSA standards
+           - Reference specific Singapore regulatory requirements, HSA guidelines, and Singapore healthcare framework extensively
+
+           STRUCTURE FOR SINGAPORE CTC (EXTREMELY DETAILED):
+           1. CTC APPLICATION OVERVIEW
+              1.1. Trial Information (CTC reference, Trial title) - Complete study identification and Singapore regulatory framework
+              1.2. Sponsor Information - Comprehensive sponsor qualifications and Singapore regulatory standing
+              1.3. Study Overview and Singapore considerations - Detailed study design and Singapore healthcare integration
+           2. INVESTIGATIONAL PRODUCT INFORMATION
+              2.1. Product Description and HSA Classification - Comprehensive product characterization and Singapore regulatory classification
+              2.2. Quality Information Summary (Singapore GMP considerations) - Detailed quality control and Singapore manufacturing standards
+              2.3. Non-clinical Information Summary - Complete preclinical package with Singapore regulatory analysis
+              2.4. Previous Clinical Experience - Comprehensive global and Singapore-relevant clinical data
+           3. CLINICAL TRIAL PROTOCOL SYNOPSIS (SINGAPORE-FOCUSED)
+              3.1. Study Objectives and Design - Complete methodology and statistical planning
+              3.2. Singapore Patient Population and Eligibility - Detailed demographic analysis and Singapore healthcare considerations
+              3.3. Treatment Plan and Duration - Comprehensive treatment protocols and monitoring
+              3.4. Efficacy and Safety Assessments - Detailed assessment protocols and Singapore-specific considerations
+           4. SINGAPORE INVESTIGATOR QUALIFICATIONS AND SITE INFORMATION
+              4.1. Principal Investigator Information - Complete Singapore investigator qualifications and experience
+              4.2. Singapore Site Information - Detailed Singapore site capabilities and regulatory compliance
+           5. HSA AND IRB COMPLIANCE - Comprehensive Singapore regulatory and ethical compliance framework
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Singapore regulatory requirements and HSA guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate a Singapore Clinical Trial Certificate (CTC) application for ${diseaseData.disease_name} research.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This CTC must meet HSA requirements for clinical trial authorization in Singapore with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateCTA_SG:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * Singapore Product License - ENHANCED
+  */
+ generatePRODUCT_LICENSE_SG: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in Singapore product licensing for HSA approval.
+           Your task is to generate a comprehensive product license summary.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Singapore regulatory content
+           - Each section must contain extensive detail with specific data, methodologies, and Singapore regulatory compliance analysis
+           - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
+           - Provide complete regulatory rationale and marketing authorization justification according to HSA standards
+           - Reference specific Singapore regulatory framework, HSA requirements, and Singapore healthcare considerations extensively
+
+           STRUCTURE FOR SINGAPORE PRODUCT LICENSE (EXTREMELY DETAILED):
+           1. ADMINISTRATIVE INFORMATION AND PROPOSED PRODUCT INFORMATION
+              1.1. Application Overview - Complete regulatory strategy and Singapore submission framework
+              1.2. Proposed Singapore Product Information - Detailed Singapore prescribing information and labeling
+           2. QUALITY INFORMATION SUMMARY
+              2.1. Drug Substance Summary - Comprehensive chemical and analytical characterization
+              2.2. Drug Product Summary (Singapore manufacturing considerations) - Detailed formulation and Singapore manufacturing compliance
+           3. NON-CLINICAL INFORMATION SUMMARY
+              3.1. Pharmacology and Pharmacokinetics Summary - Comprehensive preclinical pharmacology package
+              3.2. Toxicology Summary - Detailed toxicological assessment and safety evaluation
+           4. CLINICAL INFORMATION SUMMARY
+              4.1. Clinical Overview - Complete clinical development summary
+              4.2. Clinical Efficacy Summary (relevance to Singapore population) - Detailed efficacy analysis for Singapore healthcare context
+              4.3. Clinical Safety Summary - Comprehensive safety profile and risk assessment
+              4.4. Benefit-Risk Assessment for Singapore Population - Detailed benefit-risk analysis for Singapore patients
+           5. SINGAPORE-SPECIFIC REGULATORY CONSIDERATIONS - Complete Singapore regulatory framework and HSA considerations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Singapore regulatory framework and HSA requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate a Singapore Product License summary for HSA approval of ${diseaseData.disease_name} treatment.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This product license summary must meet HSA expectations for Singapore marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generatePRODUCT_LICENSE_SG:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ // =============================================================================
+ // INDIA DOCUMENTS - ENHANCED
+ // =============================================================================
+
+ /**
+  * Indian Clinical Trial Permission (CDSCO) - ENHANCED
+  */
+ generateCTA_IN: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in Indian Clinical Trial Permissions for CDSCO submission.
+           Your task is to generate key sections for an Indian CTA application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Indian regulatory content
+           - Each section must contain extensive detail with specific methodologies, procedures, and Indian regulatory compliance analysis
+           - Include detailed subsections with quantitative data, protocols, and regulatory justification
+           - Provide complete regulatory rationale and scientific justification according to CDSCO standards
+           - Reference specific Indian regulatory requirements, CDSCO guidelines, and Indian healthcare framework extensively
+
+           STRUCTURE FOR INDIAN CTA (EXTREMELY DETAILED):
+           1. CLINICAL TRIAL APPLICATION OVERVIEW
+              1.1. Trial Information (CTRI registration, Trial title) - Complete study identification and Indian regulatory framework
+              1.2. Sponsor Information - Comprehensive sponsor qualifications and Indian regulatory standing
+              1.3. Study Overview and Indian considerations - Detailed study design and Indian healthcare integration
+           2. INVESTIGATIONAL PRODUCT INFORMATION
+              2.1. Product Description and CDSCO Classification - Comprehensive product characterization and Indian regulatory classification
+              2.2. Quality Information Summary (Indian GMP considerations) - Detailed quality control and Indian manufacturing standards
+              2.3. Non-clinical Information Summary - Complete preclinical package with Indian regulatory analysis
+              2.4. Previous Clinical Experience - Comprehensive global and Indian-relevant clinical data
+           3. CLINICAL TRIAL PROTOCOL SYNOPSIS (INDIA-FOCUSED)
+              3.1. Study Objectives and Design - Complete methodology and statistical planning
+              3.2. Indian Patient Population and Eligibility - Detailed demographic analysis and Indian healthcare considerations
+              3.3. Treatment Plan and Duration - Comprehensive treatment protocols and monitoring
+              3.4. Efficacy and Safety Assessments - Detailed assessment protocols and Indian-specific considerations
+           4. INDIAN INVESTIGATOR QUALIFICATIONS AND SITE INFORMATION
+              4.1. Principal Investigator Information - Complete Indian investigator qualifications and experience
+              4.2. Indian Site Information - Detailed Indian site capabilities and regulatory compliance
+           5. CDSCO AND ETHICS COMMITTEE COMPLIANCE - Comprehensive Indian regulatory and ethical compliance framework
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Indian regulatory requirements and CDSCO guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate an Indian Clinical Trial Permission application for ${diseaseData.disease_name} research.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This application must meet CDSCO requirements for clinical trial authorization in India with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateCTA_IN:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * Indian New Drug Application - ENHANCED
+  */
+ generateNDA_IN: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in Indian New Drug Applications for CDSCO approval.
+           Your task is to generate a comprehensive Indian NDA summary.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Indian regulatory content
+           - Each section must contain extensive detail with specific data, methodologies, and Indian regulatory compliance analysis
+           - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
+           - Provide complete regulatory rationale and marketing authorization justification according to CDSCO standards
+           - Reference specific Indian regulatory framework, CDSCO requirements, and Indian healthcare considerations extensively
+
+           STRUCTURE FOR INDIAN NDA (EXTREMELY DETAILED):
+           1. ADMINISTRATIVE INFORMATION AND PROPOSED PRODUCT INFORMATION
+              1.1. Application Overview - Complete regulatory strategy and Indian submission framework
+              1.2. Proposed Indian Product Information - Detailed Indian prescribing information and labeling
+           2. QUALITY INFORMATION SUMMARY
+              2.1. Drug Substance Summary - Comprehensive chemical and analytical characterization
+              2.2. Drug Product Summary (Indian manufacturing considerations) - Detailed formulation and Indian manufacturing compliance
+           3. NON-CLINICAL INFORMATION SUMMARY
+              3.1. Pharmacology and Pharmacokinetics Summary - Comprehensive preclinical pharmacology package
+              3.2. Toxicology Summary - Detailed toxicological assessment and safety evaluation
+           4. CLINICAL INFORMATION SUMMARY
+              4.1. Clinical Overview - Complete clinical development summary
+              4.2. Clinical Efficacy Summary (relevance to Indian population) - Detailed efficacy analysis for Indian healthcare context
+              4.3. Clinical Safety Summary - Comprehensive safety profile and risk assessment
+              4.4. Benefit-Risk Assessment for Indian Population - Detailed benefit-risk analysis for Indian patients
+           5. INDIAN-SPECIFIC REGULATORY CONSIDERATIONS - Complete Indian regulatory framework and CDSCO considerations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Indian regulatory framework and CDSCO requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate an Indian New Drug Application summary for CDSCO approval of ${diseaseData.disease_name} treatment.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This NDA summary must meet CDSCO expectations for Indian marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateNDA_IN:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * Indian Import License - ENHANCED
+  */
+ generateIMPORT_LICENSE_IN: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in Indian import licenses for CDSCO approval.
+           Your task is to generate supporting documentation for Indian drug import authorization.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 4,000-5,000 words of comprehensive Indian import licensing content
+           - Each section must contain extensive detail with specific import data, methodologies, and Indian regulatory compliance analysis
+           - Include detailed subsections with quality data, import protocols, and regulatory justification
+           - Provide complete regulatory rationale and import authorization justification according to CDSCO standards
+           - Reference specific Indian regulatory framework, CDSCO requirements, and Indian import considerations extensively
+
+           STRUCTURE FOR INDIAN IMPORT LICENSE (EXTREMELY DETAILED):
+           1. IMPORT LICENSE APPLICATION OVERVIEW
+              1.1. Product Information - Complete product characterization and Indian import classification
+              1.2. Importer Information - Comprehensive importer qualifications and Indian regulatory standing
+              1.3. Import Strategy and Indian considerations - Detailed import strategy and Indian healthcare integration
+           2. PRODUCT QUALITY AND MANUFACTURING INFORMATION
+              2.1. Manufacturing Site Information - Comprehensive foreign manufacturing facility qualifications
+              2.2. Quality Control and Testing - Detailed quality control protocols and Indian testing requirements
+              2.3. Import Quality Assurance - Complete import quality assurance and Indian compliance framework
+           3. REGULATORY COMPLIANCE AND AUTHORIZATION
+              3.1. Foreign Regulatory Approvals - Comprehensive foreign regulatory status and approvals
+              3.2. Indian Regulatory Compliance - Detailed Indian regulatory compliance and CDSCO requirements
+              3.3. Import Documentation Requirements - Complete import documentation and Indian customs compliance
+           4. DISTRIBUTION AND SUPPLY CHAIN
+              4.1. Indian Distribution Plan - Comprehensive Indian distribution strategy and supply chain management
+              4.2. Storage and Handling - Detailed storage protocols and Indian handling requirements
+              4.3. Pharmacovigilance and Post-Market Surveillance - Complete Indian pharmacovigilance framework
+           5. CDSCO IMPORT AUTHORIZATION REQUIREMENTS - Complete Indian import authorization framework and compliance
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Indian regulatory framework and CDSCO import requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate Indian Import License supporting documentation for ${diseaseData.disease_name} treatment import authorization.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This documentation must support Indian import licensing requirements with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateIMPORT_LICENSE_IN:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ // =============================================================================
+ // TAIWAN DOCUMENTS - ENHANCED
+ // =============================================================================
+
+ /**
+  * Taiwan IND Application - ENHANCED
+  */
+ generateIND_TW: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in Taiwan Investigational New Drug applications for TFDA submission.
+           Your task is to generate key sections for a Taiwan IND application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Taiwan regulatory content
+           - Each section must contain extensive detail with specific methodologies, procedures, and Taiwan regulatory compliance analysis
+           - Include detailed subsections with quantitative data, protocols, and regulatory justification
+           - Provide complete regulatory rationale and scientific justification according to TFDA standards
+           - Reference specific Taiwan regulatory requirements, TFDA guidelines, and Taiwan healthcare framework extensively
+           - Include both Traditional Chinese terminology and detailed English explanations
+
+           STRUCTURE FOR TAIWAN IND (EXTREMELY DETAILED):
+           1. 臨床試驗計畫書概要 (Clinical Trial Protocol Overview)
+              1.1. 試驗藥物資訊 (Investigational Drug Information) - Complete product characterization and Taiwan regulatory classification
+              1.2. 委託者及主要研究者資訊 (Sponsor and Principal Investigator Information) - Detailed qualifications and Taiwan regulatory standing
+              1.3. 台灣臨床試驗概要 (Taiwan Clinical Trial Overview) - Comprehensive study design and Taiwan healthcare integration
+           2. 試驗藥物資訊 (Investigational Product Information)
+              2.1. 藥物說明及分類 (Drug Description and Classification) - Comprehensive product characterization
+              2.2. 品質資訊摘要 (Quality Information Summary) - Detailed quality control and Taiwan compliance
+              2.3. 非臨床資訊摘要 (Non-clinical Information Summary) - Complete preclinical package
+              2.4. 先前臨床經驗 (Previous Clinical Experience) - Comprehensive clinical data analysis
+           3. 臨床試驗方案概要 (Clinical Trial Protocol Synopsis)
+              3.1. 研究目的及設計 (Study Objectives and Design) - Complete methodology and statistical planning
+              3.2. 台灣病患族群 (Taiwan Patient Population) - Detailed Taiwan patient population analysis
+              3.3. 治療計畫 (Treatment Plan) - Comprehensive treatment protocols and monitoring
+              3.4. 療效及安全性評估 (Efficacy and Safety Assessment) - Detailed assessment protocols
+           4. 台灣法規考量 (Taiwan Regulatory Considerations) - Complete Taiwan regulatory compliance framework
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Taiwan regulatory requirements and TFDA guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate a Taiwan IND application for ${diseaseData.disease_name} clinical trial.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This application must meet TFDA requirements for clinical trial authorization in Taiwan with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateIND_TW:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * Taiwan NDA Application - ENHANCED
+  */
+ generateNDA_TW: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in Taiwan New Drug Applications for TFDA approval.
+           Your task is to generate a comprehensive Taiwan NDA summary.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Taiwan regulatory content
+           - Each section must contain extensive detail with specific data, methodologies, and Taiwan regulatory compliance analysis
+           - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
+           - Provide complete regulatory rationale and marketing authorization justification according to TFDA standards
+           - Reference specific Taiwan regulatory framework, TFDA requirements, and Taiwan healthcare considerations extensively
+           - Include both Traditional Chinese terminology and detailed English explanations
+
+           STRUCTURE FOR TAIWAN NDA (EXTREMELY DETAILED):
+           1. 行政資訊及產品資訊摘要 (Administrative Information and Product Information Summary)
+              1.1. 申請概要 (Application Overview) - Complete regulatory strategy and Taiwan submission framework
+              1.2. 建議產品資訊 (Proposed Product Information) - Detailed Taiwan prescribing information and labeling
+           2. 品質資訊摘要 (Quality Information Summary)
+              2.1. 原料藥摘要 (Drug Substance Summary) - Comprehensive chemical and analytical characterization
+              2.2. 製劑摘要 (Drug Product Summary) - Detailed formulation and Taiwan manufacturing compliance
+           3. 非臨床資訊摘要 (Non-clinical Information Summary)
+              3.1. 藥理學及藥物動力學摘要 (Pharmacology and Pharmacokinetics Summary) - Comprehensive preclinical pharmacology package
+              3.2. 毒理學摘要 (Toxicology Summary) - Detailed toxicological assessment and safety evaluation
+           4. 臨床資訊摘要 (Clinical Information Summary)
+              4.1. 臨床概要 (Clinical Overview) - Complete clinical development summary
+              4.2. 臨床療效摘要 (Clinical Efficacy Summary) - Detailed efficacy analysis for Taiwan healthcare context
+              4.3. 臨床安全性摘要 (Clinical Safety Summary) - Comprehensive safety profile and risk assessment
+              4.4. 台灣人口效益風險評估 (Benefit-Risk Assessment for Taiwan Population) - Detailed benefit-risk analysis for Taiwan patients
+           5. 台灣特殊考量 (Taiwan-Specific Considerations) - Complete Taiwan regulatory framework and market considerations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Taiwan regulatory framework and TFDA requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate a Taiwan NDA summary for TFDA approval of ${diseaseData.disease_name} treatment.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This NDA summary must meet TFDA expectations for Taiwan marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateNDA_TW:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ // =============================================================================
+ // LATIN AMERICA DOCUMENTS - ENHANCED
+ // =============================================================================
+
+ /**
+  * ANVISA Clinical Trial Authorization (Brazil) - ENHANCED
+  */
+ generateANVISA_CTA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in ANVISA clinical trial authorizations for Brazil.
+           Your task is to generate key sections for an ANVISA CTA application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Brazilian regulatory content
+           - Each section must contain extensive detail with specific methodologies, procedures, and Brazilian regulatory compliance analysis
+           - Include detailed subsections with quantitative data, protocols, and regulatory justification
+           - Provide complete regulatory rationale and scientific justification according to ANVISA standards
+           - Reference specific Brazilian regulatory requirements, ANVISA guidelines, and Brazilian healthcare framework extensively
+           - Include both Portuguese terminology and detailed English explanations
+
+           STRUCTURE FOR ANVISA CTA (EXTREMELY DETAILED):
+           1. VISÃO GERAL DA SOLICITAÇÃO (Application Overview)
+              1.1. Informações do Estudo (Study Information) - Complete study design and Brazilian regulatory framework
+              1.2. Patrocinador e Investigador Principal (Sponsor and Principal Investigator) - Detailed qualifications and Brazilian regulatory standing
+              1.3. Centros Brasileiros (Brazilian Centers) - Complete Brazilian site information and qualifications
+           2. INFORMAÇÕES DO PRODUTO INVESTIGACIONAL
+              2.1. Descrição do Produto (Product Description) - Comprehensive product characterization
+              2.2. Informações de Qualidade (Quality Information) - Detailed quality control and Brazilian compliance
+              2.3. Informações Não-Clínicas (Non-clinical Information) - Complete preclinical package
+              2.4. Experiência Clínica Anterior (Previous Clinical Experience) - Comprehensive clinical data analysis
+           3. PROTOCOLO DE PESQUISA CLÍNICA
+              3.1. Objetivos e Delineamento do Estudo (Study Objectives and Design) - Complete methodology and statistical planning
+              3.2. População Brasileira e Critérios de Seleção (Brazilian Population and Selection Criteria) - Detailed Brazilian patient population analysis
+              3.3. Plano de Tratamento (Treatment Plan) - Comprehensive treatment protocols and monitoring
+              3.4. Avaliações de Eficácia e Segurança (Efficacy and Safety Evaluations) - Detailed assessment protocols
+           4. CONSIDERAÇÕES REGULATÓRIAS BRASILEIRAS - Complete Brazilian regulatory compliance framework
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Brazilian regulatory requirements and ANVISA guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate an ANVISA Clinical Trial Authorization for ${diseaseData.disease_name} research in Brazil.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This application must meet ANVISA requirements for clinical trial authorization in Brazil with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateANVISA_CTA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * ANVISA Registration Dossier (Brazil) - ENHANCED
+  */
+ generateANVISA_NDA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in ANVISA drug registrations for the Brazilian market.
+           Your task is to generate a comprehensive ANVISA registration dossier summary.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Brazilian regulatory content
+           - Each section must contain extensive detail with specific data, methodologies, and Brazilian regulatory compliance analysis
+           - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
+           - Provide complete regulatory rationale and marketing authorization justification according to ANVISA standards
+           - Reference specific Brazilian regulatory framework, ANVISA requirements, and Brazilian healthcare considerations extensively
+           - Include both Portuguese terminology and detailed English explanations
+
+           STRUCTURE FOR ANVISA REGISTRATION DOSSIER (EXTREMELY DETAILED):
+           1. INFORMAÇÕES ADMINISTRATIVAS E ROTULAGEM
+              1.1. Resumo da Solicitação (Application Summary) - Complete regulatory strategy and Brazilian submission framework
+              1.2. Rotulagem Proposta (Proposed Labeling) - Detailed Brazilian labeling and prescribing information
+           2. INFORMAÇÕES DE QUALIDADE
+              2.1. Substância Ativa (Active Substance) - Comprehensive chemical and analytical characterization
+              2.2. Produto Acabado (Finished Product) - Detailed formulation and Brazilian manufacturing compliance
+              2.3. Fabricação no Brasil ou Importação (Brazilian Manufacturing or Import) - Complete regulatory compliance framework
+           3. INFORMAÇÕES NÃO-CLÍNICAS
+              3.1. Farmacologia e Farmacocinética - Comprehensive preclinical pharmacology package
+              3.2. Toxicologia - Detailed toxicological assessment and safety evaluation
+           4. INFORMAÇÕES CLÍNICAS
+              4.1. Resumo de Eficácia Clínica - Detailed clinical efficacy evidence and analysis
+              4.2. Resumo de Segurança Clínica - Comprehensive safety profile and risk assessment
+              4.3. Avaliação Benefício-Risco para População Brasileira - Detailed benefit-risk analysis for Brazilian patients
+           5. CONSIDERAÇÕES ESPECIAIS PARA O BRASIL - Complete Brazilian market analysis and regulatory considerations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Brazilian regulatory framework and ANVISA requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate an ANVISA Registration Dossier for marketing authorization of ${diseaseData.disease_name} treatment in Brazil.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This registration dossier must meet ANVISA requirements for Brazilian marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateANVISA_NDA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * ANVISA GMP Certificate (Brazil) - ENHANCED
+  */
+ generateANVISA_GMP: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a quality assurance expert with experience in ANVISA GMP certification requirements for Brazil.
+           Your task is to generate supporting documentation for ANVISA GMP certificate application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 4,000-5,000 words of comprehensive Brazilian GMP regulatory content
+           - Each section must contain extensive detail with specific quality systems, procedures, and Brazilian regulatory compliance analysis
+           - Include detailed subsections with quality data, validation protocols, and regulatory justification
+           - Provide complete regulatory rationale and quality assurance justification according to ANVISA standards
+           - Reference specific Brazilian GMP requirements, ANVISA guidelines, and Brazilian manufacturing standards extensively
+           - Include both Portuguese terminology and detailed English explanations
+
+           STRUCTURE FOR ANVISA GMP CERTIFICATE (EXTREMELY DETAILED):
+           1. INFORMAÇÕES GERAIS DE FABRICAÇÃO
+              1.1. Informações do Local de Fabricação (Manufacturing Site Information) - Complete facility description and Brazilian qualification
+              1.2. Estrutura Organizacional (Organizational Structure) - Detailed personnel qualifications and Brazilian regulatory responsibilities
+              1.3. Sistema de Qualidade (Quality System) - Comprehensive quality management system for Brazilian compliance
+           2. PROCESSOS DE FABRICAÇÃO
+              2.1. Descrição do Processo de Fabricação (Manufacturing Process Description) - Complete process validation and Brazilian control standards
+              2.2. Controle de Qualidade (Quality Control) - Detailed analytical methods and Brazilian quality testing requirements
+              2.3. Validação de Processos (Process Validation) - Comprehensive validation protocols and Brazilian documentation standards
+           3. CONFORMIDADE COM REQUISITOS ANVISA BPF
+              3.1. Conformidade com Padrões Brasileiros (Brazilian Standards Compliance) - Complete Brazilian regulatory compliance framework
+              3.2. Sistema de Documentação (Documentation System) - Detailed Brazilian documentation control and record keeping
+              3.3. Treinamento de Pessoal (Personnel Training) - Comprehensive Brazilian training programs and qualifications
+           4. PREPARAÇÃO PARA INSPEÇÃO ANVISA - Complete Brazilian inspection preparedness and audit protocols
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Brazilian GMP requirements and ANVISA manufacturing standards.`
+         },
+         {
+           role: "user",
+           content: `Generate ANVISA GMP Certificate supporting documentation for Brazilian manufacturing authorization of ${diseaseData.disease_name} treatment.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This documentation must support ANVISA GMP certification requirements with EXTREMELY DETAILED content and comprehensive quality analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateANVISA_GMP:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * ANMAT Clinical Trial Authorization (Argentina) - ENHANCED
+  */
+ generateANMAT_CTA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in ANMAT clinical trial authorizations for Argentina.
+           Your task is to generate key sections for an ANMAT CTA application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Argentine regulatory content
+           - Each section must contain extensive detail with specific methodologies, procedures, and Argentine regulatory compliance analysis
+           - Include detailed subsections with quantitative data, protocols, and regulatory justification
+           - Provide complete regulatory rationale and scientific justification according to ANMAT standards
+           - Reference specific Argentine regulatory requirements, ANMAT guidelines, and Argentine healthcare framework extensively
+           - Include both Spanish terminology and detailed English explanations
+
+           STRUCTURE FOR ANMAT CTA (EXTREMELY DETAILED):
+           1. RESUMEN DE LA SOLICITUD (Application Overview)
+              1.1. Información del Estudio (Study Information) - Complete study design and Argentine regulatory framework
+              1.2. Patrocinador e Investigador Principal (Sponsor and Principal Investigator) - Detailed qualifications and Argentine regulatory standing
+              1.3. Centros Argentinos (Argentine Centers) - Complete Argentine site information and qualifications
+           2. INFORMACIÓN DEL PRODUCTO EN INVESTIGACIÓN
+              2.1. Descripción del Producto (Product Description) - Comprehensive product characterization
+              2.2. Información de Calidad (Quality Information) - Detailed quality control and Argentine compliance
+              2.3. Información No-Clínica (Non-clinical Information) - Complete preclinical package
+              2.4. Experiencia Clínica Previa (Previous Clinical Experience) - Comprehensive clinical data analysis
+           3. PROTOCOLO DE INVESTIGACIÓN CLÍNICA
+              3.1. Objetivos y Diseño del Estudio (Study Objectives and Design) - Complete methodology and statistical planning
+              3.2. Población Argentina y Criterios de Selección (Argentine Population and Selection Criteria) - Detailed Argentine patient population analysis
+              3.3. Plan de Tratamiento (Treatment Plan) - Comprehensive treatment protocols and monitoring
+              3.4. Evaluaciones de Eficacia y Seguridad (Efficacy and Safety Evaluations) - Detailed assessment protocols
+           4. CONSIDERACIONES REGULATORIAS ARGENTINAS - Complete Argentine regulatory compliance framework
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Argentine regulatory requirements and ANMAT guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate an ANMAT Clinical Trial Authorization for ${diseaseData.disease_name} research in Argentina.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This application must meet ANMAT requirements for clinical trial authorization in Argentina with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateANMAT_CTA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * ANMAT Drug Registration (Argentina) - ENHANCED
+  */
+ generateANMAT_NDA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in ANMAT drug registrations for Argentina.
+           Your task is to generate a comprehensive ANMAT registration summary.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Argentine regulatory content
+           - Each section must contain extensive detail with specific data, methodologies, and Argentine regulatory compliance analysis
+           - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
+           - Provide complete regulatory rationale and marketing authorization justification according to ANMAT standards
+           - Reference specific Argentine regulatory framework, ANMAT requirements, and Argentine healthcare considerations extensively
+           - Include both Spanish terminology and detailed English explanations
+
+           STRUCTURE FOR ANMAT DRUG REGISTRATION (EXTREMELY DETAILED):
+           1. INFORMACIÓN ADMINISTRATIVA Y ETIQUETADO
+              1.1. Resumen de la Solicitud (Application Summary) - Complete regulatory strategy and Argentine submission framework
+              1.2. Etiquetado Propuesto (Proposed Labeling) - Detailed Argentine labeling and prescribing information
+           2. INFORMACIÓN DE CALIDAD
+              2.1. Sustancia Activa (Active Substance) - Comprehensive chemical and analytical characterization
+              2.2. Producto Terminado (Finished Product) - Detailed formulation and Argentine manufacturing compliance
+           3. INFORMACIÓN NO-CLÍNICA
+              3.1. Farmacología y Farmacocinética - Comprehensive preclinical pharmacology package
+              3.2. Toxicología - Detailed toxicological assessment and safety evaluation
+           4. INFORMACIÓN CLÍNICA
+              4.1. Resumen de Eficacia Clínica - Detailed clinical efficacy evidence and analysis
+              4.2. Resumen de Seguridad Clínica - Comprehensive safety profile and risk assessment
+              4.3. Evaluación Beneficio-Riesgo para Población Argentina - Detailed benefit-risk analysis for Argentine patients
+           5. CONSIDERACIONES ESPECIALES PARA ARGENTINA - Complete Argentine market analysis and regulatory considerations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Argentine regulatory framework and ANMAT requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate an ANMAT Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Argentina.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This registration summary must meet ANMAT requirements for Argentine marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateANMAT_NDA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * INVIMA Clinical Trial Permit (Colombia) - ENHANCED
+  */
+ generateINVIMA_CTA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in INVIMA clinical trial permits for Colombia.
+           Your task is to generate key sections for an INVIMA CTA application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Colombian regulatory content
+           - Each section must contain extensive detail with specific methodologies, procedures, and Colombian regulatory compliance analysis
+           - Include detailed subsections with quantitative data, protocols, and regulatory justification
+           - Provide complete regulatory rationale and scientific justification according to INVIMA standards
+           - Reference specific Colombian regulatory requirements, INVIMA guidelines, and Colombian healthcare framework extensively
+           - Include both Spanish terminology and detailed English explanations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Colombian regulatory requirements and INVIMA guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate an INVIMA Clinical Trial Permit for ${diseaseData.disease_name} research in Colombia.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This permit must meet INVIMA requirements for clinical trial authorization in Colombia with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateINVIMA_CTA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * INVIMA Drug Registration (Colombia) - ENHANCED
+  */
+ generateINVIMA_NDA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in INVIMA drug registrations for Colombia.
+           Your task is to generate a comprehensive INVIMA registration summary.
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Colombian regulatory framework and INVIMA requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate an INVIMA Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Colombia.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateINVIMA_NDA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * ISP Clinical Trial Authorization (Chile) - ENHANCED
+  */
+ generateISP_CTA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in ISP clinical trial authorizations for Chile.
+           Your task is to generate key sections for an ISP CTA application.
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Chilean regulatory requirements and ISP guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate an ISP Clinical Trial Authorization for ${diseaseData.disease_name} research in Chile.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateISP_CTA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * ISP Drug Registration (Chile) - ENHANCED
+  */
+ generateISP_NDA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in ISP drug registrations for Chile.
+           Your task is to generate a comprehensive ISP registration summary.
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Chilean regulatory framework and ISP requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate an ISP Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Chile.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.
+              toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateISP_NDA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ // =============================================================================
+ // AFRICA & MIDDLE EAST DOCUMENTS - ENHANCED
+ // =============================================================================
+
+ /**
+  * SAHPRA Clinical Trial Authorization (South Africa) - ENHANCED
+  */
+ generateSAHPRA_CTA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in SAHPRA clinical trial authorizations for South Africa.
+           Your task is to generate key sections for a SAHPRA CTA application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive South African regulatory content
+           - Each section must contain extensive detail with specific methodologies, procedures, and South African regulatory compliance analysis
+           - Include detailed subsections with quantitative data, protocols, and regulatory justification
+           - Provide complete regulatory rationale and scientific justification according to SAHPRA standards
+           - Reference specific South African regulatory requirements, SAHPRA guidelines, and South African healthcare framework extensively
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference South African regulatory requirements and SAHPRA guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate a SAHPRA Clinical Trial Authorization for ${diseaseData.disease_name} research in South Africa.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This application must meet SAHPRA requirements for clinical trial authorization in South Africa with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateSAHPRA_CTA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * SAHPRA Medicine Registration (South Africa) - ENHANCED
+  */
+ generateSAHPRA_NDA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in SAHPRA medicine registrations for South Africa.
+           Your task is to generate a comprehensive SAHPRA registration summary.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive South African regulatory content
+           - Each section must contain extensive detail with specific data, methodologies, and South African regulatory compliance analysis
+           - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
+           - Provide complete regulatory rationale and marketing authorization justification according to SAHPRA standards
+           - Reference specific South African regulatory framework, SAHPRA requirements, and South African healthcare considerations extensively
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference South African regulatory framework and SAHPRA requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate a SAHPRA Medicine Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in South Africa.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This registration summary must meet SAHPRA requirements for South African marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateSAHPRA_NDA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * Israeli MOH Clinical Trial Permit - ENHANCED
+  */
+ generateMOH_ISRAEL_CTA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in Israeli MOH clinical trial permits.
+           Your task is to generate key sections for an Israeli MOH CTA application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Israeli regulatory content
+           - Each section must contain extensive detail with specific methodologies, procedures, and Israeli regulatory compliance analysis
+           - Include detailed subsections with quantitative data, protocols, and regulatory justification
+           - Provide complete regulatory rationale and scientific justification according to Israeli MOH standards
+           - Reference specific Israeli regulatory requirements, MOH guidelines, and Israeli healthcare framework extensively
+           - Include both Hebrew terminology and detailed English explanations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Israeli regulatory requirements and MOH guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate an Israeli MOH Clinical Trial Permit for ${diseaseData.disease_name} research in Israel.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This permit must meet Israeli MOH requirements for clinical trial authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateMOH_ISRAEL_CTA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * Israeli Drug Registration - ENHANCED
+  */
+ generateMOH_ISRAEL_NDA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in Israeli drug registrations.
+           Your task is to generate a comprehensive Israeli registration summary.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Israeli regulatory content
+           - Each section must contain extensive detail with specific data, methodologies, and Israeli regulatory compliance analysis
+           - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
+           - Provide complete regulatory rationale and marketing authorization justification according to Israeli standards
+           - Reference specific Israeli regulatory framework, MOH requirements, and Israeli healthcare considerations extensively
+           - Include both Hebrew terminology and detailed English explanations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Israeli regulatory framework and MOH requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate an Israeli Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Israel.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This registration summary must meet Israeli MOH requirements for marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateMOH_ISRAEL_NDA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * SFDA Clinical Trial Authorization (Saudi Arabia) - ENHANCED
+  */
+ generateSFDA_CTA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in SFDA clinical trial authorizations for Saudi Arabia.
+           Your task is to generate key sections for an SFDA CTA application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Saudi regulatory content
+           - Each section must contain extensive detail with specific methodologies, procedures, and Saudi regulatory compliance analysis
+           - Include detailed subsections with quantitative data, protocols, and regulatory justification
+           - Provide complete regulatory rationale and scientific justification according to SFDA standards
+           - Reference specific Saudi regulatory requirements, SFDA guidelines, and Saudi healthcare framework extensively
+           - Include both Arabic terminology and detailed English explanations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Saudi regulatory requirements and SFDA guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate an SFDA Clinical Trial Authorization for ${diseaseData.disease_name} research in Saudi Arabia.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This authorization must meet SFDA requirements for clinical trial approval in Saudi Arabia with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateSFDA_CTA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * SFDA Drug Registration (Saudi Arabia) - ENHANCED
+  */
+ generateSFDA_NDA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in SFDA drug registrations for Saudi Arabia.
+           Your task is to generate a comprehensive SFDA registration summary.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive Saudi regulatory content
+           - Each section must contain extensive detail with specific data, methodologies, and Saudi regulatory compliance analysis
+           - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
+           - Provide complete regulatory rationale and marketing authorization justification according to SFDA standards
+           - Reference specific Saudi regulatory framework, SFDA requirements, and Saudi healthcare considerations extensively
+           - Include both Arabic terminology and detailed English explanations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference Saudi regulatory framework and SFDA requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate an SFDA Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Saudi Arabia.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This registration summary must meet SFDA requirements for Saudi marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateSFDA_NDA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * DHA Clinical Trial Permit (UAE) - ENHANCED
+  */
+ generateDHA_CTA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a regulatory affairs expert specializing in DHA clinical trial permits for UAE.
+           Your task is to generate key sections for a DHA CTA application.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive UAE regulatory content
+           - Each section must contain extensive detail with specific methodologies, procedures, and UAE regulatory compliance analysis
+           - Include detailed subsections with quantitative data, protocols, and regulatory justification
+           - Provide complete regulatory rationale and scientific justification according to DHA standards
+           - Reference specific UAE regulatory requirements, DHA guidelines, and UAE healthcare framework extensively
+           - Include both Arabic terminology and detailed English explanations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference UAE regulatory requirements and DHA guidelines.`
+         },
+         {
+           role: "user",
+           content: `Generate a DHA Clinical Trial Permit for ${diseaseData.disease_name} research in UAE.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This permit must meet DHA requirements for clinical trial authorization in UAE with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateDHA_CTA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ /**
+  * UAE Drug Registration - ENHANCED
+  */
+ generateMOH_UAE_NDA: async (diseaseData) => {
+   try {
+     const response = await openaiApi.post('chat/completions', {
+       model: "gpt-4o",
+       messages: [
+         {
+           role: "system",
+           content: `You are a senior regulatory affairs expert with experience in UAE drug registrations.
+           Your task is to generate a comprehensive UAE registration summary.
+
+           CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
+           - Generate MINIMUM 5,000-6,000 words of comprehensive UAE regulatory content
+           - Each section must contain extensive detail with specific data, methodologies, and UAE regulatory compliance analysis
+           - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
+           - Provide complete regulatory rationale and marketing authorization justification according to UAE standards
+           - Reference specific UAE regulatory framework, MOH requirements, and UAE healthcare considerations extensively
+           - Include both Arabic terminology and detailed English explanations
+
+           Use plain text formatting only - NO MARKDOWN.
+           Reference UAE regulatory framework and MOH requirements.`
+         },
+         {
+           role: "user",
+           content: `Generate a UAE Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in UAE.
+           
+           ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+           ).filter(Boolean).join('\n')}
+
+           This registration summary must meet UAE MOH requirements for marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
+         }
+       ],
+       temperature: 0.2,
+       max_tokens: 8000
+     });
+     return { document_content: response.data.choices[0].message.content.trim() };
+   } catch (error) {
+     console.error('Error in generateMOH_UAE_NDA:', error.response?.data || error.message);
+     throw error;
+   }
+ },
+
+ // =============================================================================
+ // QUERY ASSISTANT - ENHANCED
+ // =============================================================================
+
+ queryAssistant: async (queryData) => {
+   try {
+     // First, ask GPT if the question is relevant to clinical/regulatory topics
+     const relevanceCheck = await openaiApi.post(
+       'chat/completions',
+       {
+         model: "gpt-4o", // UPGRADED
+         messages: [
+           {
+             role: "system",
+             content: `You are a relevance checker. Determine if a question is related to clinical trials, medical protocols, regulatory affairs, pharmaceutical development, or healthcare research.
+
+             Respond with ONLY one word:
+             - "RELEVANT" if the question is about clinical trials, medical research, drug development, regulatory submissions, medical conditions, treatments, or pharmaceutical topics
+             - "IRRELEVANT" if the question is about cooking, weather, entertainment, sports, travel, technology, politics, or other non-medical topics`
+           },
+           {
+             role: "user",
+             content: queryData.question
+           }
+         ],
+         temperature: 0,
+         max_tokens: 10
+       }
+     );
+
+     const relevance = relevanceCheck.data.choices[0].message.content.trim();
+
+     // If irrelevant, return standardized response
+     if (relevance === "IRRELEVANT") {
+       return {
+         answer: `CLINICAL ASSISTANT - OFF-TOPIC QUERY
+
+I'm Lumina™, your specialized clinical protocol assistant. Your question appears to be outside my area of clinical and regulatory expertise.
+
+MY SPECIALIZED CAPABILITIES:
+- Clinical trial protocol design and optimization
+- Regulatory document generation (IND, NDA, BLA, CTD, eCTD)
+- Endpoint selection and statistical considerations
+- Patient population definitions and inclusion/exclusion criteria
+- Safety monitoring and adverse event assessment
+- Regulatory compliance guidance (FDA, EMA, ICH guidelines)
+
+EXAMPLES OF RELEVANT QUESTIONS:
+- "What are appropriate primary endpoints for a Phase 2 atopic dermatitis trial?"
+- "How should I structure inclusion criteria for a lung cancer study?"
+- "What safety assessments are required for immunotherapy trials?"
+- "How do I design a bioequivalence study?"
+
+Please ask a question related to clinical trials, protocols, or regulatory affairs, and I'll provide detailed, professional guidance.`
+       };
+     }
+
+     // If relevant, proceed with normal OpenAI response
+     const response = await openaiApi.post(
+       'chat/completions',
+       {
+         model: "gpt-4o", // UPGRADED
+         messages: [
+           {
+             role: "system",
+             content: `You are a clinical protocol and regulatory expert providing precise, well-structured, and professionally formatted answers.
+             Your expertise spans all aspects of clinical trial design, regulatory submissions, and pharmaceutical development.
+             
+             CRITICAL FORMATTING RULES - FOLLOW EXACTLY:
+             - Use ONLY plain text - NO markdown, NO asterisks (*), NO bold (**), NO italics, NO special characters
+             - Do NOT use ** for bold text or * for bullet points
+             - Use simple dashes (-) or numbers (1., 2., 3.) for lists
+             - Use ALL CAPS only for major section headings
+             - Use normal text with clear line breaks and indentation for structure
+             - No formatting symbols whatsoever - treat this as if you're writing in a basic text editor
+             
+             CONTENT RULES:
+             - Structure responses with clear paragraphing and indentation
+             - Be precise and direct - avoid unnecessary filler text
+             - If the question involves a specific disease or protocol, tailor the answer accordingly
+             - If asked about endpoints, list them clearly and explain their relevance
+             - If asked about regulatory strategy, provide actionable advice
+             - Cite relevant guidelines (ICH, FDA, EMA) when appropriate`
+           },
+           {
+             role: "user",
+             content: `Question: ${queryData.question}
+             ${queryData.disease_context ? `Disease Context: ${queryData.disease_context}` : ''}
+             ${queryData.protocol_id ? `Reference Protocol ID: ${queryData.protocol_id}` : ''}`
+           }
+         ],
+         temperature: 0.2, // REDUCED from 0.3
+         max_tokens: 2000 // INCREASED
+       }
+     );
+     
+     return {
+       answer: response.data.choices[0].message.content.trim()
+     };
+   } catch (error) {
+     console.error('Error in queryAssistant:', error.response?.data || error.message);
+     throw error;
+   }
+ }
 };
 
 export default openaiService;
+
