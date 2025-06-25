@@ -3,26 +3,77 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
 
 const RegulatoryDocumentGenerator = () => {
-  // Original IND Module Generator state
+  // Basic Information
   const [disease, setDisease] = useState('');
   const [drugClass, setDrugClass] = useState('');
   const [mechanism, setMechanism] = useState('');
   const [country, setCountry] = useState('');
   const [documentType, setDocumentType] = useState('');
+
+  // Trial Characteristics
+  const [trialPhase, setTrialPhase] = useState('');
+  const [trialType, setTrialType] = useState('');
+  const [blinding, setBlinding] = useState('');
+  const [randomization, setRandomization] = useState('');
+
+  // Population Details
+  const [minAge, setMinAge] = useState('');
+  const [maxAge, setMaxAge] = useState('');
+  const [gender, setGender] = useState('');
+  const [targetSampleSize, setTargetSampleSize] = useState('');
+  const [inclusionCriteria, setInclusionCriteria] = useState('');
+  const [exclusionCriteria, setExclusionCriteria] = useState('');
+
+  // Treatment & Control
+  const [drugFormulation, setDrugFormulation] = useState('');
+  const [routeOfAdministration, setRouteOfAdministration] = useState('');
+  const [dosingRegimen, setDosingRegimen] = useState('');
+  const [controlGroup, setControlGroup] = useState('');
+
+  // Endpoints & Outcomes
+  const [primaryEndpoints, setPrimaryEndpoints] = useState('');
+  const [secondaryEndpoints, setSecondaryEndpoints] = useState('');
+  const [outcomeMeasureTool, setOutcomeMeasureTool] = useState('');
+
+  // Statistical Considerations
+  const [statisticalPower, setStatisticalPower] = useState('80');
+  const [significanceLevel, setSignificanceLevel] = useState('0.05');
+
+  // UI State
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('cmc');
-  
-  // Regulatory documents integration
-  const [viewMode, setViewMode] = useState('form'); // 'form', 'regions', 'countries', 'documents'
+  const [viewMode, setViewMode] = useState('form');
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedDocuments, setSelectedDocuments] = useState([]);
+  const [showHelp, setShowHelp] = useState(false);
   
   // For navigation
   const location = useLocation();
-  //const navigate = useNavigate();
+  
+  // Dropdown Options
+  const trialPhases = ['Phase I', 'Phase II', 'Phase III', 'Phase IV'];
+  const trialTypes = ['Interventional', 'Observational', 'Expanded Access'];
+  const blindingOptions = ['Open-label', 'Single-blind', 'Double-blind'];
+  const genderOptions = ['All', 'Male', 'Female'];
+  const drugFormulationOptions = ['Tablet', 'Capsule', 'Injection', 'Topical Cream', 'Topical Gel', 'Patch', 'Inhalation', 'Oral Solution'];
+  const routeOptions = ['Oral', 'Intravenous (IV)', 'Subcutaneous (SC)', 'Intramuscular (IM)', 'Topical', 'Inhalation', 'Transdermal'];
+  const controlGroupOptions = ['Placebo', 'Standard of Care (SoC)', 'Active Comparator', 'Historical Control', 'None'];
+  const outcomeMeasureTools = [
+    'PASI (Psoriasis Area and Severity Index)',
+    'DLQI (Dermatology Life Quality Index)',
+    'EASI (Eczema Area and Severity Index)',
+    'IGA (Investigator Global Assessment)',
+    'VAS (Visual Analog Scale)',
+    'FVC (Forced Vital Capacity)',
+    'FEV1 (Forced Expiratory Volume)',
+    'HAM-D (Hamilton Depression Rating Scale)',
+    'MMSE (Mini-Mental State Examination)',
+    'WOMAC (Western Ontario and McMaster Universities Arthritis Index)',
+    'Custom/Other'
+  ];
   
   // Regions and countries
   const regions = {
@@ -140,38 +191,65 @@ const RegulatoryDocumentGenerator = () => {
     }
   }, [location.state, disease]);
 
-  // Main form submit handler - IMPROVED VERSION
+  // Main form submit handler - ENHANCED VERSION
   const handleSubmit = async () => {
     setLoading(true);
     setError('');
     setResult(null);
 
     try {
+      // Compile all enhanced form data
+      const enhancedFormData = {
+        disease_name: disease.trim(),
+        additional_parameters: {
+          // Basic parameters
+          drug_class: drugClass.trim() || undefined,
+          mechanism: mechanism.trim() || undefined,
+          country: country || undefined,
+          document_type: documentType || undefined,
+          
+          // Trial Characteristics
+          trial_phase: trialPhase || undefined,
+          trial_type: trialType || undefined,
+          blinding: blinding || undefined,
+          randomization: randomization || undefined,
+          
+          // Population Details
+          min_age: minAge || undefined,
+          max_age: maxAge || undefined,
+          gender: gender || undefined,
+          target_sample_size: targetSampleSize || undefined,
+          inclusion_criteria: inclusionCriteria || undefined,
+          exclusion_criteria: exclusionCriteria || undefined,
+          
+          // Treatment & Control
+          drug_formulation: drugFormulation || undefined,
+          route_of_administration: routeOfAdministration || undefined,
+          dosing_regimen: dosingRegimen || undefined,
+          control_group: controlGroup || undefined,
+          
+          // Endpoints & Outcomes
+          primary_endpoints: primaryEndpoints || undefined,
+          secondary_endpoints: secondaryEndpoints || undefined,
+          outcome_measure_tool: outcomeMeasureTool || undefined,
+          
+          // Statistical Considerations
+          statistical_power: statisticalPower || undefined,
+          significance_level: significanceLevel || undefined
+        }
+      };
+      
       // Log parameters for debugging
-      console.log("Starting document generation with parameters:", {
-        disease: disease,
-        drugClass: drugClass,
-        mechanism: mechanism,
-        country: country,
-        documentType: documentType
-      });
+      console.log("Starting enhanced document generation with parameters:", enhancedFormData);
       
       if (!disease || disease.trim() === '') {
         throw new Error('Disease/Condition is required');
       }
 
-      // Call the API with the correct parameters
-      const response = await apiService.generateIndModule({
-        disease_name: disease.trim(),
-        additional_parameters: {
-          drug_class: drugClass.trim() || undefined,
-          mechanism: mechanism.trim() || undefined,
-          country: country || undefined,
-          document_type: documentType || undefined
-        }
-      });
+      // Call the API with the enhanced parameters
+      const response = await apiService.generateIndModule(enhancedFormData);
       
-      console.log("API response received, response keys:", Object.keys(response));
+      console.log("Enhanced API response received, response keys:", Object.keys(response));
       
       // Check structure of response to handle both response formats
       if (response.document_content) {
@@ -256,7 +334,7 @@ const RegulatoryDocumentGenerator = () => {
       }, 100);
       
     } catch (err) {
-      console.error("Document generation error:", err);
+      console.error("Enhanced document generation error:", err);
       setError(`Failed to generate regulatory documents: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
@@ -270,6 +348,28 @@ const RegulatoryDocumentGenerator = () => {
     setMechanism('');
     setCountry('');
     setDocumentType('');
+    
+    // Reset all new fields
+    setTrialPhase('');
+    setTrialType('');
+    setBlinding('');
+    setRandomization('');
+    setMinAge('');
+    setMaxAge('');
+    setGender('');
+    setTargetSampleSize('');
+    setInclusionCriteria('');
+    setExclusionCriteria('');
+    setDrugFormulation('');
+    setRouteOfAdministration('');
+    setDosingRegimen('');
+    setControlGroup('');
+    setPrimaryEndpoints('');
+    setSecondaryEndpoints('');
+    setOutcomeMeasureTool('');
+    setStatisticalPower('80');
+    setSignificanceLevel('0.05');
+    
     setResult(null);
     setError('');
   };
@@ -292,22 +392,69 @@ const RegulatoryDocumentGenerator = () => {
     );
   };
 
-  // Render the form view
+  // Render the enhanced form view
   const renderForm = () => (
     <div className="regulatory-selector">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2>Regulatory Document Generator</h2>
-          <p>Generate regulatory documentation for drug development and approval</p>
+          <h2>Enhanced Regulatory Document Generator</h2>
+          <p>Generate comprehensive regulatory documentation with detailed trial design parameters</p>
         </div>
         
-        <button 
-          onClick={() => setViewMode('regions')}
-          className="view-button"
-        >
-          Select Document by Region/Country
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            onClick={() => setShowHelp(!showHelp)}
+            className="btn btn-secondary"
+          >
+            {showHelp ? 'Hide Help' : 'What Other Fields Can Be Added?'}
+          </button>
+          <button 
+            onClick={() => setViewMode('regions')}
+            className="view-button"
+          >
+            Select Document by Region/Country
+          </button>
+        </div>
       </div>
+
+      {/* Help Section */}
+      {showHelp && (
+        <div className="info-box mb-4">
+          <h4>Additional Regulatory Fields You Can Consider Adding:</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+            <div>
+              <h5>Advanced Regulatory Strategy:</h5>
+              <ul style={{ fontSize: '0.9rem', paddingLeft: '1.5rem' }}>
+                <li>Fast Track designation eligibility</li>
+                <li>Breakthrough therapy designation</li>
+                <li>Orphan drug designation</li>
+                <li>Priority review qualifications</li>
+                <li>Pediatric investigation plan (PIP)</li>
+              </ul>
+            </div>
+            <div>
+              <h5>Manufacturing & Quality:</h5>
+              <ul style={{ fontSize: '0.9rem', paddingLeft: '1.5rem' }}>
+                <li>Manufacturing site locations</li>
+                <li>GMP certification status</li>
+                <li>Release testing specifications</li>
+                <li>Stability study designs</li>
+                <li>Comparability protocols</li>
+              </ul>
+            </div>
+            <div>
+              <h5>Risk Management:</h5>
+              <ul style={{ fontSize: '0.9rem', paddingLeft: '1.5rem' }}>
+                <li>Risk evaluation strategies (REMS)</li>
+                <li>Pharmacovigilance plans</li>
+                <li>Safety data collection methods</li>
+                <li>Benefit-risk assessment frameworks</li>
+                <li>Post-marketing commitments</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Show country and document type if they were preselected */}
       {(country || documentType) && (
@@ -336,54 +483,350 @@ const RegulatoryDocumentGenerator = () => {
       )}
 
       <div className="regulatory-form">
-        <div className="form-group">
-          <label htmlFor="disease">Disease/Condition <span className="required">*</span></label>
-          <input
-            id="disease"
-            type="text"
-            value={disease}
-            onChange={(e) => setDisease(e.target.value)}
-            placeholder="e.g., Psoriasis, Eczema, Atopic Dermatitis"
-            required
-          />
-        </div>
+        {/* Basic Information Section */}
+        <div className="form-section">
+          <h3>Basic Information</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="disease">Disease/Condition <span className="required">*</span></label>
+              <input
+                id="disease"
+                type="text"
+                value={disease}
+                onChange={(e) => setDisease(e.target.value)}
+                placeholder="e.g., Psoriasis, Eczema, Atopic Dermatitis"
+                required
+              />
+            </div>
 
-        {!country && (
-          <div className="form-group">
-            <label htmlFor="country">Country/Region (Optional)</label>
-            <input
-              id="country"
-              type="text"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              placeholder="e.g., USA, EU, Japan"
-            />
-            <div className="form-hint">
-              Use the "Select Document by Region/Country" button above to browse available regulatory documents by geography
+            {!country && (
+              <div className="form-group">
+                <label htmlFor="country">Country/Region (Optional)</label>
+                <input
+                  id="country"
+                  type="text"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  placeholder="e.g., USA, EU, Japan"
+                />
+                <div className="form-hint">
+                  Use the "Select Document by Region/Country" button above to browse available regulatory documents by geography
+                </div>
+              </div>
+            )}
+
+            <div className="form-group">
+              <label htmlFor="drug-class">Drug Class</label>
+              <input
+                id="drug-class"
+                type="text"
+                value={drugClass}
+                onChange={(e) => setDrugClass(e.target.value)}
+                placeholder="e.g., Corticosteroid, Biologics, Small molecule"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="mechanism">Mechanism of Action</label>
+              <input
+                id="mechanism"
+                type="text"
+                value={mechanism}
+                onChange={(e) => setMechanism(e.target.value)}
+                placeholder="e.g., PDE4 inhibition, JAK-STAT pathway"
+              />
             </div>
           </div>
-        )}
-
-        <div className="form-group">
-          <label htmlFor="drug-class">Drug Class (Optional)</label>
-          <input
-            id="drug-class"
-            type="text"
-            value={drugClass}
-            onChange={(e) => setDrugClass(e.target.value)}
-            placeholder="e.g., Corticosteroid, Biologics, Small molecule"
-          />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="mechanism">Mechanism of Action (Optional)</label>
-          <input
-            id="mechanism"
-            type="text"
-            value={mechanism}
-            onChange={(e) => setMechanism(e.target.value)}
-            placeholder="e.g., PDE4 inhibition, JAK-STAT pathway"
-          />
+        {/* Trial Characteristics Section */}
+        <div className="form-section">
+          <h3>Trial Characteristics</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="trialPhase">Trial Phase</label>
+              <select
+                id="trialPhase"
+                value={trialPhase}
+                onChange={(e) => setTrialPhase(e.target.value)}
+              >
+                <option value="">Select Phase</option>
+                {trialPhases.map(phase => (
+                  <option key={phase} value={phase}>{phase}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="trialType">Trial Type</label>
+              <select
+                id="trialType"
+                value={trialType}
+                onChange={(e) => setTrialType(e.target.value)}
+              >
+                <option value="">Select Type</option>
+                {trialTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="blinding">Blinding</label>
+              <select
+                id="blinding"
+                value={blinding}
+                onChange={(e) => setBlinding(e.target.value)}
+              >
+                <option value="">Select Blinding</option>
+                {blindingOptions.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Randomization</label>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.9rem' }}>
+                  <input
+                    type="radio"
+                    name="randomization"
+                    value="Yes"
+                    checked={randomization === 'Yes'}
+                    onChange={(e) => setRandomization(e.target.value)}
+                    style={{ marginRight: '0.5rem' }}
+                  />
+                  Yes
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.9rem' }}>
+                  <input
+                    type="radio"
+                    name="randomization"
+                    value="No"
+                    checked={randomization === 'No'}
+                    onChange={(e) => setRandomization(e.target.value)}
+                    style={{ marginRight: '0.5rem' }}
+                  />
+                  No
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Population Details Section */}
+        <div className="form-section">
+          <h3>Population Details</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="minAge">Minimum Age</label>
+              <input
+                id="minAge"
+                type="number"
+                value={minAge}
+                onChange={(e) => setMinAge(e.target.value)}
+                placeholder="e.g., 18"
+                min="0"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="maxAge">Maximum Age</label>
+              <input
+                id="maxAge"
+                type="number"
+                value={maxAge}
+                onChange={(e) => setMaxAge(e.target.value)}
+                placeholder="e.g., 75"
+                min="0"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="gender">Gender</label>
+              <select
+                id="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+              >
+                <option value="">Select Gender</option>
+                {genderOptions.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="targetSampleSize">Target Sample Size</label>
+              <input
+                id="targetSampleSize"
+                type="number"
+                value={targetSampleSize}
+                onChange={(e) => setTargetSampleSize(e.target.value)}
+                placeholder="e.g., 120"
+                min="1"
+              />
+            </div>
+          </div>
+
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="inclusionCriteria">Inclusion Criteria</label>
+              <textarea
+                id="inclusionCriteria"
+                value={inclusionCriteria}
+                onChange={(e) => setInclusionCriteria(e.target.value)}
+                placeholder="e.g., Adults aged 18-75 years, Confirmed diagnosis of moderate-to-severe condition..."
+                rows="4"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="exclusionCriteria">Exclusion Criteria</label>
+              <textarea
+                id="exclusionCriteria"
+                value={exclusionCriteria}
+                onChange={(e) => setExclusionCriteria(e.target.value)}
+                placeholder="e.g., Pregnancy, Active infection, Immunocompromised state..."
+                rows="4"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Treatment & Control Section */}
+        <div className="form-section">
+          <h3>Treatment & Control</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="drugFormulation">Drug Formulation</label>
+              <select
+                id="drugFormulation"
+                value={drugFormulation}
+                onChange={(e) => setDrugFormulation(e.target.value)}
+              >
+                <option value="">Select Formulation</option>
+                {drugFormulationOptions.map(formulation => (
+                  <option key={formulation} value={formulation}>{formulation}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="routeOfAdministration">Route of Administration</label>
+              <select
+                id="routeOfAdministration"
+                value={routeOfAdministration}
+                onChange={(e) => setRouteOfAdministration(e.target.value)}
+              >
+                <option value="">Select Route</option>
+                {routeOptions.map(route => (
+                  <option key={route} value={route}>{route}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="dosingRegimen">Dosing Regimen</label>
+              <input
+                id="dosingRegimen"
+                type="text"
+                value={dosingRegimen}
+                onChange={(e) => setDosingRegimen(e.target.value)}
+                placeholder="e.g., 50mg once daily for 12 weeks"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="controlGroup">Control Group</label>
+              <select
+                id="controlGroup"
+                value={controlGroup}
+                onChange={(e) => setControlGroup(e.target.value)}
+              >
+                <option value="">Select Control</option>
+                {controlGroupOptions.map(control => (
+                  <option key={control} value={control}>{control}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Endpoints & Outcomes Section */}
+        <div className="form-section">
+          <h3>Endpoints & Outcomes</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="primaryEndpoints">Primary Endpoint(s)</label>
+              <textarea
+                id="primaryEndpoints"
+                value={primaryEndpoints}
+                onChange={(e) => setPrimaryEndpoints(e.target.value)}
+                placeholder="e.g., Proportion of patients achieving PASI 75 at Week 16"
+                rows="3"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="secondaryEndpoints">Secondary Endpoint(s)</label>
+              <textarea
+                id="secondaryEndpoints"
+                value={secondaryEndpoints}
+                onChange={(e) => setSecondaryEndpoints(e.target.value)}
+                placeholder="e.g., PASI 90 response, sPGA score, Quality of life measures"
+                rows="3"
+              />
+            </div>
+
+            <div className="form-group full-width">
+              <label htmlFor="outcomeMeasureTool">Outcome Measure Tool</label>
+              <select
+                id="outcomeMeasureTool"
+                value={outcomeMeasureTool}
+                onChange={(e) => setOutcomeMeasureTool(e.target.value)}
+              >
+                <option value="">Select Measurement Tool</option>
+                {outcomeMeasureTools.map(tool => (
+                  <option key={tool} value={tool}>{tool}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Statistical Considerations Section */}
+        <div className="form-section">
+          <h3>Statistical Considerations</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="statisticalPower">Statistical Power (%)</label>
+              <input
+                id="statisticalPower"
+                type="number"
+                value={statisticalPower}
+                onChange={(e) => setStatisticalPower(e.target.value)}
+                placeholder="80"
+                min="1"
+                max="99"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="significanceLevel">Significance Level (α)</label>
+              <input
+                id="significanceLevel"
+                type="number"
+                value={significanceLevel}
+                onChange={(e) => setSignificanceLevel(e.target.value)}
+                placeholder="0.05"
+                step="0.01"
+                min="0.01"
+                max="0.2"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="action-buttons">
@@ -393,7 +836,7 @@ const RegulatoryDocumentGenerator = () => {
             disabled={loading || !disease}
             className="generate-button"
           >
-            {loading ? 'Generating...' : `Generate ${documentType || 'Regulatory Documents'}`}
+            {loading ? 'Generating...' : `Generate Enhanced ${documentType || 'Regulatory Documents'}`}
           </button>
           <button 
             type="button" 
@@ -409,7 +852,7 @@ const RegulatoryDocumentGenerator = () => {
 
       {loading && <div className="loading-indicator">
         <div className="spinner"></div>
-        <p>Generating regulatory documentation...</p>
+        <p>Generating comprehensive regulatory documentation with enhanced trial parameters...</p>
       </div>}
 
       {result && (
@@ -479,7 +922,7 @@ const RegulatoryDocumentGenerator = () => {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `${country || 'Regulatory'}_Document_${new Date().toISOString().slice(0, 10)}.txt`;
+                a.download = `Enhanced_${country || 'Regulatory'}_Document_${new Date().toISOString().slice(0, 10)}.txt`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);

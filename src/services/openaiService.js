@@ -46,7 +46,7 @@ const openaiService = {
   /**
    * Given a doctor–patient transcript, suggest the most likely diagnosis.
    * @param {string} transcript - Full text of the conversation.
-   * @returns {Promise<string>} - GPT’s diagnostic suggestion.
+   * @returns {Promise<string>} - GPT's diagnostic suggestion.
    */
   diagnoseConversation: async (transcript) => {
     try {
@@ -147,187 +147,292 @@ Condition Description: Recurrent throbbing headaches preceded by zigzag lines in
   },
   
   /**
-   * Generates an executive summary protocol for a given disease.
+   * ENHANCED: Generates an executive summary protocol for a given disease with comprehensive parameter integration.
    * @param {object} diseaseData - { disease_name: string, additional_parameters: object }
    * @returns {Promise<{protocol_id: string, protocol: string}>}
    */
-  generateProtocol: async (diseaseData) => {
-    try {
-      const response = await openaiApi.post(
-        'chat/completions',
-        {
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: `You are a senior regulatory affairs expert with 20+ years of experience in writing clinical study protocols.
-              Your task is to generate a highly professional, ICH/FDA/EMA-compliant protocol EXECUTIVE SUMMARY for a clinical trial.
-              The document must be in clean, plain text format—NO markdown, symbols, or special characters.
+  /**
+ * ENHANCED: Generates a comprehensive executive summary protocol with detailed parameter integration.
+ * @param {object} diseaseData - { disease_name: string, additional_parameters: object }
+ * @returns {Promise<{protocol_id: string, protocol: string}>}
+ */
+generateProtocol: async (diseaseData) => {
+  try {
+    const response = await openaiApi.post(
+      'chat/completions',
+      {
+        model: "gpt-4o", // UPGRADED MODEL - Better quality, reasoning, and detail
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with 20+ years of experience in writing clinical study protocols for major pharmaceutical companies and regulatory agencies.
 
-              STRICT FORMATTING REQUIREMENTS:
-              - Format according to ICH E6(R2) Good Clinical Practice guidelines
-              - Follow EXACTLY this section structure with numbered sections:
-                1. Protocol Summary / Synopsis
-                2. Introduction & Background
-                3. Objectives & Endpoints
-                4. Study Design & Investigational Plan
-                5. Study Population & Eligibility
-                6. Interventions / Treatments
-                7. Assessments & Procedures
-                8. Statistical Considerations & Data Analysis
-                9. Outcome Analysis (Efficacy, Safety, etc.)
-                10. References & Appendices / Supporting Documentation
-              - Use ALL CAPS for main section headings (e.g., "1. PROTOCOL SUMMARY / SYNOPSIS")
-              - Use Title Case for subsection headings
-              - Include appropriate clinical trial identifiers and version control
-              - Follow standard clinical protocol document structure
-              - DO NOT use markdown formatting like ## for headers or ** for emphasis
-              - DO NOT use bullet points with * or - symbols; use regular numbers or letters for lists
+            Your task is to generate a highly professional, ICH/FDA/EMA-compliant protocol EXECUTIVE SUMMARY for a clinical trial that meets industry standards for regulatory submission.
 
-              GUIDANCE FOR IN-DEPTH PROTOCOL CONTENT:
-              
-              For each section, include the following level of detail:
-              
-              1. PROTOCOL SUMMARY / SYNOPSIS:
-                 - Full study title with phase designation
-                 - Concise study rationale
-                 - Primary and secondary objectives clearly stated
-                 - Study design summary with randomization details
-                 - Treatment arms and dosing regimens
-                 - Key inclusion/exclusion criteria
-                 - Sample size with justification
-                 - Duration of study with detailed timeline
-              
-              2. INTRODUCTION & BACKGROUND:
-                 - Disease epidemiology with prevalence statistics
-                 - Current treatment landscape
-                 - Unmet medical needs
-                 - Investigational product background
-                 - Preclinical data summary
-                 - Previous clinical experience
-                 - Rationale for current study design
-              
-              3. OBJECTIVES & ENDPOINTS:
-                 - Primary objective with corresponding primary endpoint
-                 - Secondary objectives with corresponding endpoints
-                 - Exploratory objectives if applicable
-                 - Definition of each endpoint with measurement method
-                 - Timing of assessments
-                 
-              4. STUDY DESIGN & INVESTIGATIONAL PLAN:
-                 - Study design diagram or detailed description
-                 - Randomization methodology
-                 - Blinding procedures
-                 - Treatment allocation ratio
-                 - Study timeline with specific periods
-                 - Visit schedule
-                 - Dose modification guidelines
-                 
-              5. STUDY POPULATION & ELIGIBILITY:
-                 - Detailed inclusion criteria (minimum 5-7 criteria)
-                 - Detailed exclusion criteria (minimum 8-10 criteria)
-                 - Demographic requirements
-                 - Permitted and prohibited concomitant medications
-                 - Withdrawal criteria and procedures
-                 
-              6. INTERVENTIONS / TREATMENTS:
-                 - Study drug description
-                 - Formulation details
-                 - Dosage and administration
-                 - Packaging and labeling
-                 - Storage conditions
-                 - Dose modification guidelines
-                 - Treatment compliance monitoring
-                 
-              7. ASSESSMENTS & PROCEDURES:
-                 - Detailed schedule of assessments
-                 - Screening procedures
-                 - Efficacy assessments with validated instruments
-                 - Safety assessments
-                 - Laboratory assessments
-                 - Patient-reported outcomes
-                 - Follow-up procedures
-                 
-              8. STATISTICAL CONSIDERATIONS & DATA ANALYSIS:
-                 - Sample size calculation with assumptions
-                 - Analysis populations (ITT, PP, safety)
-                 - Statistical methods for primary and secondary endpoints
-                 - Interim analysis plan
-                 - Missing data handling
-                 - Multiplicity adjustments
-                 
-              9. OUTCOME ANALYSIS:
-                 - Definition of treatment success
-                 - Efficacy analysis methodology
-                 - Safety monitoring approach
-                 - Adverse event reporting and categorization
-                 - Risk-benefit assessment
-                 - DSMB/DMC structure and responsibilities
-                 
-              10. REFERENCES & APPENDICES:
-                  - Key literature citations
-                  - Supplementary materials
-                  - Schedule of assessments table
-                  - Study flow diagram
-              
-              Include relevant numerical values where appropriate including but not limited to:
-              - Specific dosing amounts (e.g., 50 mg BID)
-              - Treatment durations (e.g., 12 weeks)
-              - Visit windows (e.g., ±3 days)
-              - Laboratory parameter ranges (e.g., ALT < 2.5 × ULN)
-              - Statistical thresholds (e.g., two-sided alpha of 0.05)
-              
-              Always reference a specific example of a comparable approved protocol when possible, such as "Following the precedent established in the CANTOS trial for inflammatory conditions..."
-              
-              For rare conditions or specialized protocols, incorporate established methodological frameworks like RECIST criteria for oncology or EULAR response criteria for rheumatology.
-              
-              IMPORTANT: Always consider how templates would apply to outlier cases - extremely rare diseases, pediatric populations, or complex comorbidities. Provide specific guidance for these edge cases.`
-            },
-            {
-              role: "user",
-              content: `Generate a highly professional and comprehensive Phase 2 Clinical Study Protocol EXECUTIVE SUMMARY for the treatment of ${diseaseData.disease_name}.
-              ${diseaseData.additional_parameters.population ? `Target population: ${diseaseData.additional_parameters.population}.` : ''}
-              ${diseaseData.additional_parameters.treatment_duration ? `Treatment duration: ${diseaseData.additional_parameters.treatment_duration}.` : ''}
-              ${diseaseData.additional_parameters.drug_class ? `Drug class: ${diseaseData.additional_parameters.drug_class}.` : ''}
-              ${diseaseData.additional_parameters.mechanism ? `Mechanism of action: ${diseaseData.additional_parameters.mechanism}.` : ''}
-              ${diseaseData.additional_parameters.clinical_info ? `Additional clinical information: ${diseaseData.additional_parameters.clinical_info}.` : ''}
+            CRITICAL REQUIREMENTS:
+            - This must be EXTREMELY DETAILED - aim for 3,500-4,500 words minimum
+            - Each section must contain comprehensive, granular detail suitable for regulatory review
+            - Include specific numerical values, dosing regimens, and methodological details
+            - Reference established protocols and regulatory guidance documents
+            - Use professional medical and regulatory terminology throughout
 
-              REQUIREMENTS:
-              1. This EXECUTIVE SUMMARY must be EXTREMELY DETAILED and meet professional industry standards and regulatory expectations
-              2. Include comprehensive details across all required 10 sections
-              3. Follow EXACTLY the section numbering and structure provided in the formatting requirements
-              4. Include specific numerical values and concrete details for:
-                 - Dosing regimens (specific amounts, frequencies, routes)
-                 - Visit schedules (specific week numbers and timepoints)
-                 - Assessment timepoints
-                 - Inclusion/exclusion criteria (with specific parameters)
-                 - Statistical thresholds and power calculations
-              5. Include version number, date, and appropriate document control elements
-              6. Use appropriate clinical and medical terminology
-              7. DO NOT use any markdown formatting like ## for headers or ** for emphasis
-              8. Use plain text formatting only - NO special characters or markdown
-              9. Reference precedent protocols or methodological frameworks where applicable
-              10. For ${diseaseData.disease_name}, include disease-specific assessment methods and endpoints
+            STRICT FORMATTING REQUIREMENTS:
+            - Format according to ICH E6(R2) Good Clinical Practice guidelines
+            - Follow EXACTLY this section structure with numbered sections:
+              1. Protocol Summary / Synopsis
+              2. Introduction & Background
+              3. Objectives & Endpoints
+              4. Study Design & Investigational Plan
+              5. Study Population & Eligibility
+              6. Interventions / Treatments
+              7. Assessments & Procedures
+              8. Statistical Considerations & Data Analysis
+              9. Outcome Analysis (Efficacy, Safety, etc.)
+              10. References & Appendices / Supporting Documentation
+            - Use ALL CAPS for main section headings (e.g., "1. PROTOCOL SUMMARY / SYNOPSIS")
+            - Use Title Case for subsection headings with appropriate numbering
+            - DO NOT use markdown formatting or special characters
+            - Use plain text with proper spacing and indentation only
 
-              The executive summary should be extremely detailed while remaining well-organized for busy executives and regulators to review.`  
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 4000 // Ensure enough tokens for detailed output
-        }
-      );
+            COMPREHENSIVE SECTION REQUIREMENTS:
 
-      return {
-        protocol_id: `prot-${Date.now()}`,
-        protocol: response.data.choices[0].message.content.trim()
-      };
-    } catch (error) {
-      console.error('Error in generateProtocol:', error.response?.data || error.message);
-      throw error;
-    }
-  },
+            1. PROTOCOL SUMMARY / SYNOPSIS (400-500 words):
+               - Complete study title with specific phase designation and dosing information
+               - Detailed study rationale with disease background (2-3 paragraphs)
+               - Comprehensive primary and secondary objectives clearly stated
+               - Detailed study design summary including randomization methodology
+               - Complete treatment arms with exact dosing regimens and administration routes
+               - Key inclusion/exclusion criteria summary with specific parameters
+               - Sample size with detailed power calculation and assumptions
+               - Complete study duration with detailed timeline including screening, treatment, and follow-up periods
+               - Primary endpoint definition with measurement methodology
+
+            2. INTRODUCTION & BACKGROUND (500-600 words):
+               - Disease epidemiology with specific prevalence and incidence statistics
+               - Current treatment landscape with named standard-of-care therapies and their limitations
+               - Comprehensive unmet medical needs analysis with specific gaps
+               - Detailed investigational product background including drug class and development history
+               - Preclinical data summary with specific efficacy and safety findings
+               - Previous clinical experience with detailed Phase I/II results and dose-finding data
+               - Comprehensive rationale for current study design and patient population selection
+               - Market analysis and competitive landscape if relevant to development strategy
+
+            3. OBJECTIVES & ENDPOINTS (400-500 words):
+               - Primary objective with detailed definition and clinical relevance
+               - Comprehensive secondary objectives (minimum 6-8 objectives) including:
+                 * Additional efficacy measures
+                 * Quality of life assessments
+                 * Biomarker evaluations
+                 * Pharmacokinetic assessments
+                 * Long-term safety evaluations
+               - Exploratory objectives including biomarker studies and subgroup analyses
+               - Detailed endpoint definitions with specific measurement methods and timing
+               - Rationale for endpoint selection with regulatory precedent
+               - Endpoint hierarchy and multiplicity considerations
+
+            4. STUDY DESIGN & INVESTIGATIONAL PLAN (500-600 words):
+               - Comprehensive study design description with design rationale
+               - Detailed randomization methodology including stratification factors and block sizes
+               - Complete blinding procedures including emergency unblinding protocols
+               - Treatment allocation ratios with statistical and practical justification
+               - Detailed study timeline with specific periods:
+                 * Screening period duration and procedures
+                 * Treatment period with dose escalation/modification rules
+                 * Follow-up period with assessment schedule
+               - Complete visit schedule with specific timepoints and visit windows
+               - Dose modification guidelines with specific criteria and procedures
+               - Concomitant medication rules and washout periods
+               - Study discontinuation criteria and procedures
+
+            5. STUDY POPULATION & ELIGIBILITY (600-700 words):
+               - Detailed target population description with demographic characteristics
+               - Comprehensive inclusion criteria (minimum 10-15 criteria) including:
+                 * Specific age ranges with justification
+                 * Disease severity criteria with validated scales
+                 * Previous treatment requirements
+                 * Contraceptive requirements
+                 * Laboratory parameter requirements
+                 * Performance status criteria
+               - Detailed exclusion criteria (minimum 15-20 criteria) including:
+                 * Medical conditions and contraindications
+                 * Concomitant medication restrictions
+                 * Laboratory parameter exclusions
+                 * Previous therapy washout requirements
+                 * Pregnancy and reproductive considerations
+               - Permitted and prohibited concomitant medications with detailed lists
+               - Withdrawal criteria and procedures including safety considerations
+               - Screening procedures with specific assessments and timeline
+
+            6. INTERVENTIONS / TREATMENTS (500-600 words):
+               - Detailed investigational product description including formulation details
+               - Specific dosage regimens with exact mg amounts, frequency, and timing
+               - Detailed administration instructions including food requirements
+               - Drug packaging, labeling, and supply chain specifications
+               - Storage conditions, stability data, and expiration considerations
+               - Comprehensive dose modification guidelines with specific criteria:
+                 * Dose reduction algorithms
+                 * Dose escalation procedures if applicable
+                 * Safety stopping rules
+               - Treatment compliance monitoring procedures and accountability
+               - Comparator drug details if applicable including matching placebo specifications
+               - Drug dispensing and return procedures
+
+            7. ASSESSMENTS & PROCEDURES (600-700 words):
+               - Comprehensive schedule of assessments with detailed visit table
+               - Detailed screening procedures (typically 2-4 weeks) including:
+                 * Medical history and physical examination
+                 * Laboratory assessments (hematology, chemistry, serology)
+                 * Disease-specific assessments
+                 * Imaging studies if applicable
+               - Efficacy assessments with validated instruments and scoring methods
+               - Complete safety assessments including:
+                 * Vital signs and physical examinations
+                 * Comprehensive laboratory panels with normal ranges
+                 * ECG assessments and cardiac monitoring
+                 * Adverse event monitoring and grading scales
+               - Patient-reported outcomes with specific questionnaires and timing
+               - Biomarker and pharmacokinetic sampling schedules with specific timepoints
+               - Follow-up procedures including long-term safety assessments
+               - Data collection procedures and source document requirements
+
+            8. STATISTICAL CONSIDERATIONS & DATA ANALYSIS (500-600 words):
+               - Detailed sample size calculation with all assumptions:
+                 * Expected effect size with confidence intervals
+                 * Power calculation (typically 80-90%)
+                 * Significance level (typically 0.05)
+                 * Dropout rate assumptions
+               - Analysis populations with detailed definitions:
+                 * Intent-to-treat (ITT) population
+                 * Per-protocol (PP) population
+                 * Safety population
+               - Statistical methods for primary and secondary endpoints including:
+                 * Specific statistical tests (t-tests, chi-square, logistic regression)
+                 * Time-to-event analysis methods if applicable
+                 * Repeated measures analysis approaches
+               - Interim analysis plan with detailed stopping rules for efficacy and futility
+               - Missing data handling strategies including sensitivity analyses
+               - Multiplicity adjustments for multiple endpoints and comparisons
+               - Subgroup analysis plans including demographics and disease characteristics
+
+            9. OUTCOME ANALYSIS (400-500 words):
+               - Definition of treatment success with specific response criteria
+               - Efficacy analysis methodology with detailed statistical approaches
+               - Safety monitoring approach including safety run-in periods if applicable
+               - Adverse event reporting, classification, and causality assessment
+               - Risk-benefit assessment framework and criteria
+               - Data Safety Monitoring Board (DSMB) structure, responsibilities, and meeting schedule
+               - Quality assurance and monitoring plans
+               - Regulatory reporting requirements and timelines
+
+            10. REFERENCES & APPENDICES / SUPPORTING DOCUMENTATION (300-400 words):
+                - Key literature citations (minimum 20-25 references) including:
+                  * Disease epidemiology studies
+                  * Previous clinical trials in the indication
+                  * Regulatory guidance documents
+                  * Validation studies for assessment instruments
+                - Supplementary materials including:
+                  * Detailed schedule of assessments table
+                  * Study flow diagram
+                  * Laboratory reference ranges
+                  * Concomitant medication guidelines
+                - Regulatory guidance references including ICH guidelines and FDA/EMA guidance documents
+                - Protocol amendment history and version control information
+
+            ENHANCED PARAMETER INTEGRATION:
+            When specific trial design parameters are provided, incorporate them exactly and comprehensively:
+            
+            - If trial_phase is provided, ensure all sections reflect phase-appropriate depth and regulatory expectations
+            - If sample_size is specified, use it throughout with supporting power calculations
+            - If primary_endpoints are provided, use them exactly with detailed measurement methodology
+            - If inclusion_criteria and exclusion_criteria are provided, incorporate them verbatim and expand with additional standard criteria
+            - If statistical_power and significance_level are specified, use them in all calculations
+            - If route_of_administration and dosing_frequency are provided, detail exact administration procedures
+            - Reference the specific outcome_measurement_tool with validation data and scoring methodology
+
+            Include specific numerical values throughout:
+            - Exact dosing amounts (e.g., "15 mg administered orally once daily in the morning")
+            - Specific visit windows (e.g., "Week 4 visit: Day 28 ± 3 days")
+            - Laboratory parameter ranges (e.g., "ALT and AST < 2.5 × ULN")
+            - Statistical thresholds with confidence intervals (e.g., "95% CI")
+            - Detailed timeline specifications (e.g., "Screening period: up to 28 days")
+
+            Always reference comparable approved protocols when possible and cite established methodological frameworks relevant to the disease area and study phase.`
+          },
+          {
+            role: "user",
+            content: `Generate a highly detailed and comprehensive ${diseaseData.additional_parameters?.trial_phase || 'Phase 2'} Clinical Study Protocol EXECUTIVE SUMMARY for the treatment of ${diseaseData.disease_name}.
+
+            This EXECUTIVE SUMMARY must be EXTREMELY DETAILED (3,500-4,500 words minimum) and meet professional regulatory standards for FDA/EMA submission review.
+
+            TRIAL DESIGN PARAMETERS:
+            ${diseaseData.additional_parameters?.trial_phase ? `- Trial Phase: ${diseaseData.additional_parameters.trial_phase}` : ''}
+            ${diseaseData.additional_parameters?.trial_type ? `- Trial Type: ${diseaseData.additional_parameters.trial_type}` : ''}
+            ${diseaseData.additional_parameters?.randomization ? `- Randomization: ${diseaseData.additional_parameters.randomization}` : ''}
+            ${diseaseData.additional_parameters?.blinding ? `- Blinding: ${diseaseData.additional_parameters.blinding}` : ''}
+            ${diseaseData.additional_parameters?.control_group_type ? `- Control Group: ${diseaseData.additional_parameters.control_group_type}` : ''}
+
+            POPULATION SPECIFICATIONS:
+            ${diseaseData.additional_parameters?.sample_size ? `- Target Sample Size: ${diseaseData.additional_parameters.sample_size} patients` : ''}
+            ${diseaseData.additional_parameters?.min_age ? `- Minimum Age: ${diseaseData.additional_parameters.min_age} years` : ''}
+            ${diseaseData.additional_parameters?.max_age ? `- Maximum Age: ${diseaseData.additional_parameters.max_age} years` : ''}
+            ${diseaseData.additional_parameters?.gender ? `- Gender: ${diseaseData.additional_parameters.gender}` : ''}
+            ${diseaseData.additional_parameters?.population ? `- Target Population: ${diseaseData.additional_parameters.population}` : ''}
+
+            INTERVENTION DETAILS:
+            ${diseaseData.additional_parameters?.route_of_administration ? `- Route of Administration: ${diseaseData.additional_parameters.route_of_administration}` : ''}
+            ${diseaseData.additional_parameters?.dosing_frequency ? `- Dosing Frequency: ${diseaseData.additional_parameters.dosing_frequency}` : ''}
+            ${diseaseData.additional_parameters?.treatment_duration ? `- Treatment Duration: ${diseaseData.additional_parameters.treatment_duration}` : ''}
+            ${diseaseData.additional_parameters?.comparator_drug ? `- Comparator: ${diseaseData.additional_parameters.comparator_drug}` : ''}
+            ${diseaseData.additional_parameters?.drug_class ? `- Drug Class: ${diseaseData.additional_parameters.drug_class}` : ''}
+            ${diseaseData.additional_parameters?.mechanism ? `- Mechanism of Action: ${diseaseData.additional_parameters.mechanism}` : ''}
+
+            ENDPOINT SPECIFICATIONS:
+            ${diseaseData.additional_parameters?.primary_endpoints ? `- Primary Endpoints: ${diseaseData.additional_parameters.primary_endpoints}` : ''}
+            ${diseaseData.additional_parameters?.secondary_endpoints ? `- Secondary Endpoints: ${diseaseData.additional_parameters.secondary_endpoints}` : ''}
+            ${diseaseData.additional_parameters?.outcome_measurement_tool ? `- Outcome Measurement Tool: ${diseaseData.additional_parameters.outcome_measurement_tool}` : ''}
+
+            STATISTICAL PARAMETERS:
+            ${diseaseData.additional_parameters?.statistical_power ? `- Statistical Power: ${diseaseData.additional_parameters.statistical_power}%` : ''}
+            ${diseaseData.additional_parameters?.significance_level ? `- Significance Level (α): ${diseaseData.additional_parameters.significance_level}` : ''}
+            ${diseaseData.additional_parameters?.study_duration ? `- Total Study Duration: ${diseaseData.additional_parameters.study_duration}` : ''}
+
+            ELIGIBILITY CRITERIA:
+            ${diseaseData.additional_parameters?.inclusion_criteria ? `- Inclusion Criteria: ${diseaseData.additional_parameters.inclusion_criteria}` : ''}
+            ${diseaseData.additional_parameters?.exclusion_criteria ? `- Exclusion Criteria: ${diseaseData.additional_parameters.exclusion_criteria}` : ''}
+
+            ${diseaseData.additional_parameters?.clinical_info ? `ADDITIONAL CLINICAL INFORMATION: ${diseaseData.additional_parameters.clinical_info}` : ''}
+
+            MANDATORY REQUIREMENTS:
+            1. Generate EXACTLY 10 sections as specified in the system prompt with comprehensive detail
+            2. Each section must meet the minimum word count specified (total 3,500-4,500 words)
+            3. Incorporate ALL provided parameters exactly as specified throughout the document
+            4. Include specific dosing regimens, visit schedules, and numerical parameters
+            5. Reference specific clinical data, regulatory guidelines, and precedent protocols
+            6. Provide detailed statistical methodology and comprehensive power calculations
+            7. Include extensive eligibility criteria and comprehensive safety assessments
+            8. Use professional medical terminology and regulatory language throughout
+            9. Ensure the document is suitable for regulatory submission and industry peer review
+            10. Include specific visit windows, laboratory ranges, and procedural details
+
+            The executive summary must be extremely comprehensive and detailed while incorporating all provided trial design parameters to create a regulatory-compliant protocol suitable for FDA/EMA submission.`  
+          }
+        ],
+        temperature: 0.15, // Slightly lower for more consistent, professional output
+        max_tokens: 8000 // SIGNIFICANTLY INCREASED to allow for comprehensive content
+      }
+    );
+
+    return {
+      protocol_id: `prot-${Date.now()}`,
+      protocol: response.data.choices[0].message.content.trim()
+    };
+  } catch (error) {
+    console.error('Error in generateProtocol:', error.response?.data || error.message);
+    throw error;
+  }
+},
   
-  // Generates CMC and Clinical sections for an IND submission
+  // ENHANCED: Generates CMC and Clinical sections for an IND submission with comprehensive parameter integration
   generateIndModule: async (diseaseData) => {
     try {
       const response = await openaiApi.post(
@@ -361,139 +466,176 @@ Condition Description: Recurrent throbbing headaches preceded by zigzag lines in
               - Absolutely NO markdown or special formatting characters in the output
               - Use plain text with proper indentation and spacing only
               
-              GUIDANCE FOR IN-DEPTH IND CONTENT:
+              ENHANCED GUIDANCE FOR COMPREHENSIVE PARAMETER INTEGRATION:
               
-              CMC SECTION: (Chemistry, Manufacturing, and Controls) - Critical for IND
-              Start with a detailed CMC section that includes:
+              When detailed trial parameters are provided, incorporate them systematically throughout both CMC and Clinical sections:
               
-              1. Drug Substance Description:
-                 - Chemical structure and properties, physical characteristics
-                 - Method of preparation/synthesis route summary
-                 - Impurity profile and characterization
-                 - Specifications and reference standards
+              CMC SECTION ENHANCEMENTS:
+              - If drug_formulation is specified, detail the exact formulation development rationale
+              - If route_of_administration is provided, include administration-specific formulation considerations
+              - If dosing_frequency is specified, incorporate into stability and manufacturing specifications
+              - Reference the specific trial_phase to determine appropriate CMC depth and regulatory expectations
               
-              2. Drug Product Description:
-                 - Formulation composition with exact quantities of all components
-                 - Dosage form specifications (appearance, strength, etc.)
-                 - Justification of formulation and excipients
-                 - Manufacturing process overview and controls
-              
-              3. Analytical Methods:
-                 - Description of analytical procedures for drug substance and product (e.g., identity, assay, purity, dissolution)
-                 - Validation summary or reference to validation reports
-              
-              4. Stability Data:
-                 - Summary of stability studies (conditions, duration, results) for drug substance and product
-                 - Proposed storage conditions and retest period/shelf-life
-              
-              5. Container Closure System:
-                 - Description of primary packaging components
-                 - Suitability for protection and compatibility
-
-              6. Placebo Composition (if applicable)
-
-              7. Labeling:
-                 - Draft labeling for investigational drug product
-              
-              CLINICAL SECTION (IND Focus - often for Phase 1/2 studies):
-              For each of the numbered sections, include the following level of detail:
+              CLINICAL SECTION ENHANCED INTEGRATION:
               
               1. INTRO / BACKGROUND:
-                 - Comprehensive disease overview and unmet need
-                 - Investigational product: mechanism of action, class
-                 - Summary of preclinical pharmacology and toxicology studies supporting human trials
-                 - Previous human experience (if any)
-                 - Scientific rationale for the proposed study and IND
+                 - Justify the specified trial_phase in the development context
+                 - Reference the exact trial_type (Interventional/Observational/Registry) and its regulatory implications
+                 - Include population-specific background if age ranges or gender specified
               
               2. OBJECTIVES / HYPOTHESES / ENDPOINTS:
-                 - Primary objective (often safety and tolerability for early phase INDs)
-                 - Secondary objectives (e.g., PK, PD, preliminary efficacy signals)
-                 - Detailed endpoint definitions, especially for safety and PK
+                 - Use provided primary_endpoints and secondary_endpoints exactly as specified
+                 - Reference the outcome_measurement_tool methodology and validation
+                 - Align objectives with the specified trial_phase expectations
               
               3. STUDY DESIGN & SAMPLE SIZE:
-                 - Phase of study (e.g., Phase 1, Phase 2a)
-                 - Detailed study design (e.g., dose escalation, single ascending dose, multiple ascending dose, randomized controlled)
-                 - Treatment arms, dosing regimens, route of administration
-                 - Study duration per subject and overall
-                 - Sample size justification (often based on feasibility for early phase)
+                 - Detail the exact trial_type design methodology
+                 - Specify randomization procedures if randomization = "Yes"
+                 - Include blinding methodology as specified
+                 - Use provided sample_size with power calculation based on statistical_power and significance_level
+                 - Detail control_group_type specifications and rationale
               
               4. POPULATIONS & BASELINE:
-                 - Target patient population or healthy volunteers
-                 - Detailed inclusion and exclusion criteria specific to early phase studies
-                 - Screening and baseline assessments
+                 - Incorporate exact age ranges from min_age and max_age
+                 - Specify gender requirements and stratification
+                 - Include provided inclusion_criteria and exclusion_criteria verbatim
+                 - Detail baseline characteristics expected for the target population
               
               5. STATISTICAL METHODS & DATA HANDLING:
-                 - Primarily descriptive statistics for safety and PK
-                 - Data collection and management procedures
-                 - AE coding (MedDRA)
+                 - Use specified statistical_power for sample size calculations
+                 - Incorporate significance_level (α) for hypothesis testing
+                 - Detail randomization methodology if specified
+                 - Include stratification factors (age, gender) if provided
               
-              6. EFFICACY ANALYSIS (if applicable for the phase, may be exploratory):
-                 - Exploratory efficacy endpoints and analysis methods
+              6. EFFICACY ANALYSIS:
+                 - Reference primary_endpoints analysis methodology
+                 - Detail outcome_measurement_tool scoring and interpretation
+                 - Include time points based on study_duration
               
               7. SAFETY ANALYSIS:
-                 - AE monitoring, grading (CTCAE), and reporting procedures
-                 - Safety stopping rules or dose escalation criteria
-                 - Laboratory safety tests, vital signs, ECGs
+                 - Consider route_of_administration specific safety monitoring
+                 - Include dosing_frequency related safety assessments
+                 - Reference drug_class specific safety considerations
               
               8. PHARMACOKINETIC / EXPLORATORY:
-                 - PK sampling schedule and parameters to be assessed
-                 - PD biomarker plan, if applicable
+                 - Detail PK sampling based on route_of_administration
+                 - Include dosing_frequency implications for PK analysis
+                 - Reference mechanism of action for PD endpoints
               
-              9. INTERIM & OTHER SPECIAL ANALYSES:
-                 - Plans for interim safety reviews (e.g., by a Safety Monitoring Committee)
+              GUIDANCE FOR IN-DEPTH IND CONTENT WITH PARAMETER INTEGRATION:
               
-              10. REFERENCES & APPENDICES:
-                  - Key preclinical and clinical references
-                  - Investigator's Brochure reference
+              CMC SECTION: (Chemistry, Manufacturing, and Controls) - Enhanced with provided parameters
               
-              Include relevant numerical values where appropriate.
-              Reference relevant FDA guidance documents for IND submissions.
+              1. Drug Substance Description:
+                 - Enhanced specifications based on route_of_administration requirements
+                 - Stability considerations for dosing_frequency requirements
+                 - Manufacturing controls appropriate for trial_phase
               
-              Your response MUST ALSO contain these two clearly marked sections: "CMC SECTION:" and "CLINICAL SECTION:"
-              Place these section headers on separate lines before and after the 10 numbered sections.`
+              2. Drug Product Description:
+                 - Detailed formulation reflecting drug_formulation specifications
+                 - Container closure system appropriate for route_of_administration
+                 - Dosage form optimized for dosing_frequency
+              
+              3. Analytical Methods:
+                 - Methods appropriate for the specified trial_phase requirements
+                 - Route-specific analytical considerations
+              
+              4. Stability Data:
+                 - Storage conditions appropriate for dosing_frequency
+                 - Stability protocols for the specified study_duration
+              
+              CLINICAL SECTION (IND Focus - comprehensive parameter integration):
+              For each numbered section, incorporate provided parameters systematically:
+              
+              1. INTRO / BACKGROUND:
+                 - Disease overview with population-specific considerations (age/gender)
+                 - Development rationale for the specified trial_phase
+                 - Mechanism of action with route_of_administration rationale
+              
+              2. OBJECTIVES / HYPOTHESES / ENDPOINTS:
+                 - Primary objective using exact primary_endpoints provided
+                 - Secondary objectives incorporating secondary_endpoints
+                 - Endpoint methodology using outcome_measurement_tool specifications
+              
+              3. STUDY DESIGN & SAMPLE SIZE:
+                 - Detailed design reflecting trial_type specifications
+                 - Randomization methodology if randomization = "Yes"
+                 - Blinding procedures as specified
+                 - Sample size calculation using statistical_power and significance_level
+                 - Treatment duration reflecting study_duration
+              
+              4. POPULATIONS & BASELINE:
+                 - Exact age eligibility using min_age and max_age
+                 - Gender specifications as provided
+                 - Verbatim inclusion_criteria and exclusion_criteria
+                 - Target enrollment reflecting sample_size
+              
+              5. STATISTICAL METHODS & DATA HANDLING:
+                 - Power analysis using specified statistical_power
+                 - Alpha level set to significance_level
+                 - Analysis populations defined for trial_type
+              
+              Include relevant numerical values and specific methodologies based on all provided parameters.
+              Reference relevant FDA guidance documents for IND submissions and the specified trial_phase.
+              
+              Your response MUST contain these two clearly marked sections: "CMC SECTION:" and "CLINICAL SECTION:"
+              Place these section headers on separate lines before the content.`
             },
             {
               role: "user",
               content: `Generate a comprehensive, FDA-compliant MAIN DOCUMENT for an Investigational New Drug (IND) application for ${diseaseData.disease_name}.
-              This document is intended for a Phase 1 or early Phase 2 clinical trial.
-              Country: ${diseaseData.additional_parameters.country || 'USA'}
-              Document Type: ${diseaseData.additional_parameters.document_type || 'IND'}
 
-              First include a "CMC SECTION:" containing Chemistry, Manufacturing, and Controls information including:
-                - Detailed drug substance specifications
-                - Comprehensive drug product manufacturing process
-                - Validated analytical methods
-                - Stability data summary
-                ${diseaseData.additional_parameters.drug_class ? `- Detailed information on the ${diseaseData.additional_parameters.drug_class} including pharmacological properties` : ''}
-                - Quality control procedures
-              
-              Then include a "CLINICAL SECTION:" that follows EXACTLY this numbered structure:
-                1. INTRO / BACKGROUND
-                2. OBJECTIVES / HYPOTHESES / ENDPOINTS
-                3. STUDY DESIGN & SAMPLE SIZE
-                4. POPULATIONS & BASELINE
-                5. STATISTICAL METHODS & DATA HANDLING
-                6. EFFICACY ANALYSIS
-                7. SAFETY ANALYSIS
-                8. PHARMACOKINETIC / EXPLORATORY
-                9. INTERIM & OTHER SPECIAL ANALYSES
-                10. REFERENCES & APPENDICES
-              
+              TRIAL DESIGN SPECIFICATIONS:
+              ${diseaseData.additional_parameters?.trial_phase ? `- Trial Phase: ${diseaseData.additional_parameters.trial_phase}` : '- Trial Phase: Phase I/II (default)'}
+              ${diseaseData.additional_parameters?.trial_type ? `- Trial Type: ${diseaseData.additional_parameters.trial_type}` : ''}
+              ${diseaseData.additional_parameters?.randomization ? `- Randomization: ${diseaseData.additional_parameters.randomization}` : ''}
+              ${diseaseData.additional_parameters?.blinding ? `- Blinding: ${diseaseData.additional_parameters.blinding}` : ''}
+              ${diseaseData.additional_parameters?.control_group_type ? `- Control Group: ${diseaseData.additional_parameters.control_group_type}` : ''}
+
+              POPULATION & ELIGIBILITY PARAMETERS:
+              ${diseaseData.additional_parameters?.sample_size ? `- Target Sample Size: ${diseaseData.additional_parameters.sample_size} patients` : ''}
+              ${diseaseData.additional_parameters?.min_age ? `- Minimum Age: ${diseaseData.additional_parameters.min_age} years` : ''}
+              ${diseaseData.additional_parameters?.max_age ? `- Maximum Age: ${diseaseData.additional_parameters.max_age} years` : ''}
+              ${diseaseData.additional_parameters?.gender ? `- Gender: ${diseaseData.additional_parameters.gender}` : ''}
+              ${diseaseData.additional_parameters?.inclusion_criteria ? `- Inclusion Criteria: ${diseaseData.additional_parameters.inclusion_criteria}` : ''}
+              ${diseaseData.additional_parameters?.exclusion_criteria ? `- Exclusion Criteria: ${diseaseData.additional_parameters.exclusion_criteria}` : ''}
+
+              TREATMENT & DRUG SPECIFICATIONS:
+              ${diseaseData.additional_parameters?.drug_formulation ? `- Drug Formulation: ${diseaseData.additional_parameters.drug_formulation}` : ''}
+              ${diseaseData.additional_parameters?.route_of_administration ? `- Route of Administration: ${diseaseData.additional_parameters.route_of_administration}` : ''}
+              ${diseaseData.additional_parameters?.dosing_regimen ? `- Dosing Regimen: ${diseaseData.additional_parameters.dosing_regimen}` : ''}
+              ${diseaseData.additional_parameters?.dosing_frequency ? `- Dosing Frequency: ${diseaseData.additional_parameters.dosing_frequency}` : ''}
+              ${diseaseData.additional_parameters?.control_group ? `- Control Group: ${diseaseData.additional_parameters.control_group}` : ''}
+              ${diseaseData.additional_parameters?.drug_class ? `- Drug Class: ${diseaseData.additional_parameters.drug_class}` : ''}
+              ${diseaseData.additional_parameters?.mechanism ? `- Mechanism of Action: ${diseaseData.additional_parameters.mechanism}` : ''}
+
+              ENDPOINT & OUTCOME SPECIFICATIONS:
+              ${diseaseData.additional_parameters?.primary_endpoints ? `- Primary Endpoints: ${diseaseData.additional_parameters.primary_endpoints}` : ''}
+              ${diseaseData.additional_parameters?.secondary_endpoints ? `- Secondary Endpoints: ${diseaseData.additional_parameters.secondary_endpoints}` : ''}
+              ${diseaseData.additional_parameters?.outcome_measure_tool ? `- Outcome Measurement Tool: ${diseaseData.additional_parameters.outcome_measure_tool}` : ''}
+
+              STATISTICAL DESIGN PARAMETERS:
+              ${diseaseData.additional_parameters?.statistical_power ? `- Statistical Power: ${diseaseData.additional_parameters.statistical_power}%` : ''}
+              ${diseaseData.additional_parameters?.significance_level ? `- Significance Level (α): ${diseaseData.additional_parameters.significance_level}` : ''}
+              ${diseaseData.additional_parameters?.study_duration ? `- Study Duration: ${diseaseData.additional_parameters.study_duration}` : ''}
+
+              REGULATORY CONTEXT:
+              Country: ${diseaseData.additional_parameters?.country || 'USA'}
+              Document Type: ${diseaseData.additional_parameters?.document_type || 'IND'}
+
               IMPORTANT REQUIREMENTS:
-              1. This document must be EXTREMELY DETAILED and meet professional industry standards for an IND submission to the FDA.
-              2. Include comprehensive information in each section with specific numerical values relevant to an early phase trial.
-              3. Do NOT use markdown formatting.
-              4. Do NOT use bullet points with * or - characters.
-              5. Use ONLY plain text with proper indentation and spacing.
-              6. Include these specific elements in the appropriate sections:
-                - ${diseaseData.additional_parameters.population ? `Detailed population information for: ${diseaseData.additional_parameters.population}` : 'Comprehensive patient/volunteer eligibility criteria'}
-                - ${diseaseData.additional_parameters.treatment_duration ? `Detailed treatment plan for duration: ${diseaseData.additional_parameters.treatment_duration}` : 'Comprehensive treatment schedule'}
-                - ${diseaseData.additional_parameters.mechanism ? `Detailed mechanism of action: ${diseaseData.additional_parameters.mechanism}` : ''}
-                - ${diseaseData.additional_parameters.clinical_info ? `Relevant clinical information: ${diseaseData.additional_parameters.clinical_info}` : ''}
-                
-              This MAIN DOCUMENT must be suitable for an IND submission. Focus on safety, PK, and early signals of activity appropriate for ${diseaseData.disease_name}.
-              Reference FDA guidance for INDs and preclinical data supporting the trial.
-              IMPORTANT: Ensure the CMC section is robust as it's a cornerstone of an IND.`
+              1. Generate a detailed CMC SECTION that incorporates drug_formulation and route_of_administration specifications
+              2. Generate a comprehensive CLINICAL SECTION following the exact 10-section structure
+              3. Incorporate ALL provided parameters exactly as specified throughout both sections
+              4. Use the exact sample_size, statistical_power, and significance_level in statistical calculations
+              5. Include verbatim inclusion_criteria and exclusion_criteria in Section 4
+              6. Reference the specific trial_phase and trial_type throughout the document
+              7. Detail the outcome_measurement_tool methodology in appropriate sections
+              8. Use plain text formatting only - NO MARKDOWN
+              9. Ensure CMC section reflects the specified formulation and administration route
+              10. Structure the clinical section to reflect whether this is Interventional, Observational, or Registry trial
+
+              This MAIN DOCUMENT must incorporate all enhanced parameters to create a comprehensive, parameter-specific IND suitable for FDA submission.`
             }
           ],
           temperature: 0.2,
@@ -1324,44 +1466,44 @@ Condition Description: Recurrent throbbing headaches preceded by zigzag lines in
     }
   },
   
-queryAssistant: async (queryData) => {
-  try {
-    // First, ask GPT if the question is relevant to clinical/regulatory topics
-    const relevanceCheck = await openaiApi.post(
-      'chat/completions',
-      {
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `You are a relevance checker. Determine if a question is related to clinical trials, medical protocols, regulatory affairs, pharmaceutical development, or healthcare research.
+  queryAssistant: async (queryData) => {
+    try {
+      // First, ask GPT if the question is relevant to clinical/regulatory topics
+      const relevanceCheck = await openaiApi.post(
+        'chat/completions',
+        {
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are a relevance checker. Determine if a question is related to clinical trials, medical protocols, regulatory affairs, pharmaceutical development, or healthcare research.
 
-            Respond with ONLY one word:
-            - "RELEVANT" if the question is about clinical trials, medical research, drug development, regulatory submissions, medical conditions, treatments, or pharmaceutical topics
-            - "IRRELEVANT" if the question is about cooking, weather, entertainment, sports, travel, technology, politics, or other non-medical topics
+              Respond with ONLY one word:
+              - "RELEVANT" if the question is about clinical trials, medical research, drug development, regulatory submissions, medical conditions, treatments, or pharmaceutical topics
+              - "IRRELEVANT" if the question is about cooking, weather, entertainment, sports, travel, technology, politics, or other non-medical topics
 
-            Examples:
-            - "What are efficacy endpoints for psoriasis?" → RELEVANT
-            - "Key endpoints for banana bread?" → IRRELEVANT  
-            - "How to design inclusion criteria?" → RELEVANT
-            - "What's the weather today?" → IRRELEVANT`
-          },
-          {
-            role: "user",
-            content: queryData.question
-          }
-        ],
-        temperature: 0,
-        max_tokens: 10
-      }
-    );
+              Examples:
+              - "What are efficacy endpoints for psoriasis?" → RELEVANT
+              - "Key endpoints for banana bread?" → IRRELEVANT  
+              - "How to design inclusion criteria?" → RELEVANT
+              - "What's the weather today?" → IRRELEVANT`
+            },
+            {
+              role: "user",
+              content: queryData.question
+            }
+          ],
+          temperature: 0,
+          max_tokens: 10
+        }
+      );
 
-    const relevance = relevanceCheck.data.choices[0].message.content.trim();
+      const relevance = relevanceCheck.data.choices[0].message.content.trim();
 
-    // If irrelevant, return standardized response
-    if (relevance === "IRRELEVANT") {
-      return {
-        answer: `CLINICAL ASSISTANT - OFF-TOPIC QUERY
+      // If irrelevant, return standardized response
+      if (relevance === "IRRELEVANT") {
+        return {
+          answer: `CLINICAL ASSISTANT - OFF-TOPIC QUERY
 
 I'm Lumina™, your specialized clinical protocol assistant. Your question appears to be outside my area of clinical and regulatory expertise.
 
@@ -1380,69 +1522,69 @@ EXAMPLES OF RELEVANT QUESTIONS:
 - "How do I design a bioequivalence study?"
 
 Please ask a question related to clinical trials, protocols, or regulatory affairs, and I'll provide detailed, professional guidance.`
-      };
-    }
-
-    // If relevant, proceed with normal OpenAI response
-    const response = await openaiApi.post(
-      'chat/completions',
-      {
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `You are a clinical protocol and regulatory expert providing precise, well-structured, and professionally formatted answers.
-            Your expertise spans all aspects of clinical trial design, regulatory submissions, and pharmaceutical development.
-            
-            CRITICAL FORMATTING RULES - FOLLOW EXACTLY:
-            - Use ONLY plain text - NO markdown, NO asterisks (*), NO bold (**), NO italics, NO special characters
-            - Do NOT use ** for bold text or * for bullet points
-            - Use simple dashes (-) or numbers (1., 2., 3.) for lists
-            - Use ALL CAPS only for major section headings
-            - Use normal text with clear line breaks and indentation for structure
-            - No formatting symbols whatsoever - treat this as if you're writing in a basic text editor
-            
-            CONTENT RULES:
-            - Structure responses with clear paragraphing and indentation
-            - Be precise and direct - avoid unnecessary filler text
-            - If the question involves a specific disease or protocol, tailor the answer accordingly
-            - If asked about endpoints, list them clearly and explain their relevance
-            - If asked about regulatory strategy, provide actionable advice
-            - Cite relevant guidelines (ICH, FDA, EMA) when appropriate
-            
-            EXAMPLE FORMAT (NO ASTERISKS):
-            KEY EFFICACY ENDPOINTS FOR PSORIASIS TRIALS:
-            
-            PRIMARY ENDPOINTS:
-                1. PASI 75 Response Rate at Week 16
-                   - Definition: Proportion achieving 75% reduction in PASI score
-                   - Relevance: Standard regulatory endpoint
-            
-            SECONDARY ENDPOINTS:
-                1. Static Physician Global Assessment (sPGA)
-                   - Clear (0) or Almost Clear (1) skin
-                   - Physician assessment of overall improvement`
-          },
-          {
-            role: "user",
-            content: `Question: ${queryData.question}
-            ${queryData.disease_context ? `Disease Context: ${queryData.disease_context}` : ''}
-            ${queryData.protocol_id ? `Reference Protocol ID: ${queryData.protocol_id}` : ''}`
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 1000
+        };
       }
-    );
-    
-    return {
-      answer: response.data.choices[0].message.content.trim()
-    };
-  } catch (error) {
-    console.error('Error in queryAssistant:', error.response?.data || error.message);
-    throw error;
+
+      // If relevant, proceed with normal OpenAI response
+      const response = await openaiApi.post(
+        'chat/completions',
+        {
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are a clinical protocol and regulatory expert providing precise, well-structured, and professionally formatted answers.
+              Your expertise spans all aspects of clinical trial design, regulatory submissions, and pharmaceutical development.
+              
+              CRITICAL FORMATTING RULES - FOLLOW EXACTLY:
+              - Use ONLY plain text - NO markdown, NO asterisks (*), NO bold (**), NO italics, NO special characters
+              - Do NOT use ** for bold text or * for bullet points
+              - Use simple dashes (-) or numbers (1., 2., 3.) for lists
+              - Use ALL CAPS only for major section headings
+              - Use normal text with clear line breaks and indentation for structure
+              - No formatting symbols whatsoever - treat this as if you're writing in a basic text editor
+              
+              CONTENT RULES:
+              - Structure responses with clear paragraphing and indentation
+              - Be precise and direct - avoid unnecessary filler text
+              - If the question involves a specific disease or protocol, tailor the answer accordingly
+              - If asked about endpoints, list them clearly and explain their relevance
+              - If asked about regulatory strategy, provide actionable advice
+              - Cite relevant guidelines (ICH, FDA, EMA) when appropriate
+              
+              EXAMPLE FORMAT (NO ASTERISKS):
+              KEY EFFICACY ENDPOINTS FOR PSORIASIS TRIALS:
+              
+              PRIMARY ENDPOINTS:
+                  1. PASI 75 Response Rate at Week 16
+                     - Definition: Proportion achieving 75% reduction in PASI score
+                     - Relevance: Standard regulatory endpoint
+              
+              SECONDARY ENDPOINTS:
+                  1. Static Physician Global Assessment (sPGA)
+                     - Clear (0) or Almost Clear (1) skin
+                     - Physician assessment of overall improvement`
+            },
+            {
+              role: "user",
+              content: `Question: ${queryData.question}
+              ${queryData.disease_context ? `Disease Context: ${queryData.disease_context}` : ''}
+              ${queryData.protocol_id ? `Reference Protocol ID: ${queryData.protocol_id}` : ''}`
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 1000
+        }
+      );
+      
+      return {
+        answer: response.data.choices[0].message.content.trim()
+      };
+    } catch (error) {
+      console.error('Error in queryAssistant:', error.response?.data || error.message);
+      throw error;
+    }
   }
-}
 };
 
 export default openaiService;
