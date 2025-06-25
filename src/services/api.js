@@ -1,4 +1,4 @@
-// src/services/api.js - UPDATED WITH COMPLETE ROUTING FOR ALL DOCUMENTS
+// src/services/api.js - COMPLETE VERSION WITH ALL MISSING DOCUMENT ROUTING
 
 import openaiService from './openaiService';
 import dossierService from './dossierService';
@@ -314,12 +314,67 @@ const apiService = {
         return await openaiService.generateANMAT_NDA(data);
       }
 
+      if (documentTypeName === "INVIMA Clinical Trial Permit") {
+        console.log('Calling openaiService.generateINVIMA_CTA');
+        return await openaiService.generateINVIMA_CTA(data);
+      }
+      
+      if (documentTypeName === "INVIMA Drug Registration") {
+        console.log('Calling openaiService.generateINVIMA_NDA');
+        return await openaiService.generateINVIMA_NDA(data);
+      }
+
+      if (documentTypeName === "ISP Clinical Trial Authorization") {
+        console.log('Calling openaiService.generateISP_CTA');
+        return await openaiService.generateISP_CTA(data);
+      }
+      
+      if (documentTypeName === "ISP Drug Registration") {
+        console.log('Calling openaiService.generateISP_NDA');
+        return await openaiService.generateISP_NDA(data);
+      }
+
       // =============================================================================
       // AFRICA & MIDDLE EAST DOCUMENTS
       // =============================================================================
       if (documentTypeName === "SAHPRA Clinical Trial Authorization") {
         console.log('Calling openaiService.generateSAHPRA_CTA');
         return await openaiService.generateSAHPRA_CTA(data);
+      }
+
+      if (documentTypeName === "SAHPRA Medicine Registration") {
+        console.log('Calling openaiService.generateSAHPRA_NDA');
+        return await openaiService.generateSAHPRA_NDA(data);
+      }
+
+      if (documentTypeName === "Israeli MOH Clinical Trial Permit") {
+        console.log('Calling openaiService.generateMOH_ISRAEL_CTA');
+        return await openaiService.generateMOH_ISRAEL_CTA(data);
+      }
+      
+      if (documentTypeName === "Israeli Drug Registration") {
+        console.log('Calling openaiService.generateMOH_ISRAEL_NDA');
+        return await openaiService.generateMOH_ISRAEL_NDA(data);
+      }
+
+      if (documentTypeName === "SFDA Clinical Trial Authorization") {
+        console.log('Calling openaiService.generateSFDA_CTA');
+        return await openaiService.generateSFDA_CTA(data);
+      }
+      
+      if (documentTypeName === "SFDA Drug Registration") {
+        console.log('Calling openaiService.generateSFDA_NDA');
+        return await openaiService.generateSFDA_NDA(data);
+      }
+
+      if (documentTypeName === "DHA Clinical Trial Permit") {
+        console.log('Calling openaiService.generateDHA_CTA');
+        return await openaiService.generateDHA_CTA(data);
+      }
+      
+      if (documentTypeName === "UAE Drug Registration") {
+        console.log('Calling openaiService.generateMOH_UAE_NDA');
+        return await openaiService.generateMOH_UAE_NDA(data);
       }
 
       // =============================================================================

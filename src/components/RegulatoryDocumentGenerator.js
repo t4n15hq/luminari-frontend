@@ -330,12 +330,7 @@ const RegulatoryDocumentGenerator = () => {
           >
             ← Back to Map
           </button>
-          <button 
-            onClick={() => setShowHelp(!showHelp)}
-            className="btn btn-secondary"
-          >
-            {showHelp ? 'Hide Help' : 'Additional Fields Guide'}
-          </button>
+
         </div>
       </div>
 
