@@ -303,53 +303,10 @@ const ProtocolGenerator = () => {
           <h2>Clinical Study Protocol Generator</h2>
           <p>Generate a complete clinical study protocol with enhanced trial design parameters</p>
         </div>
-        <button 
-          onClick={() => setShowHelp(!showHelp)}
-          className="btn btn-secondary"
-          style={{ padding: '0.75rem 1.5rem' }}
-        >
-          {showHelp ? 'Hide Help' : 'What Other Fields Can Be Added?'}
-        </button>
+        
       </div>
 
-      {/* Help Section */}
-      {showHelp && (
-        <div className="info-box" style={{ marginBottom: '2rem' }}>
-          <h4>Additional Fields You Can Consider Adding:</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
-            <div>
-              <h5>Advanced Trial Design:</h5>
-              <ul style={{ fontSize: '0.9rem', paddingLeft: '1.5rem' }}>
-                <li>Crossover design specifications</li>
-                <li>Adaptive trial elements</li>
-                <li>Interim analysis plans</li>
-                <li>Futility stopping rules</li>
-                <li>Biomarker stratification</li>
-              </ul>
-            </div>
-            <div>
-              <h5>Safety & Monitoring:</h5>
-              <ul style={{ fontSize: '0.9rem', paddingLeft: '1.5rem' }}>
-                <li>Data Safety Monitoring Board (DSMB)</li>
-                <li>Adverse event reporting timelines</li>
-                <li>Laboratory safety parameters</li>
-                <li>Concomitant medication restrictions</li>
-                <li>Withdrawal criteria</li>
-              </ul>
-            </div>
-            <div>
-              <h5>Regulatory & Quality:</h5>
-              <ul style={{ fontSize: '0.9rem', paddingLeft: '1.5rem' }}>
-                <li>GCP compliance requirements</li>
-                <li>Regulatory submission timeline</li>
-                <li>Quality assurance plans</li>
-                <li>Data management procedures</li>
-                <li>Audit preparation</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
+      
       
       <form onSubmit={handleSubmit}>
         {/* Basic Information Section */}
