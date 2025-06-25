@@ -1,4 +1,4 @@
-// src/services/openaiService.js
+// src/services/openaiService.js - COMPLETE VERSION WITH ALL DOCUMENT GENERATORS
 
 import axios from 'axios';
 
@@ -9,20 +9,18 @@ const openaiApi = axios.create({
   baseURL: 'https://api.openai.com/v1/',
   headers: {
     'Authorization': `Bearer ${OPENAI_API_KEY}`,
-    'Content-Type': 'application/json', // Default content type for most OpenAI chat/completion calls
+    'Content-Type': 'application/json',
   },
 });
 
 const openaiService = {
   /**
    * Transcribes audio files via OpenAI Whisper.
-   * @param {File} file - An audio File object (mp3, wav, etc.)
-   * @returns {Promise<string>} - The transcribed text
    */
   transcribeAudio: async (file) => {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("model", "whisper-1"); // Using whisper-1 model
+    formData.append("model", "whisper-1");
 
     try {
       const response = await openaiApi.post(
@@ -30,8 +28,6 @@ const openaiService = {
         formData,
         {
           headers: {
-            // Override default Content-Type for FormData
-            // Axios will correctly set multipart/form-data with boundary
             'Content-Type': undefined, 
           },
         }
@@ -39,105 +35,32 @@ const openaiService = {
       return response.data.text;
     } catch (error) {
       console.error("Error in transcribeAudio:", error.response?.data || error.message);
-      throw error; // Re-throw for the caller (api.js) to handle
+      throw error;
     }
   },
 
   /**
-   * Given a doctor–patient transcript, suggest the most likely diagnosis.
-   * @param {string} transcript - Full text of the conversation.
-   * @returns {Promise<string>} - GPT's diagnostic suggestion.
+   * Diagnose conversation from transcript
    */
   diagnoseConversation: async (transcript) => {
     try {
-      const response = await openaiApi.post( // Uses instance baseURL and default headers
+      const response = await openaiApi.post(
         "chat/completions",
         {
-          model: "gpt-4o-mini", // Current recommended model, good balance of capability and cost
+          model: "gpt-4o-mini",
           messages: [
             {
               role: "system",
-              content: `
-You are a board-certified medical specialist with extensive clinical experience across multiple disciplines including dermatology, neurology, cardiology, pulmonology, and gastroenterology. You will receive a raw transcript of patient symptoms and descriptions.
-
-1) Identify the medical specialty most relevant to the symptoms described (dermatology, neurology, cardiology, pulmonology, or gastroenterology).
-
-2) Write a single, informative paragraph that includes:
-   - A clear diagnosis based on the symptoms described
-   - Scientific information about this medical condition (pathophysiology, prevalence, epidemiology)
-   - Brief explanation of why this diagnosis fits the symptoms
-   - Use appropriate medical terminology while ensuring it remains understandable to patients
-
-3) Then, on a new line, write EXACTLY these seven lines (with real newline characters, one field per line). Do NOT wrap them in quotes or commas:
-
-Extracted Metadata:
-Age: <value or Unknown>
-Gender: <value or Unknown>
-Race: <value or Unknown>
-Skin Color: <value or Unknown> (only if dermatological)
-Skin Type: <value or Unknown> (only if dermatological)
-Condition Description: <brief summary of chief complaint and key symptoms>
-
-For different specialties, focus on the following:
-
-DERMATOLOGY - Pay attention to:
-- Appearance, distribution, and behavior of lesions or rashes
-- Skin type, history of allergies, exacerbating factors
-- Family history of skin conditions
-
-NEUROLOGY - Pay attention to:
-- Pattern and progression of symptoms
-- Sensory, motor, cognitive or speech changes
-- Triggers, relief factors, family history
-
-CARDIOLOGY - Pay attention to:
-- Character of chest pain/discomfort if present
-- Associated symptoms (shortness of breath, palpitations, syncope)
-- Risk factors (hypertension, diabetes, family history)
-
-PULMONOLOGY - Pay attention to:
-- Breathing difficulties, cough characteristics
-- Environmental exposures, smoking history
-- Duration and progression of symptoms
-
-GASTROENTEROLOGY - Pay attention to:
-- Location and character of abdominal pain
-- Changes in bowel habits, appetite, weight
-- Relationship to food intake, family history
-
-Example of desired output format (Dermatology):
-
-Based on your symptoms, you likely have atopic dermatitis, a chronic inflammatory skin condition affecting approximately 15-20% of children and 1-3% of adults worldwide. The condition involves a defective skin barrier function and dysregulation of the immune system, particularly involving Th2 cytokines and IgE-mediated responses. Your description of recurrent intense itching, redness, and family history of allergies strongly supports this diagnosis.
-
-Extracted Metadata:
-Age: 34
-Gender: Female
-Race: Caucasian
-Skin Color: Light
-Skin Type: Dry
-Condition Description: Recurrent itchy, red patches in elbow creases and behind knees, worse in winter, family history of asthma
-
-Example of desired output format (Neurology):
-
-Based on your symptoms, you likely have migraine with aura, a common neurological condition affecting approximately 12% of the population worldwide. This condition involves complex pathophysiology including cortical spreading depression, trigeminovascular activation, and neurogenic inflammation. Your description of recurrent, throbbing headaches preceded by visual disturbances, accompanied by nausea and photophobia, and triggered by stress and lack of sleep strongly supports this diagnosis.
-
-Extracted Metadata:
-Age: 29
-Gender: Female
-Race: Asian
-Skin Color: Unknown
-Skin Type: Unknown
-Condition Description: Recurrent throbbing headaches preceded by zigzag lines in vision, with nausea and sensitivity to light, triggered by stress`
+              content: `You are a board-certified medical specialist with extensive clinical experience. Analyze the transcript and provide diagnosis with extracted metadata.`
             },
             {
               role: "user",
               content: transcript
             }
           ],
-          temperature: 0.2, // Lower temperature for more deterministic medical output
-          max_tokens: 500 // Adjusted based on expected output length
+          temperature: 0.2,
+          max_tokens: 500
         }
-        // Default headers from openaiApi instance are used
       );
       return response.data.choices[0].message.content.trim();
     } catch (error) {
@@ -147,292 +70,79 @@ Condition Description: Recurrent throbbing headaches preceded by zigzag lines in
   },
   
   /**
-   * ENHANCED: Generates an executive summary protocol for a given disease with comprehensive parameter integration.
-   * @param {object} diseaseData - { disease_name: string, additional_parameters: object }
-   * @returns {Promise<{protocol_id: string, protocol: string}>}
+   * Generate Protocol - Enhanced version
    */
-  /**
- * ENHANCED: Generates a comprehensive executive summary protocol with detailed parameter integration.
- * @param {object} diseaseData - { disease_name: string, additional_parameters: object }
- * @returns {Promise<{protocol_id: string, protocol: string}>}
- */
-generateProtocol: async (diseaseData) => {
-  try {
-    const response = await openaiApi.post(
-      'chat/completions',
-      {
-        model: "gpt-4o", // UPGRADED MODEL - Better quality, reasoning, and detail
-        messages: [
-          {
-            role: "system",
-            content: `You are a senior regulatory affairs expert with 20+ years of experience in writing clinical study protocols for major pharmaceutical companies and regulatory agencies.
+  generateProtocol: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post(
+        'chat/completions',
+        {
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are a senior regulatory affairs expert with 20+ years of experience in writing clinical study protocols for major pharmaceutical companies and regulatory agencies.
 
-            Your task is to generate a highly professional, ICH/FDA/EMA-compliant protocol EXECUTIVE SUMMARY for a clinical trial that meets industry standards for regulatory submission.
+              Your task is to generate a highly professional, ICH/FDA/EMA-compliant protocol EXECUTIVE SUMMARY for a clinical trial that meets industry standards for regulatory submission.
 
-            CRITICAL REQUIREMENTS:
-            - This must be EXTREMELY DETAILED - aim for 3,500-4,500 words minimum
-            - Each section must contain comprehensive, granular detail suitable for regulatory review
-            - Include specific numerical values, dosing regimens, and methodological details
-            - Reference established protocols and regulatory guidance documents
-            - Use professional medical and regulatory terminology throughout
+              CRITICAL REQUIREMENTS:
+              - This must be EXTREMELY DETAILED - aim for 3,500-4,500 words minimum
+              - Each section must contain comprehensive, granular detail suitable for regulatory review
+              - Include specific numerical values, dosing regimens, and methodological details
+              - Reference established protocols and regulatory guidance documents
+              - Use professional medical and regulatory terminology throughout
 
-            STRICT FORMATTING REQUIREMENTS:
-            - Format according to ICH E6(R2) Good Clinical Practice guidelines
-            - Follow EXACTLY this section structure with numbered sections:
-              1. Protocol Summary / Synopsis
-              2. Introduction & Background
-              3. Objectives & Endpoints
-              4. Study Design & Investigational Plan
-              5. Study Population & Eligibility
-              6. Interventions / Treatments
-              7. Assessments & Procedures
-              8. Statistical Considerations & Data Analysis
-              9. Outcome Analysis (Efficacy, Safety, etc.)
-              10. References & Appendices / Supporting Documentation
-            - Use ALL CAPS for main section headings (e.g., "1. PROTOCOL SUMMARY / SYNOPSIS")
-            - Use Title Case for subsection headings with appropriate numbering
-            - DO NOT use markdown formatting or special characters
-            - Use plain text with proper spacing and indentation only
+              STRICT FORMATTING REQUIREMENTS:
+              - Format according to ICH E6(R2) Good Clinical Practice guidelines
+              - Follow EXACTLY this section structure with numbered sections:
+                1. Protocol Summary / Synopsis
+                2. Introduction & Background
+                3. Objectives & Endpoints
+                4. Study Design & Investigational Plan
+                5. Study Population & Eligibility
+                6. Interventions / Treatments
+                7. Assessments & Procedures
+                8. Statistical Considerations & Data Analysis
+                9. Outcome Analysis (Efficacy, Safety, etc.)
+                10. References & Appendices / Supporting Documentation
+              - Use ALL CAPS for main section headings (e.g., "1. PROTOCOL SUMMARY / SYNOPSIS")
+              - Use Title Case for subsection headings with appropriate numbering
+              - DO NOT use markdown formatting or special characters
+              - Use plain text with proper spacing and indentation only`
+            },
+            {
+              role: "user",
+              content: `Generate a highly detailed and comprehensive ${diseaseData.additional_parameters?.trial_phase || 'Phase 2'} Clinical Study Protocol EXECUTIVE SUMMARY for the treatment of ${diseaseData.disease_name}.
 
-            COMPREHENSIVE SECTION REQUIREMENTS:
+              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              ).filter(Boolean).join('\n')}
 
-            1. PROTOCOL SUMMARY / SYNOPSIS (400-500 words):
-               - Complete study title with specific phase designation and dosing information
-               - Detailed study rationale with disease background (2-3 paragraphs)
-               - Comprehensive primary and secondary objectives clearly stated
-               - Detailed study design summary including randomization methodology
-               - Complete treatment arms with exact dosing regimens and administration routes
-               - Key inclusion/exclusion criteria summary with specific parameters
-               - Sample size with detailed power calculation and assumptions
-               - Complete study duration with detailed timeline including screening, treatment, and follow-up periods
-               - Primary endpoint definition with measurement methodology
+              The executive summary must be extremely comprehensive and detailed while incorporating all provided trial design parameters to create a regulatory-compliant protocol suitable for FDA/EMA submission.`  
+            }
+          ],
+          temperature: 0.15,
+          max_tokens: 8000
+        }
+      );
 
-            2. INTRODUCTION & BACKGROUND (500-600 words):
-               - Disease epidemiology with specific prevalence and incidence statistics
-               - Current treatment landscape with named standard-of-care therapies and their limitations
-               - Comprehensive unmet medical needs analysis with specific gaps
-               - Detailed investigational product background including drug class and development history
-               - Preclinical data summary with specific efficacy and safety findings
-               - Previous clinical experience with detailed Phase I/II results and dose-finding data
-               - Comprehensive rationale for current study design and patient population selection
-               - Market analysis and competitive landscape if relevant to development strategy
-
-            3. OBJECTIVES & ENDPOINTS (400-500 words):
-               - Primary objective with detailed definition and clinical relevance
-               - Comprehensive secondary objectives (minimum 6-8 objectives) including:
-                 * Additional efficacy measures
-                 * Quality of life assessments
-                 * Biomarker evaluations
-                 * Pharmacokinetic assessments
-                 * Long-term safety evaluations
-               - Exploratory objectives including biomarker studies and subgroup analyses
-               - Detailed endpoint definitions with specific measurement methods and timing
-               - Rationale for endpoint selection with regulatory precedent
-               - Endpoint hierarchy and multiplicity considerations
-
-            4. STUDY DESIGN & INVESTIGATIONAL PLAN (500-600 words):
-               - Comprehensive study design description with design rationale
-               - Detailed randomization methodology including stratification factors and block sizes
-               - Complete blinding procedures including emergency unblinding protocols
-               - Treatment allocation ratios with statistical and practical justification
-               - Detailed study timeline with specific periods:
-                 * Screening period duration and procedures
-                 * Treatment period with dose escalation/modification rules
-                 * Follow-up period with assessment schedule
-               - Complete visit schedule with specific timepoints and visit windows
-               - Dose modification guidelines with specific criteria and procedures
-               - Concomitant medication rules and washout periods
-               - Study discontinuation criteria and procedures
-
-            5. STUDY POPULATION & ELIGIBILITY (600-700 words):
-               - Detailed target population description with demographic characteristics
-               - Comprehensive inclusion criteria (minimum 10-15 criteria) including:
-                 * Specific age ranges with justification
-                 * Disease severity criteria with validated scales
-                 * Previous treatment requirements
-                 * Contraceptive requirements
-                 * Laboratory parameter requirements
-                 * Performance status criteria
-               - Detailed exclusion criteria (minimum 15-20 criteria) including:
-                 * Medical conditions and contraindications
-                 * Concomitant medication restrictions
-                 * Laboratory parameter exclusions
-                 * Previous therapy washout requirements
-                 * Pregnancy and reproductive considerations
-               - Permitted and prohibited concomitant medications with detailed lists
-               - Withdrawal criteria and procedures including safety considerations
-               - Screening procedures with specific assessments and timeline
-
-            6. INTERVENTIONS / TREATMENTS (500-600 words):
-               - Detailed investigational product description including formulation details
-               - Specific dosage regimens with exact mg amounts, frequency, and timing
-               - Detailed administration instructions including food requirements
-               - Drug packaging, labeling, and supply chain specifications
-               - Storage conditions, stability data, and expiration considerations
-               - Comprehensive dose modification guidelines with specific criteria:
-                 * Dose reduction algorithms
-                 * Dose escalation procedures if applicable
-                 * Safety stopping rules
-               - Treatment compliance monitoring procedures and accountability
-               - Comparator drug details if applicable including matching placebo specifications
-               - Drug dispensing and return procedures
-
-            7. ASSESSMENTS & PROCEDURES (600-700 words):
-               - Comprehensive schedule of assessments with detailed visit table
-               - Detailed screening procedures (typically 2-4 weeks) including:
-                 * Medical history and physical examination
-                 * Laboratory assessments (hematology, chemistry, serology)
-                 * Disease-specific assessments
-                 * Imaging studies if applicable
-               - Efficacy assessments with validated instruments and scoring methods
-               - Complete safety assessments including:
-                 * Vital signs and physical examinations
-                 * Comprehensive laboratory panels with normal ranges
-                 * ECG assessments and cardiac monitoring
-                 * Adverse event monitoring and grading scales
-               - Patient-reported outcomes with specific questionnaires and timing
-               - Biomarker and pharmacokinetic sampling schedules with specific timepoints
-               - Follow-up procedures including long-term safety assessments
-               - Data collection procedures and source document requirements
-
-            8. STATISTICAL CONSIDERATIONS & DATA ANALYSIS (500-600 words):
-               - Detailed sample size calculation with all assumptions:
-                 * Expected effect size with confidence intervals
-                 * Power calculation (typically 80-90%)
-                 * Significance level (typically 0.05)
-                 * Dropout rate assumptions
-               - Analysis populations with detailed definitions:
-                 * Intent-to-treat (ITT) population
-                 * Per-protocol (PP) population
-                 * Safety population
-               - Statistical methods for primary and secondary endpoints including:
-                 * Specific statistical tests (t-tests, chi-square, logistic regression)
-                 * Time-to-event analysis methods if applicable
-                 * Repeated measures analysis approaches
-               - Interim analysis plan with detailed stopping rules for efficacy and futility
-               - Missing data handling strategies including sensitivity analyses
-               - Multiplicity adjustments for multiple endpoints and comparisons
-               - Subgroup analysis plans including demographics and disease characteristics
-
-            9. OUTCOME ANALYSIS (400-500 words):
-               - Definition of treatment success with specific response criteria
-               - Efficacy analysis methodology with detailed statistical approaches
-               - Safety monitoring approach including safety run-in periods if applicable
-               - Adverse event reporting, classification, and causality assessment
-               - Risk-benefit assessment framework and criteria
-               - Data Safety Monitoring Board (DSMB) structure, responsibilities, and meeting schedule
-               - Quality assurance and monitoring plans
-               - Regulatory reporting requirements and timelines
-
-            10. REFERENCES & APPENDICES / SUPPORTING DOCUMENTATION (300-400 words):
-                - Key literature citations (minimum 20-25 references) including:
-                  * Disease epidemiology studies
-                  * Previous clinical trials in the indication
-                  * Regulatory guidance documents
-                  * Validation studies for assessment instruments
-                - Supplementary materials including:
-                  * Detailed schedule of assessments table
-                  * Study flow diagram
-                  * Laboratory reference ranges
-                  * Concomitant medication guidelines
-                - Regulatory guidance references including ICH guidelines and FDA/EMA guidance documents
-                - Protocol amendment history and version control information
-
-            ENHANCED PARAMETER INTEGRATION:
-            When specific trial design parameters are provided, incorporate them exactly and comprehensively:
-            
-            - If trial_phase is provided, ensure all sections reflect phase-appropriate depth and regulatory expectations
-            - If sample_size is specified, use it throughout with supporting power calculations
-            - If primary_endpoints are provided, use them exactly with detailed measurement methodology
-            - If inclusion_criteria and exclusion_criteria are provided, incorporate them verbatim and expand with additional standard criteria
-            - If statistical_power and significance_level are specified, use them in all calculations
-            - If route_of_administration and dosing_frequency are provided, detail exact administration procedures
-            - Reference the specific outcome_measurement_tool with validation data and scoring methodology
-
-            Include specific numerical values throughout:
-            - Exact dosing amounts (e.g., "15 mg administered orally once daily in the morning")
-            - Specific visit windows (e.g., "Week 4 visit: Day 28 ± 3 days")
-            - Laboratory parameter ranges (e.g., "ALT and AST < 2.5 × ULN")
-            - Statistical thresholds with confidence intervals (e.g., "95% CI")
-            - Detailed timeline specifications (e.g., "Screening period: up to 28 days")
-
-            Always reference comparable approved protocols when possible and cite established methodological frameworks relevant to the disease area and study phase.`
-          },
-          {
-            role: "user",
-            content: `Generate a highly detailed and comprehensive ${diseaseData.additional_parameters?.trial_phase || 'Phase 2'} Clinical Study Protocol EXECUTIVE SUMMARY for the treatment of ${diseaseData.disease_name}.
-
-            This EXECUTIVE SUMMARY must be EXTREMELY DETAILED (3,500-4,500 words minimum) and meet professional regulatory standards for FDA/EMA submission review.
-
-            TRIAL DESIGN PARAMETERS:
-            ${diseaseData.additional_parameters?.trial_phase ? `- Trial Phase: ${diseaseData.additional_parameters.trial_phase}` : ''}
-            ${diseaseData.additional_parameters?.trial_type ? `- Trial Type: ${diseaseData.additional_parameters.trial_type}` : ''}
-            ${diseaseData.additional_parameters?.randomization ? `- Randomization: ${diseaseData.additional_parameters.randomization}` : ''}
-            ${diseaseData.additional_parameters?.blinding ? `- Blinding: ${diseaseData.additional_parameters.blinding}` : ''}
-            ${diseaseData.additional_parameters?.control_group_type ? `- Control Group: ${diseaseData.additional_parameters.control_group_type}` : ''}
-
-            POPULATION SPECIFICATIONS:
-            ${diseaseData.additional_parameters?.sample_size ? `- Target Sample Size: ${diseaseData.additional_parameters.sample_size} patients` : ''}
-            ${diseaseData.additional_parameters?.min_age ? `- Minimum Age: ${diseaseData.additional_parameters.min_age} years` : ''}
-            ${diseaseData.additional_parameters?.max_age ? `- Maximum Age: ${diseaseData.additional_parameters.max_age} years` : ''}
-            ${diseaseData.additional_parameters?.gender ? `- Gender: ${diseaseData.additional_parameters.gender}` : ''}
-            ${diseaseData.additional_parameters?.population ? `- Target Population: ${diseaseData.additional_parameters.population}` : ''}
-
-            INTERVENTION DETAILS:
-            ${diseaseData.additional_parameters?.route_of_administration ? `- Route of Administration: ${diseaseData.additional_parameters.route_of_administration}` : ''}
-            ${diseaseData.additional_parameters?.dosing_frequency ? `- Dosing Frequency: ${diseaseData.additional_parameters.dosing_frequency}` : ''}
-            ${diseaseData.additional_parameters?.treatment_duration ? `- Treatment Duration: ${diseaseData.additional_parameters.treatment_duration}` : ''}
-            ${diseaseData.additional_parameters?.comparator_drug ? `- Comparator: ${diseaseData.additional_parameters.comparator_drug}` : ''}
-            ${diseaseData.additional_parameters?.drug_class ? `- Drug Class: ${diseaseData.additional_parameters.drug_class}` : ''}
-            ${diseaseData.additional_parameters?.mechanism ? `- Mechanism of Action: ${diseaseData.additional_parameters.mechanism}` : ''}
-
-            ENDPOINT SPECIFICATIONS:
-            ${diseaseData.additional_parameters?.primary_endpoints ? `- Primary Endpoints: ${diseaseData.additional_parameters.primary_endpoints}` : ''}
-            ${diseaseData.additional_parameters?.secondary_endpoints ? `- Secondary Endpoints: ${diseaseData.additional_parameters.secondary_endpoints}` : ''}
-            ${diseaseData.additional_parameters?.outcome_measurement_tool ? `- Outcome Measurement Tool: ${diseaseData.additional_parameters.outcome_measurement_tool}` : ''}
-
-            STATISTICAL PARAMETERS:
-            ${diseaseData.additional_parameters?.statistical_power ? `- Statistical Power: ${diseaseData.additional_parameters.statistical_power}%` : ''}
-            ${diseaseData.additional_parameters?.significance_level ? `- Significance Level (α): ${diseaseData.additional_parameters.significance_level}` : ''}
-            ${diseaseData.additional_parameters?.study_duration ? `- Total Study Duration: ${diseaseData.additional_parameters.study_duration}` : ''}
-
-            ELIGIBILITY CRITERIA:
-            ${diseaseData.additional_parameters?.inclusion_criteria ? `- Inclusion Criteria: ${diseaseData.additional_parameters.inclusion_criteria}` : ''}
-            ${diseaseData.additional_parameters?.exclusion_criteria ? `- Exclusion Criteria: ${diseaseData.additional_parameters.exclusion_criteria}` : ''}
-
-            ${diseaseData.additional_parameters?.clinical_info ? `ADDITIONAL CLINICAL INFORMATION: ${diseaseData.additional_parameters.clinical_info}` : ''}
-
-            MANDATORY REQUIREMENTS:
-            1. Generate EXACTLY 10 sections as specified in the system prompt with comprehensive detail
-            2. Each section must meet the minimum word count specified (total 3,500-4,500 words)
-            3. Incorporate ALL provided parameters exactly as specified throughout the document
-            4. Include specific dosing regimens, visit schedules, and numerical parameters
-            5. Reference specific clinical data, regulatory guidelines, and precedent protocols
-            6. Provide detailed statistical methodology and comprehensive power calculations
-            7. Include extensive eligibility criteria and comprehensive safety assessments
-            8. Use professional medical terminology and regulatory language throughout
-            9. Ensure the document is suitable for regulatory submission and industry peer review
-            10. Include specific visit windows, laboratory ranges, and procedural details
-
-            The executive summary must be extremely comprehensive and detailed while incorporating all provided trial design parameters to create a regulatory-compliant protocol suitable for FDA/EMA submission.`  
-          }
-        ],
-        temperature: 0.15, // Slightly lower for more consistent, professional output
-        max_tokens: 8000 // SIGNIFICANTLY INCREASED to allow for comprehensive content
-      }
-    );
-
-    return {
-      protocol_id: `prot-${Date.now()}`,
-      protocol: response.data.choices[0].message.content.trim()
-    };
-  } catch (error) {
-    console.error('Error in generateProtocol:', error.response?.data || error.message);
-    throw error;
-  }
-},
+      return {
+        protocol_id: `prot-${Date.now()}`,
+        protocol: response.data.choices[0].message.content.trim()
+      };
+    } catch (error) {
+      console.error('Error in generateProtocol:', error.response?.data || error.message);
+      throw error;
+    }
+  },
   
-  // ENHANCED: Generates CMC and Clinical sections for an IND submission with comprehensive parameter integration
+  // =============================================================================
+  // UNITED STATES DOCUMENTS
+  // =============================================================================
+  
+  /**
+   * US IND (Investigational New Drug) - Default/Original
+   */
   generateIndModule: async (diseaseData) => {
     try {
       const response = await openaiApi.post(
@@ -445,201 +155,26 @@ generateProtocol: async (diseaseData) => {
               content: `You are a Principal Investigator and Clinical Trial Design Expert with 25+ years of experience in pharmaceutical development.
               Your task is to generate a comprehensive, regulatory-compliant MAIN DOCUMENT for an Investigational New Drug (IND) application, focusing on the study design, CMC, and clinical sections. This document meets professional industry standards for submission to the FDA.
               
-              STRICT FORMATTING REQUIREMENTS:
-              - Format according to ICH E6(R2) Good Clinical Practice and FDA guidelines for IND submissions.
-              - The document MUST be structured EXACTLY into these sections with this numbering for the clinical part:
-                1. Intro / Background
-                2. Objectives / Hypotheses / Endpoints
-                3. Study Design & Sample Size
-                4. Populations & Baseline
-                5. Statistical Methods & Data Handling
-                6. Efficacy Analysis
-                7. Safety Analysis
-                8. Pharmacokinetic / Exploratory
-                9. Interim & Other Special Analyses
-                10. References & Appendices
-              - Format with appropriate document control elements (version control, dates, etc.)
-              - Use ALL CAPS for main numbered headings 
-              - Use Title Case for subheadings with appropriate numbering (e.g., 1.1, 1.1.1)
-              - DO NOT use markdown formatting (such as ## for headers or ** for emphasis)
-              - DO NOT use bullet points with * or - characters; use standard numbers or letters instead
-              - Absolutely NO markdown or special formatting characters in the output
-              - Use plain text with proper indentation and spacing only
+              The document MUST be structured EXACTLY into these sections:
+              CMC SECTION: (Chemistry, Manufacturing, and Controls)
+              CLINICAL SECTION: (numbered 1-10 with comprehensive clinical information)
               
-              ENHANCED GUIDANCE FOR COMPREHENSIVE PARAMETER INTEGRATION:
-              
-              When detailed trial parameters are provided, incorporate them systematically throughout both CMC and Clinical sections:
-              
-              CMC SECTION ENHANCEMENTS:
-              - If drug_formulation is specified, detail the exact formulation development rationale
-              - If route_of_administration is provided, include administration-specific formulation considerations
-              - If dosing_frequency is specified, incorporate into stability and manufacturing specifications
-              - Reference the specific trial_phase to determine appropriate CMC depth and regulatory expectations
-              
-              CLINICAL SECTION ENHANCED INTEGRATION:
-              
-              1. INTRO / BACKGROUND:
-                 - Justify the specified trial_phase in the development context
-                 - Reference the exact trial_type (Interventional/Observational/Registry) and its regulatory implications
-                 - Include population-specific background if age ranges or gender specified
-              
-              2. OBJECTIVES / HYPOTHESES / ENDPOINTS:
-                 - Use provided primary_endpoints and secondary_endpoints exactly as specified
-                 - Reference the outcome_measurement_tool methodology and validation
-                 - Align objectives with the specified trial_phase expectations
-              
-              3. STUDY DESIGN & SAMPLE SIZE:
-                 - Detail the exact trial_type design methodology
-                 - Specify randomization procedures if randomization = "Yes"
-                 - Include blinding methodology as specified
-                 - Use provided sample_size with power calculation based on statistical_power and significance_level
-                 - Detail control_group_type specifications and rationale
-              
-              4. POPULATIONS & BASELINE:
-                 - Incorporate exact age ranges from min_age and max_age
-                 - Specify gender requirements and stratification
-                 - Include provided inclusion_criteria and exclusion_criteria verbatim
-                 - Detail baseline characteristics expected for the target population
-              
-              5. STATISTICAL METHODS & DATA HANDLING:
-                 - Use specified statistical_power for sample size calculations
-                 - Incorporate significance_level (α) for hypothesis testing
-                 - Detail randomization methodology if specified
-                 - Include stratification factors (age, gender) if provided
-              
-              6. EFFICACY ANALYSIS:
-                 - Reference primary_endpoints analysis methodology
-                 - Detail outcome_measurement_tool scoring and interpretation
-                 - Include time points based on study_duration
-              
-              7. SAFETY ANALYSIS:
-                 - Consider route_of_administration specific safety monitoring
-                 - Include dosing_frequency related safety assessments
-                 - Reference drug_class specific safety considerations
-              
-              8. PHARMACOKINETIC / EXPLORATORY:
-                 - Detail PK sampling based on route_of_administration
-                 - Include dosing_frequency implications for PK analysis
-                 - Reference mechanism of action for PD endpoints
-              
-              GUIDANCE FOR IN-DEPTH IND CONTENT WITH PARAMETER INTEGRATION:
-              
-              CMC SECTION: (Chemistry, Manufacturing, and Controls) - Enhanced with provided parameters
-              
-              1. Drug Substance Description:
-                 - Enhanced specifications based on route_of_administration requirements
-                 - Stability considerations for dosing_frequency requirements
-                 - Manufacturing controls appropriate for trial_phase
-              
-              2. Drug Product Description:
-                 - Detailed formulation reflecting drug_formulation specifications
-                 - Container closure system appropriate for route_of_administration
-                 - Dosage form optimized for dosing_frequency
-              
-              3. Analytical Methods:
-                 - Methods appropriate for the specified trial_phase requirements
-                 - Route-specific analytical considerations
-              
-              4. Stability Data:
-                 - Storage conditions appropriate for dosing_frequency
-                 - Stability protocols for the specified study_duration
-              
-              CLINICAL SECTION (IND Focus - comprehensive parameter integration):
-              For each numbered section, incorporate provided parameters systematically:
-              
-              1. INTRO / BACKGROUND:
-                 - Disease overview with population-specific considerations (age/gender)
-                 - Development rationale for the specified trial_phase
-                 - Mechanism of action with route_of_administration rationale
-              
-              2. OBJECTIVES / HYPOTHESES / ENDPOINTS:
-                 - Primary objective using exact primary_endpoints provided
-                 - Secondary objectives incorporating secondary_endpoints
-                 - Endpoint methodology using outcome_measurement_tool specifications
-              
-              3. STUDY DESIGN & SAMPLE SIZE:
-                 - Detailed design reflecting trial_type specifications
-                 - Randomization methodology if randomization = "Yes"
-                 - Blinding procedures as specified
-                 - Sample size calculation using statistical_power and significance_level
-                 - Treatment duration reflecting study_duration
-              
-              4. POPULATIONS & BASELINE:
-                 - Exact age eligibility using min_age and max_age
-                 - Gender specifications as provided
-                 - Verbatim inclusion_criteria and exclusion_criteria
-                 - Target enrollment reflecting sample_size
-              
-              5. STATISTICAL METHODS & DATA HANDLING:
-                 - Power analysis using specified statistical_power
-                 - Alpha level set to significance_level
-                 - Analysis populations defined for trial_type
-              
-              Include relevant numerical values and specific methodologies based on all provided parameters.
-              Reference relevant FDA guidance documents for IND submissions and the specified trial_phase.
-              
-              Your response MUST contain these two clearly marked sections: "CMC SECTION:" and "CLINICAL SECTION:"
-              Place these section headers on separate lines before the content.`
+              Use plain text formatting only - NO MARKDOWN.
+              Incorporate ALL provided parameters systematically throughout both sections.`
             },
             {
               role: "user",
               content: `Generate a comprehensive, FDA-compliant MAIN DOCUMENT for an Investigational New Drug (IND) application for ${diseaseData.disease_name}.
 
-              TRIAL DESIGN SPECIFICATIONS:
-              ${diseaseData.additional_parameters?.trial_phase ? `- Trial Phase: ${diseaseData.additional_parameters.trial_phase}` : '- Trial Phase: Phase I/II (default)'}
-              ${diseaseData.additional_parameters?.trial_type ? `- Trial Type: ${diseaseData.additional_parameters.trial_type}` : ''}
-              ${diseaseData.additional_parameters?.randomization ? `- Randomization: ${diseaseData.additional_parameters.randomization}` : ''}
-              ${diseaseData.additional_parameters?.blinding ? `- Blinding: ${diseaseData.additional_parameters.blinding}` : ''}
-              ${diseaseData.additional_parameters?.control_group_type ? `- Control Group: ${diseaseData.additional_parameters.control_group_type}` : ''}
-
-              POPULATION & ELIGIBILITY PARAMETERS:
-              ${diseaseData.additional_parameters?.sample_size ? `- Target Sample Size: ${diseaseData.additional_parameters.sample_size} patients` : ''}
-              ${diseaseData.additional_parameters?.min_age ? `- Minimum Age: ${diseaseData.additional_parameters.min_age} years` : ''}
-              ${diseaseData.additional_parameters?.max_age ? `- Maximum Age: ${diseaseData.additional_parameters.max_age} years` : ''}
-              ${diseaseData.additional_parameters?.gender ? `- Gender: ${diseaseData.additional_parameters.gender}` : ''}
-              ${diseaseData.additional_parameters?.inclusion_criteria ? `- Inclusion Criteria: ${diseaseData.additional_parameters.inclusion_criteria}` : ''}
-              ${diseaseData.additional_parameters?.exclusion_criteria ? `- Exclusion Criteria: ${diseaseData.additional_parameters.exclusion_criteria}` : ''}
-
-              TREATMENT & DRUG SPECIFICATIONS:
-              ${diseaseData.additional_parameters?.drug_formulation ? `- Drug Formulation: ${diseaseData.additional_parameters.drug_formulation}` : ''}
-              ${diseaseData.additional_parameters?.route_of_administration ? `- Route of Administration: ${diseaseData.additional_parameters.route_of_administration}` : ''}
-              ${diseaseData.additional_parameters?.dosing_regimen ? `- Dosing Regimen: ${diseaseData.additional_parameters.dosing_regimen}` : ''}
-              ${diseaseData.additional_parameters?.dosing_frequency ? `- Dosing Frequency: ${diseaseData.additional_parameters.dosing_frequency}` : ''}
-              ${diseaseData.additional_parameters?.control_group ? `- Control Group: ${diseaseData.additional_parameters.control_group}` : ''}
-              ${diseaseData.additional_parameters?.drug_class ? `- Drug Class: ${diseaseData.additional_parameters.drug_class}` : ''}
-              ${diseaseData.additional_parameters?.mechanism ? `- Mechanism of Action: ${diseaseData.additional_parameters.mechanism}` : ''}
-
-              ENDPOINT & OUTCOME SPECIFICATIONS:
-              ${diseaseData.additional_parameters?.primary_endpoints ? `- Primary Endpoints: ${diseaseData.additional_parameters.primary_endpoints}` : ''}
-              ${diseaseData.additional_parameters?.secondary_endpoints ? `- Secondary Endpoints: ${diseaseData.additional_parameters.secondary_endpoints}` : ''}
-              ${diseaseData.additional_parameters?.outcome_measure_tool ? `- Outcome Measurement Tool: ${diseaseData.additional_parameters.outcome_measure_tool}` : ''}
-
-              STATISTICAL DESIGN PARAMETERS:
-              ${diseaseData.additional_parameters?.statistical_power ? `- Statistical Power: ${diseaseData.additional_parameters.statistical_power}%` : ''}
-              ${diseaseData.additional_parameters?.significance_level ? `- Significance Level (α): ${diseaseData.additional_parameters.significance_level}` : ''}
-              ${diseaseData.additional_parameters?.study_duration ? `- Study Duration: ${diseaseData.additional_parameters.study_duration}` : ''}
-
-              REGULATORY CONTEXT:
-              Country: ${diseaseData.additional_parameters?.country || 'USA'}
-              Document Type: ${diseaseData.additional_parameters?.document_type || 'IND'}
-
-              IMPORTANT REQUIREMENTS:
-              1. Generate a detailed CMC SECTION that incorporates drug_formulation and route_of_administration specifications
-              2. Generate a comprehensive CLINICAL SECTION following the exact 10-section structure
-              3. Incorporate ALL provided parameters exactly as specified throughout both sections
-              4. Use the exact sample_size, statistical_power, and significance_level in statistical calculations
-              5. Include verbatim inclusion_criteria and exclusion_criteria in Section 4
-              6. Reference the specific trial_phase and trial_type throughout the document
-              7. Detail the outcome_measurement_tool methodology in appropriate sections
-              8. Use plain text formatting only - NO MARKDOWN
-              9. Ensure CMC section reflects the specified formulation and administration route
-              10. Structure the clinical section to reflect whether this is Interventional, Observational, or Registry trial
+              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              ).filter(Boolean).join('\n')}
 
               This MAIN DOCUMENT must incorporate all enhanced parameters to create a comprehensive, parameter-specific IND suitable for FDA submission.`
             }
           ],
           temperature: 0.2,
-          max_tokens: 4000 // Max tokens for comprehensive output
+          max_tokens: 4000
         }
       );
 
@@ -664,17 +199,6 @@ generateProtocol: async (diseaseData) => {
         cmcSection = sections[0].replace(/CMC SECTION:/i, '').trim();
         clinicalSection = sections.length > 1 ? sections[1].trim() : '';
       }
-      if (!clinicalSection && fullResponse.toLowerCase().includes("clinical")) {
-         const clinicalContentIndex = fullResponse.toLowerCase().indexOf("clinical section:");
-         if (clinicalContentIndex !== -1) {
-            clinicalSection = fullResponse.substring(clinicalContentIndex + "clinical section:".length).trim();
-         } else {
-            const genericClinicalIndex = fullResponse.toLowerCase().indexOf("clinical");
-            if (genericClinicalIndex !== -1) {
-                 clinicalSection = fullResponse.substring(genericClinicalIndex).trim();
-            }
-         }
-      }
 
       return {
         cmc_section: cmcSection || "CMC section could not be extracted.",
@@ -685,8 +209,10 @@ generateProtocol: async (diseaseData) => {
       throw error;
     }
   },
-  
-  // Generates an NDA Summary
+
+  /**
+   * US NDA (New Drug Application)
+   */
   generateNDA: async (diseaseData) => {
     try {
       const response = await openaiApi.post(
@@ -698,65 +224,25 @@ generateProtocol: async (diseaseData) => {
               role: "system",
               content: `You are a senior regulatory affairs expert with 25+ years of experience preparing New Drug Applications (NDAs) for FDA submission.
               Your task is to generate a comprehensive, FDA-compliant NDA SUMMARY document. This document should highlight key information typically found in Module 2 (CTD Summaries) and relevant aspects of Module 5 (Clinical Study Reports) of an eCTD submission.
-              The document must be in clean, plain text format—NO markdown, symbols, or special characters.
-
-              STRICT FORMATTING REQUIREMENTS:
-              - Format according to FDA guidelines for NDA submissions, reflecting the Common Technical Document (CTD) structure.
-              - Focus on generating key summary sections of an NDA, structured similarly to CTD Module 2 and incorporating pivotal data from Module 5.
-              - Example High-Level Structure (adaptable based on CTD modules):
-                1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY
-                   1.1. Application Summary
-                   1.2. Proposed Labeling Highlights (Key sections of Prescribing Information)
-                2. OVERALL SUMMARY OF QUALITY (Based on CTD Module 2.3)
-                   2.1. Introduction to Quality
-                   2.2. Drug Substance Summary (Manufacture, Characterization, Control, Stability)
-                   2.3. Drug Product Summary (Description, Formulation, Manufacture, Control, Stability)
-                3. NONCLINICAL OVERVIEW AND SUMMARY (Based on CTD Modules 2.4 & 2.6)
-                   3.1. Nonclinical Overview
-                   3.2. Pharmacology Summary (Primary, Secondary, Safety Pharmacology)
-                   3.3. Pharmacokinetics Summary (Nonclinical - ADME)
-                   3.4. Toxicology Summary (Single-dose, Repeat-dose, Genotoxicity, Carcinogenicity, Reproductive Tox)
-                4. CLINICAL OVERVIEW AND SUMMARY (Based on CTD Modules 2.5 & 2.7)
-                   4.1. Clinical Overview (Product Development Rationale, Biopharmaceutics, Clinical Pharmacology - PK/PD, Immunogenicity)
-                   4.2. Summary of Clinical Efficacy (Pivotal studies, study designs, populations, primary/secondary endpoints, key results with statistical significance, subgroup analyses)
-                   4.3. Summary of Clinical Safety (Extent of exposure, AEs, deaths, SAEs, AEs of special interest, laboratory findings, vital signs, ECGs, overall safety assessment)
-                   4.4. Benefits and Risks Conclusions
-                5. KEY CLINICAL STUDY REPORT SUMMARIES (Brief highlights from pivotal Phase 3 trials from Module 5)
-                   5.1. Pivotal Study 1 (e.g., [Study Identifier]): Brief Design, Key Efficacy Results, Key Safety Findings
-                   5.2. Pivotal Study 2 (e.g., [Study Identifier]): Brief Design, Key Efficacy Results, Key Safety Findings
-              - Use ALL CAPS for main section headings.
-              - Use Title Case for subsection headings with appropriate numbering.
-              - DO NOT use markdown formatting. Provide clean plain text.
-
-              GUIDANCE FOR NDA SUMMARY CONTENT:
-              - Emphasize pivotal trial results supporting efficacy and safety for the proposed indication: ${diseaseData.disease_name}.
-              - Clearly articulate the drug's benefit-risk profile.
-              - Summarize pharmacology, pharmacokinetics (clinical and nonclinical), and toxicology for the drug class: ${diseaseData.additional_parameters.drug_class || 'N/A'}.
-              - Detail the quality aspects of the drug substance and drug product.
-              - Include proposed labeling concepts and how data support them.
-              - Reference specific data, p-values, effect sizes, and patient numbers from clinical trials.
-              - The focus is on a SUMMARY document, not the full detailed reports.
-              Your response MUST be a single, coherent document.
-              `
+              
+              Structure according to FDA guidelines for NDA submissions, reflecting the Common Technical Document (CTD) structure:
+              1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY
+              2. OVERALL SUMMARY OF QUALITY (Based on CTD Module 2.3)
+              3. NONCLINICAL OVERVIEW AND SUMMARY (Based on CTD Modules 2.4 & 2.6)
+              4. CLINICAL OVERVIEW AND SUMMARY (Based on CTD Modules 2.5 & 2.7)
+              5. KEY CLINICAL STUDY REPORT SUMMARIES
+              
+              Use plain text formatting only - NO MARKDOWN.`
             },
             {
               role: "user",
               content: `Generate a comprehensive NDA SUMMARY document for the treatment of ${diseaseData.disease_name}.
-              Drug Class: ${diseaseData.additional_parameters.drug_class || 'Not specified'}
-              Mechanism of Action: ${diseaseData.additional_parameters.mechanism || 'Not specified'}
-              Country for Submission: USA (NDA for FDA)
-              Document Type: ${diseaseData.additional_parameters.document_type || 'NDA Summary'}
-              Key Clinical Trial Data Summary (assume successful Phase 3 data for pivotal trials): ${diseaseData.additional_parameters.clinical_info || 'Pivotal Phase 3 trials demonstrated statistically significant and clinically meaningful efficacy with a manageable safety profile.'}
+              
+              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              ).filter(Boolean).join('\n')}
 
-              REQUIREMENTS:
-              1. This NDA SUMMARY must be EXTREMELY DETAILED and meet FDA expectations for such a summary document, focusing on Module 2 content.
-              2. Include comprehensive details across all relevant CTD Module 2 summary sections and key findings from Module 5.
-              3. Follow EXACTLY the section structure and formatting requirements provided in the system prompt.
-              4. Include specific (even if illustrative) numerical values: p-values, confidence intervals, effect sizes, patient numbers, key safety event rates.
-              5. Use plain text formatting only. NO MARKDOWN.
-              6. The document should be structured as a cohesive NDA Summary, suitable for regulatory review.
-              Output only the generated document content.
-              `
+              This NDA SUMMARY must be EXTREMELY DETAILED and meet FDA expectations for Module 2 content with specific numerical values and regulatory compliance.`
             }
           ],
           temperature: 0.2,
@@ -772,7 +258,340 @@ generateProtocol: async (diseaseData) => {
     }
   },
 
-  // Generates key sections for a European CTA
+  /**
+   * US BLA (Biologics License Application)
+   */
+  generateBLA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with 25+ years of experience preparing Biologics License Applications (BLAs) for FDA submission.
+            Your task is to generate a comprehensive BLA SUMMARY document, analogous to an NDA summary but with a focus on biologics-specific considerations.
+
+            KEY BLA-SPECIFIC CONSIDERATIONS:
+            - Manufacturing process for biologics (cell lines, fermentation/culture, purification)
+            - Characterization of the biologic (structure, purity, potency, heterogeneity, immunogenicity)
+            - Comparability assessments (if manufacturing changes occurred)
+            - Stability of the biologic
+            - Adventitious agent safety
+            - Immunogenicity assessment and impact
+
+            STRUCTURE:
+            1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY
+            2. OVERALL SUMMARY OF QUALITY (BIOLOGICS FOCUS)
+            3. NONCLINICAL OVERVIEW AND SUMMARY
+            4. CLINICAL OVERVIEW AND SUMMARY
+            5. KEY CLINICAL STUDY REPORT SUMMARIES
+            
+            Use plain text formatting only - NO MARKDOWN.
+            Reference the Public Health Service Act where relevant for biologics.`
+          },
+          {
+            role: "user",
+            content: `Generate a comprehensive BLA SUMMARY document for a biologic treatment for ${diseaseData.disease_name}.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This BLA SUMMARY must be DETAILED and meet FDA expectations for a biologic, emphasizing biologics-specific aspects (manufacturing, characterization, immunogenicity, comparability).`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateBLA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // CANADA DOCUMENTS
+  // =============================================================================
+
+  /**
+   * Canadian Clinical Trial Application (Health Canada)
+   */
+  generateCTA_CA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Canadian Clinical Trial Applications for submission to Health Canada.
+            Your task is to generate key sections of a Canadian CTA, following Health Canada requirements and guidelines.
+
+            STRUCTURE FOR CANADIAN CTA:
+            1. APPLICATION SUMMARY
+               1.1. Trial Information (Title, Phase, Health Canada Control Number if available)
+               1.2. Sponsor and Principal Investigator Information
+               1.3. Study Overview
+            2. INVESTIGATIONAL PRODUCT INFORMATION
+               2.1. Product Description and Classification
+               2.2. Quality Information Summary (Manufacturing, Specifications)
+               2.3. Non-clinical Summary
+               2.4. Previous Clinical Experience
+            3. CLINICAL TRIAL PROTOCOL SYNOPSIS
+               3.1. Study Objectives and Design
+               3.2. Patient Population and Eligibility
+               3.3. Treatment Plan and Duration
+               3.4. Efficacy and Safety Assessments
+            4. INVESTIGATOR QUALIFICATIONS AND SITE INFORMATION
+            5. ETHICS AND REGULATORY COMPLIANCE
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Health Canada guidelines and requirements where appropriate.`
+          },
+          {
+            role: "user",
+            content: `Generate a comprehensive Canadian Clinical Trial Application (Health Canada) for ${diseaseData.disease_name}.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This CTA must meet Health Canada requirements and include all necessary sections for Canadian clinical trial authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateCTA_CA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Canadian New Drug Submission (NDS)
+   */
+  generateNDS: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with extensive experience in preparing New Drug Submissions (NDS) for Health Canada.
+            Your task is to generate a comprehensive NDS SUMMARY document following Canadian regulatory requirements.
+
+            STRUCTURE FOR CANADIAN NDS:
+            1. ADMINISTRATIVE INFORMATION AND PRODUCT MONOGRAPH SUMMARY
+               1.1. Application Overview
+               1.2. Proposed Product Monograph Highlights
+            2. QUALITY INFORMATION SUMMARY
+               2.1. Drug Substance Summary
+               2.2. Drug Product Summary
+               2.3. Canadian Manufacturing and Quality Considerations
+            3. NON-CLINICAL INFORMATION SUMMARY
+               3.1. Pharmacology and Pharmacokinetics Summary
+               3.2. Toxicology Summary
+            4. CLINICAL INFORMATION SUMMARY
+               4.1. Clinical Overview
+               4.2. Clinical Efficacy Summary
+               4.3. Clinical Safety Summary
+               4.4. Benefit-Risk Assessment for Canadian Population
+            5. RISK MANAGEMENT SUMMARY
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Health Canada guidance documents and Canadian regulatory framework.`
+          },
+          {
+            role: "user",
+            content: `Generate a comprehensive New Drug Submission (NDS) summary for Health Canada approval of ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This NDS summary must meet Health Canada expectations and demonstrate compliance with Canadian regulatory requirements.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateNDS:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Canadian Notice of Compliance (NOC)
+   */
+  generateNOC: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Canadian Notice of Compliance (NOC) applications for Health Canada.
+            Your task is to generate key documentation supporting an NOC application.
+
+            STRUCTURE FOR NOC SUPPORTING DOCUMENTATION:
+            1. NOC APPLICATION OVERVIEW
+               1.1. Product Information
+               1.2. Authorization Request Summary
+               1.3. Regulatory Pathway (New Drug Submission, Abbreviated New Drug Submission, etc.)
+            2. QUALITY DOCUMENTATION SUMMARY
+               2.1. Product Quality Profile
+               2.2. Manufacturing Authorization Summary
+               2.3. Specifications and Testing Summary
+            3. CLINICAL DATA SUMMARY (if applicable)
+               3.1. Efficacy Data Summary
+               3.2. Safety Data Summary
+               3.3. Comparative Studies (if biosimilar or generic)
+            4. LABELING AND PRODUCT MONOGRAPH
+               4.1. Proposed Canadian Product Monograph
+               4.2. Patient Information Summary
+            5. POST-MARKET COMMITMENTS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Focus on Canadian marketing authorization requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate Notice of Compliance (NOC) supporting documentation for Canadian marketing authorization of ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This NOC documentation must support Canadian marketing authorization and demonstrate regulatory compliance.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateNOC:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // MEXICO DOCUMENTS
+  // =============================================================================
+
+  /**
+   * COFEPRIS Clinical Trial Authorization
+   */
+  generateCOFEPRIS_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in COFEPRIS (Mexican health authority) clinical trial authorizations.
+            Your task is to generate key sections for a COFEPRIS Clinical Trial Authorization application.
+
+            STRUCTURE FOR COFEPRIS CTA:
+            1. INFORMACION ADMINISTRATIVA (Administrative Information)
+               1.1. Información del Estudio (Study Information)
+               1.2. Patrocinador y Investigador Principal (Sponsor and Principal Investigator)
+               1.3. Sitios de Investigación en México (Mexican Investigation Sites)
+            2. INFORMACION DEL PRODUCTO INVESTIGACIONAL
+               2.1. Descripción del Producto (Product Description)
+               2.2. Información de Calidad (Quality Information)
+               2.3. Información No-Clínica (Non-clinical Information)
+               2.4. Experiencia Clínica Previa (Previous Clinical Experience)
+            3. PROTOCOLO DE INVESTIGACION
+               3.1. Objetivos y Diseño del Estudio (Study Objectives and Design)
+               3.2. Población y Criterios de Selección (Population and Selection Criteria)
+               3.3. Plan de Tratamiento (Treatment Plan)
+               3.4. Evaluaciones de Eficacia y Seguridad (Efficacy and Safety Evaluations)
+            4. CONSIDERACIONES ETICAS Y REGULATORIAS MEXICANAS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Mexican regulatory requirements and COFEPRIS guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a COFEPRIS Clinical Trial Authorization application for ${diseaseData.disease_name} research in Mexico.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This application must meet COFEPRIS requirements for clinical trial authorization in Mexico.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateCOFEPRIS_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * COFEPRIS New Drug Registration
+   */
+  generateCOFEPRIS_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in COFEPRIS new drug registrations for the Mexican market.
+            Your task is to generate a comprehensive summary for COFEPRIS new drug registration.
+
+            STRUCTURE FOR COFEPRIS NEW DRUG REGISTRATION:
+            1. INFORMACION ADMINISTRATIVA Y ETIQUETADO
+               1.1. Resumen de la Solicitud (Application Summary)
+               1.2. Etiquetado Propuesto (Proposed Labeling)
+            2. INFORMACION DE CALIDAD
+               2.1. Sustancia Activa (Active Substance)
+               2.2. Producto Terminado (Finished Product)
+               2.3. Manufactura en México o Importación (Mexican Manufacturing or Import)
+            3. INFORMACION NO-CLINICA
+               3.1. Farmacología y Farmacocinética
+               3.2. Toxicología
+            4. INFORMACION CLINICA
+               4.1. Resumen de Eficacia Clínica
+               4.2. Resumen de Seguridad Clínica
+               4.3. Evaluación Beneficio-Riesgo para Población Mexicana
+            5. CONSIDERACIONES ESPECIALES PARA MEXICO
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Mexican regulatory framework and COFEPRIS requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate a COFEPRIS New Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Mexico.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This registration summary must meet COFEPRIS requirements for Mexican marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateCOFEPRIS_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // EUROPEAN UNION DOCUMENTS
+  // =============================================================================
+
+  /**
+   * EU CTA (Clinical Trial Application)
+   */
   generateCTA: async (diseaseData) => {
     try {
       const response = await openaiApi.post(
@@ -784,51 +603,33 @@ generateProtocol: async (diseaseData) => {
               role: "system",
               content: `You are a regulatory affairs expert specializing in European Clinical Trial Applications (CTAs) under the EU Clinical Trials Regulation (CTR).
               Your task is to generate key sections of a CTA, focusing on Part I (dossier related to the investigational medicinal product - IMP - and the trial itself). This content should be suitable for inclusion in a CTIS submission.
-              The document must be in clean, plain text format—NO markdown, symbols, or special characters.
 
               STRICT FORMATTING REQUIREMENTS:
               - Format according to EU CTR requirements for CTA submissions via CTIS.
               - Focus on generating content for key sections of the CTA dossier, such as:
-                A. COVER LETTER AND APPLICATION FORM HIGHLIGHTS (e.g., trial title, EudraCT number if transitional, key contacts, list of MS concerned)
-                B. PROTOCOL SUMMARY (Key elements: title, objectives, design, population, endpoints, IMP dosage, duration. Not the full protocol.)
-                C. INVESTIGATOR'S BROCHURE (IB) SUMMARY (Key preclinical and clinical findings, risk assessment. Not the full IB.)
+                A. COVER LETTER AND APPLICATION FORM HIGHLIGHTS
+                B. PROTOCOL SUMMARY
+                C. INVESTIGATOR'S BROCHURE (IB) SUMMARY
                 D. GMP COMPLIANCE AND IMPD (Investigational Medicinal Product Dossier) - KEY SUMMARIES
-                   D.1. IMP Quality Data Summary (IMPD-Q like summary: brief description of substance, product, placebo, manufacturing site(s) and QP certification, stability highlights)
-                   D.2. IMP Non-Clinical Data Summary (IMPD-S like summary: key pharmacology, toxicology findings relevant to human safety)
-                   D.3. IMP Clinical Data Summary (Previous human experience, if any, relevant to the proposed trial)
-                E. AUXILIARY MEDICINAL PRODUCTS (if any, brief description and justification)
-                F. SCIENTIFIC ADVICE AND PIP (Pediatric Investigation Plan) - (Summary of relevant advice or PIP status)
-                G. MANUFACTURING AND IMPORTATION AUTHORIZATIONS (Statement of MIA holder for IMP release in EU)
+                   D.1. IMP Quality Data Summary
+                   D.2. IMP Non-Clinical Data Summary
+                   D.3. IMP Clinical Data Summary
+                E. AUXILIARY MEDICINAL PRODUCTS
+                F. SCIENTIFIC ADVICE AND PIP
+                G. MANUFACTURING AND IMPORTATION AUTHORIZATIONS
               - Use ALL CAPS for main section headings.
               - Use Title Case for subsection headings with appropriate lettering/numbering.
-              - DO NOT use markdown formatting. Provide clean plain text.
-
-              GUIDANCE FOR CTA CONTENT:
-              - The IMPD-Q summary (D.1) should briefly cover drug substance, drug product, placebo (if used), manufacturing, and stability highlights sufficient for a CTA.
-              - The IMPD-S/P summary (D.2, D.3) should concisely present non-clinical and any prior clinical findings relevant to the trial.
-              - For ${diseaseData.disease_name}, ensure the summaries align with typical requirements for a trial in this indication in the EU.
-              - This is about generating KEY SECTIONS/SUMMARIES, not the entirety of all documents. The full documents would be attached in CTIS.
-              Your response MUST be a single, coherent document representing these key CTA section summaries.
-              `
+              - DO NOT use markdown formatting. Provide clean plain text.`
             },
             {
               role: "user",
               content: `Generate key section summaries for a European Clinical Trial Application (CTA) for a trial on ${diseaseData.disease_name}.
-              Drug Class: ${diseaseData.additional_parameters.drug_class || 'Not specified'}
-              Mechanism of Action: ${diseaseData.additional_parameters.mechanism || 'Not specified'}
-              Target EU Countries (for context): ${diseaseData.additional_parameters.country || 'Germany, France, Spain'}
-              Trial Phase (for context): ${diseaseData.additional_parameters.clinical_info || 'Phase II'}
-              Document Type: ${diseaseData.additional_parameters.document_type || 'CTA Summary'}
+              
+              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              ).filter(Boolean).join('\n')}
 
-
-              REQUIREMENTS:
-              1. Generate content for the key CTA section summaries outlined in the system prompt, especially protocol, IB, and IMPD summaries.
-              2. The content must be detailed enough for a CTA summary and meet EU CTR expectations for these sections.
-              3. Follow EXACTLY the section structure and formatting requirements.
-              4. Use plain text formatting only. NO MARKDOWN.
-              5. Focus on IMP-related information (Quality, Non-clinical, Clinical summaries) and trial essentials.
-              Output only the generated document content.
-              `
+              The content must be detailed enough for a CTA summary and meet EU CTR expectations for these sections.`
             }
           ],
           temperature: 0.2,
@@ -844,7 +645,9 @@ generateProtocol: async (diseaseData) => {
     }
   },
 
-  // Generates an MAA Summary
+  /**
+   * EU MAA (Marketing Authorization Application)
+   */
   generateMAA: async (diseaseData) => {
     try {
       const response = await openaiApi.post(
@@ -856,64 +659,28 @@ generateProtocol: async (diseaseData) => {
               role: "system",
               content: `You are a senior regulatory affairs expert with extensive experience in preparing Marketing Authorisation Applications (MAAs) for submission to the European Medicines Agency (EMA).
               Your task is to generate a comprehensive MAA SUMMARY document, mirroring the structure and content expectations of the Common Technical Document (CTD) Modules 2 (Summaries) and key highlights from Module 5 (Clinical Study Reports).
-              The document must be in clean, plain text format—NO markdown, symbols, or special characters.
 
               STRICT FORMATTING REQUIREMENTS:
               - Format according to EMA guidelines for MAA submissions, reflecting the CTD structure.
               - Focus on generating key summary sections of an MAA:
                 1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY (SmPC Highlights)
-                   1.1. Application Overview (Product name, indication, applicant)
-                   1.2. Summary of Product Characteristics (SmPC) - Key Sections Summary (e.g., 4.1 Therapeutic indications, 4.2 Posology, 4.3 Contraindications, 4.4 Special warnings, 4.8 Undesirable effects, 5.1 Pharmacodynamic properties)
                 2. QUALITY OVERALL SUMMARY (QOS - CTD Module 2.3)
-                   2.1. Introduction to Quality
-                   2.2. Drug Substance (S) Summary (Manufacture, Characterisation, Control, Stability)
-                   2.3. Drug Product (P) Summary (Description, Formulation, Manufacture, Control, Stability)
                 3. NON-CLINICAL OVERVIEW AND WRITTEN SUMMARIES (CTD Modules 2.4 & 2.6)
-                   3.1. Non-Clinical Overview
-                   3.2. Pharmacology Written Summary (Primary, Secondary, Safety Pharmacology)
-                   3.3. Pharmacokinetics Written Summary (Non-Clinical - ADME)
-                   3.4. Toxicology Written Summary (Single-dose, Repeat-dose, Genotoxicity, Carcinogenicity, Reproductive Tox)
                 4. CLINICAL OVERVIEW AND SUMMARY OF CLINICAL EFFICACY & SAFETY (CTD Modules 2.5 & 2.7)
-                   4.1. Clinical Overview (Product Development Rationale, Clinical Pharmacology, Biopharmaceutics, PK/PD)
-                   4.2. Summary of Clinical Efficacy (Pivotal studies, study designs, populations, primary/secondary endpoints, key results with statistical significance, subgroup analyses, discussion of clinical relevance)
-                   4.3. Summary of Clinical Safety (Patient exposure, AEs, SAEs, specific safety findings, risk management highlights, safety in special populations)
-                   4.4. Benefit-Risk Assessment (Clear articulation of benefits vs. risks)
-                5. PIVOTAL CLINICAL STUDY REPORT SUMMARIES (Key findings from pivotal Phase 3 trials - Module 5 highlights)
-                   5.1. Pivotal Efficacy/Safety Study 1 ([Study ID]): Brief Design, Population, Key Endpoints, Efficacy Results, Safety Results
-                   5.2. Pivotal Efficacy/Safety Study 2 ([Study ID]): Brief Design, Population, Key Endpoints, Efficacy Results, Safety Results
+                5. PIVOTAL CLINICAL STUDY REPORT SUMMARIES
               - Use ALL CAPS for main section headings.
               - Use Title Case for subsection headings with appropriate numbering.
-              - DO NOT use markdown formatting. Provide clean plain text.
-
-              GUIDANCE FOR MAA SUMMARY CONTENT:
-              - Clearly demonstrate Positive Benefit-Risk Balance for ${diseaseData.disease_name}.
-              - Summarize pivotal clinical trial data (efficacy and safety) for the proposed indication.
-              - Detail quality, non-clinical pharmacology, PK, and toxicology for drug class: ${diseaseData.additional_parameters.drug_class || 'N/A'}.
-              - Articulate how the SmPC is supported by the data.
-              - Include information on Risk Management Plan (RMP) highlights if applicable.
-              - Ensure the summary is tailored to European regulatory expectations.
-              Your response MUST be a single, coherent document.
-              `
+              - DO NOT use markdown formatting. Provide clean plain text.`
             },
             {
               role: "user",
               content: `Generate a comprehensive MAA SUMMARY document for the treatment of ${diseaseData.disease_name}, for submission to the EMA.
-              Drug Class: ${diseaseData.additional_parameters.drug_class || 'Not specified'}
-              Mechanism of Action: ${diseaseData.additional_parameters.mechanism || 'Not specified'}
-              Proposed Indication: Treatment of ${diseaseData.disease_name}
-              Country for Submission: European Union (MAA for EMA)
-              Document Type: ${diseaseData.additional_parameters.document_type || 'MAA Summary'}
-              Key Clinical Trial Data Summary (assume robust, positive Phase 3 data): ${diseaseData.additional_parameters.clinical_info || 'Pivotal Phase 3 trials met primary and key secondary endpoints with statistical significance and clinical relevance. Safety profile was acceptable and consistent with the drug class.'}
+              
+              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              ).filter(Boolean).join('\n')}
 
-              REQUIREMENTS:
-              1. This MAA SUMMARY must be EXTREMELY DETAILED and meet EMA CTD standards for summary documents (Module 2 focus).
-              2. Include comprehensive details for all relevant CTD Module 2 summaries and pivotal Module 5 findings.
-              3. Follow EXACTLY the section structure and formatting requirements.
-              4. Include specific (even if illustrative) numerical data: efficacy outcomes (e.g. mean change, response rates), p-values, confidence intervals, safety event rates, patient numbers.
-              5. Use plain text formatting only. NO MARKDOWN.
-              6. The document should be a cohesive MAA Summary.
-              Output only the generated document content.
-              `
+              This MAA SUMMARY must be EXTREMELY DETAILED and meet EMA CTD standards for summary documents (Module 2 focus).`
             }
           ],
           temperature: 0.2,
@@ -929,7 +696,9 @@ generateProtocol: async (diseaseData) => {
     }
   },
 
-  // Generates an IMPD (Investigational Medicinal Product Dossier)
+  /**
+   * EU IMPD (Investigational Medicinal Product Dossier)
+   */
   generateIMPD: async (diseaseData) => {
     try {
       const response = await openaiApi.post(
@@ -940,66 +709,28 @@ generateProtocol: async (diseaseData) => {
             {
               role: "system",
               content: `You are a regulatory expert specializing in the preparation of Investigational Medicinal Product Dossiers (IMPDs) for European clinical trial submissions.
-              Your task is to generate a well-structured IMPD, focusing on Quality (IMPD-Q) and relevant summaries for Safety/Efficacy (IMPD-S/E if simplified IMPD is requested or for context).
-              The document must be in clean, plain text format—NO markdown, symbols, or special characters.
+              Your task is to generate a well-structured IMPD, focusing on Quality (IMPD-Q) and relevant summaries for Safety/Efficacy (IMPD-S/E).
 
-              STRICT FORMATTING REQUIREMENTS (IMPD-Q focus):
-              - Structure based on EMA guidelines for IMPD Quality section.
-              - Key Sections for IMPD-Q:
-                1. INTRODUCTION (Brief overview of the IMP, its intended use in the trial for ${diseaseData.disease_name}, and dosage form: ${diseaseData.additional_parameters.clinical_info || 'Not specified'})
-                2. DRUG SUBSTANCE (S)
-                   2.1. General Information (Nomenclature, CAS, structure, general properties)
-                   2.2. Manufacture (Manufacturer(s), brief description of manufacturing process and controls)
-                   2.3. Characterisation (Elucidation of structure and other characteristics, impurities summary)
-                   2.4. Control of Drug Substance (Specifications table, brief description of analytical procedures and validation, batch analyses summary)
-                   2.5. Reference Standards or Materials
-                   2.6. Container Closure System for Drug Substance
-                   2.7. Stability (Summary of stability studies, conclusions, proposed re-test period)
-                3. DRUG PRODUCT (P)
-                   3.1. Description and Composition (Description of dosage form, composition table with function of excipients)
-                   3.2. Pharmaceutical Development (Brief summary of formulation development, compatibility with container closure)
-                   3.3. Manufacture (Manufacturer(s), brief description of manufacturing process and controls, process validation summary)
-                   3.4. Control of Excipients (Specifications for critical excipients)
-                   3.5. Control of Drug Product (Specifications table, brief description of analytical procedures and validation, batch analyses summary)
-                   3.6. Reference Standards or Materials
-                   3.7. Container Closure System for Drug Product
-                   3.8. Stability (Summary of stability studies, conclusions, proposed shelf-life)
-                4. PLACEBO (if applicable - structure similar to Drug Product, detailing composition and controls)
-                5. APPENDICES (List of potential appendices, e.g., Facilities and Equipment, Adventitious Agents Safety, Novel Excipients)
-              (Optional Brief Summaries for IMPD-S and IMPD-E, if this is for a simplified IMPD or context requires it):
-                6. NON-CLINICAL SUMMARY (IMPD-S) (Brief overview of key non-clinical pharmacology, PK, toxicology studies. Reference to IB.)
-                7. CLINICAL SUMMARY (IMPD-E) (Brief overview of any previous human experience, including PK, PD, efficacy, safety. Reference to IB.)
-              - Use ALL CAPS for main section headings.
-              - Use Title Case for subsection headings with appropriate numbering (e.g., 2.1, 2.1.1).
-              - DO NOT use markdown formatting. Provide clean plain text.
-
-              GUIDANCE FOR IMPD CONTENT:
-              - The IMPD-Q section must be detailed, covering all aspects from drug substance to finished product, including manufacturing, controls, and stability, appropriate for the trial phase: ${diseaseData.additional_parameters.clinical_info || 'Phase I/II'}.
-              - For ${diseaseData.disease_name}, ensure details are consistent with an IMP for this type of condition.
-              - If providing IMPD-S/E summaries, these should be brief and reference the full IB or other relevant documents.
-              Your response MUST be a single, coherent document representing the IMPD.
-              `
+              STRUCTURE FOR IMPD:
+              1. INTRODUCTION
+              2. DRUG SUBSTANCE (S)
+              3. DRUG PRODUCT (P)
+              4. PLACEBO (if applicable)
+              5. APPENDICES
+              6. NON-CLINICAL SUMMARY (IMPD-S)
+              7. CLINICAL SUMMARY (IMPD-E)
+              
+              Use plain text formatting only - NO MARKDOWN.`
             },
             {
               role: "user",
-              content: `Generate an Investigational Medicinal Product Dossier (IMPD) for a clinical trial concerning ${diseaseData.disease_name}. Focus primarily on the IMPD-Quality (IMPD-Q) section.
-              Drug Class: ${diseaseData.additional_parameters.drug_class || 'Not specified'}
-              Mechanism of Action: ${diseaseData.additional_parameters.mechanism || 'Not specified'}
-              Dosage Form (for context): ${diseaseData.additional_parameters.clinical_info || 'Oral tablet'}
-              Trial Phase (for context): ${diseaseData.additional_parameters.clinical_info || 'Phase I/II'}
-              Country for Submission: ${diseaseData.additional_parameters.country || 'European Union'}
-              Document Type: ${diseaseData.additional_parameters.document_type || 'IMPD'}
+              content: `Generate an Investigational Medicinal Product Dossier (IMPD) for a clinical trial concerning ${diseaseData.disease_name}.
+              
+              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              ).filter(Boolean).join('\n')}
 
-
-              REQUIREMENTS:
-              1. Generate a detailed IMPD-Q section as outlined in the system prompt. Include illustrative details for specifications (e.g., Appearance: White crystalline powder; Assay: 98.0-102.0%).
-              2. Include specific (even if illustrative) details for manufacturing, controls, specifications, and stability.
-              3. If brief IMPD-S (Non-clinical Summary) and IMPD-E (Clinical Summary - previous human experience) sections are appropriate for context, include them concisely at the end.
-              4. Follow EXACTLY the section structure and formatting requirements.
-              5. Use plain text formatting only. NO MARKDOWN.
-              6. The document should be a cohesive IMPD.
-              Output only the generated document content.
-              `
+              Generate a detailed IMPD-Q section with specific details for manufacturing, controls, specifications, and stability.`
             }
           ],
           temperature: 0.2,
@@ -1015,82 +746,450 @@ generateProtocol: async (diseaseData) => {
     }
   },
 
-  // New specific document generators:
+  // =============================================================================
+  // UNITED KINGDOM DOCUMENTS
+  // =============================================================================
 
-  generateBLA: async (diseaseData) => {
+  /**
+   * UK Clinical Trial Authorisation (MHRA)
+   */
+  generateCTA_UK: async (diseaseData) => {
     try {
       const response = await openaiApi.post('chat/completions', {
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: `You are a senior regulatory affairs expert with 25+ years of experience preparing Biologics License Applications (BLAs) for FDA submission.
-            Your task is to generate a comprehensive BLA SUMMARY document, analogous to an NDA summary but with a focus on biologics-specific considerations. This document should highlight key information from CTD Modules 2 and 5.
-            The document must be in clean, plain text format—NO markdown.
+            content: `You are a regulatory affairs expert specializing in UK Clinical Trial Authorisations for submission to the MHRA post-Brexit.
+            Your task is to generate key sections for a UK CTA application.
 
-            KEY BLA-SPECIFIC CONSIDERATIONS:
-            - Manufacturing process for biologics (cell lines, fermentation/culture, purification).
-            - Characterization of the biologic (structure, purity, potency, heterogeneity, immunogenicity).
-            - Comparability assessments (if manufacturing changes occurred).
-            - Stability of the biologic.
-            - Adventitious agent safety.
-            - Immunogenicity assessment and impact.
+            STRUCTURE FOR UK CTA:
+            1. APPLICATION OVERVIEW
+               1.1. Trial Information (Title, EudraCT number if transitional, MHRA reference)
+               1.2. Sponsor and Principal Investigator Information
+               1.3. Study Overview and UK-specific considerations
+            2. INVESTIGATIONAL MEDICINAL PRODUCT INFORMATION
+               2.1. Product Description and Classification
+               2.2. Quality Information Summary (UK GMP compliance)
+               2.3. Non-clinical Summary
+               2.4. Previous Clinical Experience
+            3. CLINICAL TRIAL PROTOCOL SYNOPSIS (UK-FOCUSED)
+               3.1. Study Objectives and Design
+               3.2. UK Patient Population and Eligibility
+               3.3. Treatment Plan and Duration
+               3.4. Efficacy and Safety Assessments
+            4. UK INVESTIGATOR QUALIFICATIONS AND SITE INFORMATION
+            5. MHRA AND ETHICS COMPLIANCE
 
-            STRUCTURE (similar to NDA summary, with biologics emphasis):
-            1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY
-               1.1. Application Summary (Product name, indication, applicant)
-               1.2. Proposed Labeling Highlights (Key sections of Prescribing Information, emphasizing biologics aspects like immunogenicity warnings)
-            2. OVERALL SUMMARY OF QUALITY (CTD Module 2.3 - BIOLOGICS FOCUS)
-               2.1. Introduction to Quality of the Biologic
-               2.2. Drug Substance (Active Biological Substance) Summary (Manufacture, Characterization, Control, Stability, Comparability)
-               2.3. Drug Product (Finished Biological Product) Summary (Description, Formulation, Manufacture, Control, Stability, Container Closure, Delivery Device if applicable)
-            3. NONCLINICAL OVERVIEW AND SUMMARY (CTD Modules 2.4 & 2.6)
-               3.1. Nonclinical Overview
-               3.2. Pharmacology Summary (Primary, Secondary, Safety Pharmacology)
-               3.3. Pharmacokinetics Summary (Nonclinical - ADME, immunogenicity)
-               3.4. Toxicology Summary (including immunotoxicology)
-            4. CLINICAL OVERVIEW AND SUMMARY (CTD Modules 2.5 & 2.7)
-               4.1. Clinical Overview (Product Development Rationale, Clinical Pharmacology - PK/PD, Immunogenicity)
-               4.2. Summary of Clinical Efficacy (Pivotal studies, study designs, populations, primary/secondary endpoints, key results with statistical significance, subgroup analyses)
-               4.3. Summary of Clinical Safety (Exposure, AEs, SAEs, immunogenicity-related events, infusion reactions, overall safety assessment)
-               4.4. Benefits and Risks Conclusions
-            5. KEY CLINICAL STUDY REPORT SUMMARIES (Brief highlights from pivotal Phase 3 trials)
-            
-            Use ALL CAPS for main section headings. Use Title Case for subsections. Provide clean plain text.
-            Focus on ${diseaseData.disease_name} and drug class ${diseaseData.additional_parameters.drug_class || 'Biologic'}.
-            Reference the Public Health Service Act where relevant for biologics.
-            Your response MUST be a single, coherent document.
-            `
+            Use plain text formatting only - NO MARKDOWN.
+            Reference UK/MHRA guidelines and post-Brexit regulatory framework.`
           },
           {
             role: "user",
-            content: `Generate a comprehensive BLA SUMMARY document for a biologic treatment for ${diseaseData.disease_name}.
-            Drug Class: ${diseaseData.additional_parameters.drug_class || 'Monoclonal Antibody'}
-            Mechanism of Action: ${diseaseData.additional_parameters.mechanism || 'Targets specific inflammatory pathway'}
-            Country for Submission: USA (BLA for FDA)
-            Document Type: ${diseaseData.additional_parameters.document_type || 'BLA Summary'}
-            Key Clinical Trial Data Summary: ${diseaseData.additional_parameters.clinical_info || 'Pivotal Phase 3 trials demonstrated significant efficacy and a manageable safety profile, including immunogenicity assessment.'}
+            content: `Generate a UK Clinical Trial Authorisation (MHRA) application for ${diseaseData.disease_name} research.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
 
-            REQUIREMENTS:
-            1. This BLA SUMMARY must be DETAILED and meet FDA expectations for a biologic, focusing on Module 2 content.
-            2. Emphasize biologics-specific aspects (manufacturing, characterization, immunogenicity, comparability).
-            3. Follow the specified section structure and formatting requirements.
-            4. Include specific (illustrative) numerical data for efficacy, safety, and immunogenicity.
-            5. Use plain text formatting only. NO MARKDOWN.
-            Output only the generated document content.
-            `
+            This application must meet MHRA requirements for clinical trial authorization in the UK post-Brexit.`
           }
         ],
         temperature: 0.2, max_tokens: 4000
       });
       return { document_content: response.data.choices[0].message.content.trim() };
     } catch (error) {
-      console.error('Error in generateBLA:', error.response?.data || error.message);
+      console.error('Error in generateCTA_UK:', error.response?.data || error.message);
       throw error;
     }
   },
 
-  generateCTN_JP: async (diseaseData) => { // Clinical Trial Notification - Japan
+  /**
+   * UK Marketing Authorisation (MHRA)
+   */
+  generateMA_UK: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in UK Marketing Authorisation applications for MHRA submission.
+            Your task is to generate a comprehensive summary for UK marketing authorization.
+
+            STRUCTURE FOR UK MARKETING AUTHORISATION:
+            1. ADMINISTRATIVE INFORMATION AND SUMMARY OF PRODUCT CHARACTERISTICS (SmPC)
+               1.1. Application Overview
+               1.2. Proposed UK SmPC Highlights
+            2. QUALITY INFORMATION SUMMARY
+               2.1. Drug Substance Summary
+               2.2. Drug Product Summary (UK-specific manufacturing considerations)
+            3. NON-CLINICAL INFORMATION SUMMARY
+               3.1. Pharmacology and Pharmacokinetics Summary
+               3.2. Toxicology Summary
+            4. CLINICAL INFORMATION SUMMARY
+               4.1. Clinical Overview
+               4.2. Clinical Efficacy Summary (relevance to UK population)
+               4.3. Clinical Safety Summary
+               4.4. Benefit-Risk Assessment for UK Population
+            5. UK-SPECIFIC REGULATORY CONSIDERATIONS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference UK regulatory framework and MHRA guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a UK Marketing Authorisation summary for MHRA approval of ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This summary must meet MHRA expectations for UK marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateMA_UK:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * UK Voluntary Scheme for Branded Medicines Pricing
+   */
+  generateVIE: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory and market access expert specializing in UK pricing and access frameworks.
+            Your task is to generate documentation for the UK Voluntary Scheme for Branded Medicines Pricing and Access.
+
+            STRUCTURE FOR UK PRICING AND ACCESS:
+            1. PRODUCT AND PRICING OVERVIEW
+               1.1. Product Information and Classification
+               1.2. Proposed Pricing Structure
+               1.3. Value Proposition Summary
+            2. CLINICAL AND ECONOMIC EVIDENCE
+               2.1. Clinical Efficacy and Safety Evidence
+               2.2. Health Economic Analysis
+               2.3. Budget Impact Assessment
+            3. COMPARATIVE EFFECTIVENESS
+               3.1. Comparison with Current Standard of Care
+               3.2. Place in Therapy Analysis
+            4. ACCESS AND IMPLEMENTATION
+               4.1. Patient Access Strategy
+               4.2. Implementation Considerations for NHS
+            5. RISK SHARING AND OUTCOME AGREEMENTS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference UK health technology assessment and NICE considerations.`
+          },
+          {
+            role: "user",
+            content: `Generate UK Voluntary Scheme documentation for pricing and access of ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This documentation must support pricing and access negotiations in the UK healthcare system.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateVIE:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // SWITZERLAND DOCUMENTS
+  // =============================================================================
+
+  /**
+   * Swiss Clinical Trial Authorisation (Swissmedic)
+   */
+  generateCTA_CH: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Swiss clinical trial authorizations for Swissmedic submission.
+            Your task is to generate key sections for a Swiss CTA application.
+
+            STRUCTURE FOR SWISS CTA:
+            1. ANTRAGSUBERSICHT (Application Overview)
+               1.1. Studieninformationen (Study Information)
+               1.2. Sponsor und Hauptpruferin (Sponsor and Principal Investigator)
+               1.3. Schweizer Standorte (Swiss Sites)
+            2. PRUFPRAPARAT-INFORMATIONEN (Investigational Product Information)
+               2.1. Produktbeschreibung (Product Description)
+               2.2. Qualitatsinformationen (Quality Information)
+               2.3. Nicht-klinische Zusammenfassung (Non-clinical Summary)
+               2.4. Fruehere klinische Erfahrung (Previous Clinical Experience)
+            3. KLINISCHES STUDIENPROTOKOLL (Clinical Study Protocol Synopsis)
+               3.1. Studienziele und -design (Study Objectives and Design)
+               3.2. Schweizer Patientenpopulation (Swiss Patient Population)
+               3.3. Behandlungsplan (Treatment Plan)
+               3.4. Wirksamkeits- und Sicherheitsbewertungen (Efficacy and Safety Assessments)
+            4. SCHWEIZER REGULATORISCHE UBERLEGUNGEN
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Swiss regulatory requirements and Swissmedic guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a Swiss Clinical Trial Authorisation (Swissmedic) application for ${diseaseData.disease_name} research.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This application must meet Swissmedic requirements for clinical trial authorization in Switzerland.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateCTA_CH:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Swiss Marketing Authorisation (Swissmedic)
+   */
+  generateMA_CH: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Swiss marketing authorizations for Swissmedic.
+            Your task is to generate a comprehensive summary for Swiss drug registration.
+
+            STRUCTURE FOR SWISS MARKETING AUTHORISATION:
+            1. ADMINISTRATIVE INFORMATIONEN UND FACHINFORMATIONEN
+               1.1. Antragsubersicht (Application Overview)
+               1.2. Vorgeschlagene Fachinformationen (Proposed Professional Information)
+            2. QUALITATSINFORMATIONEN
+               2.1. Wirkstoff-Zusammenfassung (Drug Substance Summary)
+               2.2. Arzneimittel-Zusammenfassung (Drug Product Summary)
+            3. NICHT-KLINISCHE INFORMATIONEN
+               3.1. Pharmakologie und Pharmakokinetik
+               3.2. Toxikologie
+            4. KLINISCHE INFORMATIONEN
+               4.1. Klinische Ubersicht (Clinical Overview)
+               4.2. Klinische Wirksamkeit (Clinical Efficacy)
+               4.3. Klinische Sicherheit (Clinical Safety)
+               4.4. Nutzen-Risiko-Bewertung fur Schweizer Population
+            5. SCHWEIZER BESONDERHEITEN
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Swiss regulatory framework and Swissmedic guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a Swiss Marketing Authorisation summary for Swissmedic approval of ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This summary must meet Swissmedic expectations for Swiss marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateMA_CH:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // RUSSIA DOCUMENTS
+  // =============================================================================
+
+  /**
+   * Russian Clinical Trial Permit (Roszdravnadzor)
+   */
+  generateCTA_RU: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Russian clinical trial permits for Roszdravnadzor submission.
+            Your task is to generate key sections for a Russian clinical trial authorization.
+
+            STRUCTURE FOR RUSSIAN CLINICAL TRIAL PERMIT:
+            1. ОБЗОР ЗАЯВЛЕНИЯ (Application Overview)
+               1.1. Информация об исследовании (Study Information)
+               1.2. Спонсор и главный исследователь (Sponsor and Principal Investigator)
+               1.3. Российские исследовательские центры (Russian Investigation Centers)
+            2. ИНФОРМАЦИЯ ОБ ИССЛЕДУЕМОМ ПРЕПАРАТЕ
+               2.1. Описание препарата (Product Description)
+               2.2. Информация о качестве (Quality Information)
+               2.3. Доклинические данные (Non-clinical Data)
+               2.4. Предыдущий клинический опыт (Previous Clinical Experience)
+            3. ПРОТОКОЛ КЛИНИЧЕСКОГО ИССЛЕДОВАНИЯ
+               3.1. Цели и дизайн исследования (Study Objectives and Design)
+               3.2. Российская популяция пациентов (Russian Patient Population)
+               3.3. План лечения (Treatment Plan)
+               3.4. Оценка эффективности и безопасности (Efficacy and Safety Assessment)
+            4. РОССИЙСКИЕ РЕГУЛЯТОРНЫЕ СООБРАЖЕНИЯ
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Russian regulatory requirements and Roszdravnadzor guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a Russian Clinical Trial Permit application for ${diseaseData.disease_name} research in Russia.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This application must meet Roszdravnadzor requirements for clinical trial authorization in Russia.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateCTA_RU:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Russian Registration Dossier
+   */
+  generateRD_RU: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Russian drug registration with Roszdravnadzor.
+            Your task is to generate a comprehensive Russian registration dossier summary.
+
+            STRUCTURE FOR RUSSIAN REGISTRATION DOSSIER:
+            1. АДМИНИСТРАТИВНАЯ ИНФОРМАЦИЯ И ИНСТРУКЦИЯ ПО ПРИМЕНЕНИЮ
+               1.1. Обзор заявления (Application Overview)
+               1.2. Предлагаемая инструкция по применению (Proposed Instructions for Use)
+            2. ИНФОРМАЦИЯ О КАЧЕСТВЕ
+               2.1. Лекарственное вещество (Drug Substance)
+               2.2. Лекарственный препарат (Drug Product)
+               2.3. Российское производство или импорт (Russian Manufacturing or Import)
+            3. ДОКЛИНИЧЕСКАЯ ИНФОРМАЦИЯ
+               3.1. Фармакология и фармакокинетика
+               3.2. Токсикология
+            4. КЛИНИЧЕСКАЯ ИНФОРМАЦИЯ
+               4.1. Клинический обзор (Clinical Overview)
+               4.2. Клиническая эффективность (Clinical Efficacy)
+               4.3. Клиническая безопасность (Clinical Safety)
+               4.4. Оценка соотношения польза-риск для российской популяции
+            5. ОСОБЕННОСТИ ДЛЯ РОССИЙСКОГО РЫНКА
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Russian regulatory framework and Roszdravnadzor requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate a Russian Registration Dossier for drug registration of ${diseaseData.disease_name} treatment in Russia.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This registration dossier must meet Roszdravnadzor requirements for Russian marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateRD_RU:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Russian GMP Certificate
+   */
+  generateGMP_RU: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a quality assurance expert specializing in Russian GMP certification requirements.
+            Your task is to generate supporting documentation for Russian GMP certificate application.
+
+            STRUCTURE FOR RUSSIAN GMP CERTIFICATE DOCUMENTATION:
+            1. ОБЩАЯ ИНФОРМАЦИЯ О ПРОИЗВОДСТВЕ (General Manufacturing Information)
+               1.1. Информация о производственной площадке (Manufacturing Site Information)
+               1.2. Организационная структура (Organizational Structure)
+               1.3. Система качества (Quality System)
+            2. ПРОИЗВОДСТВЕННЫЕ ПРОЦЕССЫ (Manufacturing Processes)
+               2.1. Описание производственного процесса (Manufacturing Process Description)
+               2.2. Контроль качества (Quality Control)
+               2.3. Валидация процессов (Process Validation)
+            3. СООТВЕТСТВИЕ РОССИЙСКИМ GMP ТРЕБОВАНИЯМ
+               3.1. Соответствие российским стандартам (Compliance with Russian Standards)
+               3.2. Система документооборота (Documentation System)
+               3.3. Обучение персонала (Personnel Training)
+            4. ПЛАН ИНСПЕКЦИИ И АУДИТА
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Russian GMP requirements and manufacturing standards.`
+          },
+          {
+            role: "user",
+            content: `Generate Russian GMP Certificate supporting documentation for manufacturing authorization of ${diseaseData.disease_name} treatment in Russia.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This documentation must support GMP certification requirements for Russian manufacturing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateGMP_RU:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // JAPAN DOCUMENTS
+  // =============================================================================
+
+  /**
+   * Japanese Clinical Trial Notification (CTN)
+   */
+  generateCTN_JP: async (diseaseData) => {
     try {
       const response = await openaiApi.post('chat/completions', {
         model: "gpt-4o-mini",
@@ -1099,7 +1198,6 @@ generateProtocol: async (diseaseData) => {
             role: "system",
             content: `You are a regulatory affairs expert specializing in Japanese Clinical Trial Notifications (CTNs) for submission to the PMDA.
             Your task is to generate KEY SECTIONS of a Japanese CTN. This is a notification, not a full application dossier like an IND.
-            The document must be in clean, plain text format—NO markdown.
 
             KEY SECTIONS FOR A JAPANESE CTN SUMMARY:
             1.  NOTIFICATION OVERVIEW
@@ -1109,7 +1207,7 @@ generateProtocol: async (diseaseData) => {
                 1.4. Phase of Trial
                 1.5. Planned Number of Sites and Subjects in Japan
             2.  INVESTIGATIONAL PRODUCT INFORMATION SUMMARY
-                2.1. Brief Description (Type, class, proposed indication: ${diseaseData.disease_name})
+                2.1. Brief Description (Type, class, proposed indication)
                 2.2. Manufacturing Summary (Manufacturer, GMP compliance statement)
                 2.3. Brief Quality Summary (Key specifications, stability overview)
                 2.4. Brief Non-clinical Summary (Key findings supporting safety for human trials)
@@ -1124,27 +1222,17 @@ generateProtocol: async (diseaseData) => {
             4.  LIST OF INVESTIGATIONAL SITES IN JAPAN (Illustrative)
             5.  CONTACT INFORMATION FOR PMDA QUERIES
 
-            Use ALL CAPS for main section headings. Use Title Case for subsections. Provide clean plain text.
-            Focus on concise information required for a notification.
-            Your response MUST be a single, coherent document.
-            `
+            Use plain text formatting only - NO MARKDOWN.`
           },
           {
             role: "user",
             content: `Generate key sections for a Japanese Clinical Trial Notification (CTN) for a trial on ${diseaseData.disease_name}.
-            Drug Class: ${diseaseData.additional_parameters.drug_class || 'Not specified'}
-            Mechanism of Action: ${diseaseData.additional_parameters.mechanism || 'Not specified'}
-            Trial Phase: ${diseaseData.additional_parameters.clinical_info || 'Phase II'}
-            Country for Submission: Japan
-            Document Type: ${diseaseData.additional_parameters.document_type || 'CTN (Japan) Summary'}
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
 
-            REQUIREMENTS:
-            1. Generate concise yet informative content for the key CTN sections.
-            2. Reflect requirements for a Japanese PMDA submission.
-            3. Follow the specified section structure and formatting.
-            4. Use plain text formatting only. NO MARKDOWN.
-            Output only the generated document content.
-            `
+            Generate concise yet informative content for the key CTN sections reflecting PMDA submission requirements.`
           }
         ],
         temperature: 0.2, max_tokens: 3000 
@@ -1156,7 +1244,10 @@ generateProtocol: async (diseaseData) => {
     }
   },
 
-  generateJNDA: async (diseaseData) => { // Japanese New Drug Application
+  /**
+   * Japanese New Drug Application (J-NDA)
+   */
+  generateJNDA: async (diseaseData) => {
     try {
       const response = await openaiApi.post('chat/completions', {
         model: "gpt-4o-mini",
@@ -1164,49 +1255,27 @@ generateProtocol: async (diseaseData) => {
           {
             role: "system",
             content: `You are a senior regulatory affairs expert with extensive experience in preparing Japanese New Drug Applications (J-NDAs) for submission to the PMDA/MHLW.
-            Your task is to generate a J-NDA SUMMARY document. This should highlight key information structured similarly to the CTD, but with consideration for Japanese regulatory expectations (e.g., data from Japanese patients if available, bridging studies).
-            The document must be in clean, plain text format—NO markdown.
+            Your task is to generate a J-NDA SUMMARY document. This should highlight key information structured similarly to the CTD, but with consideration for Japanese regulatory expectations.
 
             STRUCTURE (CTD-based, with J-NDA considerations):
             1. ADMINISTRATIVE INFORMATION AND PROPOSED PACKAGE INSERT SUMMARY (Japanese 'Tensu-Bunsho')
-               1.1. Application Summary
-               1.2. Proposed Package Insert Highlights (Key sections, warnings specific to Japanese population if relevant)
             2. GAIYOU (OVERALL SUMMARY OF QUALITY - CTD Module 2.3)
-               2.1. Introduction to Quality
-               2.2. Drug Substance Summary
-               2.3. Drug Product Summary
             3. NONCLINICAL OVERVIEW AND SUMMARY (CTD Modules 2.4 & 2.6)
-               3.1. Nonclinical Overview
-               3.2. Pharmacology, PK, Toxicology Summaries
             4. CLINICAL OVERVIEW AND SUMMARY (CTD Modules 2.5 & 2.7 - EMPHASIZE JAPANESE DATA)
-               4.1. Clinical Overview (Rationale, Clinical Pharmacology - including data in Japanese subjects, bridging strategy if applicable)
-               4.2. Summary of Clinical Efficacy (Pivotal studies, emphasis on results in Japanese population or bridging evidence)
-               4.3. Summary of Clinical Safety (Exposure in Japanese patients, AEs, specific safety concerns for Japanese population)
-               4.4. Benefits and Risks Conclusions (in context of Japanese medical practice)
-            5. KEY JAPANESE CLINICAL STUDY REPORT SUMMARIES (or pivotal global studies with Japanese patient data)
+            5. KEY JAPANESE CLINICAL STUDY REPORT SUMMARIES
 
-            Use ALL CAPS for main headings. Use Title Case for subsections. Provide clean plain text.
-            Focus on ${diseaseData.disease_name} and drug class ${diseaseData.additional_parameters.drug_class || 'N/A'}.
-            Reference Japanese regulatory guidelines or practices where appropriate.
-            Your response MUST be a single, coherent document.
-            `
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Japanese regulatory guidelines and emphasize data relevant to the Japanese population.`
           },
           {
             role: "user",
             content: `Generate a comprehensive J-NDA SUMMARY document for ${diseaseData.disease_name}.
-            Drug Class: ${diseaseData.additional_parameters.drug_class || 'Not specified'}
-            Mechanism of Action: ${diseaseData.additional_parameters.mechanism || 'Not specified'}
-            Country for Submission: Japan (J-NDA for PMDA/MHLW)
-            Document Type: ${diseaseData.additional_parameters.document_type || 'J-NDA Summary'}
-            Key Clinical Trial Data: ${diseaseData.additional_parameters.clinical_info || 'Global Phase 3 trials included Japanese patients and showed consistent efficacy and safety. Specific bridging study conducted.'}
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
 
-            REQUIREMENTS:
-            1. This J-NDA SUMMARY must be DETAILED and meet PMDA expectations.
-            2. Emphasize data relevant to the Japanese population and any bridging strategies.
-            3. Follow the specified section structure and formatting.
-            4. Use plain text formatting only. NO MARKDOWN.
-            Output only the generated document content.
-            `
+            This J-NDA SUMMARY must be DETAILED and meet PMDA expectations, emphasizing data relevant to the Japanese population and any bridging strategies.`
           }
         ],
         temperature: 0.2, max_tokens: 4000
@@ -1217,8 +1286,69 @@ generateProtocol: async (diseaseData) => {
       throw error;
     }
   },
-  
-  // This will generate key sections for a Chinese IND, distinct from the US IND module structure.
+
+  /**
+   * PMDA Scientific Advice
+   */
+  generatePMDA_CONSULTATION: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory strategy expert specializing in PMDA scientific advice consultations.
+            Your task is to generate a PMDA scientific advice request document.
+
+            STRUCTURE FOR PMDA SCIENTIFIC ADVICE:
+            1. CONSULTATION REQUEST OVERVIEW
+               1.1. Product and Development Background
+               1.2. Specific Questions for PMDA
+               1.3. Regulatory Strategy Context
+            2. DEVELOPMENT PROGRAM SUMMARY
+               2.1. Current Development Status
+               2.2. Planned Clinical Development (Japan-specific considerations)
+               2.3. Global Development Strategy
+            3. SPECIFIC SCIENTIFIC QUESTIONS
+               3.1. Clinical Development Questions
+               3.2. Regulatory Pathway Questions
+               3.3. Japanese Bridging Strategy
+            4. SUPPORTING DATA AND RATIONALE
+               4.1. Available Non-clinical Data
+               4.2. Available Clinical Data
+               4.3. Relevance to Japanese Population
+            5. REQUESTED PMDA GUIDANCE
+
+            Use plain text formatting only - NO MARKDOWN.
+            Focus on strategic regulatory questions relevant to Japanese development.`
+          },
+          {
+            role: "user",
+            content: `Generate a PMDA Scientific Advice request for development strategy of ${diseaseData.disease_name} treatment in Japan.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This consultation request must address strategic development questions for Japanese regulatory pathway.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generatePMDA_CONSULTATION:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // CHINA DOCUMENTS
+  // =============================================================================
+
+  /**
+   * Chinese IND Application
+   */
   generateIND_CH: async (diseaseData) => {
     try {
       const response = await openaiApi.post('chat/completions', {
@@ -1228,13 +1358,12 @@ generateProtocol: async (diseaseData) => {
             role: "system",
             content: `You are a regulatory affairs expert specializing in Chinese Investigational New Drug (IND) applications for submission to the NMPA.
             Your task is to generate KEY SECTIONS of a Chinese IND application. The structure may differ from US INDs, focusing on specific NMPA requirements.
-            The document must be in clean, plain text format—NO markdown.
 
-            KEY SECTIONS FOR A CHINESE IND SUMMARY (Illustrative, adapt based on NMPA guidelines):
+            KEY SECTIONS FOR A CHINESE IND SUMMARY:
             1.  APPLICATION OVERVIEW
                 1.1. Drug Name (Chinese and English if available), Dosage Form, Strength
                 1.2. Applicant Information
-                1.3. Proposed Indication: ${diseaseData.disease_name}
+                1.3. Proposed Indication
                 1.4. Phase of Clinical Trial
             2.  INVESTIGATIONAL PRODUCT INFORMATION SUMMARY
                 2.1. Manufacturing and Quality Control (Summary of CMC, highlighting local testing if applicable)
@@ -1248,29 +1377,19 @@ generateProtocol: async (diseaseData) => {
                 3.5. Efficacy and Safety Assessment Plan
                 3.6. Risk Management Plan Highlights for Chinese Patients
             4.  INVESTIGATOR'S BROCHURE SUMMARY (Key points relevant to Chinese investigators)
-            5.  ETHICS COMMITTEE APPROVAL STATUS (Statement or placeholder)
-            
-            Use ALL CAPS for main section headings. Use Title Case for subsections. Provide clean plain text.
-            Focus on concise information required for an NMPA IND.
-            Your response MUST be a single, coherent document.
-            `
+            5.  ETHICS COMMITTEE APPROVAL STATUS
+
+            Use plain text formatting only - NO MARKDOWN.`
           },
           {
             role: "user",
             content: `Generate key sections for a Chinese IND application for a trial on ${diseaseData.disease_name}.
-            Drug Class: ${diseaseData.additional_parameters.drug_class || 'Not specified'}
-            Mechanism of Action: ${diseaseData.additional_parameters.mechanism || 'Not specified'}
-            Trial Phase: ${diseaseData.additional_parameters.clinical_info || 'Phase I/II'}
-            Country for Submission: China (for NMPA)
-            Document Type: ${diseaseData.additional_parameters.document_type || 'IND (China) Summary'}
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
 
-            REQUIREMENTS:
-            1. Generate content for key Chinese IND sections, reflecting NMPA expectations.
-            2. Highlight any aspects relevant to the Chinese context (e.g., local data, specific guidelines).
-            3. Follow the specified section structure and formatting.
-            4. Use plain text formatting only. NO MARKDOWN.
-            Output only the generated document content.
-            `
+            Generate content for key Chinese IND sections, reflecting NMPA expectations and highlighting aspects relevant to the Chinese context.`
           }
         ],
         temperature: 0.2, max_tokens: 3500
@@ -1282,6 +1401,9 @@ generateProtocol: async (diseaseData) => {
     }
   },
 
+  /**
+   * Chinese NDA Application
+   */
   generateNDA_CH: async (diseaseData) => {
     try {
       const response = await openaiApi.post('chat/completions', {
@@ -1291,46 +1413,26 @@ generateProtocol: async (diseaseData) => {
             role: "system",
             content: `You are a senior regulatory affairs expert with extensive experience in preparing Chinese New Drug Applications (NDAs) for submission to the NMPA.
             Your task is to generate a Chinese NDA SUMMARY document. This should be structured according to NMPA expectations, which may draw from CTD principles but have local nuances.
-            The document must be in clean, plain text format—NO markdown.
 
             STRUCTURE (CTD-based, with NMPA considerations):
             1. ADMINISTRATIVE INFORMATION AND PROPOSED DRUG INSERT SUMMARY
-               1.1. Application Overview
-               1.2. Proposed Drug Insert Highlights (Key sections, reflecting Chinese labeling requirements)
             2. QUALITY INFORMATION SUMMARY (CMC)
-               2.1. Drug Substance Summary (Local manufacturing/testing considerations if applicable)
-               2.2. Drug Product Summary (Local manufacturing/testing considerations if applicable)
             3. NONCLINICAL STUDY SUMMARY
-               3.1. Pharmacology, PK, Toxicology Summaries (Highlighting data relevant/acceptable to NMPA)
             4. CLINICAL STUDY SUMMARY (EMPHASIZE DATA IN CHINESE PATIENTS)
-               4.1. Clinical Overview (Rationale, Clinical Pharmacology - including data in Chinese subjects, ethnic sensitivity analysis)
-               4.2. Summary of Clinical Efficacy (Pivotal studies, emphasis on results in Chinese population or bridging evidence. Consistency with foreign data.)
-               4.3. Summary of Clinical Safety (Exposure in Chinese patients, AEs, specific safety concerns for Chinese population. Comparison with foreign data.)
-               4.4. Benefit-Risk Assessment (in context of Chinese medical practice and approved alternatives)
             5. KEY CLINICAL TRIAL SUMMARIES (Trials conducted in China, or pivotal global trials with significant Chinese cohort)
 
-            Use ALL CAPS for main headings. Use Title Case for subsections. Provide clean plain text.
-            Focus on ${diseaseData.disease_name} and drug class ${diseaseData.additional_parameters.drug_class || 'N/A'}.
-            Reference Chinese regulatory guidelines or practices where appropriate.
-            Your response MUST be a single, coherent document.
-            `
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Chinese regulatory guidelines and emphasize data from Chinese patients and alignment with NMPA guidelines.`
           },
           {
             role: "user",
             content: `Generate a comprehensive Chinese NDA SUMMARY document for ${diseaseData.disease_name}.
-            Drug Class: ${diseaseData.additional_parameters.drug_class || 'Not specified'}
-            Mechanism of Action: ${diseaseData.additional_parameters.mechanism || 'Not specified'}
-            Country for Submission: China (NDA for NMPA)
-            Document Type: ${diseaseData.additional_parameters.document_type || 'NDA (China) Summary'}
-            Key Clinical Trial Data: ${diseaseData.additional_parameters.clinical_info || 'Global Phase 3 trials included a substantial cohort of Chinese patients and showed positive results. Local Phase 3 trial also conducted.'}
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
 
-            REQUIREMENTS:
-            1. This Chinese NDA SUMMARY must be DETAILED and meet NMPA expectations.
-            2. Emphasize data from Chinese patients and alignment with NMPA guidelines.
-            3. Follow the specified section structure and formatting.
-            4. Use plain text formatting only. NO MARKDOWN.
-            Output only the generated document content.
-            `
+            This Chinese NDA SUMMARY must be DETAILED and meet NMPA expectations, emphasizing data from Chinese patients and alignment with NMPA guidelines.`
           }
         ],
         temperature: 0.2, max_tokens: 4000
@@ -1342,7 +1444,229 @@ generateProtocol: async (diseaseData) => {
     }
   },
 
-  generateCTN_AU: async (diseaseData) => { // Clinical Trial Notification - Australia
+  /**
+   * Chinese Drug Registration Certificate
+   */
+  generateDRUG_LICENSE_CH: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Chinese drug registration certificates for NMPA approval.
+            Your task is to generate supporting documentation for Chinese drug license application.
+
+            STRUCTURE FOR CHINESE DRUG REGISTRATION CERTIFICATE:
+            1. 药品注册申请概述 (Drug Registration Application Overview)
+               1.1. 产品信息 (Product Information)
+               1.2. 申请人信息 (Applicant Information)
+               1.3. 注册分类 (Registration Classification)
+            2. 药品质量信息 (Drug Quality Information)
+               2.1. 原料药信息 (API Information)
+               2.2. 制剂信息 (Formulation Information)
+               2.3. 中国生产或进口 (Chinese Manufacturing or Import)
+            3. 非临床研究信息 (Non-clinical Study Information)
+               3.1. 药理毒理研究 (Pharmacology and Toxicology Studies)
+               3.2. 药代动力学研究 (Pharmacokinetic Studies)
+            4. 临床试验信息 (Clinical Trial Information)
+               4.1. 临床试验总结 (Clinical Trial Summary)
+               4.2. 中国临床数据 (Chinese Clinical Data)
+               4.3. 获益风险评估 (Benefit-Risk Assessment)
+            5. 中国特殊考虑 (China-Specific Considerations)
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Chinese regulatory framework and NMPA requirements for drug licensing.`
+          },
+          {
+            role: "user",
+            content: `Generate Chinese Drug Registration Certificate supporting documentation for ${diseaseData.disease_name} treatment licensing in China.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This documentation must support drug registration certificate requirements for Chinese commercialization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateDRUG_LICENSE_CH:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // SOUTH KOREA DOCUMENTS
+  // =============================================================================
+
+  /**
+   * Korean IND Application
+   */
+  generateIND_KR: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Korean Investigational New Drug (IND) applications for submission to the MFDS.
+            Your task is to generate key sections for a Korean IND application.
+
+            STRUCTURE FOR KOREAN IND:
+            1. 임상시험계획서 개요 (Clinical Trial Protocol Overview)
+               1.1. 시험약물 정보 (Investigational Drug Information)
+               1.2. 의뢰자 및 주요 연구자 정보 (Sponsor and Principal Investigator Information)
+               1.3. 한국 임상시험 개요 (Korean Clinical Trial Overview)
+            2. 시험약물 정보 (Investigational Product Information)
+               2.1. 약물 설명 및 분류 (Drug Description and Classification)
+               2.2. 품질 정보 요약 (Quality Information Summary)
+               2.3. 비임상 정보 요약 (Non-clinical Information Summary)
+               2.4. 이전 임상 경험 (Previous Clinical Experience)
+            3. 임상시험 프로토콜 개요 (Clinical Trial Protocol Synopsis)
+               3.1. 연구 목적 및 설계 (Study Objectives and Design)
+               3.2. 한국 환자 집단 (Korean Patient Population)
+               3.3. 치료 계획 (Treatment Plan)
+               3.4. 유효성 및 안전성 평가 (Efficacy and Safety Assessment)
+            4. 한국 규제 고려사항 (Korean Regulatory Considerations)
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Korean regulatory requirements and MFDS guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a Korean IND application for ${diseaseData.disease_name} clinical trial in South Korea.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This application must meet MFDS requirements for clinical trial authorization in South Korea.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateIND_KR:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Korean NDA Application
+   */
+  generateNDA_KR: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Korean New Drug Applications for MFDS submission.
+            Your task is to generate a comprehensive Korean NDA summary.
+
+            STRUCTURE FOR KOREAN NDA:
+            1. 행정 정보 및 제품 정보 요약 (Administrative Information and Product Information Summary)
+               1.1. 신청 개요 (Application Overview)
+               1.2. 제안된 제품 정보 (Proposed Product Information)
+            2. 품질 정보 요약 (Quality Information Summary)
+               2.1. 원료의약품 요약 (Drug Substance Summary)
+               2.2. 완제의약품 요약 (Drug Product Summary)
+            3. 비임상 정보 요약 (Non-clinical Information Summary)
+               3.1. 약리학 및 약동학 요약 (Pharmacology and Pharmacokinetics Summary)
+               3.2. 독성학 요약 (Toxicology Summary)
+            4. 임상 정보 요약 (Clinical Information Summary)
+               4.1. 임상 개요 (Clinical Overview)
+               4.2. 임상 유효성 요약 (Clinical Efficacy Summary)
+               4.3. 임상 안전성 요약 (Clinical Safety Summary)
+               4.4. 한국 인구에 대한 이익-위험 평가 (Benefit-Risk Assessment for Korean Population)
+            5. 한국 특별 고려사항 (Korea-Specific Considerations)
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Korean regulatory framework and MFDS requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate a Korean NDA summary for MFDS approval of ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This NDA summary must meet MFDS expectations for Korean marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateNDA_KR:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Korean GMP Certificate
+   */
+  generateKGMP: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a quality assurance expert specializing in Korean GMP certification requirements for MFDS.
+            Your task is to generate supporting documentation for Korean GMP certificate application.
+
+            STRUCTURE FOR KOREAN GMP CERTIFICATE:
+            1. 제조업체 일반 정보 (General Manufacturing Information)
+               1.1. 제조시설 정보 (Manufacturing Facility Information)
+               1.2. 조직 구조 (Organizational Structure)
+               1.3. 품질 시스템 (Quality System)
+            2. 제조 공정 (Manufacturing Processes)
+               2.1. 제조 공정 설명 (Manufacturing Process Description)
+               2.2. 품질 관리 (Quality Control)
+               2.3. 공정 검증 (Process Validation)
+            3. 한국 GMP 요구사항 준수 (Korean GMP Requirements Compliance)
+               3.1. 한국 표준 준수 (Compliance with Korean Standards)
+               3.2. 문서화 시스템 (Documentation System)
+               3.3. 인력 교육 (Personnel Training)
+            4. 검사 및 심사 계획 (Inspection and Audit Plan)
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Korean GMP requirements and MFDS manufacturing standards.`
+          },
+          {
+            role: "user",
+            content: `Generate Korean GMP Certificate supporting documentation for manufacturing authorization of ${diseaseData.disease_name} treatment in South Korea.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This documentation must support Korean GMP certification requirements for MFDS manufacturing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateKGMP:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // AUSTRALIA DOCUMENTS
+  // =============================================================================
+
+  /**
+   * Australian Clinical Trial Notification (CTN)
+   */
+  generateCTN_AU: async (diseaseData) => {
     try {
       const response = await openaiApi.post('chat/completions', {
         model: "gpt-4o-mini",
@@ -1351,9 +1675,8 @@ generateProtocol: async (diseaseData) => {
             role: "system",
             content: `You are a regulatory affairs expert specializing in Australian Clinical Trial Notifications (CTN) for submission to the TGA.
             Your task is to generate KEY SECTIONS of an Australian CTN. This is a notification scheme, primarily requiring ethics approval and notification to TGA.
-            The document must be in clean, plain text format—NO markdown.
 
-            KEY SECTIONS FOR AN AUSTRALIAN CTN SUMMARY (for internal documentation/summary, as actual submission is form-based):
+            KEY SECTIONS FOR AN AUSTRALIAN CTN SUMMARY:
             1.  TRIAL IDENTIFICATION
                 1.1. Protocol Title
                 1.2. Investigational Product(s) Name / Code
@@ -1365,34 +1688,24 @@ generateProtocol: async (diseaseData) => {
                 2.3. Study Design Synopsis (e.g., randomized, placebo-controlled)
                 2.4. Target Population in Australia (Number of participants)
             3.  INVESTIGATIONAL PRODUCT(S) SUMMARY
-                3.1. Brief Description (Type, class, proposed indication: ${diseaseData.disease_name})
+                3.1. Brief Description (Type, class, proposed indication)
                 3.2. Manufacturing and Supply (GMP compliance, importation details if applicable)
             4.  ETHICS COMMITTEE (HREC) INFORMATION
                 4.1. Name of Approving HREC
                 4.2. Date of HREC Approval
             5.  PRINCIPAL INVESTIGATOR(S) AND SITE(S) (Illustrative list of Australian sites)
             
-            Use ALL CAPS for main section headings. Use Title Case for subsections. Provide clean plain text.
-            Focus on concise information required for notification and HREC oversight.
-            Your response MUST be a single, coherent document.
-            `
+            Use plain text formatting only - NO MARKDOWN.`
           },
           {
             role: "user",
             content: `Generate key sections for an Australian Clinical Trial Notification (CTN) summary for a trial on ${diseaseData.disease_name}.
-            Drug Class: ${diseaseData.additional_parameters.drug_class || 'Not specified'}
-            Mechanism of Action: ${diseaseData.additional_parameters.mechanism || 'Not specified'}
-            Trial Phase: ${diseaseData.additional_parameters.clinical_info || 'Phase III'}
-            Country for Submission: Australia (for TGA)
-            Document Type: ${diseaseData.additional_parameters.document_type || 'CTN (Australia) Summary'}
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
 
-            REQUIREMENTS:
-            1. Generate concise content for key Australian CTN informational sections.
-            2. Reflect TGA's CTN scheme requirements (notification post-HREC approval).
-            3. Follow the specified section structure and formatting.
-            4. Use plain text formatting only. NO MARKDOWN.
-            Output only the generated document content.
-            `
+            Generate concise content for key Australian CTN informational sections reflecting TGA's CTN scheme requirements.`
           }
         ],
         temperature: 0.2, max_tokens: 2500
@@ -1404,7 +1717,10 @@ generateProtocol: async (diseaseData) => {
     }
   },
 
-  generateAUS: async (diseaseData) => { // Australian Submission for ARTG
+  /**
+   * Australian Submission for ARTG
+   */
+  generateAUS: async (diseaseData) => {
     try {
       const response = await openaiApi.post('chat/completions', {
         model: "gpt-4o-mini",
@@ -1413,48 +1729,26 @@ generateProtocol: async (diseaseData) => {
             role: "system",
             content: `You are a senior regulatory affairs expert with experience in preparing submissions for registration on the Australian Register of Therapeutic Goods (ARTG) with the TGA.
             Your task is to generate an AUSTRALIAN SUBMISSION SUMMARY document. This should highlight key information, structured similarly to the CTD, for a TGA evaluation.
-            The document must be in clean, plain text format—NO markdown.
 
             STRUCTURE (CTD-based, with TGA considerations):
             1. ADMINISTRATIVE INFORMATION AND PROPOSED PRODUCT INFORMATION (PI) SUMMARY
-               1.1. Application Overview (Product name, indication, sponsor)
-               1.2. Proposed Product Information (PI) Highlights (Key sections, warnings, consistent with Australian PI format)
             2. QUALITY OVERALL SUMMARY (CTD Module 2.3)
-               2.1. Introduction to Quality
-               2.2. Drug Substance Summary
-               2.3. Drug Product Summary (Including Australian-specific packaging/labeling if relevant)
             3. NONCLINICAL OVERVIEW AND SUMMARY (CTD Modules 2.4 & 2.6)
-               3.1. Nonclinical Overview
-               3.2. Pharmacology, PK, Toxicology Summaries
             4. CLINICAL OVERVIEW AND SUMMARY (CTD Modules 2.5 & 2.7 - EMPHASIZE RELEVANCE TO AUSTRALIAN POPULATION)
-               4.1. Clinical Overview (Rationale, Clinical Pharmacology - including any data relevant to Australian population or bridging)
-               4.2. Summary of Clinical Efficacy (Pivotal studies, applicability of data to Australian context)
-               4.3. Summary of Clinical Safety (Exposure, AEs, safety in Australian patients if data available, Risk Management Plan summary)
-               4.4. Benefits and Risks Conclusions (for Australian context)
             5. KEY CLINICAL STUDY REPORT SUMMARIES (Pivotal trials supporting the submission)
 
-            Use ALL CAPS for main headings. Use Title Case for subsections. Provide clean plain text.
-            Focus on ${diseaseData.disease_name} and drug class ${diseaseData.additional_parameters.drug_class || 'N/A'}.
-            Reference TGA guidelines or practices where appropriate.
-            Your response MUST be a single, coherent document.
-            `
+            Use plain text formatting only - NO MARKDOWN.
+            Reference TGA guidelines and demonstrate data applicability to the Australian population.`
           },
           {
             role: "user",
             content: `Generate a comprehensive AUSTRALIAN SUBMISSION SUMMARY document for ${diseaseData.disease_name}, for TGA evaluation and ARTG registration.
-            Drug Class: ${diseaseData.additional_parameters.drug_class || 'Not specified'}
-            Mechanism of Action: ${diseaseData.additional_parameters.mechanism || 'Not specified'}
-            Country for Submission: Australia (for TGA ARTG registration)
-            Document Type: ${diseaseData.additional_parameters.document_type || 'AUS Summary for TGA'}
-            Key Clinical Trial Data: ${diseaseData.additional_parameters.clinical_info || 'Global Phase 3 trials demonstrated efficacy and safety, with data considered applicable to the Australian population.'}
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
 
-            REQUIREMENTS:
-            1. This Australian Submission Summary must be DETAILED and meet TGA expectations for an ARTG application dossier summary.
-            2. Emphasize data applicability to the Australian population and PI consistency.
-            3. Follow the specified section structure and formatting.
-            4. Use plain text formatting only. NO MARKDOWN.
-            Output only the generated document content.
-            `
+            This Australian Submission Summary must be DETAILED and meet TGA expectations for an ARTG application dossier summary.`
           }
         ],
         temperature: 0.2, max_tokens: 4000
@@ -1465,7 +1759,1398 @@ generateProtocol: async (diseaseData) => {
       throw error;
     }
   },
-  
+
+  /**
+   * TGA GMP Certificate
+   */
+  generateTGA_GMP: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a quality assurance expert specializing in TGA GMP certification requirements for Australian manufacturing authorization.
+            Your task is to generate supporting documentation for TGA GMP certificate application.
+
+            STRUCTURE FOR TGA GMP CERTIFICATE:
+            1. MANUFACTURING FACILITY OVERVIEW
+               1.1. Facility Information and Location
+               1.2. Organizational Structure and Responsibilities
+               1.3. Quality Management System
+            2. MANUFACTURING OPERATIONS
+               2.1. Manufacturing Process Description
+               2.2. Quality Control Operations
+               2.3. Process Validation and Qualification
+            3. AUSTRALIAN GMP COMPLIANCE
+               3.1. Compliance with Australian Manufacturing Standards
+               3.2. Documentation and Record Systems
+               3.3. Personnel Qualifications and Training
+            4. INSPECTION READINESS AND COMPLIANCE MONITORING
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Australian GMP requirements and TGA manufacturing standards.`
+          },
+          {
+            role: "user",
+            content: `Generate TGA GMP Certificate supporting documentation for Australian manufacturing authorization of ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This documentation must support TGA GMP certification requirements for Australian manufacturing license.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateTGA_GMP:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // SINGAPORE DOCUMENTS
+  // =============================================================================
+
+  /**
+   * Singapore Clinical Trial Certificate (HSA)
+   */
+  generateCTA_SG: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Singapore Clinical Trial Certificates for HSA submission.
+            Your task is to generate key sections for a Singapore clinical trial application.
+
+            STRUCTURE FOR SINGAPORE CLINICAL TRIAL CERTIFICATE:
+            1. APPLICATION OVERVIEW
+               1.1. Clinical Trial Information
+               1.2. Sponsor and Principal Investigator Details
+               1.3. Singapore Trial Sites and Patient Numbers
+            2. INVESTIGATIONAL PRODUCT INFORMATION
+               2.1. Product Description and Classification
+               2.2. Quality and Manufacturing Information
+               2.3. Non-clinical Safety Summary
+               2.4. Previous Clinical Experience
+            3. CLINICAL TRIAL PROTOCOL SUMMARY
+               3.1. Study Objectives and Design
+               3.2. Singapore Patient Population
+               3.3. Treatment Protocol and Duration
+               3.4. Safety and Efficacy Assessments
+            4. SINGAPORE REGULATORY COMPLIANCE
+               4.1. HSA Requirements Compliance
+               4.2. Ethics Committee Approval Status
+               4.3. Good Clinical Practice Compliance
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Singapore regulatory requirements and HSA guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a Singapore Clinical Trial Certificate application for ${diseaseData.disease_name} research.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This application must meet HSA requirements for clinical trial authorization in Singapore.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateCTA_SG:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Singapore Product License
+   */
+  generatePRODUCT_LICENSE_SG: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Singapore product licensing for HSA marketing authorization.
+            Your task is to generate a comprehensive Singapore product license summary.
+
+            STRUCTURE FOR SINGAPORE PRODUCT LICENSE:
+            1. ADMINISTRATIVE INFORMATION AND PRODUCT INFORMATION
+               1.1. Application Overview
+               1.2. Proposed Singapore Product Information
+            2. QUALITY INFORMATION SUMMARY
+               2.1. Drug Substance Summary
+               2.2. Drug Product Summary
+               2.3. Singapore Manufacturing or Import Considerations
+            3. NON-CLINICAL INFORMATION SUMMARY
+               3.1. Pharmacology and Pharmacokinetics Summary
+               3.2. Toxicology Summary
+            4. CLINICAL INFORMATION SUMMARY
+               4.1. Clinical Overview
+               4.2. Clinical Efficacy Summary
+               4.3. Clinical Safety Summary
+               4.4. Benefit-Risk Assessment for Singapore Population
+            5. SINGAPORE-SPECIFIC CONSIDERATIONS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Singapore regulatory framework and HSA requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate a Singapore Product License summary for HSA marketing authorization of ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This summary must meet HSA expectations for Singapore marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generatePRODUCT_LICENSE_SG:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // INDIA DOCUMENTS
+  // =============================================================================
+
+  /**
+   * Indian Clinical Trial Permission (CDSCO)
+   */
+  generateCTA_IN: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Indian clinical trial permissions for CDSCO submission.
+            Your task is to generate key sections for an Indian clinical trial permission application.
+
+            STRUCTURE FOR INDIAN CLINICAL TRIAL PERMISSION:
+            1. APPLICATION OVERVIEW
+               1.1. Clinical Trial Information
+               1.2. Sponsor and Principal Investigator Information
+               1.3. Indian Trial Sites and Subject Numbers
+            2. INVESTIGATIONAL PRODUCT INFORMATION
+               2.1. Drug Description and Classification
+               2.2. Quality Information and Manufacturing
+               2.3. Non-clinical Data Summary
+               2.4. Previous Clinical Experience
+            3. CLINICAL TRIAL PROTOCOL SYNOPSIS
+               3.1. Study Objectives and Design
+               3.2. Indian Patient Population and Eligibility
+               3.3. Treatment Plan and Study Procedures
+               3.4. Efficacy and Safety Evaluations
+            4. INDIAN REGULATORY COMPLIANCE
+               4.1. CDSCO Requirements Compliance
+               4.2. Ethics Committee Approvals
+               4.3. Good Clinical Practice Compliance
+               4.4. Compensation and Insurance Provisions
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Indian regulatory requirements and CDSCO guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate an Indian Clinical Trial Permission application for ${diseaseData.disease_name} research in India.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This application must meet CDSCO requirements for clinical trial permission in India.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateCTA_IN:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Indian New Drug Application
+   */
+  generateNDA_IN: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Indian New Drug Applications for CDSCO marketing approval.
+            Your task is to generate a comprehensive Indian NDA summary.
+
+            STRUCTURE FOR INDIAN NEW DRUG APPLICATION:
+            1. ADMINISTRATIVE INFORMATION AND PROPOSED LABELING
+               1.1. Application Overview
+               1.2. Proposed Indian Package Insert
+            2. QUALITY INFORMATION SUMMARY
+               2.1. Drug Substance Summary
+               2.2. Drug Product Summary
+               2.3. Indian Manufacturing or Import Information
+            3. NON-CLINICAL INFORMATION SUMMARY
+               3.1. Pharmacology and Pharmacokinetics Summary
+               3.2. Toxicology Summary
+            4. CLINICAL INFORMATION SUMMARY
+               4.1. Clinical Overview
+               4.2. Clinical Efficacy Summary (Indian and Global Data)
+               4.3. Clinical Safety Summary
+               4.4. Benefit-Risk Assessment for Indian Population
+            5. INDIAN-SPECIFIC REGULATORY CONSIDERATIONS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Indian regulatory framework and CDSCO requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate an Indian New Drug Application summary for CDSCO marketing approval of ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This NDA summary must meet CDSCO expectations for Indian marketing approval.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateNDA_IN:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Indian Import License
+   */
+  generateIMPORT_LICENSE_IN: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Indian drug import licenses for CDSCO authorization.
+            Your task is to generate supporting documentation for Indian import license application.
+
+            STRUCTURE FOR INDIAN IMPORT LICENSE:
+            1. IMPORT LICENSE APPLICATION OVERVIEW
+               1.1. Importer Information
+               1.2. Product Information and Classification
+               1.3. Import Authorization Request
+            2. PRODUCT QUALITY AND COMPLIANCE
+               2.1. Manufacturing Site Information
+               2.2. Quality Specifications and Testing
+               2.3. GMP Compliance Certification
+            3. REGULATORY STATUS AND APPROVALS
+               3.1. Marketing Authorization Status (India/Foreign)
+               3.2. Clinical Trial or Commercial Use Declaration
+               3.3. Regulatory Compliance Certificates
+            4. IMPORT LOGISTICS AND DISTRIBUTION
+               4.1. Import Quantities and Frequency
+               4.2. Storage and Distribution Plans
+               4.3. Pharmacovigilance and Safety Reporting
+            5. INDIAN REGULATORY COMPLIANCE
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Indian import regulations and CDSCO requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate Indian Import License supporting documentation for import authorization of ${diseaseData.disease_name} treatment into India.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This documentation must support import license requirements for Indian drug importation.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateIMPORT_LICENSE_IN:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // TAIWAN DOCUMENTS
+  // =============================================================================
+
+  /**
+   * Taiwan IND Application
+   */
+  generateIND_TW: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Taiwan Investigational New Drug (IND) applications for TFDA submission.
+            Your task is to generate key sections for a Taiwan IND application.
+
+            STRUCTURE FOR TAIWAN IND:
+            1. 試驗計畫概述 (Trial Plan Overview)
+               1.1. 試驗藥物資訊 (Investigational Drug Information)
+               1.2. 申請人及主持人資訊 (Applicant and Principal Investigator Information)
+               1.3. 台灣臨床試驗概要 (Taiwan Clinical Trial Summary)
+            2. 試驗藥物資訊 (Investigational Product Information)
+               2.1. 藥物描述及分類 (Drug Description and Classification)
+               2.2. 品質資訊摘要 (Quality Information Summary)
+               2.3. 非臨床資訊摘要 (Non-clinical Information Summary)
+               2.4. 先前臨床經驗 (Previous Clinical Experience)
+            3. 臨床試驗計畫書概要 (Clinical Trial Protocol Synopsis)
+               3.1. 研究目標及設計 (Study Objectives and Design)
+               3.2. 台灣病患族群 (Taiwan Patient Population)
+               3.3. 治療計畫 (Treatment Plan)
+               3.4. 療效及安全性評估 (Efficacy and Safety Assessment)
+            4. 台灣法規考量 (Taiwan Regulatory Considerations)
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Taiwan regulatory requirements and TFDA guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a Taiwan IND application for ${diseaseData.disease_name} clinical trial.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This application must meet TFDA requirements for clinical trial authorization in Taiwan.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateIND_TW:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Taiwan NDA Application
+   */
+  generateNDA_TW: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Taiwan New Drug Applications for TFDA approval.
+            Your task is to generate a comprehensive Taiwan NDA summary.
+
+            STRUCTURE FOR TAIWAN NDA:
+            1. 行政資訊及產品資訊摘要 (Administrative Information and Product Information Summary)
+               1.1. 申請概述 (Application Overview)
+               1.2. 建議產品資訊 (Proposed Product Information)
+            2. 品質資訊摘要 (Quality Information Summary)
+               2.1. 原料藥摘要 (Drug Substance Summary)
+               2.2. 製劑摘要 (Drug Product Summary)
+            3. 非臨床資訊摘要 (Non-clinical Information Summary)
+               3.1. 藥理學及藥物動力學摘要 (Pharmacology and Pharmacokinetics Summary)
+               3.2. 毒理學摘要 (Toxicology Summary)
+            4. 臨床資訊摘要 (Clinical Information Summary)
+               4.1. 臨床概述 (Clinical Overview)
+               4.2. 臨床療效摘要 (Clinical Efficacy Summary)
+               4.3. 臨床安全性摘要 (Clinical Safety Summary)
+               4.4. 台灣族群效益風險評估 (Benefit-Risk Assessment for Taiwan Population)
+            5. 台灣特殊考量 (Taiwan-Specific Considerations)
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Taiwan regulatory framework and TFDA requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate a Taiwan NDA summary for TFDA approval of ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This NDA summary must meet TFDA expectations for Taiwan marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateNDA_TW:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // LATIN AMERICA DOCUMENTS
+  // =============================================================================
+
+  /**
+   * Brazilian ANVISA Clinical Trial Authorization
+   */
+  generateANVISA_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Brazilian ANVISA clinical trial authorizations.
+            Your task is to generate key sections for a Brazilian clinical trial authorization application.
+
+            STRUCTURE FOR ANVISA CLINICAL TRIAL AUTHORIZATION:
+            1. INFORMAÇÕES ADMINISTRATIVAS (Administrative Information)
+               1.1. Informações do Estudo (Study Information)
+               1.2. Patrocinador e Investigador Principal (Sponsor and Principal Investigator)
+               1.3. Centros de Pesquisa no Brasil (Research Centers in Brazil)
+            2. INFORMAÇÕES DO PRODUTO INVESTIGACIONAL
+               2.1. Descrição do Produto (Product Description)
+               2.2. Informações de Qualidade (Quality Information)
+               2.3. Informações Não-Clínicas (Non-clinical Information)
+               2.4. Experiência Clínica Prévia (Previous Clinical Experience)
+            3. PROTOCOLO DE PESQUISA CLÍNICA
+               3.1. Objetivos e Desenho do Estudo (Study Objectives and Design)
+               3.2. População Brasileira e Critérios de Seleção (Brazilian Population and Selection Criteria)
+               3.3. Plano de Tratamento (Treatment Plan)
+               3.4. Avaliações de Eficácia e Segurança (Efficacy and Safety Evaluations)
+            4. CONSIDERAÇÕES REGULATÓRIAS BRASILEIRAS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Brazilian regulatory requirements and ANVISA guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a Brazilian ANVISA Clinical Trial Authorization for ${diseaseData.disease_name} research in Brazil.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This application must meet ANVISA requirements for clinical trial authorization in Brazil.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateANVISA_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Brazilian ANVISA Drug Registration
+   */
+  generateANVISA_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Brazilian ANVISA drug registration.
+            Your task is to generate a comprehensive ANVISA registration summary.
+
+            STRUCTURE FOR ANVISA DRUG REGISTRATION:
+            1. INFORMAÇÕES ADMINISTRATIVAS E BULA
+               1.1. Resumo da Solicitação (Application Summary)
+               1.2. Bula Proposta (Proposed Package Insert)
+            2. INFORMAÇÕES DE QUALIDADE
+               2.1. Resumo do Fármaco (Drug Substance Summary)
+               2.2. Resumo do Medicamento (Drug Product Summary)
+               2.3. Fabricação no Brasil ou Importação (Brazilian Manufacturing or Import)
+            3. INFORMAÇÕES NÃO-CLÍNICAS
+               3.1. Farmacologia e Farmacocinética
+               3.2. Toxicologia
+            4. INFORMAÇÕES CLÍNICAS
+               4.1. Resumo Clínico (Clinical Overview)
+               4.2. Eficácia Clínica (Clinical Efficacy)
+               4.3. Segurança Clínica (Clinical Safety)
+               4.4. Avaliação Benefício-Risco para População Brasileira
+            5. CONSIDERAÇÕES ESPECIAIS PARA O BRASIL
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Brazilian regulatory framework and ANVISA requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate a Brazilian ANVISA Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Brazil.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This registration summary must meet ANVISA requirements for Brazilian marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateANVISA_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Brazilian ANVISA GMP Certificate
+   */
+  generateANVISA_GMP: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a quality assurance expert specializing in Brazilian ANVISA GMP certification requirements.
+            Your task is to generate supporting documentation for ANVISA GMP certificate application.
+
+            STRUCTURE FOR ANVISA GMP CERTIFICATE:
+            1. INFORMAÇÕES GERAIS DE FABRICAÇÃO (General Manufacturing Information)
+               1.1. Informações da Unidade Fabril (Manufacturing Unit Information)
+               1.2. Estrutura Organizacional (Organizational Structure)
+               1.3. Sistema de Qualidade (Quality System)
+            2. PROCESSOS DE FABRICAÇÃO (Manufacturing Processes)
+               2.1. Descrição do Processo de Fabricação (Manufacturing Process Description)
+               2.2. Controle de Qualidade (Quality Control)
+               2.3. Validação de Processos (Process Validation)
+            3. CONFORMIDADE COM BPF BRASILEIRAS
+               3.1. Conformidade com Normas Brasileiras (Compliance with Brazilian Standards)
+               3.2. Sistema de Documentação (Documentation System)
+               3.3. Treinamento de Pessoal (Personnel Training)
+            4. PLANO DE INSPEÇÃO E AUDITORIA
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Brazilian GMP requirements and ANVISA manufacturing standards.`
+          },
+          {
+            role: "user",
+            content: `Generate Brazilian ANVISA GMP Certificate supporting documentation for manufacturing authorization of ${diseaseData.disease_name} treatment in Brazil.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This documentation must support ANVISA GMP certification requirements for Brazilian manufacturing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateANVISA_GMP:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // ADDITIONAL LATIN AMERICA DOCUMENTS (Argentina, Colombia, Chile)
+  // =============================================================================
+
+  /**
+   * Argentine ANMAT Clinical Trial Authorization
+   */
+  generateANMAT_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Argentine ANMAT clinical trial authorizations.
+            Your task is to generate key sections for an Argentine clinical trial authorization.
+
+            STRUCTURE FOR ANMAT CLINICAL TRIAL AUTHORIZATION:
+            1. INFORMACIÓN ADMINISTRATIVA
+               1.1. Información del Estudio
+               1.2. Patrocinador e Investigador Principal
+               1.3. Centros de Investigación en Argentina
+            2. INFORMACIÓN DEL PRODUCTO EN INVESTIGACIÓN
+               2.1. Descripción del Producto
+               2.2. Información de Calidad
+               2.3. Información No-Clínica
+               2.4. Experiencia Clínica Previa
+            3. PROTOCOLO DE INVESTIGACIÓN CLÍNICA
+               3.1. Objetivos y Diseño del Estudio
+               3.2. Población Argentina y Criterios de Selección
+               3.3. Plan de Tratamiento
+               3.4. Evaluaciones de Eficacia y Seguridad
+            4. CONSIDERACIONES REGULATORIAS ARGENTINAS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Argentine regulatory requirements and ANMAT guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate an Argentine ANMAT Clinical Trial Authorization for ${diseaseData.disease_name} research in Argentina.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This application must meet ANMAT requirements for clinical trial authorization in Argentina.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateANMAT_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Argentine ANMAT Drug Registration
+   */
+  generateANMAT_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Argentine ANMAT drug registration.
+            Your task is to generate a comprehensive ANMAT registration summary.
+
+            STRUCTURE FOR ANMAT DRUG REGISTRATION:
+            1. INFORMACIÓN ADMINISTRATIVA Y PROSPECTO
+            2. INFORMACIÓN DE CALIDAD
+            3. INFORMACIÓN NO-CLÍNICA
+            4. INFORMACIÓN CLÍNICA
+            5. CONSIDERACIONES ESPECIALES PARA ARGENTINA
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Argentine regulatory framework and ANMAT requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate an Argentine ANMAT Drug Registration summary for ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This registration summary must meet ANMAT requirements for Argentine marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateANMAT_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Additional generators for Colombia (INVIMA) and Chile (ISP) would follow similar patterns...
+
+  // =============================================================================
+  // AFRICA & MIDDLE EAST DOCUMENTS
+  // =============================================================================
+
+  /**
+   * South African SAHPRA Clinical Trial Authorization
+   */
+  generateSAHPRA_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in South African SAHPRA clinical trial authorizations.
+            Your task is to generate key sections for a South African clinical trial authorization.
+
+            STRUCTURE FOR SAHPRA CLINICAL TRIAL AUTHORIZATION:
+            1. APPLICATION OVERVIEW
+               1.1. Clinical Trial Information
+               1.2. Sponsor and Principal Investigator Information
+               1.3. South African Trial Sites and Patient Numbers
+            2. INVESTIGATIONAL PRODUCT INFORMATION
+               2.1. Product Description and Classification
+               2.2. Quality Information and Manufacturing
+               2.3. Non-clinical Safety Summary
+               2.4. Previous Clinical Experience
+            3. CLINICAL TRIAL PROTOCOL SYNOPSIS
+               3.1. Study Objectives and Design
+               3.2. South African Patient Population
+               3.3. Treatment Protocol and Duration
+               3.4. Safety and Efficacy Assessments
+            4. SOUTH AFRICAN REGULATORY COMPLIANCE
+               4.1. SAHPRA Requirements Compliance
+               4.2. Ethics Committee Approval Status
+               4.3. Good Clinical Practice Compliance
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference South African regulatory requirements and SAHPRA guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a South African SAHPRA Clinical Trial Authorization for ${diseaseData.disease_name} research.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This application must meet SAHPRA requirements for clinical trial authorization in South Africa.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateSAHPRA_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * South African SAHPRA Medicine Registration
+   */
+  generateSAHPRA_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in South African SAHPRA medicine registration.
+            Your task is to generate a comprehensive SAHPRA medicine registration summary.
+
+            STRUCTURE FOR SAHPRA MEDICINE REGISTRATION:
+            1. ADMINISTRATIVE INFORMATION AND PRODUCT INFORMATION
+               1.1. Application Overview
+               1.2. Proposed South African Product Information
+            2. QUALITY INFORMATION SUMMARY
+               2.1. Drug Substance Summary
+               2.2. Drug Product Summary
+               2.3. South African Manufacturing or Import Considerations
+            3. NON-CLINICAL INFORMATION SUMMARY
+               3.1. Pharmacology and Pharmacokinetics Summary
+               3.2. Toxicology Summary
+            4. CLINICAL INFORMATION SUMMARY
+               4.1. Clinical Overview
+               4.2. Clinical Efficacy Summary
+               4.3. Clinical Safety Summary
+               4.4. Benefit-Risk Assessment for South African Population
+            5. SOUTH AFRICAN-SPECIFIC CONSIDERATIONS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference South African regulatory framework and SAHPRA requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate a South African SAHPRA Medicine Registration summary for marketing authorization of ${diseaseData.disease_name} treatment.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This summary must meet SAHPRA expectations for South African marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateSAHPRA_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // COLOMBIA DOCUMENTS (INVIMA)
+  // =============================================================================
+
+  /**
+   * Colombian INVIMA Clinical Trial Permit
+   */
+  generateINVIMA_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Colombian INVIMA clinical trial permits.
+            Your task is to generate key sections for a Colombian clinical trial permit application.
+
+            STRUCTURE FOR INVIMA CLINICAL TRIAL PERMIT:
+            1. INFORMACIÓN ADMINISTRATIVA (Administrative Information)
+               1.1. Información del Ensayo Clínico (Clinical Trial Information)
+               1.2. Patrocinador e Investigador Principal (Sponsor and Principal Investigator)
+               1.3. Centros de Investigación en Colombia (Colombian Research Centers)
+            2. INFORMACIÓN DEL PRODUCTO EN INVESTIGACIÓN
+               2.1. Descripción del Producto (Product Description)
+               2.2. Información de Calidad (Quality Information)
+               2.3. Información No-Clínica (Non-clinical Information)
+               2.4. Experiencia Clínica Previa (Previous Clinical Experience)
+            3. PROTOCOLO DE INVESTIGACIÓN CLÍNICA
+               3.1. Objetivos y Diseño del Estudio (Study Objectives and Design)
+               3.2. Población Colombiana y Criterios de Selección (Colombian Population and Selection Criteria)
+               3.3. Plan de Tratamiento (Treatment Plan)
+               3.4. Evaluaciones de Eficacia y Seguridad (Efficacy and Safety Evaluations)
+            4. CONSIDERACIONES REGULATORIAS COLOMBIANAS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Colombian regulatory requirements and INVIMA guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a Colombian INVIMA Clinical Trial Permit for ${diseaseData.disease_name} research in Colombia.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This permit application must meet INVIMA requirements for clinical trial authorization in Colombia.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateINVIMA_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Colombian INVIMA Drug Registration
+   */
+  generateINVIMA_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Colombian INVIMA drug registration.
+            Your task is to generate a comprehensive INVIMA drug registration summary.
+
+            STRUCTURE FOR INVIMA DRUG REGISTRATION:
+            1. INFORMACIÓN ADMINISTRATIVA Y REGISTRO SANITARIO
+               1.1. Resumen de la Solicitud (Application Summary)
+               1.2. Registro Sanitario Propuesto (Proposed Sanitary Registration)
+            2. INFORMACIÓN DE CALIDAD
+               2.1. Resumen del Principio Activo (Active Ingredient Summary)
+               2.2. Resumen del Producto Terminado (Finished Product Summary)
+               2.3. Fabricación en Colombia o Importación (Colombian Manufacturing or Import)
+            3. INFORMACIÓN NO-CLÍNICA
+               3.1. Farmacología y Farmacocinética
+               3.2. Toxicología
+            4. INFORMACIÓN CLÍNICA
+               4.1. Resumen Clínico (Clinical Overview)
+               4.2. Eficacia Clínica (Clinical Efficacy)
+               4.3. Seguridad Clínica (Clinical Safety)
+               4.4. Evaluación Beneficio-Riesgo para Población Colombiana
+            5. CONSIDERACIONES ESPECIALES PARA COLOMBIA
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Colombian regulatory framework and INVIMA requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate a Colombian INVIMA Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Colombia.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This registration summary must meet INVIMA requirements for Colombian marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateINVIMA_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // CHILE DOCUMENTS (ISP)
+  // =============================================================================
+
+  /**
+   * Chilean ISP Clinical Trial Authorization
+   */
+  generateISP_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Chilean ISP clinical trial authorizations.
+            Your task is to generate key sections for a Chilean clinical trial authorization application.
+
+            STRUCTURE FOR ISP CLINICAL TRIAL AUTHORIZATION:
+            1. INFORMACIÓN ADMINISTRATIVA (Administrative Information)
+               1.1. Información del Protocolo (Protocol Information)
+               1.2. Patrocinador e Investigador Principal (Sponsor and Principal Investigator)
+               1.3. Centros de Investigación en Chile (Chilean Research Centers)
+            2. INFORMACIÓN DEL PRODUCTO EN INVESTIGACIÓN
+               2.1. Descripción del Producto (Product Description)
+               2.2. Información de Calidad (Quality Information)
+               2.3. Información No-Clínica (Non-clinical Information)
+               2.4. Experiencia Clínica Previa (Previous Clinical Experience)
+            3. PROTOCOLO DE INVESTIGACIÓN CLÍNICA
+               3.1. Objetivos y Diseño del Estudio (Study Objectives and Design)
+               3.2. Población Chilena y Criterios de Selección (Chilean Population and Selection Criteria)
+               3.3. Plan de Tratamiento (Treatment Plan)
+               3.4. Evaluaciones de Eficacia y Seguridad (Efficacy and Safety Evaluations)
+            4. CONSIDERACIONES REGULATORIAS CHILENAS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Chilean regulatory requirements and ISP guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a Chilean ISP Clinical Trial Authorization for ${diseaseData.disease_name} research in Chile.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This authorization application must meet ISP requirements for clinical trial approval in Chile.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateISP_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Chilean ISP Drug Registration
+   */
+  generateISP_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Chilean ISP drug registration.
+            Your task is to generate a comprehensive ISP drug registration summary.
+
+            STRUCTURE FOR ISP DRUG REGISTRATION:
+            1. INFORMACIÓN ADMINISTRATIVA Y REGISTRO SANITARIO
+               1.1. Resumen de la Solicitud (Application Summary)
+               1.2. Registro Sanitario Propuesto (Proposed Sanitary Registration)
+            2. INFORMACIÓN DE CALIDAD
+               2.1. Resumen del Principio Activo (Active Ingredient Summary)
+               2.2. Resumen del Producto Terminado (Finished Product Summary)
+               2.3. Fabricación en Chile o Importación (Chilean Manufacturing or Import)
+            3. INFORMACIÓN NO-CLÍNICA
+               3.1. Farmacología y Farmacocinética
+               3.2. Toxicología
+            4. INFORMACIÓN CLÍNICA
+               4.1. Resumen Clínico (Clinical Overview)
+               4.2. Eficacia Clínica (Clinical Efficacy)
+               4.3. Seguridad Clínica (Clinical Safety)
+               4.4. Evaluación Beneficio-Riesgo para Población Chilena
+            5. CONSIDERACIONES ESPECIALES PARA CHILE
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Chilean regulatory framework and ISP requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate a Chilean ISP Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Chile.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This registration summary must meet ISP requirements for Chilean marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateISP_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // ISRAEL DOCUMENTS (MOH)
+  // =============================================================================
+
+  /**
+   * Israeli MOH Clinical Trial Permit
+   */
+  generateMOH_ISRAEL_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Israeli Ministry of Health (MOH) clinical trial permits.
+            Your task is to generate key sections for an Israeli clinical trial permit application.
+
+            STRUCTURE FOR ISRAELI MOH CLINICAL TRIAL PERMIT:
+            1. APPLICATION OVERVIEW
+               1.1. Clinical Trial Information
+               1.2. Sponsor and Principal Investigator Information
+               1.3. Israeli Trial Sites and Patient Numbers
+            2. INVESTIGATIONAL PRODUCT INFORMATION
+               2.1. Product Description and Classification
+               2.2. Quality Information and Manufacturing
+               2.3. Non-clinical Safety Summary
+               2.4. Previous Clinical Experience
+            3. CLINICAL TRIAL PROTOCOL SYNOPSIS
+               3.1. Study Objectives and Design
+               3.2. Israeli Patient Population
+               3.3. Treatment Protocol and Duration
+               3.4. Safety and Efficacy Assessments
+            4. ISRAELI REGULATORY COMPLIANCE
+               4.1. MOH Requirements Compliance
+               4.2. Ethics Committee Approval Status
+               4.3. Good Clinical Practice Compliance
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Israeli regulatory requirements and MOH guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate an Israeli MOH Clinical Trial Permit for ${diseaseData.disease_name} research in Israel.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This permit application must meet Israeli MOH requirements for clinical trial authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateMOH_ISRAEL_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Israeli Drug Registration
+   */
+  generateMOH_ISRAEL_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Israeli drug registration with the Ministry of Health.
+            Your task is to generate a comprehensive Israeli drug registration summary.
+
+            STRUCTURE FOR ISRAELI DRUG REGISTRATION:
+            1. ADMINISTRATIVE INFORMATION AND PRODUCT INFORMATION
+               1.1. Application Overview
+               1.2. Proposed Israeli Product Information
+            2. QUALITY INFORMATION SUMMARY
+               2.1. Drug Substance Summary
+               2.2. Drug Product Summary
+               2.3. Israeli Manufacturing or Import Considerations
+            3. NON-CLINICAL INFORMATION SUMMARY
+               3.1. Pharmacology and Pharmacokinetics Summary
+               3.2. Toxicology Summary
+            4. CLINICAL INFORMATION SUMMARY
+               4.1. Clinical Overview
+               4.2. Clinical Efficacy Summary
+               4.3. Clinical Safety Summary
+               4.4. Benefit-Risk Assessment for Israeli Population
+            5. ISRAELI-SPECIFIC CONSIDERATIONS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Israeli regulatory framework and MOH requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate an Israeli Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Israel.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This summary must meet Israeli MOH expectations for marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateMOH_ISRAEL_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // SAUDI ARABIA DOCUMENTS (SFDA)
+  // =============================================================================
+
+  /**
+   * Saudi SFDA Clinical Trial Authorization
+   */
+  generateSFDA_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Saudi Food and Drug Authority (SFDA) clinical trial authorizations.
+            Your task is to generate key sections for a Saudi clinical trial authorization application.
+
+            STRUCTURE FOR SFDA CLINICAL TRIAL AUTHORIZATION:
+            1. APPLICATION OVERVIEW
+               1.1. Clinical Trial Information
+               1.2. Sponsor and Principal Investigator Information
+               1.3. Saudi Trial Sites and Patient Numbers
+            2. INVESTIGATIONAL PRODUCT INFORMATION
+               2.1. Product Description and Classification
+               2.2. Quality Information and Manufacturing
+               2.3. Non-clinical Safety Summary
+               2.4. Previous Clinical Experience
+            3. CLINICAL TRIAL PROTOCOL SYNOPSIS
+               3.1. Study Objectives and Design
+               3.2. Saudi Patient Population
+               3.3. Treatment Protocol and Duration
+               3.4. Safety and Efficacy Assessments
+            4. SAUDI REGULATORY COMPLIANCE
+               4.1. SFDA Requirements Compliance
+               4.2. Ethics Committee Approval Status
+               4.3. Good Clinical Practice Compliance
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Saudi regulatory requirements and SFDA guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a Saudi SFDA Clinical Trial Authorization for ${diseaseData.disease_name} research in Saudi Arabia.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This authorization application must meet SFDA requirements for clinical trial approval in Saudi Arabia.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateSFDA_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Saudi SFDA Drug Registration
+   */
+  generateSFDA_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Saudi SFDA drug registration.
+            Your task is to generate a comprehensive SFDA drug registration summary.
+
+            STRUCTURE FOR SFDA DRUG REGISTRATION:
+            1. ADMINISTRATIVE INFORMATION AND PRODUCT INFORMATION
+               1.1. Application Overview
+               1.2. Proposed Saudi Product Information
+            2. QUALITY INFORMATION SUMMARY
+               2.1. Drug Substance Summary
+               2.2. Drug Product Summary
+               2.3. Saudi Manufacturing or Import Considerations
+            3. NON-CLINICAL INFORMATION SUMMARY
+               3.1. Pharmacology and Pharmacokinetics Summary
+               3.2. Toxicology Summary
+            4. CLINICAL INFORMATION SUMMARY
+               4.1. Clinical Overview
+               4.2. Clinical Efficacy Summary
+               4.3. Clinical Safety Summary
+               4.4. Benefit-Risk Assessment for Saudi Population
+            5. SAUDI-SPECIFIC CONSIDERATIONS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference Saudi regulatory framework and SFDA requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate a Saudi SFDA Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Saudi Arabia.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This summary must meet SFDA expectations for Saudi marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateSFDA_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // UAE DOCUMENTS (DHA/MOH)
+  // =============================================================================
+
+  /**
+   * UAE DHA Clinical Trial Permit
+   */
+  generateDHA_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in UAE Dubai Health Authority (DHA) clinical trial permits.
+            Your task is to generate key sections for a UAE clinical trial permit application.
+
+            STRUCTURE FOR DHA CLINICAL TRIAL PERMIT:
+            1. APPLICATION OVERVIEW
+               1.1. Clinical Trial Information
+               1.2. Sponsor and Principal Investigator Information
+               1.3. UAE Trial Sites and Patient Numbers
+            2. INVESTIGATIONAL PRODUCT INFORMATION
+               2.1. Product Description and Classification
+               2.2. Quality Information and Manufacturing
+               2.3. Non-clinical Safety Summary
+               2.4. Previous Clinical Experience
+            3. CLINICAL TRIAL PROTOCOL SYNOPSIS
+               3.1. Study Objectives and Design
+               3.2. UAE Patient Population
+               3.3. Treatment Protocol and Duration
+               3.4. Safety and Efficacy Assessments
+            4. UAE REGULATORY COMPLIANCE
+               4.1. DHA Requirements Compliance
+               4.2. Ethics Committee Approval Status
+               4.3. Good Clinical Practice Compliance
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference UAE regulatory requirements and DHA guidelines.`
+          },
+          {
+            role: "user",
+            content: `Generate a UAE DHA Clinical Trial Permit for ${diseaseData.disease_name} research in the United Arab Emirates.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This permit application must meet DHA requirements for clinical trial authorization in the UAE.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateDHA_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * UAE Drug Registration
+   */
+  generateMOH_UAE_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in UAE drug registration with the Ministry of Health.
+            Your task is to generate a comprehensive UAE drug registration summary.
+
+            STRUCTURE FOR UAE DRUG REGISTRATION:
+            1. ADMINISTRATIVE INFORMATION AND PRODUCT INFORMATION
+               1.1. Application Overview
+               1.2. Proposed UAE Product Information
+            2. QUALITY INFORMATION SUMMARY
+               2.1. Drug Substance Summary
+               2.2. Drug Product Summary
+               2.3. UAE Manufacturing or Import Considerations
+            3. NON-CLINICAL INFORMATION SUMMARY
+               3.1. Pharmacology and Pharmacokinetics Summary
+               3.2. Toxicology Summary
+            4. CLINICAL INFORMATION SUMMARY
+               4.1. Clinical Overview
+               4.2. Clinical Efficacy Summary
+               4.3. Clinical Safety Summary
+               4.4. Benefit-Risk Assessment for UAE Population
+            5. UAE-SPECIFIC CONSIDERATIONS
+
+            Use plain text formatting only - NO MARKDOWN.
+            Reference UAE regulatory framework and MOH requirements.`
+          },
+          {
+            role: "user",
+            content: `Generate a UAE Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in the United Arab Emirates.
+            
+            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+            ).filter(Boolean).join('\n')}
+
+            This summary must meet UAE MOH expectations for marketing authorization.`
+          }
+        ],
+        temperature: 0.2, max_tokens: 4000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateMOH_UAE_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // =============================================================================
+  // QUERY ASSISTANT
+  // =============================================================================
+
   queryAssistant: async (queryData) => {
     try {
       // First, ask GPT if the question is relevant to clinical/regulatory topics
@@ -1480,13 +3165,7 @@ generateProtocol: async (diseaseData) => {
 
               Respond with ONLY one word:
               - "RELEVANT" if the question is about clinical trials, medical research, drug development, regulatory submissions, medical conditions, treatments, or pharmaceutical topics
-              - "IRRELEVANT" if the question is about cooking, weather, entertainment, sports, travel, technology, politics, or other non-medical topics
-
-              Examples:
-              - "What are efficacy endpoints for psoriasis?" → RELEVANT
-              - "Key endpoints for banana bread?" → IRRELEVANT  
-              - "How to design inclusion criteria?" → RELEVANT
-              - "What's the weather today?" → IRRELEVANT`
+              - "IRRELEVANT" if the question is about cooking, weather, entertainment, sports, travel, technology, politics, or other non-medical topics`
             },
             {
               role: "user",
@@ -1550,20 +3229,7 @@ Please ask a question related to clinical trials, protocols, or regulatory affai
               - If the question involves a specific disease or protocol, tailor the answer accordingly
               - If asked about endpoints, list them clearly and explain their relevance
               - If asked about regulatory strategy, provide actionable advice
-              - Cite relevant guidelines (ICH, FDA, EMA) when appropriate
-              
-              EXAMPLE FORMAT (NO ASTERISKS):
-              KEY EFFICACY ENDPOINTS FOR PSORIASIS TRIALS:
-              
-              PRIMARY ENDPOINTS:
-                  1. PASI 75 Response Rate at Week 16
-                     - Definition: Proportion achieving 75% reduction in PASI score
-                     - Relevance: Standard regulatory endpoint
-              
-              SECONDARY ENDPOINTS:
-                  1. Static Physician Global Assessment (sPGA)
-                     - Clear (0) or Almost Clear (1) skin
-                     - Physician assessment of overall improvement`
+              - Cite relevant guidelines (ICH, FDA, EMA) when appropriate`
             },
             {
               role: "user",
