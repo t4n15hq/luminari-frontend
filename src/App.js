@@ -1,13 +1,16 @@
+// src/App.js - Updated routing to include both files properly
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 
 import HomePage from './components/HomePage';
 import ProtocolGenerator from './components/ProtocolGenerator';
-import RegulatoryDocumentGenerator from './components/RegulatoryDocumentGenerator';
+import RegulatoryDocuments from './components/RegulatoryDocuments'; // MAP INTERFACE
+import RegulatoryDocumentGenerator from './components/RegulatoryDocumentGenerator'; // FORM & LOGIC
 import ClinicalDossierCompiler from './components/ClinicalDossierCompiler';
 import QueryAssistant from './components/QueryAssistant';
 import SkinDiseaseDetector from './components/SkinDiseaseDetector';
-import LungCancerDetector from './components/LungCancerDetector'; // NEW IMPORT
+import LungCancerDetector from './components/LungCancerDetector';
 import DiseaseDiagnosis from './components/DiseaseDiagnosis';
 import './App.css';
 
@@ -25,7 +28,7 @@ const Navigation = () => {
       <ul>
         <li><Link to="/" className="home-link">Home</Link></li>
         <li><Link to="/protocol" className={location.pathname === '/protocol' ? 'active' : ''}>Protocol & Study Design Generator</Link></li>
-        <li><Link to="/ind-modules" className={location.pathname === '/ind-modules' ? 'active' : ''}>Regulatory Document Generator</Link></li>
+        <li><Link to="/regulatory-documents" className={location.pathname.includes('/regulatory') || location.pathname.includes('/ind-modules') ? 'active' : ''}>Regulatory Document Generator</Link></li>
         <li><Link to="/clinical-dossier" className={location.pathname === '/clinical-dossier' ? 'active' : ''}>Clinical Dossier Compiler</Link></li>
         <li><Link to="/query" className={location.pathname === '/query' ? 'active' : ''}>Ask Lumina<span className="trademark">™</span></Link></li>
         <li><Link to="/diagnosis" className={location.pathname.includes('/diagnosis') ? 'active' : ''}>Disease Screening</Link></li>
@@ -54,19 +57,22 @@ function App() {
               
               {/* Main tool routes */}
               <Route path="/protocol" element={<ProtocolGenerator />} />
-              <Route path="/ind-modules" element={<RegulatoryDocumentGenerator />} />
+              
+              {/* REGULATORY DOCUMENT ROUTES */}
+              <Route path="/regulatory-documents" element={<RegulatoryDocuments />} /> {/* MAP INTERFACE */}
+              <Route path="/ind-modules" element={<RegulatoryDocumentGenerator />} />   {/* FORM & LOGIC */}
+              
               <Route path="/clinical-dossier" element={<ClinicalDossierCompiler />} />
               <Route path="/query" element={<QueryAssistant />} />
               
               {/* Disease Diagnosis routes */}
               <Route path="/diagnosis" element={<DiseaseDiagnosis />} />
               <Route path="/diagnosis/dermatology" element={<SkinDiseaseDetector />} />
-              <Route path="/diagnosis/pulmonology" element={<LungCancerDetector />} /> {/* NEW ROUTE */}
+              <Route path="/diagnosis/pulmonology" element={<LungCancerDetector />} />
               
               {/* Legacy routes with redirects */}
               <Route path="/skin-disease-detector" element={<Navigate to="/diagnosis/dermatology" replace />} />
               <Route path="/upload" element={<Navigate to="/diagnosis/dermatology" replace />} />
-              <Route path="/regulatory-documents" element={<Navigate to="/ind-modules" replace />} />
             </Routes>
           </div>
         </main>

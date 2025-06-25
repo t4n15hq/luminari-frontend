@@ -1,3 +1,6 @@
+// src/components/RegulatoryDocumentGenerator.js
+// Main Document Generation Form and Logic
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
@@ -44,14 +47,12 @@ const RegulatoryDocumentGenerator = () => {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('cmc');
-  const [viewMode, setViewMode] = useState('form');
-  const [selectedRegion, setSelectedRegion] = useState(null);
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [selectedDocuments, setSelectedDocuments] = useState([]);
+  const [selectedCountryData, setSelectedCountryData] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
   
   // For navigation
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Dropdown Options
   const trialPhases = ['Phase I', 'Phase II', 'Phase III', 'Phase IV'];
@@ -74,112 +75,30 @@ const RegulatoryDocumentGenerator = () => {
     'WOMAC (Western Ontario and McMaster Universities Arthritis Index)',
     'Custom/Other'
   ];
-  
-  // Regions and countries
-  const regions = {
-    "North America": ["USA", "Canada", "Mexico"],
-    "European Union": ["Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic", "Denmark", 
-                     "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", 
-                     "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", 
-                     "Romania", "Slovakia", "Slovenia", "Spain", "Sweden"],
-    "Asia Pacific": ["Japan", "China", "South Korea", "Taiwan", "India", "Singapore", "Australia", "New Zealand", "Malaysia", "Indonesia", "Philippines", "Vietnam", "Thailand"],
-    "South America": ["Brazil", "Argentina", "Colombia", "Chile", "Peru", "Venezuela", "Ecuador", "Bolivia", "Paraguay", "Uruguay"],
-    "Middle East & Africa": ["South Africa", "Israel", "Saudi Arabia", "UAE", "Egypt", "Turkey", "Nigeria"]
-  };
 
-  // Regulatory document data by country
-  const regulatoryData = {
-    "USA": [
-      { id: "ind", name: "IND (Investigational New Drug)", purpose: "To begin clinical trials (Phases I-III)" },
-      { id: "nda", name: "NDA (New Drug Application)", purpose: "To request approval for marketing a new drug" },
-      { id: "bla", name: "BLA (Biologics License Application)", purpose: "For biologics approval under the Public Health Service Act" }
-    ],
-    "European Union": [
-      { id: "cta_eu", name: "CTA (Clinical Trial Application)", purpose: "To authorize clinical trials" },
-      { id: "maa", name: "MAA (Marketing Authorization Application)", purpose: "To request EU-wide marketing approval" },
-      { id: "impd", name: "IMPD (Investigational Medicinal Product Dossier)", purpose: "Quality, manufacturing and control information" }
-    ],
-    "Japan": [
-      { id: "ctn_jp", name: "Clinical Trial Notification (CTN)", purpose: "Submitted to PMDA before clinical trials" },
-      { id: "jnda", name: "J-NDA (New Drug Application)", purpose: "Submitted to PMDA/MHLW for approval" }
-    ],
-    "China": [
-      { id: "ind_ch", name: "IND", purpose: "Required before clinical trials (submitted to NMPA)" },
-      { id: "nda_ch", name: "NDA", purpose: "Required for marketing approval" }
-    ],
-    "Australia": [
-      { id: "ctn_au", name: "CTN (Clinical Trial Notification)", purpose: "Notification scheme for clinical trials" },
-      { id: "aus", name: "AUS (Australian Submission)", purpose: "Part of the submission to TGA for registration on the ARTG" }
-    ]
-  };
-  
-  // Get documents for the selected country
-  const getDocumentsForCountry = () => {
-    if (!selectedCountry) return [];
-    
-    // If the country has specific documents, use them
-    if (regulatoryData[selectedCountry]) {
-      return regulatoryData[selectedCountry];
-    }
-    
-    // Otherwise, use region-default documents
-    if (selectedRegion === "European Union") {
-      return regulatoryData["European Union"];
-    }
-    
-    return [];
-  };
-  
-  // Handler for document selection
-  const handleDocumentSelect = (document) => {
-    setSelectedDocuments(prev => {
-      const exists = prev.some(doc => doc.id === document.id);
-      if (exists) {
-        return prev.filter(doc => doc.id !== document.id);
-      } else {
-        return [...prev, document];
-      }
-    });
-  };
-  
-  // Apply selections from regulatory document flow
-  const applyDocumentSelections = () => {
-    setCountry(selectedCountry);
-    
-    if (selectedDocuments.length > 0) {
-      const primaryDoc = selectedDocuments[0];
-      setDocumentType(primaryDoc.name);
-      console.log(`Selected document: ${primaryDoc.name}, Country: ${selectedCountry}`);
-    }
-    
-    setViewMode('form');
-  };
-  
-  // Load parameters from state or localStorage
+  // Load parameters from navigation state or localStorage
   useEffect(() => {
-    // First check for URL state parameters
+    // Check for navigation state from map selection
     if (location.state) {
-      const { selectedCountry: stateCountry, selectedDocuments: stateDocs } = location.state;
+      const { 
+        selectedCountry, 
+        selectedCountryId, 
+        selectedRegion, 
+        selectedDocuments 
+      } = location.state;
       
-      if (stateCountry) {
-        setSelectedCountry(stateCountry);
-        setCountry(stateCountry);
-      }
-      
-      if (stateDocs && stateDocs.length > 0) {
-        setSelectedDocuments(stateDocs);
+      if (selectedCountry) {
+        setCountry(selectedCountry);
+        setSelectedCountryData({
+          country: selectedCountry,
+          countryId: selectedCountryId,
+          region: selectedRegion,
+          availableDocuments: selectedDocuments || []
+        });
         
-        // Find if there's an IND or NDA document
-        const indDoc = stateDocs.find(doc => 
-          doc.id?.includes('ind') || doc.id?.includes('nda'));
-        
-        if (indDoc) {
-          setDocumentType(indDoc.name);
-          
-          // If the document has a specific disease associated, use it
-          if (indDoc.disease) {
-            setDisease(indDoc.disease);
-          }
+        // Pre-select the first available document type
+        if (selectedDocuments && selectedDocuments.length > 0) {
+          setDocumentType(selectedDocuments[0].name);
         }
       }
     }
@@ -191,7 +110,12 @@ const RegulatoryDocumentGenerator = () => {
     }
   }, [location.state, disease]);
 
-  // Main form submit handler - ENHANCED VERSION
+  // Navigate back to map selection
+  const handleBackToMap = () => {
+    navigate('/regulatory-documents');
+  };
+
+  // Main form submit handler
   const handleSubmit = async () => {
     setLoading(true);
     setError('');
@@ -239,7 +163,6 @@ const RegulatoryDocumentGenerator = () => {
         }
       };
       
-      // Log parameters for debugging
       console.log("Starting enhanced document generation with parameters:", enhancedFormData);
       
       if (!disease || disease.trim() === '') {
@@ -253,10 +176,7 @@ const RegulatoryDocumentGenerator = () => {
       
       // Check structure of response to handle both response formats
       if (response.document_content) {
-        // For document types that return a single content field (like BLA, NDA, etc.)
-        console.log("Response has document_content, handling this format");
-        
-        // Split document content into CMC and CLINICAL sections for display compatibility
+        // For document types that return a single content field
         const content = response.document_content;
         let cmcSection = "";
         let clinicalSection = "";
@@ -269,14 +189,12 @@ const RegulatoryDocumentGenerator = () => {
         ];
         
         let dividerIndex = -1;
-        let dividerLength = 0;
         
         // Find the earliest occurrence of any divider
         for (const divider of possibleDividers) {
           const index = content.indexOf(divider);
           if (index !== -1 && (dividerIndex === -1 || index < dividerIndex)) {
             dividerIndex = index;
-            dividerLength = divider.length;
           }
         }
         
@@ -284,9 +202,9 @@ const RegulatoryDocumentGenerator = () => {
           cmcSection = content.substring(0, dividerIndex);
           clinicalSection = content.substring(dividerIndex);
           
-          // If CMC section is very short, it might be incorrect - better to have a fallback
+          // If CMC section is very short, use fallback
           if (cmcSection.length < 500) {
-            const backupDivider = Math.floor(content.length * 0.4); // 40% mark
+            const backupDivider = Math.floor(content.length * 0.4);
             const breakpoint = content.indexOf("\n", backupDivider);
             if (breakpoint !== -1) {
               cmcSection = content.substring(0, breakpoint);
@@ -302,23 +220,18 @@ const RegulatoryDocumentGenerator = () => {
             cmcSection = content.substring(0, breakPoint);
             clinicalSection = content.substring(breakPoint);
           } else {
-            // Just split in the middle if no good breakpoint
             const midpoint = Math.floor(content.length / 2);
             cmcSection = content.substring(0, midpoint);
             clinicalSection = content.substring(midpoint);
           }
         }
         
-        console.log(`Split document_content - CMC length: ${cmcSection.length}, Clinical length: ${clinicalSection.length}`);
-        
         setResult({
           cmc_section: cmcSection,
           clinical_section: clinicalSection
         });
       } else if (response.cmc_section || response.clinical_section) {
-        // Original format with split sections (IndModule, etc.)
-        console.log("Response has separate cmc_section and clinical_section");
-        console.log(`CMC length: ${response.cmc_section?.length || 0}, Clinical length: ${response.clinical_section?.length || 0}`);
+        // Original format with split sections
         setResult(response);
       } else {
         console.error("Unexpected response format:", response);
@@ -346,10 +259,9 @@ const RegulatoryDocumentGenerator = () => {
     setDisease('');
     setDrugClass('');
     setMechanism('');
-    setCountry('');
     setDocumentType('');
     
-    // Reset all new fields
+    // Reset all fields
     setTrialPhase('');
     setTrialType('');
     setBlinding('');
@@ -374,11 +286,10 @@ const RegulatoryDocumentGenerator = () => {
     setError('');
   };
 
-  // Improved content rendering to handle large texts
+  // Improved content rendering
   const renderContent = (content) => {
     if (!content) return <p>No content available.</p>;
     
-    // Split content into chunks to avoid performance issues with large texts
     const paragraphs = content.split('\n');
     
     return (
@@ -392,10 +303,10 @@ const RegulatoryDocumentGenerator = () => {
     );
   };
 
-  // Render the enhanced form view
-  const renderForm = () => (
-    <div className="regulatory-selector">
-      <div className="flex justify-between items-center mb-4">
+  return (
+    <div className="regulatory-document-generator">
+      {/* Header with Back Button */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
           <h2>Enhanced Regulatory Document Generator</h2>
           <p>Generate comprehensive regulatory documentation with detailed trial design parameters</p>
@@ -403,19 +314,48 @@ const RegulatoryDocumentGenerator = () => {
         
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button 
+            onClick={handleBackToMap}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#4299e1',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            ← Back to Map
+          </button>
+          <button 
             onClick={() => setShowHelp(!showHelp)}
             className="btn btn-secondary"
           >
-            {showHelp ? 'Hide Help' : 'What Other Fields Can Be Added?'}
-          </button>
-          <button 
-            onClick={() => setViewMode('regions')}
-            className="view-button"
-          >
-            Select Document by Region/Country
+            {showHelp ? 'Hide Help' : 'Additional Fields Guide'}
           </button>
         </div>
       </div>
+
+      {/* Selected Country Info */}
+      {selectedCountryData && (
+        <div style={{
+          backgroundColor: '#f0fff4',
+          border: '1px solid #9ae6b4',
+          borderRadius: '8px',
+          padding: '15px',
+          marginBottom: '20px'
+        }}>
+          <h3 style={{ margin: '0 0 10px 0', color: '#276749' }}>
+            📍 Selected: {selectedCountryData.country} ({selectedCountryData.region})
+          </h3>
+          <p style={{ margin: '0', color: '#22543d' }}>
+            Available documents: {selectedCountryData.availableDocuments.map(doc => doc.name).join(', ')}
+          </p>
+        </div>
+      )}
 
       {/* Help Section */}
       {showHelp && (
@@ -456,32 +396,6 @@ const RegulatoryDocumentGenerator = () => {
         </div>
       )}
 
-      {/* Show country and document type if they were preselected */}
-      {(country || documentType) && (
-        <div className="info-box mb-4">
-          <h4>Selected Parameters</h4>
-          {country && (
-            <div className="mb-2">
-              <span className="font-medium">Country:</span> {country}
-            </div>
-          )}
-          {documentType && (
-            <div className="mb-2">
-              <span className="font-medium">Document Type:</span> {documentType}
-            </div>
-          )}
-          <button 
-            onClick={() => {
-              setCountry('');
-              setDocumentType('');
-            }}
-            className="text-blue-600 text-sm hover:underline"
-          >
-            Change Selection
-          </button>
-        </div>
-      )}
-
       <div className="regulatory-form">
         {/* Basic Information Section */}
         <div className="form-section">
@@ -499,18 +413,24 @@ const RegulatoryDocumentGenerator = () => {
               />
             </div>
 
-            {!country && (
+            {/* Document Type Selection */}
+            {selectedCountryData && (
               <div className="form-group">
-                <label htmlFor="country">Country/Region (Optional)</label>
-                <input
-                  id="country"
-                  type="text"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  placeholder="e.g., USA, EU, Japan"
-                />
+                <label htmlFor="documentType">Document Type <span className="required">*</span></label>
+                <select
+                  id="documentType"
+                  value={documentType}
+                  onChange={(e) => setDocumentType(e.target.value)}
+                >
+                  <option value="">Select Document Type</option>
+                  {selectedCountryData.availableDocuments.map(doc => (
+                    <option key={doc.id} value={doc.name}>
+                      {doc.name}
+                    </option>
+                  ))}
+                </select>
                 <div className="form-hint">
-                  Use the "Select Document by Region/Country" button above to browse available regulatory documents by geography
+                  {selectedCountryData.availableDocuments.find(doc => doc.name === documentType)?.purpose}
                 </div>
               </div>
             )}
@@ -916,7 +836,6 @@ const RegulatoryDocumentGenerator = () => {
             </button>
             <button
               onClick={() => {
-                // Create a blob for download
                 const content = `CMC SECTION:\n\n${result.cmc_section}\n\nCLINICAL SECTION:\n\n${result.clinical_section}`;
                 const blob = new Blob([content], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
@@ -937,175 +856,6 @@ const RegulatoryDocumentGenerator = () => {
       )}
     </div>
   );
-
-  // Render region selection view
-  const renderRegionSelection = () => (
-    <div className="regulatory-selector">
-      <a href="#" onClick={(e) => {
-          e.preventDefault();
-          setViewMode('form');
-        }}
-        className="back-button"
-      >
-        Back to Form
-      </a>
-      <h2>Select Region</h2>
-      <p>Choose a geographic region to browse available regulatory documents</p>
-      
-      <div className="region-grid">
-        {Object.keys(regions).map(region => (
-          <div 
-            key={region}
-            className="region-card"
-            onClick={() => {
-              setSelectedRegion(region);
-              setViewMode('countries');
-            }}
-          >
-            <h3>{region}</h3>
-            <p>{regions[region].length} countries</p>
-            <button className="view-button">
-              View countries
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  // Render country selection view
-  const renderCountrySelection = () => (
-    <div className="regulatory-selector">
-      <a 
-        href="#" 
-        onClick={(e) => {
-          e.preventDefault();
-          setViewMode('regions');
-        }}
-        className="back-button"
-      >
-        Back to Regions
-      </a>
-      <h2>{selectedRegion}</h2>
-      <p>Select a country to view available regulatory documents</p>
-      
-      <div className="country-grid">
-        {regions[selectedRegion].map(country => (
-          <div 
-            key={country}
-            className="country-card"
-            onClick={() => {
-              setSelectedCountry(country);
-              setViewMode('documents');
-            }}
-          >
-            <h3>{country}</h3>
-            {regulatoryData[country] && (
-              <p>{regulatoryData[country].length} document types available</p>
-            )}
-            <button className="view-button">
-              View documents
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  // Render document selection view
-  const renderDocumentSelection = () => {
-    const documents = getDocumentsForCountry();
-    
-    return (
-      <div className="regulatory-selector">
-        <a 
-          href="#" 
-          onClick={(e) => {
-            e.preventDefault();
-            setViewMode('countries');
-          }}
-          className="back-button"
-        >
-          Back to Countries
-        </a>
-        <h2>{selectedCountry}</h2>
-        <p>Select documents to generate for {selectedCountry}</p>
-        
-        {documents.length > 0 ? (
-          <>
-            <div className="document-grid mt-lg">
-              {documents.map(doc => (
-                <div 
-                  key={doc.id}
-                  className={`document-card ${selectedDocuments.some(d => d.id === doc.id) ? 'selected' : ''}`}
-                  onClick={() => handleDocumentSelect(doc)}
-                >
-                  <div className="document-card-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={selectedDocuments.some(d => d.id === doc.id)}
-                      onChange={() => {}}
-                      className="form-checkbox h-5 w-5"
-                    />
-                  </div>
-                  <div className="document-card-content">
-                    <h4 className="document-card-title">{doc.name}</h4>
-                    <p className="document-card-description">{doc.purpose}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="action-buttons">
-              <button 
-                onClick={() => setViewMode('form')}
-                className="reset-button"
-              >
-                Cancel
-              </button>
-              
-              <button 
-                onClick={applyDocumentSelections}
-                disabled={selectedDocuments.length === 0}
-                className={`generate-button ${selectedDocuments.length === 0 ? 'disabled' : ''}`}
-              >
-                Apply {selectedDocuments.length} Selected Document{selectedDocuments.length !== 1 ? 's' : ''}
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="info-box">
-            <p>No specific regulatory documents found for {selectedCountry}.</p>
-            <p className="mt-2">
-              <button 
-                onClick={() => {
-                  setCountry(selectedCountry);
-                  setViewMode('form');
-                }}
-                className="view-button"
-              >
-                Continue with {selectedCountry}
-              </button>
-              {' '}to create general regulatory documents.
-            </p>
-          </div>
-        )}
-      </div>
-    );
-  };
-  
-  // Main view switcher
-  switch (viewMode) {
-    case 'regions':
-      return renderRegionSelection();
-    case 'countries':
-      return renderCountrySelection();
-    case 'documents':
-      return renderDocumentSelection();
-    case 'form':
-    default:
-      return renderForm();
-  }
 };
 
 export default RegulatoryDocumentGenerator;
