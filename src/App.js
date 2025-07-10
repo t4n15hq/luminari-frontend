@@ -1,4 +1,4 @@
-// src/App.js - Updated routing to include all files properly
+// src/App.js - Updated routing to include batch functionality
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
@@ -7,6 +7,7 @@ import HomePage from './components/HomePage';
 import ProtocolGenerator from './components/ProtocolGenerator';
 import RegulatoryDocuments from './components/RegulatoryDocuments';
 import RegulatoryDocumentGenerator from './components/RegulatoryDocumentGenerator';
+import BatchRegulatoryGenerator from './components/BatchRegulatoryGenerator'; // NEW IMPORT
 import ClinicalDossierCompiler from './components/ClinicalDossierCompiler';
 import QueryAssistant from './components/QueryAssistant';
 import SkinDiseaseDetector from './components/SkinDiseaseDetector';
@@ -28,7 +29,8 @@ const Navigation = () => {
       <ul>
         <li><Link to="/" className="home-link">Home</Link></li>
         <li><Link to="/protocol" className={location.pathname === '/protocol' ? 'active' : ''}>Protocol & Study Design Generator</Link></li>
-        <li><Link to="/regulatory-documents" className={location.pathname.includes('/regulatory') || location.pathname.includes('/ind-modules') ? 'active' : ''}>Regulatory Document Generator</Link></li>
+        <li><Link to="/regulatory-documents" className={location.pathname.includes('/regulatory') || location.pathname.includes('/ind-modules') || location.pathname.includes('/batch') ? 'active' : ''}>Regulatory Document Generator</Link></li>
+        <li><Link to="/batch-regulatory" className={location.pathname === '/batch-regulatory' ? 'active' : ''}>Batch Regulatory Generator</Link></li>
         <li><Link to="/clinical-dossier" className={location.pathname === '/clinical-dossier' ? 'active' : ''}>Clinical Dossier Compiler</Link></li>
         <li><Link to="/query" className={location.pathname === '/query' ? 'active' : ''}>Ask Lumina<span className="trademark">™</span></Link></li>
         <li><Link to="/diagnosis" className={location.pathname.includes('/diagnosis') ? 'active' : ''}>Disease Screening</Link></li>
@@ -58,9 +60,10 @@ function App() {
               {/* Main tool routes */}
               <Route path="/protocol" element={<ProtocolGenerator />} />
               
-              {/* REGULATORY DOCUMENT ROUTES */}
+              {/* REGULATORY DOCUMENT ROUTES - ENHANCED WITH BATCH */}
               <Route path="/regulatory-documents" element={<RegulatoryDocuments />} /> {/* MAP INTERFACE */}
-              <Route path="/ind-modules" element={<RegulatoryDocumentGenerator />} />   {/* FORM & LOGIC */}
+              <Route path="/ind-modules" element={<RegulatoryDocumentGenerator />} />   {/* SINGLE FORM & LOGIC */}
+              <Route path="/batch-regulatory" element={<BatchRegulatoryGenerator />} />  {/* NEW BATCH INTERFACE */}
               
               <Route path="/clinical-dossier" element={<ClinicalDossierCompiler />} />
               <Route path="/query" element={<QueryAssistant />} />

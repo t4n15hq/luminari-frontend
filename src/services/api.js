@@ -1,4 +1,4 @@
-// src/services/api.js - COMPLETE VERSION WITH ALL MISSING DOCUMENT ROUTING
+// src/services/api.js - UPDATED TO EXPOSE ALL OPENAI FUNCTIONS
 
 import openaiService from './openaiService';
 import dossierService from './dossierService';
@@ -494,6 +494,96 @@ const apiService = {
         }
     });
   },
+
+  // =============================================================================
+  // EXPOSE ALL OPENAI SERVICE FUNCTIONS FOR BATCH PROCESSING
+  // =============================================================================
+  
+  // United States
+  generateNDA: openaiService.generateNDA,
+  generateBLA: openaiService.generateBLA,
+  
+  // Canada  
+  generateCTA_CA: openaiService.generateCTA_CA,
+  generateNDS: openaiService.generateNDS,
+  generateNOC: openaiService.generateNOC,
+  
+  // Mexico
+  generateCOFEPRIS_CTA: openaiService.generateCOFEPRIS_CTA,
+  generateCOFEPRIS_NDA: openaiService.generateCOFEPRIS_NDA,
+  
+  // Europe
+  generateCTA: openaiService.generateCTA,
+  generateMAA: openaiService.generateMAA,
+  generateIMPD: openaiService.generateIMPD,
+  
+  // United Kingdom
+  generateCTA_UK: openaiService.generateCTA_UK,
+  generateMA_UK: openaiService.generateMA_UK,
+  generateVIE: openaiService.generateVIE,
+  
+  // Switzerland
+  generateCTA_CH: openaiService.generateCTA_CH,
+  generateMA_CH: openaiService.generateMA_CH,
+  
+  // Russia
+  generateCTA_RU: openaiService.generateCTA_RU,
+  generateRD_RU: openaiService.generateRD_RU,
+  generateGMP_RU: openaiService.generateGMP_RU,
+  
+  // Japan
+  generateCTN_JP: openaiService.generateCTN_JP,
+  generateJNDA: openaiService.generateJNDA,
+  generatePMDA_CONSULTATION: openaiService.generatePMDA_CONSULTATION,
+  
+  // China
+  generateIND_CH: openaiService.generateIND_CH,
+  generateNDA_CH: openaiService.generateNDA_CH,
+  generateDRUG_LICENSE_CH: openaiService.generateDRUG_LICENSE_CH,
+  
+  // South Korea
+  generateIND_KR: openaiService.generateIND_KR,
+  generateNDA_KR: openaiService.generateNDA_KR,
+  generateKGMP: openaiService.generateKGMP,
+  
+  // Australia
+  generateCTN_AU: openaiService.generateCTN_AU,
+  generateAUS: openaiService.generateAUS,
+  generateTGA_GMP: openaiService.generateTGA_GMP,
+  
+  // Singapore
+  generateCTA_SG: openaiService.generateCTA_SG,
+  generatePRODUCT_LICENSE_SG: openaiService.generatePRODUCT_LICENSE_SG,
+  
+  // India
+  generateCTA_IN: openaiService.generateCTA_IN,
+  generateNDA_IN: openaiService.generateNDA_IN,
+  generateIMPORT_LICENSE_IN: openaiService.generateIMPORT_LICENSE_IN,
+  
+  // Taiwan
+  generateIND_TW: openaiService.generateIND_TW,
+  generateNDA_TW: openaiService.generateNDA_TW,
+  
+  // Latin America
+  generateANVISA_CTA: openaiService.generateANVISA_CTA,
+  generateANVISA_NDA: openaiService.generateANVISA_NDA,
+  generateANVISA_GMP: openaiService.generateANVISA_GMP,
+  generateANMAT_CTA: openaiService.generateANMAT_CTA,
+  generateANMAT_NDA: openaiService.generateANMAT_NDA,
+  generateINVIMA_CTA: openaiService.generateINVIMA_CTA,
+  generateINVIMA_NDA: openaiService.generateINVIMA_NDA,
+  generateISP_CTA: openaiService.generateISP_CTA,
+  generateISP_NDA: openaiService.generateISP_NDA,
+  
+  // Africa & Middle East
+  generateSAHPRA_CTA: openaiService.generateSAHPRA_CTA,
+  generateSAHPRA_NDA: openaiService.generateSAHPRA_NDA,
+  generateMOH_ISRAEL_CTA: openaiService.generateMOH_ISRAEL_CTA,
+  generateMOH_ISRAEL_NDA: openaiService.generateMOH_ISRAEL_NDA,
+  generateSFDA_CTA: openaiService.generateSFDA_CTA,
+  generateSFDA_NDA: openaiService.generateSFDA_NDA,
+  generateDHA_CTA: openaiService.generateDHA_CTA,
+  generateMOH_UAE_NDA: openaiService.generateMOH_UAE_NDA,
 
   // Pass through methods from openaiService
   queryAssistant: openaiService.queryAssistant,

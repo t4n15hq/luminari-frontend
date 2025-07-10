@@ -1,6 +1,3 @@
-// src/components/RegulatoryDocuments.js
-// Navigation/Selection Interface - Entry point for regulatory documents
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
