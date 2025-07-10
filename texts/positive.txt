@@ -1,0 +1,33 @@
+
+PATIENT NOTES
+
+ID: 789012
+DATE: 2023-10-26
+AGE: 68
+SEX: Male
+
+CHIEF COMPLAINT:
+Persistent cough and shortness of breath.
+
+HISTORY OF PRESENT ILLNESS:
+The patient is a 68-year-old male with a 40-pack-year smoking history who presents with a chronic, productive cough that has worsened over the past 3 months. He reports associated hemoptysis on two occasions last week. He has experienced significant unintentional weight loss of approximately 15 lbs over the last 2 months and complains of dull, aching chest pain on the right side. He also notes increasing fatigue and dyspnea on exertion, finding it difficult to walk up a single flight of stairs.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- COPD
+
+SOCIAL HISTORY:
+- Smoker: 1 pack per day for 40 years. Quit 6 months ago.
+- Alcohol: Occasional social use.
+
+REVIEW OF SYSTEMS:
+- CONSTITUTIONAL: Positive for fatigue, weight loss.
+- RESPIRATORY: Positive for chronic cough, hemoptysis, dyspnea. Negative for wheezing.
+- CARDIOVASCULAR: Negative for palpitations.
+
+ASSESSMENT AND PLAN:
+Given the patient's extensive smoking history, age, and constellation of symptoms including hemoptysis, chronic cough, and significant weight loss, there is a high suspicion for malignancy.
+1.  Immediate referral for chest X-ray and CT scan of the chest.
+2.  Sputum cytology.
+3.  Referral to Pulmonology for bronchoscopy.
+4.  Counseling on the findings and potential for a serious diagnosis.

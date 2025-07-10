@@ -1,7 +1,5 @@
-// src/components/FileUpload.js
 import React, { useState } from 'react';
-import openaiService from '../services/openaiService'; 
-// ← adjust this path if your service lives somewhere else, e.g. '../api/openaiService'
+import openaiService from '../../services/openaiService';
 
 export default function FileUpload({ onTranscript }) {
   const [loading, setLoading] = useState(false);

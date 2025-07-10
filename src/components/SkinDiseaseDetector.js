@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import FileUpload from './FileUpload';
+import { FileUpload, ResultsChat } from './common';
 import openaiService from '../services/openaiService';
+
 
 const SkinDiseaseDetector = () => {
   // Analysis mode state - 'image', 'textAudio', 'batch', or 'video'
@@ -27,6 +28,8 @@ const SkinDiseaseDetector = () => {
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
   const [processingStatus, setProcessingStatus] = useState('');
+  const [showResultsChat, setShowResultsChat] = useState(false);
+
 
   // Text/Audio analysis states
   const [transcript, setTranscript] = useState('');
@@ -118,7 +121,7 @@ const SkinDiseaseDetector = () => {
         formData.append('condition_description', item.metadata.conditionDescription || 'Unknown');
 
         const response = await axios.post(
-          `${process.env.REACT_APP_BACKEND_URL}/predict/`,
+          `${process.env.REACT_APP_BACKEND_URL || 'https://luminari-uic-skin-disease-detection.hf.space'}/predict/`,
           formData,
           { headers: { 'Content-Type': 'multipart/form-data' } }
         );
@@ -213,7 +216,7 @@ const SkinDiseaseDetector = () => {
 
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/predict/`,
+        `${process.env.REACT_APP_BACKEND_URL || 'https://luminari-uic-skin-disease-detection.hf.space'}/predict/`,
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
@@ -286,6 +289,19 @@ const SkinDiseaseDetector = () => {
     }
     window.location.href = path;
   };
+  
+  const getBatchSummary = () => {
+    const totalFiles = batchResults.length;
+    const highConfidenceDetections = batchResults.filter(r => r.topPrediction?.confidence >= 0.7).length;
+    const allPredictions = batchResults.flatMap(r => r.prediction?.map(p => p.label) || []);
+    const predictionCounts = allPredictions.reduce((acc, label) => {
+      acc[label] = (acc[label] || 0) + 1;
+      return acc;
+    }, {});
+    const mostCommonFinding = Object.keys(predictionCounts).reduce((a, b) => predictionCounts[a] > predictionCounts[b] ? a : b, 'N/A');
+
+    return { totalFiles, highConfidenceDetections, mostCommonFinding };
+  };
 
   // Circular Progress component
   const CircularProgress = ({ percentage, color, label }) => {
@@ -337,6 +353,13 @@ const SkinDiseaseDetector = () => {
 
   return (
     <div className="skin-disease-detector">
+       {showResultsChat && (
+        <ResultsChat
+          results={batchResults}
+          onClose={() => setShowResultsChat(false)}
+          contextName="Dermatology Batch Analysis"
+        />
+      )}
       {/* Top Navigation Section */}
       <div className="page-navigation">
         <div className="breadcrumb">
@@ -381,8 +404,9 @@ const SkinDiseaseDetector = () => {
         <button
           className={`tab-button ${analysisMode === 'video' ? 'active' : ''}`}
           onClick={() => setAnalysisMode('video')}
+          disabled
         >
-          Video Analysis
+          Video Analysis (In Development)
         </button>
       </div>
 
@@ -541,19 +565,8 @@ const SkinDiseaseDetector = () => {
             <button
               onClick={handlePredict}
               disabled={isLoading}
-              style={{
-                marginTop: '25px',
-                padding: '15px 30px',
-                backgroundColor: isLoading ? '#a0aec0' : '#4c51bf',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                width: '100%',
-                boxShadow: '0 4px 6px rgba(76, 81, 191, 0.3)'
-              }}
+              className="btn btn-primary btn-lg"
+              style={{marginTop: '25px', width: '100%'}}
             >
               {isLoading ? 'Analyzing...' : 'Analyze Image'}
             </button>
@@ -687,19 +700,19 @@ const SkinDiseaseDetector = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <button 
                       onClick={() => goToPage('/protocol')} 
-                      style={nextBtnStyle('#ebf8ff', '#2b6cb0')}
+                      className="btn btn-secondary"
                     >
                       Generate Clinical Protocol for {prediction[0].label}
                     </button>
                     <button 
                       onClick={() => goToPage('/ind-modules')} 
-                      style={nextBtnStyle('#f0fff4', '#276749')}
+                      className="btn btn-secondary"
                     >
                       Generate Regulatory Documents
                     </button>
                     <button 
                       onClick={() => goToPage('/query')} 
-                      style={nextBtnStyle('#faf5ff', '#553c9a')}
+                      className="btn btn-secondary"
                     >
                       Clinical Questions about {prediction[0].label}
                     </button>
@@ -708,22 +721,13 @@ const SkinDiseaseDetector = () => {
               </div>
             </div>
           )}
-
-          
-          
         </div>
       )}
 
       {/* Enhanced Batch Processing Section */}
       {analysisMode === 'batch' && (
         <div className="analysis-content">
-          <div style={{ 
-            backgroundColor: 'white', 
-            padding: '30px', 
-            borderRadius: '12px', 
-            boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
-            marginBottom: '20px'
-          }}>
+          <div className="upload-card">
             <h3 style={{ marginTop: 0, color: '#2d3748' }}>Batch Image Processing</h3>
             <input 
               type="file" 
@@ -762,204 +766,197 @@ const SkinDiseaseDetector = () => {
                   <button
                     onClick={processBatch}
                     disabled={batchLoading || batchFiles.length === 0}
-                    style={{
-                      padding: '12px 24px',
-                      backgroundColor: batchLoading ? '#a0aec0' : '#38b2ac',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      cursor: batchLoading ? 'not-allowed' : 'pointer'
-                    }}
+                    className="btn btn-primary"
                   >
                     {batchLoading ? '⚡ Processing...' : `🔬 Analyze ${batchFiles.length} Images`}
                   </button>
 
-                  {batchResults.length > 0 && (
+                  {batchResults.length > 0 && !batchLoading && (
+                    <>
                     <button
                       onClick={exportBatchResults}
-                      style={{
-                        padding: '12px 24px',
-                        backgroundColor: '#48bb78',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }}
+                      className="btn btn-success"
                     >
                       📊 Export Results
                     </button>
+                     <button
+                      onClick={() => setShowResultsChat(true)}
+                      className="btn btn-secondary"
+                    >
+                      Chat with Results
+                    </button>
+                    </>
                   )}
                 </div>
               </div>
               
               <div style={{ 
-                maxHeight: '500px', 
+                maxHeight: '600px', 
                 overflowY: 'auto', 
                 border: '1px solid #e2e8f0', 
                 borderRadius: '8px', 
                 backgroundColor: 'white'
               }}>
                 {batchFiles.map((item) => (
-                  <div key={item.id} style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    padding: '15px', 
-                    borderBottom: '1px solid #f1f5f9',
-                    backgroundColor: item.status === 'processing' ? '#fff3cd' : 
-                                   item.status === 'completed' ? '#d4edda' : 
-                                   item.status === 'error' ? '#f8d7da' : 'white'
-                  }}>
-                    <img 
-                      src={item.preview} 
-                      alt={item.name} 
-                      style={{ 
-                        width: '80px', 
-                        height: '80px', 
-                        objectFit: 'cover', 
-                        borderRadius: '8px', 
-                        marginRight: '20px',
-                        border: '1px solid #e2e8f0'
-                      }} 
-                    />
-                    
-                    <div style={{ flex: 1 }}>
-                      <div style={{ 
-                        fontWeight: 'bold', 
-                        marginBottom: '8px',
-                        color: '#2d3748'
-                      }}>
-                        {item.name}
-                      </div>
+                  <div key={item.id} className={`batch-result-card ${item.topPrediction?.confidence > 0.7 ? 'positive' : item.status === 'error' ? 'error' : item.status === 'completed' ? 'negative' : ''}`}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                      <img 
+                        src={item.preview} 
+                        alt={item.name} 
+                        style={{ 
+                          width: '80px', 
+                          height: '80px', 
+                          objectFit: 'cover', 
+                          borderRadius: '8px', 
+                          marginRight: '20px',
+                          border: '1px solid #e2e8f0'
+                        }} 
+                      />
                       
-                      <div style={{ 
-  display: 'grid', 
-  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-  gap: '8px', 
-  fontSize: '0.8rem',
-  marginBottom: '10px'
-}}>
-  <input 
-    type="number" 
-    placeholder="Age" 
-    value={item.metadata.age}
-    onChange={(e) => updateBatchMetadata(item.id, 'age', e.target.value)}
-    style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
-  />
-  <select 
-    value={item.metadata.gender}
-    onChange={(e) => updateBatchMetadata(item.id, 'gender', e.target.value)}
-    style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
-  >
-    <option value="">Gender</option>
-    <option>Male</option>
-    <option>Female</option>
-    <option>Other</option>
-  </select>
-  <select 
-    value={item.metadata.race}
-    onChange={(e) => updateBatchMetadata(item.id, 'race', e.target.value)}
-    style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
-  >
-    <option value="">Ethnicity</option>
-    <option>Caucasian</option>
-    <option>African American</option>
-    <option>Asian</option>
-    <option>Hispanic/Latino</option>
-    <option>Other</option>
-  </select>
-  <select 
-    value={item.metadata.skinColor}
-    onChange={(e) => updateBatchMetadata(item.id, 'skinColor', e.target.value)}
-    style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
-  >
-    <option value="">Skin Tone</option>
-    <option>Very Light (I)</option>
-    <option>Light (II)</option>
-    <option>Medium Light (III)</option>
-    <option>Medium (IV)</option>
-    <option>Medium Dark (V)</option>
-    <option>Dark (VI)</option>
-  </select>
-  <select 
-    value={item.metadata.skinType}
-    onChange={(e) => updateBatchMetadata(item.id, 'skinType', e.target.value)}
-    style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
-  >
-    <option value="">Skin Type</option>
-    <option>Oily</option>
-    <option>Dry</option>
-    <option>Combination</option>
-    <option>Normal</option>
-    <option>Sensitive</option>
-    <option>Acne-prone</option>
-  </select>
-</div>
-<textarea
-  placeholder="Condition Description"
-  value={item.metadata.conditionDescription}
-  onChange={(e) => updateBatchMetadata(item.id, 'conditionDescription', e.target.value)}
-  rows={2}
-  style={{
-    width: '100%',
-    padding: '8px',
-    fontSize: '0.85rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '4px',
-    resize: 'vertical',
-    marginBottom: '10px'
-  }}
-/>
-
-                      
-                      <div style={{ fontSize: '0.85rem', color: '#4a5568' }}>
-                        <strong>Status:</strong> {item.status}
-                        {item.topPrediction && (
-                          <>
-                            <br />
-                            <strong>Result:</strong> 
-                            <span style={{ 
-                              color: '#e53e3e',
-                              fontWeight: 'bold',
-                              marginLeft: '5px'
-                            }}>
-                              {item.topPrediction.label}
-                            </span>
-                            <span style={{ marginLeft: '10px' }}>
-                              ({(item.topPrediction.confidence * 100).toFixed(1)}% confidence)
-                            </span>
-                          </>
-                        )}
-                        {item.error && (
-                          <>
-                            <br />
-                            <span style={{ color: '#dc2626' }}>Error: {item.error}</span>
-                          </>
-                        )}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px'}}>
+                          <div style={{ fontWeight: 'bold', color: '#2d3748' }}>
+                            {item.name}
+                          </div>
+                          <button 
+                            onClick={() => removeBatchFile(item.id)}
+                            className="btn btn-danger btn-sm"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        
+                        {/* METADATA INPUTS RESTORED HERE */}
+                        <div style={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+                          gap: '8px', 
+                          fontSize: '0.8rem',
+                          marginBottom: '10px'
+                        }}>
+                          <input 
+                            type="number" 
+                            placeholder="Age" 
+                            value={item.metadata.age}
+                            onChange={(e) => updateBatchMetadata(item.id, 'age', e.target.value)}
+                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                          />
+                          <select 
+                            value={item.metadata.gender}
+                            onChange={(e) => updateBatchMetadata(item.id, 'gender', e.target.value)}
+                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                          >
+                            <option value="">Gender</option>
+                            <option>Male</option>
+                            <option>Female</option>
+                            <option>Other</option>
+                          </select>
+                          <select 
+                            value={item.metadata.race}
+                            onChange={(e) => updateBatchMetadata(item.id, 'race', e.target.value)}
+                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                          >
+                            <option value="">Ethnicity</option>
+                            <option>Caucasian</option>
+                            <option>African American</option>
+                            <option>Asian</option>
+                            <option>Hispanic/Latino</option>
+                            <option>Other</option>
+                          </select>
+                          <select 
+                            value={item.metadata.skinColor}
+                            onChange={(e) => updateBatchMetadata(item.id, 'skinColor', e.target.value)}
+                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                          >
+                            <option value="">Skin Tone</option>
+                            <option>Very Light (I)</option>
+                            <option>Light (II)</option>
+                            <option>Medium Light (III)</option>
+                            <option>Medium (IV)</option>
+                            <option>Medium Dark (V)</option>
+                            <option>Dark (VI)</option>
+                          </select>
+                          <select 
+                            value={item.metadata.skinType}
+                            onChange={(e) => updateBatchMetadata(item.id, 'skinType', e.target.value)}
+                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                          >
+                            <option value="">Skin Type</option>
+                            <option>Oily</option>
+                            <option>Dry</option>
+                            <option>Combination</option>
+                            <option>Normal</option>
+                            <option>Sensitive</option>
+                            <option>Acne-prone</option>
+                          </select>
+                        </div>
+                        <textarea
+                          placeholder="Condition Description"
+                          value={item.metadata.conditionDescription}
+                          onChange={(e) => updateBatchMetadata(item.id, 'conditionDescription', e.target.value)}
+                          rows={2}
+                          style={{
+                            width: '100%',
+                            padding: '8px',
+                            fontSize: '0.85rem',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '4px',
+                            resize: 'vertical',
+                            marginBottom: '10px'
+                          }}
+                        />
+                        
+                        <div style={{ fontSize: '0.85rem', color: '#4a5568' }}>
+                          <strong>Status:</strong> {item.status}
+                          {item.topPrediction && (
+                            <>
+                              <br />
+                              <strong>Result:</strong> 
+                              <span style={{ 
+                                color: item.topPrediction.confidence > 0.7 ? 'var(--color-error)' : 'var(--color-success)',
+                                fontWeight: 'bold',
+                                marginLeft: '5px'
+                              }}>
+                                {item.topPrediction.label}
+                              </span>
+                              <span style={{ marginLeft: '10px' }}>
+                                ({(item.topPrediction.confidence * 100).toFixed(1)}% confidence)
+                              </span>
+                            </>
+                          )}
+                          {item.error && (
+                            <>
+                              <br />
+                              <span style={{ color: 'var(--color-error)' }}>Error: {item.error}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    
-                    <button 
-                      onClick={() => removeBatchFile(item.id)}
-                      style={{ 
-                        marginLeft: '15px', 
-                        padding: '8px 16px', 
-                        backgroundColor: '#dc2626', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '4px', 
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                    >
-                      Remove
-                    </button>
                   </div>
                 ))}
               </div>
+              
+              {batchResults.length > 0 && !batchLoading && (
+                <div className="batch-summary">
+                  <h4>Batch Summary</h4>
+                  <ul>
+                    <li>
+                      <div className="summary-value">{getBatchSummary().totalFiles}</div>
+                      <div className="summary-label">Images Analyzed</div>
+                    </li>
+                    <li>
+                      <div className="summary-value">{getBatchSummary().highConfidenceDetections}</div>
+                      <div className="summary-label">High Confidence</div>
+                    </li>
+                    <li>
+                      <div className="summary-value">{getBatchSummary().mostCommonFinding}</div>
+                      <div className="summary-label">Most Common Finding</div>
+                    </li>
+                  </ul>
+                </div>
+              )}
+
 
               {batchLoading && (
                 <div style={{ 
@@ -998,22 +995,13 @@ const SkinDiseaseDetector = () => {
               )}
             </div>
           )}
-
-          {/* Batch Processing Info */}
-
         </div>
       )}
 
       {/* Enhanced Text/Audio Analysis Section */}
       {analysisMode === 'textAudio' && (
         <div className="analysis-content">
-          <div style={{ 
-            backgroundColor: 'white', 
-            padding: '30px', 
-            borderRadius: '12px', 
-            boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
-            marginBottom: '20px'
-          }}>
+          <div className="upload-card">
             <h3 style={{ marginTop: 0, color: '#2d3748' }}>Advanced Audio & Text Processing</h3>
             <FileUpload onTranscript={setTranscript} />
             <div style={{ 
@@ -1029,29 +1017,15 @@ const SkinDiseaseDetector = () => {
             </div>
           </div>
 
-          <div style={{ 
-            backgroundColor: 'white', 
-            padding: '30px', 
-            borderRadius: '12px', 
-            boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
-            marginBottom: '20px'
-          }}>
+          <div className="upload-card" style={{marginTop: '20px'}}>
             <h3 style={{ marginTop: 0, color: '#2d3748' }}>Manual Text Input</h3>
             <textarea
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
               placeholder="Enter detailed clinical notes, patient consultation transcript, or dermatological case description. Include symptoms, duration, appearance, location, and patient history for optimal analysis..."
               rows={8}
-              style={{
-                width: '100%',
-                padding: '15px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'monospace',
-                resize: 'vertical',
-                minHeight: '200px'
-              }}
+              className="form-textarea"
+              style={{minHeight: '200px'}}
             />
             <div style={{ 
               display: 'flex', 
@@ -1067,28 +1041,13 @@ const SkinDiseaseDetector = () => {
           </div>
 
           {transcript && (
-            <div style={{ 
-              backgroundColor: 'white', 
-              padding: '30px', 
-              borderRadius: '12px', 
-              boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
-              marginBottom: '20px'
-            }}>
+            <div className="upload-card" style={{marginTop: '20px'}}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ margin: 0, color: '#2d3748' }}>📄 Text Preview</h3>
                 <button
                   onClick={handleDiagnose}
                   disabled={diagnosisLoading}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: diagnosisLoading ? '#a0aec0' : '#9f7aea',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    cursor: diagnosisLoading ? 'not-allowed' : 'pointer'
-                  }}
+                  className="btn btn-primary"
                 >
                   {diagnosisLoading ? '🔄 Analyzing...' : 'Generate Diagnosis'}
                 </button>
@@ -1111,13 +1070,7 @@ const SkinDiseaseDetector = () => {
           )}
 
           {diagnosis && (
-            <div style={{ 
-              backgroundColor: 'white', 
-              padding: '30px', 
-              borderRadius: '12px', 
-              boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
-              marginBottom: '20px'
-            }}>
+            <div className="upload-card" style={{marginTop: '20px'}}>
               <h3 style={{ marginTop: 0, color: '#2d3748' }}>🎯 AI Diagnosis Analysis</h3>
               
               <div style={{ 
@@ -1165,17 +1118,8 @@ const SkinDiseaseDetector = () => {
                   
                   <button 
                     onClick={() => setAnalysisMode('image')}
-                    style={{
-                      marginTop: '20px',
-                      padding: '10px 20px',
-                      backgroundColor: '#4299e1',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: '500'
-                    }}
+                    className="btn btn-secondary"
+                    style={{marginTop: '20px'}}
                   >
                     🔄 Transfer Data to Image Analysis
                   </button>
@@ -1183,80 +1127,63 @@ const SkinDiseaseDetector = () => {
               )}
             </div>
           )}
-
-          {/* NLP Capabilities Info */}
-          
         </div>
       )}
 
       {/* NEW: Video/Motion Analysis Section - Coming Soon */}
       {analysisMode === 'video' && (
-  <div className="analysis-content">
-    <div style={{
-      backgroundColor: 'white',
-      padding: '40px',
-      borderRadius: '12px',
-      boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
-      textAlign: 'center',
-      maxWidth: '700px',
-      margin: '0 auto'
-    }}>
-      <h2 style={{ color: '#2d3748', marginBottom: '10px' }}>Video Analysis</h2>
-      <p style={{ fontSize: '1rem', color: '#4a5568', marginBottom: '30px' }}>
-        This feature is under development and will soon support advanced video-based lesion evaluation.
-      </p>
+        <div className="analysis-content">
+          <div style={{
+            backgroundColor: 'white',
+            padding: '40px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
+            textAlign: 'center',
+            maxWidth: '700px',
+            margin: '0 auto'
+          }}>
+            <h2 style={{ color: '#2d3748', marginBottom: '10px' }}>Video Analysis</h2>
+            <p style={{ fontSize: '1rem', color: '#4a5568', marginBottom: '30px' }}>
+              This feature is under development and will soon support advanced video-based lesion evaluation.
+            </p>
 
-      <input 
-        type="file" 
-        accept="video/*" 
-        disabled
-        style={{
-          width: '100%',
-          padding: '20px',
-          border: '2px dashed #cbd5e0',
-          borderRadius: '8px',
-          backgroundColor: '#f7fafc',
-          color: '#a0aec0',
-          cursor: 'not-allowed',
-          fontSize: '16px'
-        }}
-      />
-      <div style={{ fontSize: '0.85rem', color: '#718096', marginTop: '10px' }}>
-        Upload support for MP4, MOV, AVI • Max duration: 5 minutes • Optimal quality: 1080p
-      </div>
+            <input 
+              type="file" 
+              accept="video/*" 
+              disabled
+              style={{
+                width: '100%',
+                padding: '20px',
+                border: '2px dashed #cbd5e0',
+                borderRadius: '8px',
+                backgroundColor: '#f7fafc',
+                color: '#a0aec0',
+                cursor: 'not-allowed',
+                fontSize: '16px'
+              }}
+            />
+            <div style={{ fontSize: '0.85rem', color: '#718096', marginTop: '10px' }}>
+              Upload support for MP4, MOV, AVI • Max duration: 5 minutes • Optimal quality: 1080p
+            </div>
 
-      <div style={{
-        marginTop: '25px',
-        display: 'inline-block',
-        backgroundColor: '#fffbea',
-        color: '#744210',
-        padding: '8px 20px',
-        borderRadius: '20px',
-        fontSize: '0.85rem',
-        fontWeight: 'bold',
-        border: '1px solid #f6e05e'
-      }}>
-        In Development
-      </div>
-    </div>
-  </div>
-)}
-
+            <div style={{
+              marginTop: '25px',
+              display: 'inline-block',
+              backgroundColor: '#fffbea',
+              color: '#744210',
+              padding: '8px 20px',
+              borderRadius: '20px',
+              fontSize: '0.85rem',
+              fontWeight: 'bold',
+              border: '1px solid #f6e05e'
+            }}>
+              In Development
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
-const nextBtnStyle = (bg, color) => ({
-  padding: '12px 20px',
-  backgroundColor: bg,
-  color,
-  border: 'none',
-  borderRadius: '8px',
-  cursor: 'pointer',
-  fontWeight: '500',
-  fontSize: '14px',
-  transition: 'all 0.2s ease',
-  textAlign: 'center'
-});
 
 export default SkinDiseaseDetector;

@@ -1,4 +1,4 @@
-// src/services/openaiService.js - ENHANCED VERSION WITH DETAILED PROMPTS AND HIGHER TOKEN LIMITS
+// src/services/openaiService.js - CORRECTED AND COMPLETE
 
 import axios from 'axios';
 
@@ -59,7 +59,7 @@ const openaiService = {
             }
           ],
           temperature: 0.1, // REDUCED for higher medical precision
-          max_tokens: 500
+          max_tokens: 4000
         }
       );
       return response.data.choices[0].message.content.trim();
@@ -533,7 +533,7 @@ const openaiService = {
   },
 
   // =============================================================================
-  // ALL OTHER REGULATORY DOCUMENTS - ENHANCED TOKEN LIMITS
+  // EU DOCUMENTS
   // =============================================================================
 
   /**
@@ -598,119 +598,7 @@ const openaiService = {
       throw error;
     }
   },
-
-  // Continue with all other document generators with enhanced prompts and token limits...
-  // [REST OF THE FUNCTIONS WOULD FOLLOW THE SAME PATTERN]
-
-  // =============================================================================
-  // QUERY ASSISTANT - ENHANCED
-  // =============================================================================
-
-  queryAssistant: async (queryData) => {
-    try {
-      // First, ask GPT if the question is relevant to clinical/regulatory topics
-      const relevanceCheck = await openaiApi.post(
-        'chat/completions',
-        {
-          model: "gpt-4o", // UPGRADED
-          messages: [
-            {
-              role: "system",
-              content: `You are a relevance checker. Determine if a question is related to clinical trials, medical protocols, regulatory affairs, pharmaceutical development, or healthcare research.
-
-              Respond with ONLY one word:
-              - "RELEVANT" if the question is about clinical trials, medical research, drug development, regulatory submissions, medical conditions, treatments, or pharmaceutical topics
-              - "IRRELEVANT" if the question is about cooking, weather, entertainment, sports, travel, technology, politics, or other non-medical topics`
-            },
-            {
-              role: "user",
-              content: queryData.question
-            }
-          ],
-          temperature: 0,
-          max_tokens: 10
-        }
-      );
-
-      const relevance = relevanceCheck.data.choices[0].message.content.trim();
-
-      // If irrelevant, return standardized response
-      if (relevance === "IRRELEVANT") {
-        return {
-          answer: `CLINICAL ASSISTANT - OFF-TOPIC QUERY
-
-I'm Lumina™, your specialized clinical protocol assistant. Your question appears to be outside my area of clinical and regulatory expertise.
-
-MY SPECIALIZED CAPABILITIES:
-- Clinical trial protocol design and optimization
-- Regulatory document generation (IND, NDA, BLA, CTD, eCTD)
-- Endpoint selection and statistical considerations
-- Patient population definitions and inclusion/exclusion criteria
-- Safety monitoring and adverse event assessment
-- Regulatory compliance guidance (FDA, EMA, ICH guidelines)
-
-EXAMPLES OF RELEVANT QUESTIONS:
-- "What are appropriate primary endpoints for a Phase 2 atopic dermatitis trial?"
-- "How should I structure inclusion criteria for a lung cancer study?"
-- "What safety assessments are required for immunotherapy trials?"
-- "How do I design a bioequivalence study?"
-
-Please ask a question related to clinical trials, protocols, or regulatory affairs, and I'll provide detailed, professional guidance.`
-        };
-      }
-
-      // If relevant, proceed with normal OpenAI response
-      const response = await openaiApi.post(
-        'chat/completions',
-        {
-          model: "gpt-4o", // UPGRADED
-          messages: [
-            {
-              role: "system",
-              content: `You are a clinical protocol and regulatory expert providing precise, well-structured, and professionally formatted answers.
-              Your expertise spans all aspects of clinical trial design, regulatory submissions, and pharmaceutical development.
-              
-              CRITICAL FORMATTING RULES - FOLLOW EXACTLY:
-              - Use ONLY plain text - NO markdown, NO asterisks (*), NO bold (**), NO italics, NO special characters
-              - Do NOT use ** for bold text or * for bullet points
-              - Use simple dashes (-) or numbers (1., 2., 3.) for lists
-              - Use ALL CAPS only for major section headings
-              - Use normal text with clear line breaks and indentation for structure
-              - No formatting symbols whatsoever - treat this as if you're writing in a basic text editor
-              
-              CONTENT RULES:
-              - Structure responses with clear paragraphing and indentation
-              - Be precise and direct - avoid unnecessary filler text
-              - If the question involves a specific disease or protocol, tailor the answer accordingly
-              - If asked about endpoints, list them clearly and explain their relevance
-              - If asked about regulatory strategy, provide actionable advice
-              - Cite relevant guidelines (ICH, FDA, EMA) when appropriate`
-            },
-            {
-              role: "user",
-              content: `Question: ${queryData.question}
-              ${queryData.disease_context ? `Disease Context: ${queryData.disease_context}` : ''}
-              ${queryData.protocol_id ? `Reference Protocol ID: ${queryData.protocol_id}` : ''}`
-            }
-          ],
-          temperature: 0.2, // REDUCED from 0.3
-          max_tokens: 2000 // INCREASED
-        }
-      );
-      
-      return {
-        answer: response.data.choices[0].message.content.trim()
-      };
-    } catch (error) {
-      console.error('Error in queryAssistant:', error.response?.data || error.message);
-      throw error;
-    }
-  },
-
-  // =============================================================================
-  // ALL OTHER DOCUMENT GENERATORS WITH ENHANCED PROMPTS AND TOKEN LIMITS
-  // =============================================================================
-
+  
   /**
    * EU MAA (Marketing Authorization Application) - ENHANCED
    */
@@ -891,20 +779,6 @@ Please ask a question related to clinical trials, protocols, or regulatory affai
       throw error;
     }
   },
-
-  // =============================================================================
-  // PLACEHOLDER FOR ALL OTHER DOCUMENT GENERATORS
-  // Note: Due to character limits, I'm showing the pattern for enhancement
-  // All other generators would follow the same pattern with:
-  // 1. model: "gpt-4o" upgrade
-  // 2. Enhanced detailed prompts with "CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT"
-  // 3. Increased max_tokens: 8000 or 10000 for complex documents
-  // 4. More specific regulatory requirements and detailed content expectations
-  // =============================================================================
-
-  // =============================================================================
-  // CANADA DOCUMENTS - ENHANCED (CONTINUED)
-  // =============================================================================
 
   /**
    * Canadian New Drug Submission (NDS) - ENHANCED
@@ -1921,14 +1795,14 @@ Please ask a question related to clinical trials, protocols, or regulatory affai
   /**
    * Korean NDA Application - ENHANCED
    */
-generateNDA_KR: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in Korean New Drug Applications for MFDS submission.
+  generateNDA_KR: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Korean New Drug Applications for MFDS submission.
            Your task is to generate a comprehensive Korean NDA summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -1958,39 +1832,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Korean regulatory framework and MFDS requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate a Korean NDA summary for MFDS approval of ${diseaseData.disease_name} treatment.
+          },
+          {
+            role: "user",
+            content: `Generate a Korean NDA summary for MFDS approval of ${diseaseData.disease_name} treatment.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This NDA summary must meet MFDS expectations for Korean marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateNDA_KR:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateNDA_KR:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * Korean GMP Certificate - ENHANCED
-  */
- generateKGMP: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a quality assurance expert with experience in Korean GMP certification requirements for MFDS.
+  /**
+   * Korean GMP Certificate - ENHANCED
+   */
+  generateKGMP: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a quality assurance expert with experience in Korean GMP certification requirements for MFDS.
            Your task is to generate supporting documentation for Korean GMP certificate application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2018,43 +1892,43 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Korean GMP requirements and MFDS manufacturing standards.`
-         },
-         {
-           role: "user",
-           content: `Generate Korean GMP Certificate supporting documentation for manufacturing authorization of ${diseaseData.disease_name} treatment in South Korea.
+          },
+          {
+            role: "user",
+            content: `Generate Korean GMP Certificate supporting documentation for manufacturing authorization of ${diseaseData.disease_name} treatment in South Korea.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This documentation must support Korean GMP certification requirements with EXTREMELY DETAILED content and comprehensive quality analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateKGMP:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateKGMP:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- // =============================================================================
- // AUSTRALIA DOCUMENTS - ENHANCED
- // =============================================================================
+  // =============================================================================
+  // AUSTRALIA DOCUMENTS - ENHANCED
+  // =============================================================================
 
- /**
-  * Australian Clinical Trial Notification (TGA) - ENHANCED
-  */
- generateCTN_AU: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in Australian Clinical Trial Notifications for submission to the TGA.
+  /**
+   * Australian Clinical Trial Notification (TGA) - ENHANCED
+   */
+  generateCTN_AU: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Australian Clinical Trial Notifications for submission to the TGA.
            Your task is to generate key sections for an Australian CTN application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2086,39 +1960,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Australian regulatory requirements and TGA guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate an Australian Clinical Trial Notification (CTN) for ${diseaseData.disease_name} research.
+          },
+          {
+            role: "user",
+            content: `Generate an Australian Clinical Trial Notification (CTN) for ${diseaseData.disease_name} research.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This CTN must meet TGA requirements for clinical trial notification in Australia with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateCTN_AU:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateCTN_AU:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * Australian Submission (AUS) - ENHANCED
-  */
- generateAUS: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in Australian submissions for TGA approval.
+  /**
+   * Australian Submission (AUS) - ENHANCED
+   */
+  generateAUS: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Australian submissions for TGA approval.
            Your task is to generate a comprehensive AUS summary for ARTG registration.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2147,39 +2021,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Australian regulatory framework and TGA requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate an Australian Submission (AUS) summary for TGA approval and ARTG registration of ${diseaseData.disease_name} treatment.
+          },
+          {
+            role: "user",
+            content: `Generate an Australian Submission (AUS) summary for TGA approval and ARTG registration of ${diseaseData.disease_name} treatment.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This AUS summary must meet TGA expectations for Australian marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateAUS:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateAUS:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * TGA GMP Certificate - ENHANCED
-  */
- generateTGA_GMP: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a quality assurance expert with experience in TGA GMP certification requirements.
+  /**
+   * TGA GMP Certificate - ENHANCED
+   */
+  generateTGA_GMP: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a quality assurance expert with experience in TGA GMP certification requirements.
            Your task is to generate supporting documentation for TGA GMP certificate application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2206,43 +2080,43 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Australian GMP requirements and TGA manufacturing standards.`
-         },
-         {
-           role: "user",
-           content: `Generate TGA GMP Certificate supporting documentation for Australian manufacturing authorization of ${diseaseData.disease_name} treatment.
+          },
+          {
+            role: "user",
+            content: `Generate TGA GMP Certificate supporting documentation for Australian manufacturing authorization of ${diseaseData.disease_name} treatment.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This documentation must support TGA GMP certification requirements with EXTREMELY DETAILED content and comprehensive quality analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateTGA_GMP:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateTGA_GMP:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- // =============================================================================
- // SINGAPORE DOCUMENTS - ENHANCED
- // =============================================================================
+  // =============================================================================
+  // SINGAPORE DOCUMENTS - ENHANCED
+  // =============================================================================
 
- /**
-  * Singapore Clinical Trial Certificate (HSA) - ENHANCED
-  */
- generateCTA_SG: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in Singapore Clinical Trial Certificates for HSA submission.
+  /**
+   * Singapore Clinical Trial Certificate (HSA) - ENHANCED
+   */
+  generateCTA_SG: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Singapore Clinical Trial Certificates for HSA submission.
            Your task is to generate key sections for a Singapore CTC application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2274,39 +2148,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Singapore regulatory requirements and HSA guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate a Singapore Clinical Trial Certificate (CTC) application for ${diseaseData.disease_name} research.
+          },
+          {
+            role: "user",
+            content: `Generate a Singapore Clinical Trial Certificate (CTC) application for ${diseaseData.disease_name} research.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This CTC must meet HSA requirements for clinical trial authorization in Singapore with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateCTA_SG:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateCTA_SG:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * Singapore Product License - ENHANCED
-  */
- generatePRODUCT_LICENSE_SG: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in Singapore product licensing for HSA approval.
+  /**
+   * Singapore Product License - ENHANCED
+   */
+  generatePRODUCT_LICENSE_SG: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Singapore product licensing for HSA approval.
            Your task is to generate a comprehensive product license summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2335,43 +2209,43 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Singapore regulatory framework and HSA requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate a Singapore Product License summary for HSA approval of ${diseaseData.disease_name} treatment.
+          },
+          {
+            role: "user",
+            content: `Generate a Singapore Product License summary for HSA approval of ${diseaseData.disease_name} treatment.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This product license summary must meet HSA expectations for Singapore marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generatePRODUCT_LICENSE_SG:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generatePRODUCT_LICENSE_SG:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- // =============================================================================
- // INDIA DOCUMENTS - ENHANCED
- // =============================================================================
+  // =============================================================================
+  // INDIA DOCUMENTS - ENHANCED
+  // =============================================================================
 
- /**
-  * Indian Clinical Trial Permission (CDSCO) - ENHANCED
-  */
- generateCTA_IN: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in Indian Clinical Trial Permissions for CDSCO submission.
+  /**
+   * Indian Clinical Trial Permission (CDSCO) - ENHANCED
+   */
+  generateCTA_IN: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Indian Clinical Trial Permissions for CDSCO submission.
            Your task is to generate key sections for an Indian CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2403,39 +2277,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Indian regulatory requirements and CDSCO guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate an Indian Clinical Trial Permission application for ${diseaseData.disease_name} research.
+          },
+          {
+            role: "user",
+            content: `Generate an Indian Clinical Trial Permission application for ${diseaseData.disease_name} research.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This application must meet CDSCO requirements for clinical trial authorization in India with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateCTA_IN:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateCTA_IN:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * Indian New Drug Application - ENHANCED
-  */
- generateNDA_IN: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in Indian New Drug Applications for CDSCO approval.
+  /**
+   * Indian New Drug Application - ENHANCED
+   */
+  generateNDA_IN: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Indian New Drug Applications for CDSCO approval.
            Your task is to generate a comprehensive Indian NDA summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2464,39 +2338,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Indian regulatory framework and CDSCO requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate an Indian New Drug Application summary for CDSCO approval of ${diseaseData.disease_name} treatment.
+          },
+          {
+            role: "user",
+            content: `Generate an Indian New Drug Application summary for CDSCO approval of ${diseaseData.disease_name} treatment.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This NDA summary must meet CDSCO expectations for Indian marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateNDA_IN:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateNDA_IN:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * Indian Import License - ENHANCED
-  */
- generateIMPORT_LICENSE_IN: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in Indian import licenses for CDSCO approval.
+  /**
+   * Indian Import License - ENHANCED
+   */
+  generateIMPORT_LICENSE_IN: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Indian import licenses for CDSCO approval.
            Your task is to generate supporting documentation for Indian drug import authorization.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2527,43 +2401,43 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Indian regulatory framework and CDSCO import requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate Indian Import License supporting documentation for ${diseaseData.disease_name} treatment import authorization.
+          },
+          {
+            role: "user",
+            content: `Generate Indian Import License supporting documentation for ${diseaseData.disease_name} treatment import authorization.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This documentation must support Indian import licensing requirements with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateIMPORT_LICENSE_IN:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateIMPORT_LICENSE_IN:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- // =============================================================================
- // TAIWAN DOCUMENTS - ENHANCED
- // =============================================================================
+  // =============================================================================
+  // TAIWAN DOCUMENTS - ENHANCED
+  // =============================================================================
 
- /**
-  * Taiwan IND Application - ENHANCED
-  */
- generateIND_TW: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in Taiwan Investigational New Drug applications for TFDA submission.
+  /**
+   * Taiwan IND Application - ENHANCED
+   */
+  generateIND_TW: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Taiwan Investigational New Drug applications for TFDA submission.
            Your task is to generate key sections for a Taiwan IND application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2593,39 +2467,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Taiwan regulatory requirements and TFDA guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate a Taiwan IND application for ${diseaseData.disease_name} clinical trial.
+          },
+          {
+            role: "user",
+            content: `Generate a Taiwan IND application for ${diseaseData.disease_name} clinical trial.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This application must meet TFDA requirements for clinical trial authorization in Taiwan with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateIND_TW:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateIND_TW:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * Taiwan NDA Application - ENHANCED
-  */
- generateNDA_TW: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in Taiwan New Drug Applications for TFDA approval.
+  /**
+   * Taiwan NDA Application - ENHANCED
+   */
+  generateNDA_TW: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Taiwan New Drug Applications for TFDA approval.
            Your task is to generate a comprehensive Taiwan NDA summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2655,43 +2529,43 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Taiwan regulatory framework and TFDA requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate a Taiwan NDA summary for TFDA approval of ${diseaseData.disease_name} treatment.
+          },
+          {
+            role: "user",
+            content: `Generate a Taiwan NDA summary for TFDA approval of ${diseaseData.disease_name} treatment.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This NDA summary must meet TFDA expectations for Taiwan marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateNDA_TW:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateNDA_TW:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- // =============================================================================
- // LATIN AMERICA DOCUMENTS - ENHANCED
- // =============================================================================
+  // =============================================================================
+  // LATIN AMERICA DOCUMENTS - ENHANCED
+  // =============================================================================
 
- /**
-  * ANVISA Clinical Trial Authorization (Brazil) - ENHANCED
-  */
- generateANVISA_CTA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in ANVISA clinical trial authorizations for Brazil.
+  /**
+   * ANVISA Clinical Trial Authorization (Brazil) - ENHANCED
+   */
+  generateANVISA_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in ANVISA clinical trial authorizations for Brazil.
            Your task is to generate key sections for an ANVISA CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2721,39 +2595,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Brazilian regulatory requirements and ANVISA guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate an ANVISA Clinical Trial Authorization for ${diseaseData.disease_name} research in Brazil.
+          },
+          {
+            role: "user",
+            content: `Generate an ANVISA Clinical Trial Authorization for ${diseaseData.disease_name} research in Brazil.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This application must meet ANVISA requirements for clinical trial authorization in Brazil with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateANVISA_CTA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateANVISA_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * ANVISA Registration Dossier (Brazil) - ENHANCED
-  */
- generateANVISA_NDA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in ANVISA drug registrations for the Brazilian market.
+  /**
+   * ANVISA Registration Dossier (Brazil) - ENHANCED
+   */
+  generateANVISA_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in ANVISA drug registrations for the Brazilian market.
            Your task is to generate a comprehensive ANVISA registration dossier summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2783,39 +2657,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Brazilian regulatory framework and ANVISA requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate an ANVISA Registration Dossier for marketing authorization of ${diseaseData.disease_name} treatment in Brazil.
+          },
+          {
+            role: "user",
+            content: `Generate an ANVISA Registration Dossier for marketing authorization of ${diseaseData.disease_name} treatment in Brazil.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This registration dossier must meet ANVISA requirements for Brazilian marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateANVISA_NDA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateANVISA_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * ANVISA GMP Certificate (Brazil) - ENHANCED
-  */
- generateANVISA_GMP: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a quality assurance expert with experience in ANVISA GMP certification requirements for Brazil.
+  /**
+   * ANVISA GMP Certificate (Brazil) - ENHANCED
+   */
+  generateANVISA_GMP: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a quality assurance expert with experience in ANVISA GMP certification requirements for Brazil.
            Your task is to generate supporting documentation for ANVISA GMP certificate application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2843,39 +2717,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Brazilian GMP requirements and ANVISA manufacturing standards.`
-         },
-         {
-           role: "user",
-           content: `Generate ANVISA GMP Certificate supporting documentation for Brazilian manufacturing authorization of ${diseaseData.disease_name} treatment.
+          },
+          {
+            role: "user",
+            content: `Generate ANVISA GMP Certificate supporting documentation for Brazilian manufacturing authorization of ${diseaseData.disease_name} treatment.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This documentation must support ANVISA GMP certification requirements with EXTREMELY DETAILED content and comprehensive quality analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateANVISA_GMP:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateANVISA_GMP:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * ANMAT Clinical Trial Authorization (Argentina) - ENHANCED
-  */
- generateANMAT_CTA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in ANMAT clinical trial authorizations for Argentina.
+  /**
+   * ANMAT Clinical Trial Authorization (Argentina) - ENHANCED
+   */
+  generateANMAT_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in ANMAT clinical trial authorizations for Argentina.
            Your task is to generate key sections for an ANMAT CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2905,39 +2779,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Argentine regulatory requirements and ANMAT guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate an ANMAT Clinical Trial Authorization for ${diseaseData.disease_name} research in Argentina.
+          },
+          {
+            role: "user",
+            content: `Generate an ANMAT Clinical Trial Authorization for ${diseaseData.disease_name} research in Argentina.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This application must meet ANMAT requirements for clinical trial authorization in Argentina with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateANMAT_CTA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateANMAT_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * ANMAT Drug Registration (Argentina) - ENHANCED
-  */
- generateANMAT_NDA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in ANMAT drug registrations for Argentina.
+  /**
+   * ANMAT Drug Registration (Argentina) - ENHANCED
+   */
+  generateANMAT_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in ANMAT drug registrations for Argentina.
            Your task is to generate a comprehensive ANMAT registration summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -2966,39 +2840,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Argentine regulatory framework and ANMAT requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate an ANMAT Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Argentina.
+          },
+          {
+            role: "user",
+            content: `Generate an ANMAT Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Argentina.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This registration summary must meet ANMAT requirements for Argentine marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateANMAT_NDA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateANMAT_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * INVIMA Clinical Trial Permit (Colombia) - ENHANCED
-  */
- generateINVIMA_CTA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in INVIMA clinical trial permits for Colombia.
+  /**
+   * INVIMA Clinical Trial Permit (Colombia) - ENHANCED
+   */
+  generateINVIMA_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in INVIMA clinical trial permits for Colombia.
            Your task is to generate key sections for an INVIMA CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -3011,149 +2885,148 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Colombian regulatory requirements and INVIMA guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate an INVIMA Clinical Trial Permit for ${diseaseData.disease_name} research in Colombia.
+          },
+          {
+            role: "user",
+            content: `Generate an INVIMA Clinical Trial Permit for ${diseaseData.disease_name} research in Colombia.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This permit must meet INVIMA requirements for clinical trial authorization in Colombia with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateINVIMA_CTA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateINVIMA_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * INVIMA Drug Registration (Colombia) - ENHANCED
-  */
- generateINVIMA_NDA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in INVIMA drug registrations for Colombia.
+  /**
+   * INVIMA Drug Registration (Colombia) - ENHANCED
+   */
+  generateINVIMA_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in INVIMA drug registrations for Colombia.
            Your task is to generate a comprehensive INVIMA registration summary.
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Colombian regulatory framework and INVIMA requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate an INVIMA Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Colombia.
+          },
+          {
+            role: "user",
+            content: `Generate an INVIMA Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Colombia.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateINVIMA_NDA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateINVIMA_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * ISP Clinical Trial Authorization (Chile) - ENHANCED
-  */
- generateISP_CTA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in ISP clinical trial authorizations for Chile.
+  /**
+   * ISP Clinical Trial Authorization (Chile) - ENHANCED
+   */
+  generateISP_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in ISP clinical trial authorizations for Chile.
            Your task is to generate key sections for an ISP CTA application.
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Chilean regulatory requirements and ISP guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate an ISP Clinical Trial Authorization for ${diseaseData.disease_name} research in Chile.
+          },
+          {
+            role: "user",
+            content: `Generate an ISP Clinical Trial Authorization for ${diseaseData.disease_name} research in Chile.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateISP_CTA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateISP_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * ISP Drug Registration (Chile) - ENHANCED
-  */
- generateISP_NDA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in ISP drug registrations for Chile.
+  /**
+   * ISP Drug Registration (Chile) - ENHANCED
+   */
+  generateISP_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in ISP drug registrations for Chile.
            Your task is to generate a comprehensive ISP registration summary.
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Chilean regulatory framework and ISP requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate an ISP Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Chile.
+          },
+          {
+            role: "user",
+            content: `Generate an ISP Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Chile.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.
-              toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateISP_NDA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateISP_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- // =============================================================================
- // AFRICA & MIDDLE EAST DOCUMENTS - ENHANCED
- // =============================================================================
+  // =============================================================================
+  // AFRICA & MIDDLE EAST DOCUMENTS - ENHANCED
+  // =============================================================================
 
- /**
-  * SAHPRA Clinical Trial Authorization (South Africa) - ENHANCED
-  */
- generateSAHPRA_CTA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in SAHPRA clinical trial authorizations for South Africa.
+  /**
+   * SAHPRA Clinical Trial Authorization (South Africa) - ENHANCED
+   */
+  generateSAHPRA_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in SAHPRA clinical trial authorizations for South Africa.
            Your task is to generate key sections for a SAHPRA CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -3165,39 +3038,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference South African regulatory requirements and SAHPRA guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate a SAHPRA Clinical Trial Authorization for ${diseaseData.disease_name} research in South Africa.
+          },
+          {
+            role: "user",
+            content: `Generate a SAHPRA Clinical Trial Authorization for ${diseaseData.disease_name} research in South Africa.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This application must meet SAHPRA requirements for clinical trial authorization in South Africa with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateSAHPRA_CTA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateSAHPRA_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * SAHPRA Medicine Registration (South Africa) - ENHANCED
-  */
- generateSAHPRA_NDA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in SAHPRA medicine registrations for South Africa.
+  /**
+   * SAHPRA Medicine Registration (South Africa) - ENHANCED
+   */
+  generateSAHPRA_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in SAHPRA medicine registrations for South Africa.
            Your task is to generate a comprehensive SAHPRA registration summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -3209,39 +3082,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference South African regulatory framework and SAHPRA requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate a SAHPRA Medicine Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in South Africa.
+          },
+          {
+            role: "user",
+            content: `Generate a SAHPRA Medicine Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in South Africa.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This registration summary must meet SAHPRA requirements for South African marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateSAHPRA_NDA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateSAHPRA_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * Israeli MOH Clinical Trial Permit - ENHANCED
-  */
- generateMOH_ISRAEL_CTA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in Israeli MOH clinical trial permits.
+  /**
+   * Israeli MOH Clinical Trial Permit - ENHANCED
+   */
+  generateMOH_ISRAEL_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in Israeli MOH clinical trial permits.
            Your task is to generate key sections for an Israeli MOH CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -3254,39 +3127,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Israeli regulatory requirements and MOH guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate an Israeli MOH Clinical Trial Permit for ${diseaseData.disease_name} research in Israel.
+          },
+          {
+            role: "user",
+            content: `Generate an Israeli MOH Clinical Trial Permit for ${diseaseData.disease_name} research in Israel.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This permit must meet Israeli MOH requirements for clinical trial authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateMOH_ISRAEL_CTA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateMOH_ISRAEL_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * Israeli Drug Registration - ENHANCED
-  */
- generateMOH_ISRAEL_NDA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in Israeli drug registrations.
+  /**
+   * Israeli Drug Registration - ENHANCED
+   */
+  generateMOH_ISRAEL_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in Israeli drug registrations.
            Your task is to generate a comprehensive Israeli registration summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -3299,39 +3172,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Israeli regulatory framework and MOH requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate an Israeli Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Israel.
+          },
+          {
+            role: "user",
+            content: `Generate an Israeli Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Israel.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This registration summary must meet Israeli MOH requirements for marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateMOH_ISRAEL_NDA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateMOH_ISRAEL_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * SFDA Clinical Trial Authorization (Saudi Arabia) - ENHANCED
-  */
- generateSFDA_CTA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in SFDA clinical trial authorizations for Saudi Arabia.
+  /**
+   * SFDA Clinical Trial Authorization (Saudi Arabia) - ENHANCED
+   */
+  generateSFDA_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in SFDA clinical trial authorizations for Saudi Arabia.
            Your task is to generate key sections for an SFDA CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -3344,39 +3217,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Saudi regulatory requirements and SFDA guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate an SFDA Clinical Trial Authorization for ${diseaseData.disease_name} research in Saudi Arabia.
+          },
+          {
+            role: "user",
+            content: `Generate an SFDA Clinical Trial Authorization for ${diseaseData.disease_name} research in Saudi Arabia.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This authorization must meet SFDA requirements for clinical trial approval in Saudi Arabia with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateSFDA_CTA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateSFDA_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * SFDA Drug Registration (Saudi Arabia) - ENHANCED
-  */
- generateSFDA_NDA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in SFDA drug registrations for Saudi Arabia.
+  /**
+   * SFDA Drug Registration (Saudi Arabia) - ENHANCED
+   */
+  generateSFDA_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in SFDA drug registrations for Saudi Arabia.
            Your task is to generate a comprehensive SFDA registration summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -3389,39 +3262,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference Saudi regulatory framework and SFDA requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate an SFDA Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Saudi Arabia.
+          },
+          {
+            role: "user",
+            content: `Generate an SFDA Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in Saudi Arabia.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This registration summary must meet SFDA requirements for Saudi marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateSFDA_NDA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateSFDA_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * DHA Clinical Trial Permit (UAE) - ENHANCED
-  */
- generateDHA_CTA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a regulatory affairs expert specializing in DHA clinical trial permits for UAE.
+  /**
+   * DHA Clinical Trial Permit (UAE) - ENHANCED
+   */
+  generateDHA_CTA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a regulatory affairs expert specializing in DHA clinical trial permits for UAE.
            Your task is to generate key sections for a DHA CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -3434,39 +3307,39 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference UAE regulatory requirements and DHA guidelines.`
-         },
-         {
-           role: "user",
-           content: `Generate a DHA Clinical Trial Permit for ${diseaseData.disease_name} research in UAE.
+          },
+          {
+            role: "user",
+            content: `Generate a DHA Clinical Trial Permit for ${diseaseData.disease_name} research in UAE.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This permit must meet DHA requirements for clinical trial authorization in UAE with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateDHA_CTA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateDHA_CTA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- /**
-  * UAE Drug Registration - ENHANCED
-  */
- generateMOH_UAE_NDA: async (diseaseData) => {
-   try {
-     const response = await openaiApi.post('chat/completions', {
-       model: "gpt-4o",
-       messages: [
-         {
-           role: "system",
-           content: `You are a senior regulatory affairs expert with experience in UAE drug registrations.
+  /**
+   * UAE Drug Registration - ENHANCED
+   */
+  generateMOH_UAE_NDA: async (diseaseData) => {
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior regulatory affairs expert with experience in UAE drug registrations.
            Your task is to generate a comprehensive UAE registration summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
@@ -3479,133 +3352,370 @@ generateNDA_KR: async (diseaseData) => {
 
            Use plain text formatting only - NO MARKDOWN.
            Reference UAE regulatory framework and MOH requirements.`
-         },
-         {
-           role: "user",
-           content: `Generate a UAE Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in UAE.
+          },
+          {
+            role: "user",
+            content: `Generate a UAE Drug Registration summary for marketing authorization of ${diseaseData.disease_name} treatment in UAE.
            
            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-             value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
+              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
            ).filter(Boolean).join('\n')}
 
            This registration summary must meet UAE MOH requirements for marketing authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
-         }
-       ],
-       temperature: 0.2,
-       max_tokens: 8000
-     });
-     return { document_content: response.data.choices[0].message.content.trim() };
-   } catch (error) {
-     console.error('Error in generateMOH_UAE_NDA:', error.response?.data || error.message);
-     throw error;
-   }
- },
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+      });
+      return { document_content: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in generateMOH_UAE_NDA:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 
- // =============================================================================
- // QUERY ASSISTANT - ENHANCED
- // =============================================================================
+  // =============================================================================
+  // QUERY ASSISTANT & VALIDATION
+  // =============================================================================
+  
+  queryAssistant: async (queryData) => {
+    try {
+      const relevanceCheck = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a relevance checker. Determine if a question is related to clinical trials, medical protocols, regulatory affairs, pharmaceutical development, or healthcare research. Respond with ONLY "RELEVANT" or "IRRELEVANT".`
+          },
+          { role: "user", content: queryData.question }
+        ],
+        temperature: 0,
+        max_tokens: 10
+      });
+  
+      if (relevanceCheck.data.choices[0].message.content.trim() === "IRRELEVANT") {
+        return {
+          answer: `CLINICAL ASSISTANT - OFF-TOPIC QUERY\n\nI'm LumiPath™, your specialized clinical protocol assistant. Your question appears to be outside my area of clinical and regulatory expertise.\n\nPlease ask a question related to clinical trials, protocols, or regulatory affairs, and I'll provide detailed, professional guidance.`
+        };
+      }
+  
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a clinical protocol and regulatory expert providing precise, well-structured, and professionally formatted answers. Your expertise spans all aspects of clinical trial design, regulatory submissions, and pharmaceutical development. Use ONLY plain text with clear paragraphing, indentation, and simple dashes or numbers for lists. NO MARKDOWN.`
+          },
+          {
+            role: "user",
+            content: `Question: ${queryData.question}\n${queryData.disease_context ? `Disease Context: ${queryData.disease_context}` : ''}`
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 4000
+      });
+      
+      return { answer: response.data.choices[0].message.content.trim() };
+    } catch (error) {
+      console.error('Error in queryAssistant:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+  
+validateDocumentContent: async (validationData) => {
+  try {
+    const { 
+      documentText, 
+      fileName, 
+      expectedCategory, 
+      categoryDescription, 
+      primaryIndication, 
+      dossierType,
+      fileType,
+      fileSize,
+      language = 'english'
+    } = validationData;
 
- queryAssistant: async (queryData) => {
-   try {
-     // First, ask GPT if the question is relevant to clinical/regulatory topics
-     const relevanceCheck = await openaiApi.post(
-       'chat/completions',
-       {
-         model: "gpt-4o", // UPGRADED
-         messages: [
-           {
-             role: "system",
-             content: `You are a relevance checker. Determine if a question is related to clinical trials, medical protocols, regulatory affairs, pharmaceutical development, or healthcare research.
+    // Enhanced validation rules with ICH/FDA compliance checks
+    const validationRules = {
+      'protocol': {
+        required_keywords: ['protocol', 'study', 'clinical trial', 'objectives', 'endpoints', 'inclusion criteria', 'exclusion criteria', 'methodology', 'statistical analysis'],
+        forbidden_keywords: ['investigator brochure', 'manufacturing', 'chemistry data', 'toxicology summary'],
+        ich_guidelines: 'ICH E6(R2) Good Clinical Practice',
+        regulatory_sections: ['study objectives', 'study design', 'selection criteria', 'treatment plan', 'assessments', 'statistical considerations'],
+        min_sections: 6
+      },
+      'ib': {
+        required_keywords: ['investigator brochure', 'pharmacology', 'toxicology', 'safety', 'preclinical', 'clinical experience', 'dosing', 'adverse events'],
+        forbidden_keywords: ['study protocol', 'inclusion criteria', 'statistical analysis plan'],
+        ich_guidelines: 'ICH E6(R2) Section 7 - Investigator\'s Brochure',
+        regulatory_sections: ['general information', 'physical/chemical properties', 'nonclinical studies', 'effects in humans', 'summary'],
+        min_sections: 5
+      },
+      'quality': {
+        required_keywords: ['chemistry', 'manufacturing', 'controls', 'CMC', 'specifications', 'stability', 'quality control', 'analytical methods'],
+        forbidden_keywords: ['clinical data', 'patient results', 'efficacy endpoints'],
+        ich_guidelines: 'ICH Q1-Q14 Quality Guidelines',
+        regulatory_sections: ['drug substance', 'drug product', 'manufacturing', 'control of excipients', 'specifications', 'stability'],
+        min_sections: 4
+      },
+      'nonclinical': {
+        required_keywords: ['toxicology', 'pharmacology', 'nonclinical', 'preclinical', 'safety pharmacology', 'animal studies'],
+        forbidden_keywords: ['human subjects', 'clinical trial results', 'patient data'],
+        ich_guidelines: 'ICH S1-S11 Safety Guidelines',
+        regulatory_sections: ['pharmacology', 'pharmacokinetics', 'toxicology', 'local tolerance', 'other studies'],
+        min_sections: 3
+      },
+      'clinical': {
+        required_keywords: ['clinical study', 'efficacy', 'safety', 'patients', 'results', 'clinical trial', 'endpoints', 'adverse events'],
+        forbidden_keywords: ['manufacturing process', 'chemical synthesis', 'animal studies only'],
+        ich_guidelines: 'ICH E1-E20 Efficacy Guidelines',
+        regulatory_sections: ['study design', 'patient population', 'efficacy results', 'safety results', 'discussion', 'conclusions'],
+        min_sections: 4
+      },
+      'application': {
+        required_keywords: ['application', 'submission', 'regulatory', 'sponsor', 'authorization', 'administrative'],
+        forbidden_keywords: ['detailed study results', 'raw data', 'statistical analysis'],
+        ich_guidelines: 'Regional regulatory requirements',
+        regulatory_sections: ['administrative information', 'product information', 'regulatory pathway'],
+        min_sections: 2
+      },
+      'other': {
+        required_keywords: [],
+        forbidden_keywords: [],
+        ich_guidelines: 'General regulatory compliance',
+        regulatory_sections: [],
+        min_sections: 0
+      }
+    };
 
-             Respond with ONLY one word:
-             - "RELEVANT" if the question is about clinical trials, medical research, drug development, regulatory submissions, medical conditions, treatments, or pharmaceutical topics
-             - "IRRELEVANT" if the question is about cooking, weather, entertainment, sports, travel, technology, politics, or other non-medical topics`
-           },
-           {
-             role: "user",
-             content: queryData.question
-           }
-         ],
-         temperature: 0,
-         max_tokens: 10
-       }
-     );
+    // File type validation
+    const allowedFileTypes = {
+      'pdf': ['application/pdf'],
+      'doc': ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      'excel': ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+    };
 
-     const relevance = relevanceCheck.data.choices[0].message.content.trim();
+    const isValidFileType = Object.values(allowedFileTypes).flat().includes(fileType);
 
-     // If irrelevant, return standardized response
-     if (relevance === "IRRELEVANT") {
-       return {
-         answer: `CLINICAL ASSISTANT - OFF-TOPIC QUERY
+    // Document length handling - use more content for better validation
+    const maxAnalysisLength = 15000; // Increased from 5000
+    const analysisText = documentText.length > maxAnalysisLength 
+      ? documentText.substring(0, maxAnalysisLength) + "\n\n[Document continues...]"
+      : documentText;
 
-I'm Lumina™, your specialized clinical protocol assistant. Your question appears to be outside my area of clinical and regulatory expertise.
+    // File size validation (reasonable limits)
+    const maxFileSizeBytes = 50 * 1024 * 1024; // 50MB
+    const isValidFileSize = !fileSize || fileSize <= maxFileSizeBytes;
 
-MY SPECIALIZED CAPABILITIES:
-- Clinical trial protocol design and optimization
-- Regulatory document generation (IND, NDA, BLA, CTD, eCTD)
-- Endpoint selection and statistical considerations
-- Patient population definitions and inclusion/exclusion criteria
-- Safety monitoring and adverse event assessment
-- Regulatory compliance guidance (FDA, EMA, ICH guidelines)
+    // Language-specific validation adjustments
+    const languageAdjustments = {
+      'english': { confidence_boost: 0.0 },
+      'spanish': { confidence_boost: -0.1 },
+      'french': { confidence_boost: -0.1 },
+      'german': { confidence_boost: -0.1 },
+      'japanese': { confidence_boost: -0.15 },
+      'chinese': { confidence_boost: -0.15 }
+    };
 
-EXAMPLES OF RELEVANT QUESTIONS:
-- "What are appropriate primary endpoints for a Phase 2 atopic dermatitis trial?"
-- "How should I structure inclusion criteria for a lung cancer study?"
-- "What safety assessments are required for immunotherapy trials?"
-- "How do I design a bioequivalence study?"
+    const rules = validationRules[expectedCategory] || validationRules['other'];
+    
+    const prompt = `You are a senior regulatory affairs AI expert with deep knowledge of ICH guidelines, FDA regulations, and EMA requirements. You are tasked with comprehensively validating a clinical dossier document.
 
-Please ask a question related to clinical trials, protocols, or regulatory affairs, and I'll provide detailed, professional guidance.`
-       };
-     }
+**DOSSIER CONTEXT:**
+- Dossier Type: ${dossierType || 'Not specified'}
+- Primary Indication: ${primaryIndication || 'Not specified'}
+- Document Language: ${language}
+- File Type: ${fileType || 'Unknown'}
+- File Size: ${fileSize ? `${(fileSize / 1024 / 1024).toFixed(2)} MB` : 'Unknown'}
 
-     // If relevant, proceed with normal OpenAI response
-     const response = await openaiApi.post(
-       'chat/completions',
-       {
-         model: "gpt-4o", // UPGRADED
-         messages: [
-           {
-             role: "system",
-             content: `You are a clinical protocol and regulatory expert providing precise, well-structured, and professionally formatted answers.
-             Your expertise spans all aspects of clinical trial design, regulatory submissions, and pharmaceutical development.
-             
-             CRITICAL FORMATTING RULES - FOLLOW EXACTLY:
-             - Use ONLY plain text - NO markdown, NO asterisks (*), NO bold (**), NO italics, NO special characters
-             - Do NOT use ** for bold text or * for bullet points
-             - Use simple dashes (-) or numbers (1., 2., 3.) for lists
-             - Use ALL CAPS only for major section headings
-             - Use normal text with clear line breaks and indentation for structure
-             - No formatting symbols whatsoever - treat this as if you're writing in a basic text editor
-             
-             CONTENT RULES:
-             - Structure responses with clear paragraphing and indentation
-             - Be precise and direct - avoid unnecessary filler text
-             - If the question involves a specific disease or protocol, tailor the answer accordingly
-             - If asked about endpoints, list them clearly and explain their relevance
-             - If asked about regulatory strategy, provide actionable advice
-             - Cite relevant guidelines (ICH, FDA, EMA) when appropriate`
-           },
-           {
-             role: "user",
-             content: `Question: ${queryData.question}
-             ${queryData.disease_context ? `Disease Context: ${queryData.disease_context}` : ''}
-             ${queryData.protocol_id ? `Reference Protocol ID: ${queryData.protocol_id}` : ''}`
-           }
-         ],
-         temperature: 0.2, // REDUCED from 0.3
-         max_tokens: 2000 // INCREASED
-       }
-     );
-     
-     return {
-       answer: response.data.choices[0].message.content.trim()
-     };
-   } catch (error) {
-     console.error('Error in queryAssistant:', error.response?.data || error.message);
-     throw error;
-   }
- }
-};
+**DOCUMENT TO VALIDATE:**
+- File Name: ${fileName}
+- User-Assigned Category: "${categoryDescription}"
+- Expected Category Code: "${expectedCategory}"
+
+**VALIDATION CRITERIA:**
+1. **Category Validation**: Must contain required keywords: ${rules.required_keywords.join(', ')}
+2. **Negative Validation**: Must NOT contain: ${rules.forbidden_keywords.join(', ')}
+3. **Regulatory Compliance**: Should align with ${rules.ich_guidelines}
+4. **Structural Requirements**: Should contain ${rules.min_sections}+ of these sections: ${rules.regulatory_sections.join(', ')}
+5. **File Type Validation**: Is ${fileType} appropriate for this category?
+6. **Context Relevance**: Is content relevant to "${primaryIndication}"?
+7. **Quality Assessment**: Is this a complete, professional document suitable for regulatory submission?
+
+**ADDITIONAL VALIDATION CHECKS:**
+- Document completeness and professional formatting
+- Presence of required regulatory elements
+- Absence of obviously irrelevant content
+- Consistency with stated indication/disease area
+- Appropriate level of detail for dossier category
+
+**PRE-VALIDATION FINDINGS:**
+- File Type Valid: ${isValidFileType ? 'Yes' : 'No'}
+- File Size Valid: ${isValidFileSize ? 'Yes' : 'No'}
+- Content Length: ${analysisText.length} characters analyzed
+
+**DOCUMENT CONTENT:**
+"""
+${analysisText}
+"""
+
+**RESPONSE REQUIREMENTS:**
+Provide a comprehensive validation assessment in JSON format only. No additional text before or after.
+
+Consider that this document will be submitted to regulatory authorities and must meet professional standards.
+
+{
+  "isValid": boolean,
+  "confidence": number (0.0 to 1.0, adjusted for language and complexity),
+  "category_match": boolean,
+  "content_relevance": boolean,
+  "regulatory_compliance": boolean,
+  "file_type_appropriate": boolean,
+  "completeness_score": number (0.0 to 1.0),
+  "reason": "Detailed explanation covering all validation aspects",
+  "recommendation": "Specific, actionable guidance for the user",
+  "detected_issues": ["list", "of", "specific", "issues", "found"],
+  "suggested_category": "alternative category if current is wrong, or null",
+  "ich_compliance": "assessment of ICH/FDA/EMA guideline compliance",
+  "missing_elements": ["list", "of", "missing", "required", "elements"],
+  "quality_indicators": {
+    "professional_formatting": boolean,
+    "appropriate_detail_level": boolean,
+    "regulatory_language": boolean,
+    "complete_sections": boolean
+  }
+}`;
+
+    const response = await openaiApi.post('chat/completions', {
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1, // Very low for consistency
+      max_tokens: 1000, // Increased for detailed response
+      response_format: { "type": "json_object" }
+    });
+
+    const aiResponse = response.data.choices[0].message.content.trim();
+    const validationResult = JSON.parse(aiResponse);
+    
+    // Apply language confidence adjustment
+    const languageAdjustment = languageAdjustments[language] || languageAdjustments['english'];
+    const adjustedConfidence = Math.max(0, Math.min(1, 
+      (validationResult.confidence || 0) + languageAdjustment.confidence_boost
+    ));
+
+    // Enhanced validation result with additional metadata
+    return {
+      isValid: validationResult.isValid ?? false,
+      confidence: adjustedConfidence,
+      category_match: validationResult.category_match ?? false,
+      content_relevance: validationResult.content_relevance ?? false,
+      regulatory_compliance: validationResult.regulatory_compliance ?? false,
+      file_type_appropriate: validationResult.file_type_appropriate ?? isValidFileType,
+      completeness_score: validationResult.completeness_score ?? 0,
+      reason: validationResult.reason ?? 'Validation completed with limited information.',
+      recommendation: validationResult.recommendation ?? 'Please review document content and category assignment.',
+      detected_issues: validationResult.detected_issues ?? [],
+      suggested_category: validationResult.suggested_category ?? null,
+      ich_compliance: validationResult.ich_compliance ?? 'Unable to assess compliance',
+      missing_elements: validationResult.missing_elements ?? [],
+      quality_indicators: validationResult.quality_indicators ?? {
+        professional_formatting: false,
+        appropriate_detail_level: false,
+        regulatory_language: false,
+        complete_sections: false
+      },
+      validation_metadata: {
+        analysis_length: analysisText.length,
+        language: language,
+        file_size_mb: fileSize ? (fileSize / 1024 / 1024).toFixed(2) : null,
+        validation_timestamp: new Date().toISOString(),
+        model_used: 'gpt-4o'
+      }
+    };
+
+  } catch (error) {
+    console.error('Enhanced content validation error:', error.response?.data || error.message);
+    
+    // Comprehensive error response
+    return {
+      isValid: false,
+      confidence: 0,
+      category_match: false,
+      content_relevance: false,
+      regulatory_compliance: false,
+      file_type_appropriate: false,
+      completeness_score: 0,
+      reason: `Validation service error: ${error.message || 'Unknown error occurred'}`,
+      recommendation: 'Please check your internet connection and try again. If the problem persists, contact technical support.',
+      detected_issues: ['Validation service unavailable'],
+      suggested_category: null,
+      ich_compliance: 'Unable to assess due to service error',
+      missing_elements: ['Validation could not be completed'],
+      quality_indicators: {
+        professional_formatting: false,
+        appropriate_detail_level: false,
+        regulatory_language: false,
+        complete_sections: false
+      },
+      validation_metadata: {
+        analysis_length: 0,
+        language: validationData.language || 'unknown',
+        file_size_mb: validationData.fileSize ? (validationData.fileSize / 1024 / 1024).toFixed(2) : null,
+        validation_timestamp: new Date().toISOString(),
+        model_used: 'gpt-4o',
+        error: error.message
+      }
+    };
+  }
+},
+
+chatWithResults: async (chatData) => {
+  try {
+    const { results, question, history = [] } = chatData;
+    
+    // Build conversation context
+    const conversationHistory = history.map(msg => ({
+      role: msg.sender === 'user' ? 'user' : 'assistant',
+      content: msg.text
+    }));
+
+    const response = await openaiApi.post('chat/completions', {
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are a clinical data analyst with expertise in medical research and diagnostic analysis. You have access to analysis results data in CSV format.
+
+Your task is to analyze the provided results data and answer user questions about it. You can:
+- Calculate statistics (averages, counts, percentages)
+- Identify patterns and trends
+- Summarize findings
+- Compare different cases
+- Highlight outliers or concerning cases
+
+Be precise, professional, and provide specific numbers when possible. Focus on clinically relevant insights.
+
+RESULTS DATA (CSV format):
+${results}
+
+Important: Base your analysis ONLY on the data provided above. Be accurate with your calculations and clearly state any limitations.`
+        },
+        ...conversationHistory,
+        {
+          role: "user",
+          content: question
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 1000
+    });
+
+    return { answer: response.data.choices[0].message.content.trim() };
+  } catch (error) {
+    console.error('Error in chatWithResults:', error.response?.data || error.message);
+    throw error;
+  }
+}}
 
 export default openaiService;
-

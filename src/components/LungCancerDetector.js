@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import FileUpload from './FileUpload';
+import { FileUpload, ResultsChat } from './common';
 import apiService from '../services/api';
 
 const LungCancerDetector = () => {
@@ -19,6 +19,7 @@ const LungCancerDetector = () => {
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
   const [processingStatus, setProcessingStatus] = useState('');
+  const [showResultsChat, setShowResultsChat] = useState(false);
 
   const handleBatchFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -232,9 +233,28 @@ const LungCancerDetector = () => {
     }
     window.location.href = path;
   };
+  
+  const getBatchSummary = () => {
+    const totalFiles = batchResults.length;
+    const detectedCases = batchResults.filter(r => r.prediction?.detected).length;
+    const avgConfidence = detectedCases > 0 
+      ? batchResults
+          .filter(r => r.prediction?.detected)
+          .reduce((sum, r) => sum + r.prediction.probability, 0) / detectedCases
+      : 0;
+
+    return { totalFiles, detectedCases, avgConfidence };
+  };
 
   return (
     <div className="lung-cancer-detector">
+      {showResultsChat && (
+        <ResultsChat
+          results={batchResults}
+          onClose={() => setShowResultsChat(false)}
+          contextName="Lung Cancer Batch Analysis"
+        />
+      )}
       {/* Top Navigation Section */}
       <div className="page-navigation">
         <div className="breadcrumb">
@@ -274,6 +294,7 @@ const LungCancerDetector = () => {
         <button
     className={`tab-button ${analysisMode === 'video' ? 'active' : ''}`}
     onClick={() => setAnalysisMode('video')}
+    disabled
   >
     Video Analysis (In Development)
   </button>
@@ -322,17 +343,7 @@ const LungCancerDetector = () => {
                 <button
                   onClick={handleTextPredict}
                   disabled={isLoading}
-                  style={{
-                    flex: 1,
-                    padding: '15px 20px',
-                    backgroundColor: isLoading ? '#ccc' : '#4c51bf',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    cursor: isLoading ? 'not-allowed' : 'pointer'
-                  }}
+                  className="btn btn-primary btn-lg"
                 >
                   {isLoading ? loadingMessage || 'Analyzing...' : 'Analyze for Lung Cancer'}
                 </button>
@@ -340,16 +351,7 @@ const LungCancerDetector = () => {
                 <button
                   onClick={resetAnalysis}
                   disabled={isLoading}
-                  style={{
-                    padding: '15px 20px',
-                    backgroundColor: '#6b7280',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    cursor: isLoading ? 'not-allowed' : 'pointer'
-                  }}
+                  className="btn btn-secondary btn-lg"
                 >
                   Reset
                 </button>
@@ -484,19 +486,19 @@ const LungCancerDetector = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <button 
                           onClick={() => goToPage('/protocol')} 
-                          style={nextBtnStyle('#ebf8ff', '#2b6cb0')}
+                          className="btn btn-secondary"
                         >
                           📋 Generate Clinical Protocol
                         </button>
                         <button 
                           onClick={() => goToPage('/ind-modules')} 
-                          style={nextBtnStyle('#f0fff4', '#276749')}
+                          className="btn btn-secondary"
                         >
                           📄 Generate Regulatory Document
                         </button>
                         <button 
                           onClick={() => goToPage('/query')} 
-                          style={nextBtnStyle('#faf5ff', '#553c9a')}
+                          className="btn btn-secondary"
                         >
                           ❓ Ask Clinical Question
                         </button>
@@ -507,8 +509,6 @@ const LungCancerDetector = () => {
               </div>
             </div>
           )}
-
-
         </div>
       )}
 
@@ -530,15 +530,7 @@ const LungCancerDetector = () => {
             
             <button
               onClick={addManualText}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
+              className="btn btn-success"
             >
               + Add Manual Text Entry
             </button>
@@ -551,13 +543,7 @@ const LungCancerDetector = () => {
               
               <div style={{ maxHeight: '500px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px' }}>
                 {batchFiles.map((item) => (
-                  <div key={item.id} style={{ 
-                    padding: '15px', 
-                    borderBottom: '1px solid #f1f5f9',
-                    backgroundColor: item.status === 'processing' ? '#fff3cd' : 
-                                   item.status === 'completed' ? '#d4edda' : 
-                                   item.status === 'error' ? '#f8d7da' : 'white'
-                  }}>
+                  <div key={item.id} className={`batch-result-card ${item.prediction?.detected ? 'positive' : item.status === 'error' ? 'error' : item.status === 'completed' ? 'negative' : ''}`}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
@@ -573,14 +559,8 @@ const LungCancerDetector = () => {
                             onChange={(e) => updateBatchText(item.id, e.target.value)}
                             placeholder="Enter medical text for analysis..."
                             rows={3}
-                            style={{
-                              width: '100%',
-                              padding: '8px',
-                              border: '1px solid #d1d5db',
-                              borderRadius: '4px',
-                              fontSize: '14px',
-                              marginBottom: '10px'
-                            }}
+                            className="form-textarea"
+                            style={{marginBottom: '10px'}}
                           />
                         ) : (
                           item.transcript && (
@@ -606,7 +586,7 @@ const LungCancerDetector = () => {
                               <br />
                               <span style={{ fontWeight: '500' }}>Result:</span> 
                               <span style={{ 
-                                color: item.prediction.detected ? '#dc2626' : '#16a34a',
+                                color: item.prediction.detected ? 'var(--color-error)' : 'var(--color-success)',
                                 fontWeight: 'bold',
                                 marginLeft: '5px'
                               }}>
@@ -620,7 +600,7 @@ const LungCancerDetector = () => {
                           {item.error && (
                             <>
                               <br />
-                              <span style={{ color: '#dc2626' }}>Error: {item.error}</span>
+                              <span style={{ color: 'var(--color-error)' }}>Error: {item.error}</span>
                             </>
                           )}
                         </div>
@@ -628,16 +608,7 @@ const LungCancerDetector = () => {
                       
                       <button 
                         onClick={() => removeBatchFile(item.id)}
-                        style={{ 
-                          marginLeft: '15px', 
-                          padding: '5px 10px', 
-                          backgroundColor: '#dc2626', 
-                          color: 'white', 
-                          border: 'none', 
-                          borderRadius: '4px', 
-                          cursor: 'pointer',
-                          fontSize: '12px'
-                        }}
+                        className="btn btn-danger btn-sm"
                       >
                         Remove
                       </button>
@@ -646,45 +617,52 @@ const LungCancerDetector = () => {
                 ))}
               </div>
 
-              
-
-              <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
                 <button
                   onClick={processBatch}
                   disabled={batchLoading || batchFiles.length === 0}
-                  style={{
-                    padding: '15px 30px',
-                    backgroundColor: batchLoading ? '#ccc' : '#4c51bf',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    cursor: batchLoading ? 'not-allowed' : 'pointer',
-                    marginRight: '10px'
-                  }}
+                  className="btn btn-primary btn-lg"
                 >
                   {batchLoading ? 'Processing...' : `Analyze ${batchFiles.length} Items`}
                 </button>
 
-                {batchResults.length > 0 && (
-                  <button
-                    onClick={exportBatchResults}
-                    style={{
-                      padding: '15px 30px',
-                      backgroundColor: '#10b981',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Export Results (CSV)
-                  </button>
+                {batchResults.length > 0 && !batchLoading && (
+                  <>
+                    <button
+                      onClick={exportBatchResults}
+                      className="btn btn-success btn-lg"
+                    >
+                      Export Results (CSV)
+                    </button>
+                    <button
+                      onClick={() => setShowResultsChat(true)}
+                      className="btn btn-secondary btn-lg"
+                    >
+                      Chat with Results
+                    </button>
+                  </>
                 )}
               </div>
+
+              {batchResults.length > 0 && !batchLoading && (
+                <div className="batch-summary">
+                  <h4>Batch Summary</h4>
+                  <ul>
+                    <li>
+                      <div className="summary-value">{getBatchSummary().totalFiles}</div>
+                      <div className="summary-label">Files Analyzed</div>
+                    </li>
+                    <li>
+                      <div className="summary-value">{getBatchSummary().detectedCases}</div>
+                      <div className="summary-label">Detected Cases</div>
+                    </li>
+                    <li>
+                      <div className="summary-value">{(getBatchSummary().avgConfidence * 100).toFixed(1)}%</div>
+                      <div className="summary-label">Avg. Confidence (Detected)</div>
+                    </li>
+                  </ul>
+                </div>
+              )}
 
               {batchLoading && (
                 <div style={{ marginTop: '20px', textAlign: 'center' }}>

@@ -6,6 +6,9 @@ const ClinicalDossierCompiler = () => {
   const [selectedDossierType, setSelectedDossierType] = useState('');
   const [uploadedDocuments, setUploadedDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [validatingDocuments, setValidatingDocuments] = useState(new Set());
+  const [primaryIndication, setPrimaryIndication] = useState('');
+  const [showValidationSummary, setShowValidationSummary] = useState(false);
 
   const dossierTypes = [
     { 
@@ -48,13 +51,102 @@ const ClinicalDossierCompiler = () => {
     { id: 'other', name: 'Other Documents', required: false, icon: '📎', maxFiles: 5 }
   ];
 
+  // Extract text from file for validation
+  const extractTextFromFile = async (file) => {
+    return new Promise((resolve) => {
+      if (file.type === 'application/pdf') {
+        // For PDFs, we'll use a simplified approach
+        // In production, you'd want to use a proper PDF text extraction library
+        resolve(`PDF document: ${file.name} - Content extraction requires PDF parsing library`);
+      } else if (file.type.includes('text') || file.name.endsWith('.txt')) {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsText(file);
+      } else {
+        // For other document types, return basic info
+        resolve(`Document: ${file.name} - Binary file content`);
+      }
+    });
+  };
+
+  // Validate document content
+  const validateDocument = async (document) => {
+    if (!document.category || !primaryIndication.trim()) {
+      return {
+        isValid: false,
+        confidence: 0,
+        reason: 'Category or primary indication not specified',
+        recommendation: 'Please assign a category and specify primary indication'
+      };
+    }
+
+    setValidatingDocuments(prev => new Set(prev).add(document.id));
+
+    try {
+      // Extract text content from file
+      const documentText = await extractTextFromFile(document.file);
+      
+      const categoryInfo = documentCategories.find(cat => cat.id === document.category);
+      
+      const validationData = {
+        documentText,
+        fileName: document.name,
+        expectedCategory: document.category,
+        categoryDescription: categoryInfo?.name || document.category,
+        primaryIndication: primaryIndication.trim(),
+        dossierType: selectedDossierType,
+        fileType: document.file.type,
+        fileSize: document.file.size,
+        language: 'english' // Could be detected or user-specified
+      };
+
+      const validationResult = await apiService.validateDocumentContent(validationData);
+      
+      // Update document with validation result
+      setUploadedDocuments(docs => 
+        docs.map(doc => 
+          doc.id === document.id 
+            ? { ...doc, validation: validationResult }
+            : doc
+        )
+      );
+
+      return validationResult;
+    } catch (error) {
+      console.error('Validation error:', error);
+      const errorResult = {
+        isValid: false,
+        confidence: 0,
+        reason: 'Validation service error',
+        recommendation: 'Try validation again or contact support'
+      };
+      
+      setUploadedDocuments(docs => 
+        docs.map(doc => 
+          doc.id === document.id 
+            ? { ...doc, validation: errorResult }
+            : doc
+        )
+      );
+      
+      return errorResult;
+    } finally {
+      setValidatingDocuments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(document.id);
+        return newSet;
+      });
+    }
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       'application/pdf': ['.pdf'],
       'application/msword': ['.doc'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'text/plain': ['.txt']
     },
     onDrop: acceptedFiles => {
       const newDocuments = acceptedFiles.map(file => ({
@@ -62,13 +154,14 @@ const ClinicalDossierCompiler = () => {
         name: file.name,
         size: file.size,
         category: '',
-        id: Date.now() + Math.random()
+        id: Date.now() + Math.random(),
+        validation: null
       }));
       setUploadedDocuments([...uploadedDocuments, ...newDocuments]);
     }
   });
 
-  const handleCategoryChange = (documentId, category) => {
+  const handleCategoryChange = async (documentId, category) => {
     const categoryCount = uploadedDocuments.filter(doc => doc.category === category).length;
     const maxFiles = documentCategories.find(cat => cat.id === category)?.maxFiles || 10;
     
@@ -77,15 +170,45 @@ const ClinicalDossierCompiler = () => {
       return;
     }
     
+    // Update category
     setUploadedDocuments(docs => 
       docs.map(doc => 
-        doc.id === documentId ? { ...doc, category } : doc
+        doc.id === documentId ? { ...doc, category, validation: null } : doc
       )
     );
+
+    // Auto-validate if primary indication is set
+    if (primaryIndication.trim()) {
+      const document = uploadedDocuments.find(doc => doc.id === documentId);
+      if (document) {
+        const updatedDocument = { ...document, category };
+        setTimeout(() => validateDocument(updatedDocument), 100);
+      }
+    }
   };
 
   const removeDocument = (documentId) => {
     setUploadedDocuments(docs => docs.filter(doc => doc.id !== documentId));
+  };
+
+  const manualValidateDocument = async (documentId) => {
+    const document = uploadedDocuments.find(doc => doc.id === documentId);
+    if (document) {
+      await validateDocument(document);
+    }
+  };
+
+  const validateAllDocuments = async () => {
+    if (!primaryIndication.trim()) {
+      alert('Please specify the primary indication before validating documents.');
+      return;
+    }
+
+    const documentsToValidate = uploadedDocuments.filter(doc => doc.category);
+    
+    for (const document of documentsToValidate) {
+      await validateDocument(document);
+    }
   };
 
   const compileDossier = async () => {
@@ -105,11 +228,10 @@ const ClinicalDossierCompiler = () => {
         // Optionally reset the form
         setUploadedDocuments([]);
         setSelectedDossierType('');
+        setPrimaryIndication('');
       }
     } catch (error) {
       console.error('Detailed error:', error);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
       alert(`Failed to compile dossier: ${error.message}`);
     } finally {
       setLoading(false);
@@ -151,15 +273,73 @@ const ClinicalDossierCompiler = () => {
     }
   };
 
+  const getValidationIcon = (validation) => {
+    if (!validation) return '⚪';
+    if (validation.confidence >= 0.8) return '✅';
+    if (validation.confidence >= 0.6) return '🟡';
+    return '❌';
+  };
+
+  const getValidationColor = (validation) => {
+    if (!validation) return '#94a3b8';
+    if (validation.confidence >= 0.8) return '#10b981';
+    if (validation.confidence >= 0.6) return '#f59e0b';
+    return '#ef4444';
+  };
+
+  const getValidationSummary = () => {
+    const validatedDocs = uploadedDocuments.filter(doc => doc.validation);
+    const validDocs = validatedDocs.filter(doc => doc.validation.isValid);
+    const highConfidence = validatedDocs.filter(doc => doc.validation.confidence >= 0.8);
+    
+    return {
+      total: uploadedDocuments.length,
+      validated: validatedDocs.length,
+      valid: validDocs.length,
+      highConfidence: highConfidence.length
+    };
+  };
+
+  const summary = getValidationSummary();
+
   return (
-    <div className="clinical-dossier-compiler">
-     <h2>Clinical Dossier Compiler</h2>
-      <p>Compile various clinical trial documents into a single regulatory dossier</p>
+    <div className="clinical-dossier-compiler" style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+      <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b' }}>
+        Clinical Dossier Compiler
+      </h1>
+      <p style={{ color: '#64748b', marginBottom: '2rem' }}>
+        Compile various clinical trial documents into a single regulatory dossier with AI-powered document validation
+      </p>
+
+      {/* Primary Indication Input */}
+      <div style={{ marginBottom: '2rem', backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+          🎯 Primary Indication
+        </h2>
+        <input
+          type="text"
+          value={primaryIndication}
+          onChange={(e) => setPrimaryIndication(e.target.value)}
+          placeholder="Enter the primary disease/condition (e.g., Type 2 Diabetes, Alzheimer's Disease)"
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            borderRadius: '8px',
+            border: '1px solid #d1d5db',
+            fontSize: '1rem'
+          }}
+        />
+        <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.5rem' }}>
+          This helps validate that uploaded documents are relevant to your clinical indication
+        </p>
+      </div>
 
       {/* Dossier Type Selection */}
-      <div className="dossier-type-selection">
-        <h2>📋 Select Dossier Type</h2>
-        <div className="dossier-types-grid">
+      <div className="dossier-type-selection" style={{ marginBottom: '2rem' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+          📋 Select Dossier Type
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
           {dossierTypes.map(type => (
             <div 
               key={type.id}
@@ -173,8 +353,7 @@ const ClinicalDossierCompiler = () => {
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 boxShadow: selectedDossierType === type.id ? `0 8px 25px ${type.color}20` : '0 2px 4px rgba(0,0,0,0.1)',
-                transform: selectedDossierType === type.id ? 'translateY(-2px)' : 'none',
-                marginBottom: '1rem'
+                transform: selectedDossierType === type.id ? 'translateY(-2px)' : 'none'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
@@ -199,8 +378,10 @@ const ClinicalDossierCompiler = () => {
       {selectedDossierType && (
         <>
           {/* Document Upload Area */}
-          <div className="document-upload-section">
-            <h2>📁 Upload Documents</h2>
+          <div className="document-upload-section" style={{ marginBottom: '2rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+              📁 Upload Documents
+            </h2>
             <div 
               {...getRootProps()} 
               className={`dropzone ${isDragActive ? 'active' : ''}`}
@@ -211,8 +392,7 @@ const ClinicalDossierCompiler = () => {
                 textAlign: 'center',
                 backgroundColor: isDragActive ? '#eff6ff' : 'white',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                marginBottom: '2rem'
+                transition: 'all 0.2s ease'
               }}
             >
               <input {...getInputProps()} />
@@ -225,19 +405,71 @@ const ClinicalDossierCompiler = () => {
                   : 'Drag and drop documents here, or click to select files'}
               </p>
               <small style={{ fontSize: '0.9rem', color: '#64748b' }}>
-                Accepted formats: PDF, DOC, DOCX, XLS, XLSX
+                Accepted formats: PDF, DOC, DOCX, XLS, XLSX, TXT
               </small>
             </div>
           </div>
 
+          {/* Validation Summary */}
+          {uploadedDocuments.length > 0 && (
+            <div style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem',
+              border: '1px solid #e2e8f0',
+              marginBottom: '2rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0, color: '#1e293b' }}>
+                  🔍 Document Validation Summary
+                </h2>
+                <button
+                  onClick={validateAllDocuments}
+                  disabled={!primaryIndication.trim() || validatingDocuments.size > 0}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: primaryIndication.trim() ? '#3b82f6' : '#94a3b8',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: primaryIndication.trim() ? 'pointer' : 'not-allowed',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  {validatingDocuments.size > 0 ? 'Validating...' : 'Validate All Documents'}
+                </button>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+                <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b' }}>{summary.total}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Total Documents</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#eff6ff', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3b82f6' }}>{summary.validated}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Validated</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#10b981' }}>{summary.valid}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Valid Documents</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#ecfdf5', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#059669' }}>{summary.highConfidence}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>High Confidence</div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Document Categories Checklist */}
-          <div className="document-checklist">
-            <h2>✅ Required Documents Checklist</h2>
+          <div className="document-checklist" style={{ marginBottom: '2rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+              ✅ Required Documents Checklist
+            </h2>
             <div style={{ 
               display: 'grid', 
               gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-              gap: '1rem',
-              marginBottom: '2rem'
+              gap: '1rem'
             }}>
               {documentCategories.map(cat => {
                 const status = getCategoryStatus(cat.id);
@@ -273,14 +505,15 @@ const ClinicalDossierCompiler = () => {
 
           {/* Uploaded Documents List */}
           {uploadedDocuments.length > 0 && (
-            <div className="uploaded-documents">
-              <h2>📚 Uploaded Documents ({uploadedDocuments.length})</h2>
+            <div className="uploaded-documents" style={{ marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+                📚 Uploaded Documents ({uploadedDocuments.length})
+              </h2>
               <div className="documents-list" style={{ 
                 backgroundColor: 'white', 
                 borderRadius: '12px', 
                 padding: '1rem',
-                border: '1px solid #e2e8f0',
-                marginBottom: '2rem'
+                border: '1px solid #e2e8f0'
               }}>
                 {uploadedDocuments.map(doc => (
                   <div key={doc.id} className="document-item" style={{
@@ -292,47 +525,89 @@ const ClinicalDossierCompiler = () => {
                     borderRadius: '8px'
                   }}>
                     <div className="document-info" style={{ flex: 1 }}>
-                      <span className="document-name" style={{ fontWeight: '500', marginBottom: '0.25rem', display: 'block' }}>
-                        {doc.name}
-                      </span>
-                      <span className="document-size" style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.25rem' }}>
+                        <span className="document-name" style={{ fontWeight: '500', marginRight: '0.5rem' }}>
+                          {doc.name}
+                        </span>
+                        <span style={{ fontSize: '1rem', marginRight: '0.5rem' }}>
+                          {getValidationIcon(doc.validation)}
+                        </span>
+                        {validatingDocuments.has(doc.id) && (
+                          <span style={{ fontSize: '0.8rem', color: '#3b82f6' }}>Validating...</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.5rem' }}>
                         {(doc.size / 1024 / 1024).toFixed(2)} MB
-                      </span>
+                      </div>
+                      {doc.validation && (
+                        <div style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                          <div style={{ 
+                            color: getValidationColor(doc.validation), 
+                            fontWeight: '500',
+                            marginBottom: '0.25rem'
+                          }}>
+                            Confidence: {(doc.validation.confidence * 100).toFixed(1)}% - {doc.validation.reason}
+                          </div>
+                          {doc.validation.recommendation && (
+                            <div style={{ color: '#64748b', fontStyle: 'italic' }}>
+                              💡 {doc.validation.recommendation}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <select
-                      value={doc.category}
-                      onChange={(e) => handleCategoryChange(doc.id, e.target.value)}
-                      className="category-select"
-                      style={{
-                        padding: '0.5rem',
-                        borderRadius: '6px',
-                        border: '1px solid #d1d5db',
-                        marginRight: '1rem',
-                        minWidth: '180px'
-                      }}
-                    >
-                      <option value="">Select Category</option>
-                      {documentCategories.map(cat => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.icon} {cat.name} {cat.required && '*'}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => removeDocument(doc.id)}
-                      className="remove-button"
-                      style={{
-                        padding: '0.5rem 1rem',
-                        backgroundColor: '#ef4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '0.8rem'
-                      }}
-                    >
-                      Remove
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <select
+                        value={doc.category}
+                        onChange={(e) => handleCategoryChange(doc.id, e.target.value)}
+                        className="category-select"
+                        style={{
+                          padding: '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid #d1d5db',
+                          minWidth: '180px'
+                        }}
+                      >
+                        <option value="">Select Category</option>
+                        {documentCategories.map(cat => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.icon} {cat.name} {cat.required && '*'}
+                          </option>
+                        ))}
+                      </select>
+                      {doc.category && primaryIndication.trim() && (
+                        <button
+                          onClick={() => manualValidateDocument(doc.id)}
+                          disabled={validatingDocuments.has(doc.id)}
+                          style={{
+                            padding: '0.5rem 0.75rem',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          {validatingDocuments.has(doc.id) ? '⏳' : '🔍'}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => removeDocument(doc.id)}
+                        className="remove-button"
+                        style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -368,6 +643,16 @@ const ClinicalDossierCompiler = () => {
                 fontWeight: '500'
               }}>
                 ⚠️ Please upload all required documents and assign categories before compiling
+              </p>
+            )}
+            {primaryIndication.trim() && uploadedDocuments.some(doc => doc.validation && !doc.validation.isValid) && (
+              <p style={{ 
+                marginTop: '1rem', 
+                color: '#f59e0b', 
+                fontSize: '0.9rem',
+                fontWeight: '500'
+              }}>
+                ⚠️ Some documents have validation issues. Review and address them before compiling.
               </p>
             )}
           </div>

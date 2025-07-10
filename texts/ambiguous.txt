@@ -1,0 +1,33 @@
+
+PATIENT NOTES
+
+ID: 112233
+DATE: 2023-10-26
+AGE: 52
+SEX: Female
+
+CHIEF COMPLAINT:
+Intermittent dry cough.
+
+HISTORY OF PRESENT ILLNESS:
+The patient is a 52-year-old female presenting with a nagging, dry cough that has been present for about 6 weeks. She notes the cough is worse in the morning and seems to be triggered by cold air. She denies any fever, hemoptysis, or weight loss. She mentions some recent shortness of breath, but attributes it to being "out of shape." She has a remote history of smoking in her 20s but quit over 20 years ago.
+
+PAST MEDICAL HISTORY:
+- Seasonal allergies
+- GERD (gastroesophageal reflux disease)
+
+SOCIAL HISTORY:
+- Smoker: Smoked socially for ~5 years in her 20s, quit at age 27.
+- Alcohol: 1-2 glasses of wine per week.
+
+REVIEW OF SYSTEMS:
+- RESPIRATORY: Positive for dry cough. Denies sputum production or hemoptysis. Positive for mild dyspnea with significant exertion.
+- GASTROINTESTINAL: Positive for occasional heartburn.
+- CONSTITUTIONAL: Negative for weight loss or night sweats.
+
+ASSESSMENT AND PLAN:
+The patient's symptoms are likely multifactorial. The dry cough could be related to her history of GERD or post-nasal drip from allergies. While lung cancer is low on the differential given her limited smoking history and lack of red-flag symptoms (weight loss, hemoptysis), a chest X-ray is warranted to be thorough due to the persistence of the cough.
+1. Start trial of omeprazole for GERD.
+2. Recommend trial of nasal steroid spray for allergies.
+3. Order a chest X-ray to rule out any underlying pulmonary pathology.
+4. Follow up in 4 weeks.
