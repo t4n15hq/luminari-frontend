@@ -1,0 +1,33 @@
+
+PATIENT NOTES
+
+ID: 654321
+DATE: 2023-10-26
+AGE: 45
+SEX: Female
+
+CHIEF COMPLAINT:
+Annual physical examination.
+
+HISTORY OF PRESENT ILLNESS:
+The patient is a 45-year-old female here for a routine check-up. She reports feeling well and has no specific complaints. She is a lifelong non-smoker and avoids secondhand smoke. She maintains an active lifestyle, running 3-4 times a week without any respiratory difficulty.
+
+PAST MEDICAL HISTORY:
+- No significant past medical history.
+- No history of asthma, COPD, or other respiratory conditions.
+
+SOCIAL HISTORY:
+- Smoker: Never smoked.
+- Alcohol: Denies alcohol use.
+- Occupation: Office manager, no occupational exposures to dust or chemicals.
+
+REVIEW OF SYSTEMS:
+- CONSTITUTIONAL: Negative for fever, chills, weight loss, or fatigue.
+- RESPIRATORY: Negative for cough, shortness of breath, chest pain, hemoptysis. Lungs are clear to auscultation bilaterally.
+- All other systems reviewed and are negative.
+
+ASSESSMENT AND PLAN:
+Healthy 45-year-old female with no risk factors or symptoms concerning for lung cancer.
+1. Continue healthy lifestyle.
+2. Routine age-appropriate screening.
+3. Follow up in 1 year for annual exam.

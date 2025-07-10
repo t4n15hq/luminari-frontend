@@ -1,0 +1,33 @@
+
+PATIENT NOTES
+
+ID: 445566
+DATE: 2023-10-26
+AGE: 61
+SEX: Male
+
+CHIEF COMPLAINT:
+"I think I have bronchitis again."
+
+HISTORY OF PRESENT ILLNESS:
+A 61-year-old male with a history of recurrent bronchitis presents with a productive cough of yellow sputum for the last 10 days. He reports some associated wheezing and chest congestion. He has a 20-pack-year smoking history but is trying to cut back. He denies fever, hemoptysis, or significant weight loss, but does endorse feeling more tired than usual over the past month. He also complains of some new-onset shoulder pain, which he thinks is from yard work.
+
+PAST MEDICAL HISTORY:
+- Recurrent acute bronchitis (2-3 episodes per year)
+- Hyperlipidemia
+
+SOCIAL HISTORY:
+- Smoker: Currently smokes 0.5 packs per day, previously smoked 1 pack per day. Total 20 pack-years.
+- Occupation: Retired construction worker.
+
+REVIEW OF SYSTEMS:
+- RESPIRATORY: Productive cough, wheezing, congestion. Denies hemoptysis.
+- MUSCULOSKELETAL: New right shoulder pain, rated 4/10.
+- CONSTITUTIONAL: Positive for fatigue. Negative for weight loss.
+
+ASSESSMENT AND PLAN:
+The presentation is consistent with acute bronchitis, likely exacerbated by his smoking history. The new shoulder pain and fatigue are noted, but less likely to be associated.
+1. Prescribe a course of antibiotics (Azithromycin).
+2. Recommend trial of an albuterol inhaler for wheezing.
+3. Strongly advise smoking cessation.
+4. If cough and fatigue do not resolve in 2-3 weeks, or if shoulder pain persists, will order a chest radiograph to rule out a more insidious process like a Pancoast tumor, though this is less likely.

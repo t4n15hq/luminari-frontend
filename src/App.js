@@ -1,12 +1,12 @@
-// src/App.js - Updated routing to include both files properly
+// src/App.js - Updated routing to include all files properly
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 
 import HomePage from './components/HomePage';
 import ProtocolGenerator from './components/ProtocolGenerator';
-import RegulatoryDocuments from './components/RegulatoryDocuments'; // MAP INTERFACE
-import RegulatoryDocumentGenerator from './components/RegulatoryDocumentGenerator'; // FORM & LOGIC
+import RegulatoryDocuments from './components/RegulatoryDocuments';
+import RegulatoryDocumentGenerator from './components/RegulatoryDocumentGenerator';
 import ClinicalDossierCompiler from './components/ClinicalDossierCompiler';
 import QueryAssistant from './components/QueryAssistant';
 import SkinDiseaseDetector from './components/SkinDiseaseDetector';

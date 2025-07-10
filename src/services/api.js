@@ -499,6 +499,8 @@ const apiService = {
   queryAssistant: openaiService.queryAssistant,
   diagnoseConversation: openaiService.diagnoseConversation,
   transcribeAudio: openaiService.transcribeAudio,
+  validateDocumentContent: openaiService.validateDocumentContent,
+  chatWithResults: openaiService.chatWithResults,
 
   // List saved protocols
   listProtocols: async () => {

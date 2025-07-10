@@ -73,7 +73,7 @@ const dossierService = {
       
       // Add Luminari branding
       coverPdf.setFontSize(10);
-      coverPdf.text('Prepared by Luminari', 105, 280, { align: 'center' });
+      coverPdf.text('Prepared by LumiPath™', 105, 280, { align: 'center' });
       coverPdf.text('Page 1', 195, 285, { align: 'right' });
       
       const coverBlob = coverPdf.output('blob');
@@ -108,7 +108,7 @@ const dossierService = {
         categoryPdf.text(`${docs.length} Document${docs.length > 1 ? 's' : ''}`, 105, 140, { align: 'center' });
         
         categoryPdf.setFontSize(10);
-        categoryPdf.text('Prepared by Luminari', 105, 280, { align: 'center' });
+        categoryPdf.text('Prepared by LumiPath™', 105, 280, { align: 'center' });
         categoryPdf.text(`Page ${currentPage}`, 195, 285, { align: 'right' });
         
         const categoryBlob = categoryPdf.output('blob');
@@ -124,36 +124,33 @@ const dossierService = {
           if (doc.file && doc.file.type === 'application/pdf') {
             try {
               // Create a cover page for the PDF
-              const coverPdf = new jsPDF();
-              coverPdf.setFontSize(16);
-              coverPdf.setFont(undefined, 'bold');
-              coverPdf.text(categoryNames[category] || category, 20, 40);
+              const docCoverPdf = new jsPDF();
+              docCoverPdf.setFontSize(16);
+              docCoverPdf.setFont(undefined, 'bold');
+              docCoverPdf.text(categoryNames[category] || category, 20, 40);
               
-              coverPdf.setFontSize(14);
-              coverPdf.setFont(undefined, 'normal');
-              coverPdf.text(`Document: ${doc.name}`, 20, 60);
+              docCoverPdf.setFontSize(14);
+              docCoverPdf.setFont(undefined, 'normal');
+              docCoverPdf.text(`Document: ${doc.name}`, 20, 60);
               
-              coverPdf.setFontSize(12);
-              coverPdf.text(`Size: ${(doc.size / 1024 / 1024).toFixed(2)} MB`, 20, 75);
-              coverPdf.text(`Type: PDF Document`, 20, 85);
+              docCoverPdf.setFontSize(12);
+              docCoverPdf.text(`Size: ${(doc.size / 1024 / 1024).toFixed(2)} MB`, 20, 75);
+              docCoverPdf.text(`Type: PDF Document`, 20, 85);
               
-              coverPdf.setFontSize(11);
-              coverPdf.text('The following pages contain the original document.', 20, 105);
+              docCoverPdf.setFontSize(11);
+              docCoverPdf.text('The following pages contain the original document.', 20, 105);
               
-              coverPdf.setFontSize(10);
-              coverPdf.text('Prepared by Luminari', 105, 280, { align: 'center' });
-              coverPdf.text(`Page ${currentPage}`, 195, 285, { align: 'right' });
+              docCoverPdf.setFontSize(10);
+              docCoverPdf.text('Prepared by LumiPath™', 105, 280, { align: 'center' });
+              docCoverPdf.text(`Page ${currentPage}`, 195, 285, { align: 'right' });
               
-              const coverBlob = coverPdf.output('blob');
-              await merger.add(coverBlob);
+              const docCoverBlob = docCoverPdf.output('blob');
+              await merger.add(docCoverBlob);
               currentPage++;
               
-              // Get page count before adding (if possible)
-              // Note: This is a limitation - we'd need to read the PDF to get exact page count
-              // For now, we'll add it and estimate
               await merger.add(doc.file);
               
-              // Estimate pages (this is still not perfect, but better than before)
+              // Estimate pages based on a heuristic
               const estimatedPages = Math.max(1, Math.ceil(doc.size / (100 * 1024))); // Rough estimate: 100KB per page
               currentPage += estimatedPages;
               
@@ -193,11 +190,7 @@ const dossierService = {
             refPdf.setFontSize(11);
             refPdf.text('[Document Reference]', 20, 115);
             
-            const infoText = `This document "${doc.name}" is included by reference. ` +
-              `In a clinical dossier, non-PDF documents are typically converted to PDF ` +
-              `before inclusion. This document contains ${categoryNames[category].toLowerCase()} ` +
-              `information relevant to the study.`;
-            
+            const infoText = `This document "${doc.name}" is included by reference. In a clinical dossier, non-PDF documents are typically converted to PDF before inclusion.`;
             const lines = refPdf.splitTextToSize(infoText, 170);
             let currentY = 135;
             
@@ -207,7 +200,7 @@ const dossierService = {
             });
             
             refPdf.setFontSize(10);
-            refPdf.text('Prepared by Luminari', 105, 280, { align: 'center' });
+            refPdf.text('Prepared by LumiPath™', 105, 280, { align: 'center' });
             refPdf.text(`Page ${currentPage}`, 195, 285, { align: 'right' });
             
             const refBlob = refPdf.output('blob');
@@ -243,9 +236,7 @@ const dossierService = {
       
       // Add disclaimer
       summaryPdf.setFontSize(10);
-      const disclaimer = 'This dossier has been automatically compiled by Luminari\'s Clinical Dossier Compiler. ' +
-        'Please review all content carefully before submission to regulatory authorities.';
-      
+      const disclaimer = 'This dossier has been automatically compiled by LumiPath™. Please review all content carefully before submission to regulatory authorities.';
       const disclaimerLines = summaryPdf.splitTextToSize(disclaimer, 170);
       summaryY += 20;
       disclaimerLines.forEach(line => {
@@ -253,7 +244,7 @@ const dossierService = {
         summaryY += 5;
       });
       
-      summaryPdf.text('Prepared by Luminari', 105, 280, { align: 'center' });
+      summaryPdf.text('Prepared by LumiPath™', 105, 280, { align: 'center' });
       summaryPdf.text(`Page ${currentPage}`, 195, 285, { align: 'right' });
       
       const summaryBlob = summaryPdf.output('blob');
@@ -287,7 +278,6 @@ const dossierService = {
           tocPdf.text(`Page ${doc.page}`, 190, yPosition, { align: 'right' });
           yPosition += 8;
           
-          // Check if we need a new page
           if (yPosition > 250) {
             tocPdf.addPage();
             yPosition = 30;
@@ -298,33 +288,25 @@ const dossierService = {
         sectionNumber++;
       });
       
-      // Add page number to TOC
       tocPdf.setFontSize(10);
-      tocPdf.text('Prepared by Luminari', 105, 280, { align: 'center' });
+      tocPdf.text('Prepared by LumiPath™', 105, 280, { align: 'center' });
       tocPdf.text('Page 2', 195, 285, { align: 'right' });
       
       const tocBlob = tocPdf.output('blob');
       
-      // Create final merger with correct order
       const finalMerger = new PDFMerger();
       
-      // Add cover page
       await finalMerger.add(coverBlob);
-      
-      // Add TOC
       await finalMerger.add(tocBlob);
       
-      // Add all other pages
-      const mergedBlob = await merger.saveAsBlob();
-      await finalMerger.add(mergedBlob);
+      const mergedContentBlob = await merger.saveAsBlob();
+      await finalMerger.add(mergedContentBlob);
       
       console.log('Saving final merged PDF...');
       
-      // Save the final merged PDF
       const finalPdf = await finalMerger.saveAsBlob();
       const fileName = `${dossierType}_dossier_${Date.now()}.pdf`;
       
-      // Create download link
       const url = URL.createObjectURL(finalPdf);
       const a = document.createElement('a');
       a.href = url;
@@ -334,17 +316,10 @@ const dossierService = {
       
       console.log('Dossier saved successfully:', fileName);
       
-      // Success message
-      const successMessage = `Dossier compiled successfully!\n\n` +
-        `Type: ${dossierNames[dossierType]}\n` +
-        `Documents: ${documents.length}\n` +
-        `File: ${fileName}\n\n` +
-        `All PDF documents have been merged into the dossier.`;
-      
       return { 
         success: true, 
         fileName,
-        message: successMessage,
+        message: `Dossier compiled successfully! Downloaded as: ${fileName}`,
         documentCount: documents.length,
         dossierType: dossierNames[dossierType]
       };
