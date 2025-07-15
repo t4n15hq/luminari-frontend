@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../services/api';
+import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 
 const ProtocolGenerator = () => {
   // Basic Information
@@ -48,6 +49,10 @@ const ProtocolGenerator = () => {
   const [error, setError] = useState('');
   const [showGeneratedInfo, setShowGeneratedInfo] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+
+  // Background processing
+  const { startJob, getJob } = useBackgroundJobs('protocol');
+  const [backgroundJobId, setBackgroundJobId] = useState(null);
 
   // Protocol sections for navigation
   const protocolSections = [
@@ -110,7 +115,6 @@ const ProtocolGenerator = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setShowGeneratedInfo(false);
     
@@ -158,28 +162,57 @@ const ProtocolGenerator = () => {
         }
       };
 
-      // Generate both protocol and study design in parallel
-      const [protocolResponse, studyDesignResponse] = await Promise.all([
-        apiService.generateProtocol(formData),
-        apiService.generateIndModule(formData)
-      ]);
+      // Start background jobs for both protocol and study design
+      const protocolJobId = startJob('protocol', formData, apiService.generateProtocol);
+      const studyDesignJobId = startJob('study_design', formData, apiService.generateIndModule);
       
-      setResult(protocolResponse);
-      setStudyDesign(studyDesignResponse);
-      setShowGeneratedInfo(true);
+      setBackgroundJobId(protocolJobId);
+      setLoading(true);
       
-      // Automatically scroll to results
-      setTimeout(() => {
-        document.querySelector('.result-container')?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }, 100);
+      // Monitor both jobs
+      const checkJobsStatus = () => {
+        const protocolJob = getJob(protocolJobId);
+        const studyDesignJob = getJob(studyDesignJobId);
+        
+        if (protocolJob && studyDesignJob) {
+          if (protocolJob.status === 'completed' && studyDesignJob.status === 'completed') {
+            setLoading(false);
+            setBackgroundJobId(null);
+            
+            setResult(protocolJob.result);
+            setStudyDesign(studyDesignJob.result);
+            setShowGeneratedInfo(true);
+            
+            // Automatically scroll to results
+            setTimeout(() => {
+              document.querySelector('.result-container')?.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+              });
+            }, 100);
+            
+          } else if (protocolJob.status === 'error' || studyDesignJob.status === 'error') {
+            setLoading(false);
+            setBackgroundJobId(null);
+            setError('Failed to generate protocol. Please try again.');
+          } else {
+            // Jobs still running, check again in 1 second
+            setTimeout(checkJobsStatus, 1000);
+          }
+        } else {
+          // Jobs not found, check again in 1 second
+          setTimeout(checkJobsStatus, 1000);
+        }
+      };
+      
+      // Start monitoring
+      checkJobsStatus();
+      
     } catch (err) {
       setError('Failed to generate protocol. Please try again.');
       console.error(err);
-    } finally {
       setLoading(false);
+      setBackgroundJobId(null);
     }
   };
 

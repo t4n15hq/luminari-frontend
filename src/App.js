@@ -13,6 +13,7 @@ import QueryAssistant from './components/QueryAssistant';
 import SkinDiseaseDetector from './components/SkinDiseaseDetector';
 import LungCancerDetector from './components/LungCancerDetector';
 import DiseaseDiagnosis from './components/DiseaseDiagnosis';
+import BackgroundJobs from './components/common/BackgroundJobs'; // NEW IMPORT
 import './App.css';
 
 // Navigation component that only shows on non-landing pages
@@ -79,6 +80,9 @@ function App() {
             </Routes>
           </div>
         </main>
+        
+        {/* Background Jobs Component */}
+        <BackgroundJobs />
         
         <footer>
           <div className="container">
