@@ -4,10 +4,9 @@ import PDFMerger from 'pdf-merger-js/browser';
 const dossierService = {
   compileDossier: async (dossierType, documents) => {
     try {
-      console.log('Dossier service - Starting compilation');
-      console.log('Dossier type:', dossierType);
-      console.log('Documents:', documents);
-
+      // Declare and initialize variables for TOC and page tracking
+      let tocData = [];
+      let currentPage = 2; // Cover page is 1, TOC will be 2
       // Validate inputs
       if (!dossierType) {
         throw new Error('Dossier type is required');
@@ -39,7 +38,6 @@ const dossierService = {
       // Group documents by category
       const groupedDocs = documents.reduce((acc, doc) => {
         if (!doc.category) {
-          console.warn('Document missing category:', doc.name);
           doc.category = 'other';
         }
         if (!acc[doc.category]) {
@@ -49,17 +47,10 @@ const dossierService = {
         return acc;
       }, {});
 
-      console.log('Grouped documents:', groupedDocs);
-
-      // Track page numbers for TOC
-      const tocData = [];
-      let currentPage = 3; // Start after cover page (1) and TOC page (2)
-
       // Create a PDF merger
       const merger = new PDFMerger();
       
       // Create cover page
-      console.log('Creating cover page...');
       const coverPdf = new jsPDF();
       coverPdf.setFontSize(24);
       coverPdf.text(dossierNames[dossierType] || 'Clinical Dossier', 105, 50, { align: 'center' });
@@ -80,8 +71,6 @@ const dossierService = {
       await merger.add(coverBlob);
 
       // Process documents and track pages
-      console.log('Processing documents...');
-      
       const categoryOrder = ['protocol', 'ib', 'quality', 'nonclinical', 'clinical', 'application', 'other'];
       
       for (const category of categoryOrder) {
@@ -117,7 +106,6 @@ const dossierService = {
         
         // Process each document
         for (const doc of docs) {
-          console.log(`Processing: ${doc.name}`);
           
           const docStartPage = currentPage;
           
@@ -251,7 +239,6 @@ const dossierService = {
       await merger.add(summaryBlob);
       
       // Now create the TOC with accurate page numbers
-      console.log('Creating table of contents with accurate page numbers...');
       const tocPdf = new jsPDF();
       let yPosition = 30;
       
@@ -302,8 +289,6 @@ const dossierService = {
       const mergedContentBlob = await merger.saveAsBlob();
       await finalMerger.add(mergedContentBlob);
       
-      console.log('Saving final merged PDF...');
-      
       const finalPdf = await finalMerger.saveAsBlob();
       const fileName = `${dossierType}_dossier_${Date.now()}.pdf`;
       
@@ -313,8 +298,6 @@ const dossierService = {
       a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
-      
-      console.log('Dossier saved successfully:', fileName);
       
       return { 
         success: true, 

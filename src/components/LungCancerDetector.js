@@ -178,7 +178,8 @@ const LungCancerDetector = () => {
 
   const handleTextPredict = async () => {
     if (!transcript.trim()) {
-      alert('Please provide text to analyze.');
+      // TODO: Replace with user-friendly notification system
+      // alert('Please provide text to analyze.');
       return;
     }
 
@@ -207,7 +208,7 @@ const LungCancerDetector = () => {
 
     } catch (error) {
       clearTimeout(timeout);
-      console.error('Text prediction error:', error);
+      // console.error('Text prediction error:', error);
       setTextPrediction({
         prediction: null,
         probability: 0,

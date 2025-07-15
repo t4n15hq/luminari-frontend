@@ -77,10 +77,8 @@ const resultsCsv = useMemo(() => {
     });
     
     const csv = csvRows.join('\n');
-    console.log('Generated CSV for chat:', csv); // Debug log
     return csv;
   } catch (error) {
-    console.error('Error generating CSV:', error);
     return '';
   }
 }, [columns, data]);

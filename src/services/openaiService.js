@@ -34,7 +34,7 @@ const openaiService = {
       );
       return response.data.text;
     } catch (error) {
-      console.error("Error in transcribeAudio:", error.response?.data || error.message);
+      // console.error("Error in transcribeAudio:", error.response?.data || error.message);
       throw error;
     }
   },
@@ -64,11 +64,11 @@ const openaiService = {
       );
       return response.data.choices[0].message.content.trim();
     } catch (error) {
-      console.error("Error in diagnoseConversation:", error.response?.data || error.message);
+      // console.error("Error in diagnoseConversation:", error.response?.data || error.message);
       throw error;
     }
   },
-  
+
   /**
    * Generate Protocol - Enhanced version
    */
@@ -86,8 +86,10 @@ const openaiService = {
               Your task is to generate a highly professional, ICH/FDA/EMA-compliant protocol EXECUTIVE SUMMARY for a clinical trial that meets industry standards for regulatory submission.
 
               CRITICAL REQUIREMENTS:
-              - This must be EXTREMELY DETAILED - aim for 3,500-4,500 words minimum
-              - Each section must contain comprehensive, granular detail suitable for regulatory review
+              - This must be EXTREMELY DETAILED - you must generate at least 5,000 words (or more if required by the structure)
+              - Do not stop until all requirements and sections are fully met and the minimum word count is achieved
+              - If you reach the token limit, end with [END OF PART X] and wait for a continuation request. Continue in the next response until the document is complete.
+              - Do not skip or summarize any required section. Each section must be fully developed and detailed.
               - Include specific numerical values, dosing regimens, and methodological details
               - Reference established protocols and regulatory guidance documents
               - Use professional medical and regulatory terminology throughout
@@ -108,7 +110,9 @@ const openaiService = {
               - Use ALL CAPS for main section headings (e.g., "1. PROTOCOL SUMMARY / SYNOPSIS")
               - Use Title Case for subsection headings with appropriate numbering
               - DO NOT use markdown formatting or special characters
-              - Use plain text with proper spacing and indentation only`
+              - Use plain text with proper spacing and indentation only
+
+              IMPORTANT: You must generate at least 5,000 words. Do not stop until this minimum is reached and all requirements are fully met. If you reach the token limit, end your response with [END OF PART X] and wait for a continuation request. Continue in the next response until the document is complete.`
             },
             {
               role: "user",
@@ -118,11 +122,11 @@ const openaiService = {
                 value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
               ).filter(Boolean).join('\n')}
 
-              The executive summary must be extremely comprehensive and detailed while incorporating all provided trial design parameters to create a regulatory-compliant protocol suitable for FDA/EMA submission.`  
+              The executive summary must be extremely comprehensive and detailed while incorporating all provided trial design parameters to create a regulatory-compliant protocol suitable for FDA/EMA submission. You must generate at least 5,000 words. Do not stop until this minimum is reached and all requirements are fully met. If you reach the token limit, end your response with [END OF PART X] and wait for a continuation request. Continue in the next response until the document is complete.`  
             }
           ],
           temperature: 0.15,
-          max_tokens: 8000 // INCREASED
+          max_tokens: 12000
         }
       );
 
@@ -167,7 +171,8 @@ const openaiService = {
               CLINICAL SECTION: (numbered 1-10 with comprehensive clinical information - MINIMUM 3,000 words)
               
               Use plain text formatting only - NO MARKDOWN.
-              Incorporate ALL provided parameters systematically throughout both sections.`
+              Incorporate ALL provided parameters systematically throughout both sections.
+              IMPORTANT: If you reach the maximum length or token limit, end your response with [END OF PART 1] and wait for a continuation request.`
             },
             {
               role: "user",
@@ -177,11 +182,11 @@ const openaiService = {
                 value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
               ).filter(Boolean).join('\n')}
 
-              This MAIN DOCUMENT must incorporate all enhanced parameters to create a comprehensive, parameter-specific IND suitable for FDA submission with EXTENSIVE DETAIL in every section.`
+              This MAIN DOCUMENT must incorporate all enhanced parameters to create a comprehensive, parameter-specific IND suitable for FDA submission with EXTENSIVE DETAIL in every section. If you reach the maximum length or token limit, end your response with [END OF PART 1] and wait for a continuation request.`
             }
           ],
           temperature: 0.2,
-          max_tokens: 8000 // INCREASED
+          max_tokens: 12000 // INCREASED
         }
       );
 
@@ -246,21 +251,22 @@ const openaiService = {
               4. CLINICAL OVERVIEW AND SUMMARY (Based on CTD Modules 2.5 & 2.7)
               5. KEY CLINICAL STUDY REPORT SUMMARIES
               
-              Use plain text formatting only - NO MARKDOWN.`
+              Use plain text formatting only - NO MARKDOWN.
+              IMPORTANT: If you reach the maximum length or token limit, end your response with [END OF PART 1] and wait for a continuation request.`
             },
             {
               role: "user",
-              content: `Generate a comprehensive NDA SUMMARY document for the treatment of ${diseaseData.disease_name}.
-              
+              content: `Generate a comprehensive, FDA-compliant NDA SUMMARY for ${diseaseData.disease_name}.
+
               ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
                 value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
               ).filter(Boolean).join('\n')}
 
-              This NDA SUMMARY must be EXTREMELY DETAILED and meet FDA expectations for Module 2 content with specific numerical values and regulatory compliance with EXTENSIVE DETAIL in every section.`
+              This NDA SUMMARY must incorporate all enhanced parameters to create a comprehensive, parameter-specific NDA suitable for FDA submission with EXTENSIVE DETAIL in every section. If you reach the maximum length or token limit, end your response with [END OF PART 1] and wait for a continuation request.`
             }
           ],
           temperature: 0.2,
-          max_tokens: 8000 // INCREASED
+          max_tokens: 12000 // INCREASED
         }
       );
       return {
@@ -3713,7 +3719,7 @@ Important: Base your analysis ONLY on the data provided above. Be accurate with 
 
     return { answer: response.data.choices[0].message.content.trim() };
   } catch (error) {
-    console.error('Error in chatWithResults:', error.response?.data || error.message);
+    // console.error('Error in chatWithResults:', error.response?.data || error.message);
     throw error;
   }
 }}

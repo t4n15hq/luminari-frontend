@@ -15,28 +15,28 @@ const ClinicalDossierCompiler = () => {
       id: 'impd', 
       name: 'Investigational Medicinal Product Dossier (IMPD)',
       description: 'EU dossier containing quality, production, and control information',
-      icon: '🇪🇺',
+      icon: '', // removed emoji
       color: '#4F46E5'
     },
     { 
       id: 'ind', 
       name: 'Investigational New Drug (IND) Application',
       description: 'US FDA submission for investigational new drug trials',
-      icon: '🇺🇸',
+      icon: '', // removed emoji
       color: '#059669'
     },
     { 
       id: 'ctd', 
       name: 'Common Technical Document (CTD)',
       description: 'Standardized format for quality, safety, and efficacy information',
-      icon: '📋',
+      icon: '', // removed emoji
       color: '#DC2626'
     },
     { 
       id: 'ectd', 
       name: 'Electronic Common Technical Document (eCTD)',
       description: 'Electronic version of CTD for digital submission',
-      icon: '💻',
+      icon: '', // removed emoji
       color: '#7C3AED'
     }
   ];
@@ -200,7 +200,8 @@ const ClinicalDossierCompiler = () => {
 
   const validateAllDocuments = async () => {
     if (!primaryIndication.trim()) {
-      alert('Please specify the primary indication before validating documents.');
+      // TODO: Replace with user-friendly notification system
+      // alert('Please specify the primary indication before validating documents.');
       return;
     }
 
@@ -215,16 +216,17 @@ const ClinicalDossierCompiler = () => {
     setLoading(true);
     
     try {
-      console.log('Starting dossier compilation...');
-      console.log('Selected dossier type:', selectedDossierType);
-      console.log('Uploaded documents:', uploadedDocuments);
+      // console.log('Starting dossier compilation...');
+      // console.log('Selected dossier type:', selectedDossierType);
+      // console.log('Uploaded documents:', uploadedDocuments);
       
       const result = await apiService.compileDossier(selectedDossierType, uploadedDocuments);
       
-      console.log('Compilation result:', result);
+      // console.log('Compilation result:', result);
       
       if (result.success) {
-        alert(result.message || `Dossier compiled successfully! Downloaded as: ${result.fileName}`);
+        // TODO: Replace with user-friendly notification system
+        // alert(result.message || `Dossier compiled successfully! Downloaded as: ${result.fileName}`);
         // Optionally reset the form
         setUploadedDocuments([]);
         setSelectedDossierType('');
@@ -232,7 +234,7 @@ const ClinicalDossierCompiler = () => {
       }
     } catch (error) {
       console.error('Detailed error:', error);
-      alert(`Failed to compile dossier: ${error.message}`);
+      // alert(`Failed to compile dossier: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -314,7 +316,7 @@ const ClinicalDossierCompiler = () => {
       {/* Primary Indication Input */}
       <div style={{ marginBottom: '2rem', backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
-          🎯 Primary Indication
+          Primary Indication
         </h2>
         <input
           type="text"
@@ -337,7 +339,7 @@ const ClinicalDossierCompiler = () => {
       {/* Dossier Type Selection */}
       <div className="dossier-type-selection" style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
-          📋 Select Dossier Type
+           Select Dossier Type
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
           {dossierTypes.map(type => (

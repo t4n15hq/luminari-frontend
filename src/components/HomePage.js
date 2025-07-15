@@ -6,7 +6,7 @@ const HomePage = () => {
     {
       id: 'protocol',
       title: 'Protocol & Study Design Generator',
-      icon: '📝',
+      icon: '',
       description: 'Generate comprehensive clinical protocols for various diseases and conditions',
       path: '/protocol',
       color: '#ebf8ff',
@@ -16,7 +16,7 @@ const HomePage = () => {
     {
       id: 'regulatory',
       title: 'Regulatory Document Generator',
-      icon: '📋',
+      icon: '',
       description: 'Create regulatory documents for pharmaceutical development across global markets',
       path: '/ind-modules',
       color: '#f0fff4',
@@ -26,7 +26,7 @@ const HomePage = () => {
     {
       id: 'diagnosis',
       title: 'Disease Screening',
-      icon: '🔍',
+      icon: '',
       description: 'AI-powered tools for diagnosing conditions across multiple medical specialties',
       path: '/diagnosis',
       color: '#ebf4ff',
@@ -36,7 +36,7 @@ const HomePage = () => {
     {
       id: 'query',
       title: <>Ask Lumina<span className="trademark">™</span></>,
-      icon: '❓',
+      icon: '',
       description: 'Get expert answers to complex questions about clinical trials and protocols',
       path: '/query',
       color: '#faf5ff',

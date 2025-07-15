@@ -23,7 +23,7 @@ const QueryAssistant = () => {
       const response = await apiService.listProtocols();
       setProtocols(response || []);
     } catch (err) {
-      console.error('Error fetching protocols:', err);
+      // console.error('Error fetching protocols:', err);
     }
   };
 
@@ -165,7 +165,7 @@ Please rephrase your question to focus on clinical trials, protocol development,
       setSuccess(true);
     } catch (err) {
       setError('Failed to fetch answer. Please try again.');
-      console.error(err);
+      // console.error(err);
     } finally {
       setLoading(false);
     }

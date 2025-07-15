@@ -199,7 +199,8 @@ const SkinDiseaseDetector = () => {
     e.preventDefault();
 
     if (!selectedImage || !age || !gender || !race || !skinColor || !skinType || !conditionDescription) {
-      alert('Please fill in all fields and select an image.');
+      // TODO: Replace with user-friendly notification system
+      // alert('Please fill in all fields and select an image.');
       return;
     }
 
@@ -237,7 +238,7 @@ const SkinDiseaseDetector = () => {
       }
 
     } catch (error) {
-      console.error('Prediction error:', error);
+      // console.error('Prediction error:', error);
       setPrediction([{ label: 'An error occurred. Try again.', confidence: 0 }]);
     } finally {
       setIsLoading(false);
@@ -768,7 +769,7 @@ const SkinDiseaseDetector = () => {
                     disabled={batchLoading || batchFiles.length === 0}
                     className="btn btn-primary"
                   >
-                    {batchLoading ? '⚡ Processing...' : `🔬 Analyze ${batchFiles.length} Images`}
+                    {batchLoading ? 'Processing...' : `Analyze ${batchFiles.length} Images`}
                   </button>
 
                   {batchResults.length > 0 && !batchLoading && (
