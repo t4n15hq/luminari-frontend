@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
+import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 
 const RegulatoryDocumentGenerator = () => {
   // Basic Information
@@ -49,6 +50,10 @@ const RegulatoryDocumentGenerator = () => {
   const [activeTab, setActiveTab] = useState('cmc');
   const [selectedCountryData, setSelectedCountryData] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
+  
+  // Background processing
+  const { startJob, getJob } = useBackgroundJobs('regulatory_document');
+  const [backgroundJobId, setBackgroundJobId] = useState(null);
   
   // For navigation
   const location = useLocation();
@@ -115,9 +120,8 @@ const RegulatoryDocumentGenerator = () => {
     navigate('/regulatory-documents');
   };
 
-  // Main form submit handler
+  // Main form submit handler - UPDATED FOR BACKGROUND PROCESSING
   const handleSubmit = async () => {
-    setLoading(true);
     setError('');
     setResult(null);
 
@@ -169,88 +173,106 @@ const RegulatoryDocumentGenerator = () => {
         throw new Error('Disease/Condition is required');
       }
 
-      // Call the API with the enhanced parameters
-      const response = await apiService.generateIndModule(enhancedFormData);
+      // Start background job instead of blocking UI
+      const jobId = startJob('regulatory_document', enhancedFormData, apiService.generateIndModule);
+      setBackgroundJobId(jobId);
       
-      console.log("Enhanced API response received, response keys:", Object.keys(response));
+      // Show loading state
+      setLoading(true);
       
-      // Check structure of response to handle both response formats
-      if (response.document_content) {
-        // For document types that return a single content field
-        const content = response.document_content;
-        let cmcSection = "";
-        let clinicalSection = "";
-        
-        // Try to find a logical dividing point based on section headers
-        const possibleDividers = [
-          "CLINICAL OVERVIEW", "CLINICAL SECTION", "CLINICAL STUDY", 
-          "NONCLINICAL OVERVIEW", "3. NONCLINICAL", "4. CLINICAL", 
-          "CLINICAL TRIAL", "EFFICACY AND SAFETY"
-        ];
-        
-        let dividerIndex = -1;
-        
-        // Find the earliest occurrence of any divider
-        for (const divider of possibleDividers) {
-          const index = content.indexOf(divider);
-          if (index !== -1 && (dividerIndex === -1 || index < dividerIndex)) {
-            dividerIndex = index;
-          }
-        }
-        
-        if (dividerIndex !== -1) {
-          cmcSection = content.substring(0, dividerIndex);
-          clinicalSection = content.substring(dividerIndex);
-          
-          // If CMC section is very short, use fallback
-          if (cmcSection.length < 500) {
-            const backupDivider = Math.floor(content.length * 0.4);
-            const breakpoint = content.indexOf("\n", backupDivider);
-            if (breakpoint !== -1) {
-              cmcSection = content.substring(0, breakpoint);
-              clinicalSection = content.substring(breakpoint);
+      // Monitor job progress
+      const checkJobStatus = () => {
+        const job = getJob(jobId);
+        if (job) {
+          if (job.status === 'completed') {
+            setLoading(false);
+            setBackgroundJobId(null);
+            
+            // Process the result
+            const response = job.result;
+            console.log("Enhanced API response received, response keys:", Object.keys(response));
+            
+            // Check structure of response to handle both response formats
+            if (response.document_content) {
+              // For document types that return a single content field
+              const content = response.document_content;
+              let cmcSection = "";
+              let clinicalSection = "";
+              
+              // Try to find a logical dividing point based on section headers
+              const possibleDividers = [
+                "CLINICAL OVERVIEW", "CLINICAL SECTION", "CLINICAL STUDY", 
+                "NONCLINICAL OVERVIEW", "3. NONCLINICAL", "4. CLINICAL", 
+                "CLINICAL TRIAL", "EFFICACY AND SAFETY"
+              ];
+              
+              let dividerIndex = -1;
+              
+              // Find the earliest occurrence of any divider
+              for (const divider of possibleDividers) {
+                const index = content.indexOf(divider);
+                if (index !== -1 && (dividerIndex === -1 || index < dividerIndex)) {
+                  dividerIndex = index;
+                }
+              }
+              
+              if (dividerIndex !== -1) {
+                cmcSection = content.substring(0, dividerIndex).trim();
+                clinicalSection = content.substring(dividerIndex).trim();
+              } else {
+                // If no clear divider, split roughly in half
+                const midPoint = Math.floor(content.length / 2);
+                cmcSection = content.substring(0, midPoint).trim();
+                clinicalSection = content.substring(midPoint).trim();
+              }
+              
+              setResult({
+                cmc_section: cmcSection,
+                clinical_section: clinicalSection,
+                document_content: content
+              });
+            } else if (response.cmc_section && response.clinical_section) {
+              // For document types that return separate CMC and clinical sections
+              setResult(response);
+            } else {
+              // Fallback: treat the entire response as clinical section
+              setResult({
+                cmc_section: "",
+                clinical_section: typeof response === 'string' ? response : JSON.stringify(response, null, 2),
+                document_content: typeof response === 'string' ? response : JSON.stringify(response, null, 2)
+              });
             }
+            
+            // Automatically scroll to results
+            setTimeout(() => {
+              document.querySelector('.result-container')?.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+              });
+            }, 100);
+            
+          } else if (job.status === 'error') {
+            setLoading(false);
+            setBackgroundJobId(null);
+            setError(`Failed to generate regulatory documents: ${job.error || 'Unknown error'}`);
+          } else {
+            // Job still running, check again in 1 second
+            setTimeout(checkJobStatus, 1000);
           }
         } else {
-          // Fallback: split at approximately 40% of the document
-          const dividePoint = Math.floor(content.length * 0.4);
-          const breakPoint = content.indexOf("\n\n", dividePoint);
-          
-          if (breakPoint !== -1) {
-            cmcSection = content.substring(0, breakPoint);
-            clinicalSection = content.substring(breakPoint);
-          } else {
-            const midpoint = Math.floor(content.length / 2);
-            cmcSection = content.substring(0, midpoint);
-            clinicalSection = content.substring(midpoint);
-          }
+          // Job not found, check again in 1 second
+          setTimeout(checkJobStatus, 1000);
         }
-        
-        setResult({
-          cmc_section: cmcSection,
-          clinical_section: clinicalSection
-        });
-      } else if (response.cmc_section || response.clinical_section) {
-        // Original format with split sections
-        setResult(response);
-      } else {
-        console.error("Unexpected response format:", response);
-        throw new Error('Response format not recognized. Please check the console for details.');
-      }
+      };
       
-      // Scroll to results
-      setTimeout(() => {
-        document.querySelector('.result-container')?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }, 100);
+      // Start monitoring
+      checkJobStatus();
       
     } catch (err) {
       console.error("Enhanced document generation error:", err);
       setError(`Failed to generate regulatory documents: ${err.message || 'Unknown error'}`);
-    } finally {
       setLoading(false);
+      setBackgroundJobId(null);
     }
   };
 

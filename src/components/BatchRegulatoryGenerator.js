@@ -2,32 +2,44 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
+import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 
 const BatchRegulatoryGenerator = () => {
   const navigate = useNavigate();
   
-  // Form data state
+  // Form data state - ENHANCED WITH ALL FIELDS
   const [formData, setFormData] = useState({
+    // Basic Information
     disease_name: '',
     drug_class: '',
     mechanism: '',
+    
+    // Trial Characteristics
     trial_phase: '',
     trial_type: '',
     blinding: '',
     randomization: '',
+    
+    // Population Details
     min_age: '',
     max_age: '',
     gender: '',
     target_sample_size: '',
     inclusion_criteria: '',
     exclusion_criteria: '',
+    
+    // Treatment & Control
     drug_formulation: '',
     route_of_administration: '',
     dosing_regimen: '',
     control_group: '',
+    
+    // Endpoints & Outcomes
     primary_endpoints: '',
     secondary_endpoints: '',
     outcome_measure_tool: '',
+    
+    // Statistical Considerations
     statistical_power: '80',
     significance_level: '0.05'
   });
@@ -42,6 +54,32 @@ const BatchRegulatoryGenerator = () => {
   const [completedDocuments, setCompletedDocuments] = useState([]);
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchError, setBatchError] = useState('');
+
+  // Background processing
+  const { startJob, getJob } = useBackgroundJobs('batch_regulatory');
+  const [backgroundJobIds, setBackgroundJobIds] = useState([]);
+
+  // Dropdown options - ADDED FROM REGULATORY DOCUMENT GENERATOR
+  const trialPhases = ['Phase I', 'Phase II', 'Phase III', 'Phase IV'];
+  const trialTypes = ['Interventional', 'Observational', 'Expanded Access'];
+  const blindingOptions = ['Open-label', 'Single-blind', 'Double-blind'];
+  const genderOptions = ['All', 'Male', 'Female'];
+  const drugFormulationOptions = ['Tablet', 'Capsule', 'Injection', 'Topical Cream', 'Topical Gel', 'Patch', 'Inhalation', 'Oral Solution'];
+  const routeOptions = ['Oral', 'Intravenous (IV)', 'Subcutaneous (SC)', 'Intramuscular (IM)', 'Topical', 'Inhalation', 'Transdermal'];
+  const controlGroupOptions = ['Placebo', 'Standard of Care (SoC)', 'Active Comparator', 'Historical Control', 'None'];
+  const outcomeMeasureTools = [
+    'PASI (Psoriasis Area and Severity Index)',
+    'DLQI (Dermatology Life Quality Index)',
+    'EASI (Eczema Area and Severity Index)',
+    'IGA (Investigator Global Assessment)',
+    'VAS (Visual Analog Scale)',
+    'FVC (Forced Vital Capacity)',
+    'FEV1 (Forced Expiratory Volume)',
+    'HAM-D (Hamilton Depression Rating Scale)',
+    'MMSE (Mini-Mental State Examination)',
+    'WOMAC (Western Ontario and McMaster Universities Arthritis Index)',
+    'Custom/Other'
+  ];
 
   // Available regulatory documents by region
   const documentLibrary = {
@@ -140,7 +178,7 @@ const BatchRegulatoryGenerator = () => {
     return await apiService.generateIndModule(apiData);
   };
 
-  // Start batch processing
+  // Start batch processing - UPDATED FOR BACKGROUND PROCESSING
   const startBatchProcessing = async () => {
     if (selectedDocuments.length === 0) {
       alert('Please select at least one document to generate.');
@@ -169,57 +207,92 @@ const BatchRegulatoryGenerator = () => {
 
     setBatchQueue(queue);
 
-    // Process documents sequentially with delay to avoid overwhelming the API
+    // Start background jobs for each document
+    const jobIds = [];
+    
     for (let i = 0; i < queue.length; i++) {
       const document = queue[i];
-      setCurrentProcessing(document);
+      
+      // Update status to processing
+      setBatchQueue(prev => prev.map((item, index) => 
+        index === i ? { ...item, status: 'processing', startTime: new Date() } : item
+      ));
 
-      try {
-        // Update status to processing
-        setBatchQueue(prev => prev.map((item, index) => 
-          index === i ? { ...item, status: 'processing', startTime: new Date() } : item
-        ));
-
-        // Call the unified document generation function
-        const result = await generateDocumentForCountry(document, formData);
-
-        // Update status to completed
-        setBatchQueue(prev => prev.map((item, index) => 
-          index === i ? { 
-            ...item, 
-            status: 'completed', 
-            result: result,
-            endTime: new Date()
-          } : item
-        ));
-
-        setCompletedDocuments(prev => [...prev, { ...document, result }]);
-
-      } catch (error) {
-        console.error(`Error generating ${document.name}:`, error);
-        
-        // Update status to error
-        setBatchQueue(prev => prev.map((item, index) => 
-          index === i ? { 
-            ...item, 
-            status: 'error', 
-            error: error.message,
-            endTime: new Date()
-          } : item
-        ));
-      }
-
-      // Update progress
-      setBatchProgress(((i + 1) / queue.length) * 100);
-
-      // Add delay between requests to avoid overwhelming the API
-      if (i < queue.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
+      // Start background job for this document
+      const jobId = startJob('batch_regulatory', {
+        document,
+        formData,
+        index: i,
+        total: queue.length
+      }, async (data) => {
+        return await generateDocumentForCountry(data.document, data.formData);
+      });
+      
+      jobIds.push(jobId);
     }
-
-    setProcessingStatus('completed');
-    setCurrentProcessing(null);
+    
+    setBackgroundJobIds(jobIds);
+    
+    // Monitor all jobs
+    const checkJobsStatus = () => {
+      let allCompleted = true;
+      let hasError = false;
+      
+      jobIds.forEach((jobId, index) => {
+        const job = getJob(jobId);
+        if (job) {
+          if (job.status === 'completed') {
+            // Update batch queue
+            setBatchQueue(prev => prev.map((item, idx) => 
+              idx === index ? { 
+                ...item, 
+                status: 'completed', 
+                result: job.result,
+                endTime: new Date()
+              } : item
+            ));
+            
+            setCompletedDocuments(prev => [...prev, { ...queue[index], result: job.result }]);
+            
+          } else if (job.status === 'error') {
+            hasError = true;
+            // Update batch queue
+            setBatchQueue(prev => prev.map((item, idx) => 
+              idx === index ? { 
+                ...item, 
+                status: 'error', 
+                error: job.error,
+                endTime: new Date()
+              } : item
+            ));
+          } else {
+            allCompleted = false;
+          }
+        } else {
+          allCompleted = false;
+        }
+      });
+      
+      // Update progress
+      const completedCount = jobIds.filter(jobId => {
+        const job = getJob(jobId);
+        return job && job.status === 'completed';
+      }).length;
+      
+      setBatchProgress((completedCount / queue.length) * 100);
+      
+      if (allCompleted || hasError) {
+        setProcessingStatus('completed');
+        setCurrentProcessing(null);
+        setBackgroundJobIds([]);
+      } else {
+        // Jobs still running, check again in 2 seconds
+        setTimeout(checkJobsStatus, 2000);
+      }
+    };
+    
+    // Start monitoring
+    checkJobsStatus();
   };
 
   // Download individual document - FIXED VERSION
@@ -306,6 +379,42 @@ const BatchRegulatoryGenerator = () => {
 
   // Reset batch processing
   const resetBatch = () => {
+    setFormData({
+      // Basic Information
+      disease_name: '',
+      drug_class: '',
+      mechanism: '',
+      
+      // Trial Characteristics
+      trial_phase: '',
+      trial_type: '',
+      blinding: '',
+      randomization: '',
+      
+      // Population Details
+      min_age: '',
+      max_age: '',
+      gender: '',
+      target_sample_size: '',
+      inclusion_criteria: '',
+      exclusion_criteria: '',
+      
+      // Treatment & Control
+      drug_formulation: '',
+      route_of_administration: '',
+      dosing_regimen: '',
+      control_group: '',
+      
+      // Endpoints & Outcomes
+      primary_endpoints: '',
+      secondary_endpoints: '',
+      outcome_measure_tool: '',
+      
+      // Statistical Considerations
+      statistical_power: '80',
+      significance_level: '0.05'
+    });
+    setSelectedDocuments([]);
     setBatchQueue([]);
     setProcessingStatus('idle');
     setCurrentProcessing(null);
@@ -348,65 +457,473 @@ const BatchRegulatoryGenerator = () => {
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        {/* Left Panel: Form and Document Selection */}
-        <div>
-          {/* Basic Information Form */}
-          <div style={{ 
-            backgroundColor: 'white', 
-            borderRadius: '12px', 
-            padding: '1.5rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            marginBottom: '2rem'
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
-              Basic Information
-            </h2>
-            
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
-                Disease/Condition *
-              </label>
-              <input
-                type="text"
-                value={formData.disease_name}
-                onChange={(e) => handleInputChange('disease_name', e.target.value)}
-                placeholder="e.g., Psoriasis, Atopic Dermatitis"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Form and Document Selection */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+          {/* Left Panel: Enhanced Form */}
+          <div style={{ maxHeight: '80vh', overflowY: 'auto', paddingRight: '1rem' }}>
+            {/* Basic Information Form - ENHANCED WITH ALL FIELDS */}
+            <div style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              marginBottom: '2rem'
+            }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+                Basic Information
+              </h2>
+              
+              <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
-                  Drug Class
+                  Disease/Condition *
                 </label>
                 <input
                   type="text"
-                  value={formData.drug_class}
-                  onChange={(e) => handleInputChange('drug_class', e.target.value)}
-                  placeholder="e.g., Small molecule"
+                  value={formData.disease_name}
+                  onChange={(e) => handleInputChange('disease_name', e.target.value)}
+                  placeholder="e.g., Psoriasis, Atopic Dermatitis"
                   style={{
                     width: '100%',
                     padding: '0.75rem',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px'
+                    borderRadius: '6px',
+                    fontSize: '1rem'
                   }}
                 />
               </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Drug Class
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.drug_class}
+                    onChange={(e) => handleInputChange('drug_class', e.target.value)}
+                    placeholder="e.g., Small molecule, Biologics"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Mechanism of Action
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.mechanism}
+                    onChange={(e) => handleInputChange('mechanism', e.target.value)}
+                    placeholder="e.g., PDE4 inhibition, JAK-STAT pathway"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Trial Characteristics Section */}
+            <div style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              marginBottom: '2rem'
+            }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+                Trial Characteristics
+              </h2>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Trial Phase
+                  </label>
+                  <select
+                    value={formData.trial_phase}
+                    onChange={(e) => handleInputChange('trial_phase', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  >
+                    <option value="">Select Phase</option>
+                    {trialPhases.map(phase => (
+                      <option key={phase} value={phase}>{phase}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Trial Type
+                  </label>
+                  <select
+                    value={formData.trial_type}
+                    onChange={(e) => handleInputChange('trial_type', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  >
+                    <option value="">Select Type</option>
+                    {trialTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Blinding
+                  </label>
+                  <select
+                    value={formData.blinding}
+                    onChange={(e) => handleInputChange('blinding', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  >
+                    <option value="">Select Blinding</option>
+                    {blindingOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Randomization
+                  </label>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <input
+                        type="radio"
+                        name="randomization"
+                        value="Yes"
+                        checked={formData.randomization === 'Yes'}
+                        onChange={(e) => handleInputChange('randomization', e.target.value)}
+                        style={{ marginRight: '0.5rem' }}
+                      />
+                      Yes
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <input
+                        type="radio"
+                        name="randomization"
+                        value="No"
+                        checked={formData.randomization === 'No'}
+                        onChange={(e) => handleInputChange('randomization', e.target.value)}
+                        style={{ marginRight: '0.5rem' }}
+                      />
+                      No
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Population Details Section */}
+            <div style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              marginBottom: '2rem'
+            }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+                Population Details
+              </h2>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Minimum Age
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.min_age}
+                    onChange={(e) => handleInputChange('min_age', e.target.value)}
+                    placeholder="e.g., 18"
+                    min="0"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Maximum Age
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.max_age}
+                    onChange={(e) => handleInputChange('max_age', e.target.value)}
+                    placeholder="e.g., 75"
+                    min="0"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Gender
+                  </label>
+                  <select
+                    value={formData.gender}
+                    onChange={(e) => handleInputChange('gender', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  >
+                    <option value="">Select Gender</option>
+                    {genderOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Target Sample Size
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.target_sample_size}
+                    onChange={(e) => handleInputChange('target_sample_size', e.target.value)}
+                    placeholder="e.g., 120"
+                    min="1"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Inclusion Criteria
+                  </label>
+                  <textarea
+                    value={formData.inclusion_criteria}
+                    onChange={(e) => handleInputChange('inclusion_criteria', e.target.value)}
+                    placeholder="e.g., Adults aged 18-75 years, Confirmed diagnosis of moderate-to-severe condition..."
+                    rows="4"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Exclusion Criteria
+                  </label>
+                  <textarea
+                    value={formData.exclusion_criteria}
+                    onChange={(e) => handleInputChange('exclusion_criteria', e.target.value)}
+                    placeholder="e.g., Pregnancy, Active infection, Immunocompromised state..."
+                    rows="4"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Treatment & Control Section */}
+            <div style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              marginBottom: '2rem'
+            }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+                Treatment & Control
+              </h2>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Drug Formulation
+                  </label>
+                  <select
+                    value={formData.drug_formulation}
+                    onChange={(e) => handleInputChange('drug_formulation', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  >
+                    <option value="">Select Formulation</option>
+                    {drugFormulationOptions.map(formulation => (
+                      <option key={formulation} value={formulation}>{formulation}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Route of Administration
+                  </label>
+                  <select
+                    value={formData.route_of_administration}
+                    onChange={(e) => handleInputChange('route_of_administration', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  >
+                    <option value="">Select Route</option>
+                    {routeOptions.map(route => (
+                      <option key={route} value={route}>{route}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Dosing Regimen
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.dosing_regimen}
+                    onChange={(e) => handleInputChange('dosing_regimen', e.target.value)}
+                    placeholder="e.g., 50mg once daily for 12 weeks"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Control Group
+                  </label>
+                  <select
+                    value={formData.control_group}
+                    onChange={(e) => handleInputChange('control_group', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  >
+                    <option value="">Select Control</option>
+                    {controlGroupOptions.map(control => (
+                      <option key={control} value={control}>{control}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Endpoints & Outcomes Section */}
+            <div style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              marginBottom: '2rem'
+            }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+                Endpoints & Outcomes
+              </h2>
+              
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                  Primary Endpoint(s)
+                </label>
+                <textarea
+                  value={formData.primary_endpoints}
+                  onChange={(e) => handleInputChange('primary_endpoints', e.target.value)}
+                  placeholder="e.g., Proportion of patients achieving PASI 75 at Week 16"
+                  rows="3"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                  Secondary Endpoint(s)
+                </label>
+                <textarea
+                  value={formData.secondary_endpoints}
+                  onChange={(e) => handleInputChange('secondary_endpoints', e.target.value)}
+                  placeholder="e.g., PASI 90 response, sPGA score, Quality of life measures"
+                  rows="3"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
               <div>
                 <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
-                  Trial Phase
+                  Outcome Measure Tool
                 </label>
                 <select
-                  value={formData.trial_phase}
-                  onChange={(e) => handleInputChange('trial_phase', e.target.value)}
+                  value={formData.outcome_measure_tool}
+                  onChange={(e) => handleInputChange('outcome_measure_tool', e.target.value)}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -414,244 +931,86 @@ const BatchRegulatoryGenerator = () => {
                     borderRadius: '6px'
                   }}
                 >
-                  <option value="">Select Phase</option>
-                  <option value="Phase I">Phase I</option>
-                  <option value="Phase II">Phase II</option>
-                  <option value="Phase III">Phase III</option>
-                  <option value="Phase IV">Phase IV</option>
+                  <option value="">Select Measurement Tool</option>
+                  {outcomeMeasureTools.map(tool => (
+                    <option key={tool} value={tool}>{tool}</option>
+                  ))}
                 </select>
               </div>
             </div>
-          </div>
 
-          {/* Document Selection */}
-          <div style={{ 
-            backgroundColor: 'white', 
-            borderRadius: '12px', 
-            padding: '1.5rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0, color: '#1e293b' }}>
-                Select Documents ({selectedDocuments.length} selected)
+            {/* Statistical Considerations Section */}
+            <div style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              marginBottom: '2rem'
+            }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+                Statistical Considerations
               </h2>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  onClick={handleClearSelections}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  Clear All
-                </button>
-              </div>
-            </div>
-
-            {Object.entries(documentLibrary).map(([region, documents]) => (
-              <div key={region} style={{ marginBottom: '1.5rem' }}>
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  marginBottom: '0.75rem'
-                }}>
-                  <h3 style={{ 
-                    fontSize: '1rem', 
-                    fontWeight: '600', 
-                    margin: 0,
-                    color: '#374151'
-                  }}>
-                    {region}
-                  </h3>
-                  <button
-                    onClick={() => handleSelectRegion(region)}
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Statistical Power (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.statistical_power}
+                    onChange={(e) => handleInputChange('statistical_power', e.target.value)}
+                    placeholder="80"
+                    min="1"
+                    max="99"
                     style={{
-                      padding: '0.25rem 0.75rem',
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem'
-                    }}
-                  >
-                    Select All
-                  </button>
-                </div>
-                
-                <div style={{ 
-                  display: 'grid', 
-                  gap: '0.5rem',
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                  padding: '0.5rem',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '6px'
-                }}>
-                  {documents.map((doc) => {
-                    const isSelected = selectedDocuments.some(selected => selected.id === doc.id);
-                    return (
-                      <label
-                        key={doc.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          padding: '0.5rem',
-                          backgroundColor: isSelected ? '#dbeafe' : 'white',
-                          borderRadius: '4px',
-                          border: isSelected ? '1px solid #3b82f6' : '1px solid #e5e7eb',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem'
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => handleDocumentSelect(doc, e.target.checked)}
-                          style={{ marginRight: '0.75rem' }}
-                        />
-                        <div>
-                          <div style={{ fontWeight: '500', color: '#1f2937' }}>
-                            {doc.name}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                            {doc.country} • {doc.description}
-                          </div>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Panel: Batch Processing */}
-        <div>
-          {/* Processing Controls */}
-          <div style={{ 
-            backgroundColor: 'white', 
-            borderRadius: '12px', 
-            padding: '1.5rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            marginBottom: '2rem'
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
-              Batch Processing
-            </h2>
-
-            {selectedDocuments.length > 0 && (
-              <div style={{ 
-                backgroundColor: '#f0f9ff',
-                border: '1px solid #0ea5e9',
-                borderRadius: '6px',
-                padding: '1rem',
-                marginBottom: '1rem'
-              }}>
-                <div style={{ fontSize: '0.875rem', color: '#0c4a6e' }}>
-                  <strong>Selected:</strong> {selectedDocuments.length} documents<br />
-                  <strong>Estimated time:</strong> {getEstimatedTime()}<br />
-                  <strong>Countries:</strong> {[...new Set(selectedDocuments.map(doc => doc.country))].join(', ')}
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-              <button
-                onClick={startBatchProcessing}
-                disabled={processingStatus === 'processing' || selectedDocuments.length === 0 || !formData.disease_name.trim()}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem 1.5rem',
-                  backgroundColor: processingStatus === 'processing' || selectedDocuments.length === 0 || !formData.disease_name.trim() 
-                    ? '#9ca3af' : '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: processingStatus === 'processing' || selectedDocuments.length === 0 || !formData.disease_name.trim() 
-                    ? 'not-allowed' : 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: '500'
-                }}
-              >
-                {processingStatus === 'processing' ? 'Processing...' : `Generate ${selectedDocuments.length} Documents`}
-              </button>
-
-              {(processingStatus === 'completed' || batchQueue.length > 0) && (
-                <button
-                  onClick={resetBatch}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    backgroundColor: '#64748b',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Reset
-                </button>
-              )}
-            </div>
-
-            {processingStatus === 'processing' && (
-              <div style={{ marginBottom: '1rem' }}>
-                <div style={{ 
-                  width: '100%', 
-                  backgroundColor: '#e5e7eb', 
-                  borderRadius: '8px', 
-                  overflow: 'hidden',
-                  marginBottom: '0.5rem'
-                }}>
-                  <div 
-                    style={{ 
-                      width: `${batchProgress}%`, 
-                      height: '20px', 
-                      backgroundColor: '#3b82f6', 
-                      transition: 'width 0.3s ease' 
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
                     }}
                   />
                 </div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280', textAlign: 'center' }}>
-                  {batchProgress.toFixed(0)}% Complete
-                  {currentProcessing && (
-                    <span> • Processing: {currentProcessing.name}</span>
-                  )}
+                <div>
+                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                    Significance Level (α)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.significance_level}
+                    onChange={(e) => handleInputChange('significance_level', e.target.value)}
+                    placeholder="0.05"
+                    step="0.01"
+                    min="0.01"
+                    max="0.2"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px'
+                    }}
+                  />
                 </div>
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Results Panel */}
-          {batchQueue.length > 0 && (
+            {/* Document Selection */}
             <div style={{ 
               backgroundColor: 'white', 
               borderRadius: '12px', 
               padding: '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: '1rem'
-              }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0, color: '#1e293b' }}>
-                  Processing Results
+                  Select Documents ({selectedDocuments.length} selected)
                 </h2>
-                {completedDocuments.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button
-                    onClick={downloadAllDocuments}
+                    onClick={handleClearSelections}
                     style={{
                       padding: '0.5rem 1rem',
-                      backgroundColor: '#10b981',
+                      backgroundColor: '#ef4444',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
@@ -659,140 +1018,459 @@ const BatchRegulatoryGenerator = () => {
                       fontSize: '0.875rem'
                     }}
                   >
-                    Download All ({completedDocuments.length})
+                    Clear All
+                  </button>
+                </div>
+              </div>
+
+              {Object.entries(documentLibrary).map(([region, documents]) => (
+                <div key={region} style={{ marginBottom: '1.5rem' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    marginBottom: '0.75rem'
+                  }}>
+                    <h3 style={{ 
+                      fontSize: '1rem', 
+                      fontWeight: '600', 
+                      margin: 0,
+                      color: '#374151'
+                    }}>
+                      {region}
+                    </h3>
+                    <button
+                      onClick={() => handleSelectRegion(region)}
+                      style={{
+                        padding: '0.25rem 0.75rem',
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      Select All
+                    </button>
+                  </div>
+                  
+                  <div style={{ 
+                    display: 'grid', 
+                    gap: '0.5rem',
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    padding: '0.5rem',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '6px'
+                  }}>
+                    {documents.map((doc) => {
+                      const isSelected = selectedDocuments.some(selected => selected.id === doc.id);
+                      return (
+                        <label
+                          key={doc.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '0.5rem',
+                            backgroundColor: isSelected ? '#dbeafe' : 'white',
+                            borderRadius: '4px',
+                            border: isSelected ? '1px solid #3b82f6' : '1px solid #e5e7eb',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => handleDocumentSelect(doc, e.target.checked)}
+                            style={{ marginRight: '0.75rem' }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: '500', color: '#1f2937' }}>
+                              {doc.name}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                              {doc.country} • {doc.description}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Panel: Document Selection and Processing */}
+          <div>
+            {/* Document Selection */}
+            <div style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              marginBottom: '2rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0, color: '#1e293b' }}>
+                  Select Documents ({selectedDocuments.length} selected)
+                </h2>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={handleClearSelections}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
+
+              {Object.entries(documentLibrary).map(([region, documents]) => (
+                <div key={region} style={{ marginBottom: '1.5rem' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    marginBottom: '0.75rem'
+                  }}>
+                    <h3 style={{ 
+                      fontSize: '1rem', 
+                      fontWeight: '600', 
+                      margin: 0,
+                      color: '#374151'
+                    }}>
+                      {region}
+                    </h3>
+                    <button
+                      onClick={() => handleSelectRegion(region)}
+                      style={{
+                        padding: '0.25rem 0.75rem',
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      Select All
+                    </button>
+                  </div>
+                  
+                  <div style={{ 
+                    display: 'grid', 
+                    gap: '0.5rem',
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    padding: '0.5rem',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '6px'
+                  }}>
+                    {documents.map((doc) => {
+                      const isSelected = selectedDocuments.some(selected => selected.id === doc.id);
+                      return (
+                        <label
+                          key={doc.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '0.5rem',
+                            backgroundColor: isSelected ? '#dbeafe' : 'white',
+                            borderRadius: '4px',
+                            border: isSelected ? '1px solid #3b82f6' : '1px solid #e5e7eb',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => handleDocumentSelect(doc, e.target.checked)}
+                            style={{ marginRight: '0.75rem' }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: '500', color: '#1f2937' }}>
+                              {doc.name}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                              {doc.country} • {doc.description}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Processing Controls */}
+            <div style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              marginBottom: '2rem'
+            }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+                Batch Processing
+              </h2>
+
+              {selectedDocuments.length > 0 && (
+                <div style={{ 
+                  backgroundColor: '#f0f9ff',
+                  border: '1px solid #0ea5e9',
+                  borderRadius: '6px',
+                  padding: '1rem',
+                  marginBottom: '1rem'
+                }}>
+                  <div style={{ fontSize: '0.875rem', color: '#0c4a6e' }}>
+                    <strong>Selected:</strong> {selectedDocuments.length} documents<br />
+                    <strong>Estimated time:</strong> {getEstimatedTime()}<br />
+                    <strong>Countries:</strong> {[...new Set(selectedDocuments.map(doc => doc.country))].join(', ')}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                <button
+                  onClick={startBatchProcessing}
+                  disabled={processingStatus === 'processing' || selectedDocuments.length === 0 || !formData.disease_name.trim()}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: processingStatus === 'processing' || selectedDocuments.length === 0 || !formData.disease_name.trim() 
+                      ? '#9ca3af' : '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: processingStatus === 'processing' || selectedDocuments.length === 0 || !formData.disease_name.trim() 
+                      ? 'not-allowed' : 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: '500'
+                  }}
+                >
+                  {processingStatus === 'processing' ? 'Processing...' : `Generate ${selectedDocuments.length} Documents`}
+                </button>
+
+                {(processingStatus === 'completed' || batchQueue.length > 0) && (
+                  <button
+                    onClick={resetBatch}
+                    style={{
+                      padding: '0.75rem 1rem',
+                      backgroundColor: '#64748b',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Reset
                   </button>
                 )}
               </div>
 
-              <div style={{ 
-                maxHeight: '400px', 
-                overflowY: 'auto',
-                border: '1px solid #e5e7eb',
-                borderRadius: '6px'
-              }}>
-                {batchQueue.map((doc, index) => (
-                  <div
-                    key={doc.id}
-                    style={{
-                      padding: '1rem',
-                      borderBottom: index < batchQueue.length - 1 ? '1px solid #f3f4f6' : 'none',
-                      backgroundColor: doc.status === 'processing' ? '#fef3c7' : 
-                                    doc.status === 'completed' ? '#f0fdf4' : 
-                                    doc.status === 'error' ? '#fef2f2' : 'white'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontWeight: '500', fontSize: '0.875rem', color: '#1f2937' }}>
-                          {doc.name}
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                          {doc.country}
-                        </div>
-                      </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '12px',
-                          fontSize: '0.75rem',
-                          fontWeight: '500',
-                          backgroundColor: doc.status === 'pending' ? '#f3f4f6' :
-                                         doc.status === 'processing' ? '#fbbf24' :
-                                         doc.status === 'completed' ? '#10b981' :
-                                         doc.status === 'error' ? '#ef4444' : '#9ca3af',
-                          color: doc.status === 'pending' ? '#374151' : 'white'
-                        }}>
-                          {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
-                        </span>
-                        
-                        {doc.status === 'completed' && (
-                          <button
-                            onClick={() => downloadDocument(doc)}
-                            style={{
-                              padding: '0.25rem 0.5rem',
-                              backgroundColor: '#3b82f6',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '0.75rem'
-                            }}
-                          >
-                            📥 Download
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {doc.error && (
-                      <div style={{
-                        marginTop: '0.5rem',
-                        padding: '0.5rem',
-                        backgroundColor: '#fef2f2',
-                        border: '1px solid #fecaca',
-                        borderRadius: '4px',
-                        fontSize: '0.75rem',
-                        color: '#dc2626'
-                      }}>
-                        Error: {doc.error}
-                      </div>
+              {processingStatus === 'processing' && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ 
+                    width: '100%', 
+                    backgroundColor: '#e5e7eb', 
+                    borderRadius: '8px', 
+                    overflow: 'hidden',
+                    marginBottom: '0.5rem'
+                  }}>
+                    <div 
+                      style={{ 
+                        width: `${batchProgress}%`, 
+                        height: '20px', 
+                        backgroundColor: '#3b82f6', 
+                        transition: 'width 0.3s ease' 
+                      }}
+                    />
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: '#6b7280', textAlign: 'center' }}>
+                    {batchProgress.toFixed(0)}% Complete
+                    {currentProcessing && (
+                      <span> • Processing: {currentProcessing.name}</span>
                     )}
-                    
-                    {doc.endTime && doc.startTime && (
-                      <div style={{
-                        marginTop: '0.5rem',
-                        fontSize: '0.75rem',
-                        color: '#6b7280'
-                      }}>
-                        Processing time: {Math.round((doc.endTime - doc.startTime) / 1000)}s
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Summary Statistics */}
-              {processingStatus === 'completed' && (
-                <div style={{
-                  marginTop: '1rem',
-                  padding: '1rem',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '6px',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: '1rem',
-                  textAlign: 'center'
-                }}>
-                  <div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1f2937' }}>
-                      {batchQueue.length}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Total</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#10b981' }}>
-                      {batchQueue.filter(doc => doc.status === 'completed').length}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Completed</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ef4444' }}>
-                      {batchQueue.filter(doc => doc.status === 'error').length}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Failed</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#3b82f6' }}>
-                      {batchQueue.filter(doc => doc.endTime && doc.startTime)
-                        .reduce((sum, doc) => sum + Math.round((doc.endTime - doc.startTime) / 1000), 0)}s
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Total Time</div>
                   </div>
                 </div>
               )}
             </div>
-          )}
+
+            {/* Results Panel */}
+            {batchQueue.length > 0 && (
+              <div style={{ 
+                backgroundColor: 'white', 
+                borderRadius: '12px', 
+                padding: '1.5rem',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  marginBottom: '1rem'
+                }}>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0, color: '#1e293b' }}>
+                    Processing Results
+                  </h2>
+                  {completedDocuments.length > 0 && (
+                    <button
+                      onClick={downloadAllDocuments}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      Download All ({completedDocuments.length})
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ 
+                  maxHeight: '400px', 
+                  overflowY: 'auto'
+                }}>
+                  {batchQueue.map((doc, index) => (
+                    <div
+                      key={doc.id}
+                      style={{
+                        padding: '1rem',
+                        borderBottom: index < batchQueue.length - 1 ? '1px solid #f3f4f6' : 'none',
+                        backgroundColor: doc.status === 'processing' ? '#fef3c7' : 
+                                      doc.status === 'completed' ? '#f0fdf4' : 
+                                      doc.status === 'error' ? '#fef2f2' : 'white'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontWeight: '500', fontSize: '0.875rem', color: '#1f2937' }}>
+                            {doc.name}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                            {doc.country}
+                          </div>
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: '500',
+                            backgroundColor: doc.status === 'pending' ? '#f3f4f6' :
+                                           doc.status === 'processing' ? '#fbbf24' :
+                                           doc.status === 'completed' ? '#10b981' :
+                                           doc.status === 'error' ? '#ef4444' : '#9ca3af',
+                            color: doc.status === 'pending' ? '#374151' : 'white'
+                          }}>
+                            {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
+                          </span>
+                          
+                          {doc.status === 'completed' && (
+                            <button
+                              onClick={() => downloadDocument(doc)}
+                              style={{
+                                padding: '0.25rem 0.5rem',
+                                backgroundColor: '#3b82f6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '0.75rem'
+                              }}
+                            >
+                              📥 Download
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {doc.error && (
+                        <div style={{
+                          marginTop: '0.5rem',
+                          padding: '0.5rem',
+                          backgroundColor: '#fef2f2',
+                          border: '1px solid #fecaca',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          color: '#dc2626'
+                        }}>
+                          Error: {doc.error}
+                        </div>
+                      )}
+                      
+                      {doc.endTime && doc.startTime && (
+                        <div style={{
+                          marginTop: '0.5rem',
+                          fontSize: '0.75rem',
+                          color: '#6b7280'
+                        }}>
+                          Processing time: {Math.round((doc.endTime - doc.startTime) / 1000)}s
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Summary Statistics */}
+                {processingStatus === 'completed' && (
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '6px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: '1rem',
+                    textAlign: 'center'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1f2937' }}>
+                        {batchQueue.length}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Total</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#10b981' }}>
+                        {batchQueue.filter(doc => doc.status === 'completed').length}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Completed</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ef4444' }}>
+                        {batchQueue.filter(doc => doc.status === 'error').length}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Failed</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#3b82f6' }}>
+                        {batchQueue.filter(doc => doc.endTime && doc.startTime)
+                          .reduce((sum, doc) => sum + Math.round((doc.endTime - doc.startTime) / 1000), 0)}s
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Total Time</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
