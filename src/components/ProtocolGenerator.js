@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../services/api';
+import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
+import jsPDF from 'jspdf';
+import DocumentViewer from './common/DocumentViewer';
 
 const ProtocolGenerator = () => {
   // Basic Information
@@ -49,6 +52,17 @@ const ProtocolGenerator = () => {
   const [error, setError] = useState('');
   const [showGeneratedInfo, setShowGeneratedInfo] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showPreviousProtocols, setShowPreviousProtocols] = useState(false);
+  const [previousProtocols, setPreviousProtocols] = useState([]);
+  const [loadingPrevious, setLoadingPrevious] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerDoc, setViewerDoc] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [protocolsPerPage] = useState(5);
+  const [fetchError, setFetchError] = useState('');
+  // Add state for previous doc type
+  const [previousDocType, setPreviousDocType] = useState('PROTOCOL'); // 'PROTOCOL' or 'STUDY_DESIGN'
 
   // Background processing
   const { startJob, getJob } = useBackgroundJobs('protocol');
@@ -182,6 +196,30 @@ const ProtocolGenerator = () => {
             setResult(protocolJob.result);
             setStudyDesign(studyDesignJob.result);
             setShowGeneratedInfo(true);
+
+            // Save protocol to backend
+            if (protocolJob.result) {
+              saveDocument({
+                type: 'PROTOCOL',
+                title: `Protocol for ${disease}`,
+                disease,
+                content: protocolJob.result.protocol,
+                protocolId: protocolJob.result.protocol_id,
+                // add more fields as needed
+              });
+            }
+            // Save study design to backend
+            if (studyDesignJob.result) {
+              saveDocument({
+                type: 'STUDY_DESIGN',
+                title: `Study Design for ${disease}`,
+                disease,
+                cmcSection: studyDesignJob.result.cmc_section,
+                clinicalSection: studyDesignJob.result.clinical_section,
+                content: `CMC SECTION:\n${studyDesignJob.result.cmc_section}\n\nCLINICAL SECTION:\n${studyDesignJob.result.clinical_section}`,
+                // add more fields as needed
+              });
+            }
             
             // Automatically scroll to results
             setTimeout(() => {
@@ -216,6 +254,23 @@ const ProtocolGenerator = () => {
     }
   };
 
+  const handleShowPreviousProtocols = async () => {
+    setShowPreviousProtocols(!showPreviousProtocols);
+    if (!showPreviousProtocols && previousProtocols.length === 0) {
+      setLoadingPrevious(true);
+      setFetchError('');
+      try {
+        const docs = await fetchDocuments();
+        setPreviousProtocols(docs);
+      } catch (err) {
+        setPreviousProtocols([]);
+        setFetchError('Error fetching previous protocols. Please try again later.');
+      } finally {
+        setLoadingPrevious(false);
+      }
+    }
+  };
+
   const downloadDocument = (content, filename) => {
     const element = document.createElement('a');
     const file = new Blob([content], {type: 'text/plain'});
@@ -229,16 +284,19 @@ const ProtocolGenerator = () => {
   const generatePDF = async (documentId, filename) => {
     try {
       setLoading(true);
-      
-      // For this implementation, we'll simply download as text
-      // In a production environment, you'd integrate jsPDF and html2canvas
+      let content = '';
       if (documentId === 'protocol') {
-        downloadDocument(result.protocol, `${filename}.txt`);
+        content = result.protocol;
       } else if (documentId === 'studyDesign') {
-        downloadDocument(
-          `CMC SECTION:\n${studyDesign.cmc_section}\n\nCLINICAL SECTION:\n${studyDesign.clinical_section}`,
-          `${filename}.txt`
-        );
+        content = `CMC SECTION:\n${studyDesign.cmc_section}\n\nCLINICAL SECTION:\n${studyDesign.clinical_section}`;
+      }
+      if (content) {
+        const doc = new jsPDF();
+        doc.setFont('helvetica');
+        doc.setFontSize(12);
+        const lines = doc.splitTextToSize(content, 180);
+        doc.text(lines, 10, 10);
+        doc.save(`${filename}.pdf`);
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -336,10 +394,84 @@ const ProtocolGenerator = () => {
           <h2>Clinical Study Protocol Generator</h2>
           <p>Generate a complete clinical study protocol with enhanced trial design parameters</p>
         </div>
-        
+        <button onClick={handleShowPreviousProtocols} style={{ padding: '8px 16px', borderRadius: '6px', background: '#4299e1', color: 'white', border: 'none', cursor: 'pointer' }}>
+          {showPreviousProtocols ? 'Hide Previous Protocols' : 'Previous Protocols'}
+        </button>
       </div>
-
-      
+      {showPreviousProtocols && (
+        <div style={{ background: '#f7fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
+          <h4 style={{ margin: 0, marginBottom: '0.5rem' }}>Previous Documents</h4>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem' }}>
+            <button
+              style={{
+                padding: '6px 16px',
+                borderRadius: '6px',
+                border: previousDocType === 'PROTOCOL' ? '2px solid #4299e1' : '1px solid #cbd5e1',
+                background: previousDocType === 'PROTOCOL' ? '#4299e1' : 'white',
+                color: previousDocType === 'PROTOCOL' ? 'white' : '#2d3748',
+                cursor: 'pointer',
+                fontWeight: previousDocType === 'PROTOCOL' ? 600 : 400
+              }}
+              onClick={() => setPreviousDocType('PROTOCOL')}
+            >
+              Protocols
+            </button>
+            <button
+              style={{
+                padding: '6px 16px',
+                borderRadius: '6px',
+                border: previousDocType === 'STUDY_DESIGN' ? '2px solid #4299e1' : '1px solid #cbd5e1',
+                background: previousDocType === 'STUDY_DESIGN' ? '#4299e1' : 'white',
+                color: previousDocType === 'STUDY_DESIGN' ? 'white' : '#2d3748',
+                cursor: 'pointer',
+                fontWeight: previousDocType === 'STUDY_DESIGN' ? 600 : 400
+              }}
+              onClick={() => setPreviousDocType('STUDY_DESIGN')}
+            >
+              Study Designs
+            </button>
+          </div>
+          <input
+            type="text"
+            placeholder={`Search by title or disease...`}
+            value={searchTerm}
+            onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            style={{ marginBottom: '0.75rem', padding: '6px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', width: '100%' }}
+          />
+          {loadingPrevious ? <p>Loading...</p> : fetchError ? <p style={{ color: 'red' }}>{fetchError}</p> : (
+            (() => {
+              const filtered = previousProtocols.filter(doc =>
+                doc.type === previousDocType &&
+                (doc.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 doc.disease?.toLowerCase().includes(searchTerm.toLowerCase()))
+              );
+              const totalPages = Math.ceil(filtered.length / protocolsPerPage);
+              const startIdx = (currentPage - 1) * protocolsPerPage;
+              const paginated = filtered.slice(startIdx, startIdx + protocolsPerPage);
+              return filtered.length === 0 ? <p>No previous documents found.</p> : (
+                <>
+                  <ul style={{ maxHeight: '200px', overflowY: 'auto', margin: 0, padding: 0 }}>
+                    {paginated.map(doc => (
+                      <li key={doc.id} style={{ marginBottom: '0.5rem', listStyle: 'none', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                        <strong>{doc.title}</strong> <span style={{ color: '#64748b', fontSize: '0.9em' }}>{doc.disease}</span>
+                        <button style={{ marginLeft: '1rem', padding: '2px 8px', borderRadius: '4px', background: '#64748b', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}>
+                          View
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem' }}>
+                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} style={{ marginRight: 8, padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', background: currentPage === 1 ? '#e2e8f0' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}>Prev</button>
+                    <span style={{ alignSelf: 'center' }}>Page {currentPage} of {totalPages}</span>
+                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} style={{ marginLeft: 8, padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', background: currentPage === totalPages ? '#e2e8f0' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}>Next</button>
+                  </div>
+                </>
+              );
+            })()
+          )}
+          <DocumentViewer open={viewerOpen} onClose={() => setViewerOpen(false)} title={viewerDoc?.title} content={viewerDoc?.content} metadata={{ disease: viewerDoc?.disease, protocolId: viewerDoc?.protocolId, cmcSection: viewerDoc?.cmcSection, clinicalSection: viewerDoc?.clinicalSection }} />
+        </div>
+      )}
       
       <form onSubmit={handleSubmit}>
         {/* Basic Information Section */}

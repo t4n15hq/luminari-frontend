@@ -18,7 +18,6 @@ export default function UploadTab() {
       const result = await openaiService.diagnoseConversation(transcript);
       setDiagnosis(result);
     } catch (err) {
-      console.error(err);
       setDiagnosis('Failed to get diagnosis. See console for details.');
     } finally {
       setLoading(false);

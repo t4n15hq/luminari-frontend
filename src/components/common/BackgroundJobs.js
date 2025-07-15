@@ -1,6 +1,7 @@
 // src/components/common/BackgroundJobs.js
 import React, { useState } from 'react';
 import { useBackgroundJobs } from '../../hooks/useBackgroundJobs';
+import jsPDF from 'jspdf';
 
 const BackgroundJobs = () => {
   const { activeJobs, completedJobs, cancelJob, clearCompleted, hasActiveJobs, hasCompletedJobs } = useBackgroundJobs();
@@ -32,36 +33,36 @@ const BackgroundJobs = () => {
       if (job.type === 'regulatory_document') {
         if (job.result && job.result.document_content) {
           content = job.result.document_content;
-          filename = `regulatory_document_${Date.now()}.txt`;
+          filename = `regulatory_document_${Date.now()}.pdf`;
         } else if (job.result && (job.result.cmc_section || job.result.clinical_section)) {
           content = `CMC SECTION:\n${job.result.cmc_section || ''}\n\nCLINICAL SECTION:\n${job.result.clinical_section || ''}`;
-          filename = `regulatory_document_${Date.now()}.txt`;
+          filename = `regulatory_document_${Date.now()}.pdf`;
         }
       } else if (job.type === 'protocol') {
         if (job.result && job.result.protocol) {
           content = job.result.protocol;
-          filename = `protocol_${job.result.protocol_id || Date.now()}.txt`;
+          filename = `protocol_${job.result.protocol_id || Date.now()}.pdf`;
         }
       } else if (job.type === 'study_design') {
         if (job.result && (job.result.cmc_section || job.result.clinical_section)) {
           content = `CMC SECTION:\n${job.result.cmc_section || ''}\n\nCLINICAL SECTION:\n${job.result.clinical_section || ''}`;
-          filename = `study_design_${Date.now()}.txt`;
+          filename = `study_design_${Date.now()}.pdf`;
         }
       } else if (job.type === 'batch_regulatory') {
         if (job.result && job.result.document_content) {
           content = job.result.document_content;
-          filename = `batch_regulatory_${Date.now()}.txt`;
+          filename = `batch_regulatory_${Date.now()}.pdf`;
         }
       }
       
       if (content) {
-        const element = document.createElement('a');
-        const file = new Blob([content], {type: 'text/plain'});
-        element.href = URL.createObjectURL(file);
-        element.download = filename;
-        document.body.appendChild(element);
-        element.click();
-        document.body.removeChild(element);
+        // Generate PDF using jsPDF
+        const doc = new jsPDF();
+        doc.setFont('helvetica');
+        doc.setFontSize(12);
+        const lines = doc.splitTextToSize(content, 180);
+        doc.text(lines, 10, 10);
+        doc.save(filename);
       }
     } catch (error) {
       console.error('Error downloading job result:', error);

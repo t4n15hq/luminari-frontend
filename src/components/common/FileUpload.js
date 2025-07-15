@@ -16,13 +16,14 @@ export default function FileUpload({ onTranscript }) {
       } else if (file.type.startsWith('audio')) {
         text = await openaiService.transcribeAudio(file);
       } else {
-        alert('Only .txt or audio files are supported.');
+        // TODO: Replace with user-friendly notification system
+        // alert('Only .txt or audio files are supported.');
         return;
       }
       onTranscript(text);
     } catch (err) {
-      console.error(err);
-      alert('Failed to process file; check console for details.');
+      // TODO: Replace with user-friendly notification system
+      // alert('Failed to process file; check console for details.');
     } finally {
       setLoading(false);
       e.target.value = '';

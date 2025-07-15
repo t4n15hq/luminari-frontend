@@ -1,8 +1,11 @@
 // src/components/BatchRegulatoryGenerator.js - FIXED VERSION
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
+import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
+import jsPDF from 'jspdf';
+import DocumentViewer from './common/DocumentViewer';
 
 const BatchRegulatoryGenerator = () => {
   const navigate = useNavigate();
@@ -59,6 +62,19 @@ const BatchRegulatoryGenerator = () => {
   const { startJob, getJob } = useBackgroundJobs('batch_regulatory');
   const [backgroundJobIds, setBackgroundJobIds] = useState([]);
 
+  // Previous regulatory documents state
+  const [showPreviousDocs, setShowPreviousDocs] = useState(false);
+  const [previousDocs, setPreviousDocs] = useState([]);
+  const [loadingPreviousDocs, setLoadingPreviousDocs] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [docsPerPage] = useState(5);
+  const [fetchError, setFetchError] = useState('');
+
+  // Document Viewer state
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerDoc, setViewerDoc] = useState(null);
+
   // Dropdown options - ADDED FROM REGULATORY DOCUMENT GENERATOR
   const trialPhases = ['Phase I', 'Phase II', 'Phase III', 'Phase IV'];
   const trialTypes = ['Interventional', 'Observational', 'Expanded Access'];
@@ -84,43 +100,43 @@ const BatchRegulatoryGenerator = () => {
   // Available regulatory documents by region
   const documentLibrary = {
     'North America': [
-      { id: 'us_ind', name: 'IND (Investigational New Drug)', country: 'United States', description: 'US FDA clinical trial authorization' },
-      { id: 'us_nda', name: 'NDA (New Drug Application)', country: 'United States', description: 'US FDA marketing authorization' },
-      { id: 'us_bla', name: 'BLA (Biologics License Application)', country: 'United States', description: 'US FDA biologics authorization' },
-      { id: 'ca_cta', name: 'Clinical Trial Application (Health Canada)', country: 'Canada', description: 'Canadian clinical trial authorization' },
-      { id: 'ca_nds', name: 'New Drug Submission (NDS)', country: 'Canada', description: 'Canadian marketing authorization' },
-      { id: 'mx_cofepris_cta', name: 'COFEPRIS Clinical Trial Authorization', country: 'Mexico', description: 'Mexican clinical trial approval' }
+      { id: 'us_ind', name: 'IND (Investigational New Drug)', country: 'United States', region: 'North America', description: 'US FDA clinical trial authorization' },
+      { id: 'us_nda', name: 'NDA (New Drug Application)', country: 'United States', region: 'North America', description: 'US FDA marketing authorization' },
+      { id: 'us_bla', name: 'BLA (Biologics License Application)', country: 'United States', region: 'North America', description: 'US FDA biologics authorization' },
+      { id: 'ca_cta', name: 'Clinical Trial Application (Health Canada)', country: 'Canada', region: 'North America', description: 'Canadian clinical trial authorization' },
+      { id: 'ca_nds', name: 'New Drug Submission (NDS)', country: 'Canada', region: 'North America', description: 'Canadian marketing authorization' },
+      { id: 'mx_cofepris_cta', name: 'COFEPRIS Clinical Trial Authorization', country: 'Mexico', region: 'North America', description: 'Mexican clinical trial approval' }
     ],
     'Europe': [
-      { id: 'eu_cta', name: 'CTA (Clinical Trial Application)', country: 'European Union', description: 'EU clinical trial authorization via CTIS' },
-      { id: 'eu_maa', name: 'MAA (Marketing Authorization Application)', country: 'European Union', description: 'EU marketing authorization' },
-      { id: 'eu_impd', name: 'IMPD (Investigational Medicinal Product Dossier)', country: 'European Union', description: 'EU product dossier' },
-      { id: 'uk_cta', name: 'Clinical Trial Authorisation (UK)', country: 'United Kingdom', description: 'MHRA clinical trial authorization' },
-      { id: 'uk_ma', name: 'Marketing Authorisation (UK)', country: 'United Kingdom', description: 'MHRA marketing authorization' },
-      { id: 'ch_cta', name: 'Clinical Trial Authorisation (Swissmedic)', country: 'Switzerland', description: 'Swiss clinical trial authorization' },
-      { id: 'ru_cta', name: 'Clinical Trial Permit (Roszdravnadzor)', country: 'Russia', description: 'Russian clinical trial authorization' }
+      { id: 'eu_cta', name: 'CTA (Clinical Trial Application)', country: 'European Union', region: 'Europe', description: 'EU clinical trial authorization via CTIS' },
+      { id: 'eu_maa', name: 'MAA (Marketing Authorization Application)', country: 'European Union', region: 'Europe', description: 'EU marketing authorization' },
+      { id: 'eu_impd', name: 'IMPD (Investigational Medicinal Product Dossier)', country: 'European Union', region: 'Europe', description: 'EU product dossier' },
+      { id: 'uk_cta', name: 'Clinical Trial Authorisation (UK)', country: 'United Kingdom', region: 'Europe', description: 'MHRA clinical trial authorization' },
+      { id: 'uk_ma', name: 'Marketing Authorisation (UK)', country: 'United Kingdom', region: 'Europe', description: 'MHRA marketing authorization' },
+      { id: 'ch_cta', name: 'Clinical Trial Authorisation (Swissmedic)', country: 'Switzerland', region: 'Europe', description: 'Swiss clinical trial authorization' },
+      { id: 'ru_cta', name: 'Clinical Trial Permit (Roszdravnadzor)', country: 'Russia', region: 'Europe', description: 'Russian clinical trial authorization' }
     ],
     'Asia Pacific': [
-      { id: 'jp_ctn', name: 'Clinical Trial Notification (CTN)', country: 'Japan', description: 'PMDA clinical trial notification' },
-      { id: 'jp_nda', name: 'J-NDA (New Drug Application)', country: 'Japan', description: 'Japanese marketing authorization' },
-      { id: 'cn_ind', name: 'IND (China)', country: 'China', description: 'NMPA clinical trial authorization' },
-      { id: 'cn_nda', name: 'NDA (China)', country: 'China', description: 'Chinese marketing authorization' },
-      { id: 'kr_ind', name: 'IND (Korea)', country: 'South Korea', description: 'MFDS clinical trial authorization' },
-      { id: 'au_ctn', name: 'CTN (Clinical Trial Notification)', country: 'Australia', description: 'TGA clinical trial notification' },
-      { id: 'sg_ctc', name: 'Clinical Trial Certificate (HSA)', country: 'Singapore', description: 'Singapore clinical trial authorization' },
-      { id: 'in_cta', name: 'Clinical Trial Permission (CDSCO)', country: 'India', description: 'Indian clinical trial authorization' }
+      { id: 'jp_ctn', name: 'Clinical Trial Notification (CTN)', country: 'Japan', region: 'Asia Pacific', description: 'PMDA clinical trial notification' },
+      { id: 'jp_nda', name: 'J-NDA (New Drug Application)', country: 'Japan', region: 'Asia Pacific', description: 'Japanese marketing authorization' },
+      { id: 'cn_ind', name: 'IND (China)', country: 'China', region: 'Asia Pacific', description: 'NMPA clinical trial authorization' },
+      { id: 'cn_nda', name: 'NDA (China)', country: 'China', region: 'Asia Pacific', description: 'Chinese marketing authorization' },
+      { id: 'kr_ind', name: 'IND (Korea)', country: 'South Korea', region: 'Asia Pacific', description: 'MFDS clinical trial authorization' },
+      { id: 'au_ctn', name: 'CTN (Clinical Trial Notification)', country: 'Australia', region: 'Asia Pacific', description: 'TGA clinical trial notification' },
+      { id: 'sg_ctc', name: 'Clinical Trial Certificate (HSA)', country: 'Singapore', region: 'Asia Pacific', description: 'Singapore clinical trial authorization' },
+      { id: 'in_cta', name: 'Clinical Trial Permission (CDSCO)', country: 'India', region: 'Asia Pacific', description: 'Indian clinical trial authorization' }
     ],
     'Latin America': [
-      { id: 'br_anvisa_cta', name: 'ANVISA Clinical Trial Authorization', country: 'Brazil', description: 'Brazilian clinical trial authorization' },
-      { id: 'br_anvisa_nda', name: 'ANVISA Registration Dossier', country: 'Brazil', description: 'Brazilian marketing authorization' },
-      { id: 'ar_anmat_cta', name: 'ANMAT Clinical Trial Authorization', country: 'Argentina', description: 'Argentine clinical trial authorization' },
-      { id: 'co_invima_cta', name: 'INVIMA Clinical Trial Permit', country: 'Colombia', description: 'Colombian clinical trial authorization' }
+      { id: 'br_anvisa_cta', name: 'ANVISA Clinical Trial Authorization', country: 'Brazil', region: 'Latin America', description: 'Brazilian clinical trial authorization' },
+      { id: 'br_anvisa_nda', name: 'ANVISA Registration Dossier', country: 'Brazil', region: 'Latin America', description: 'Brazilian marketing authorization' },
+      { id: 'ar_anmat_cta', name: 'ANMAT Clinical Trial Authorization', country: 'Argentina', region: 'Latin America', description: 'Argentine clinical trial authorization' },
+      { id: 'co_invima_cta', name: 'INVIMA Clinical Trial Permit', country: 'Colombia', region: 'Latin America', description: 'Colombian clinical trial authorization' }
     ],
     'Africa & Middle East': [
-      { id: 'za_sahpra_cta', name: 'SAHPRA Clinical Trial Authorization', country: 'South Africa', description: 'South African clinical trial authorization' },
-      { id: 'il_cta', name: 'Israeli MOH Clinical Trial Permit', country: 'Israel', description: 'Israeli clinical trial authorization' },
-      { id: 'sa_sfda_cta', name: 'SFDA Clinical Trial Authorization', country: 'Saudi Arabia', description: 'Saudi clinical trial authorization' },
-      { id: 'ae_dha_cta', name: 'DHA Clinical Trial Permit', country: 'United Arab Emirates', description: 'UAE clinical trial authorization' }
+      { id: 'za_sahpra_cta', name: 'SAHPRA Clinical Trial Authorization', country: 'South Africa', region: 'Africa & Middle East', description: 'South African clinical trial authorization' },
+      { id: 'il_cta', name: 'Israeli MOH Clinical Trial Permit', country: 'Israel', region: 'Africa & Middle East', description: 'Israeli clinical trial authorization' },
+      { id: 'sa_sfda_cta', name: 'SFDA Clinical Trial Authorization', country: 'Saudi Arabia', region: 'Africa & Middle East', description: 'Saudi clinical trial authorization' },
+      { id: 'ae_dha_cta', name: 'DHA Clinical Trial Permit', country: 'United Arab Emirates', region: 'Africa & Middle East', description: 'UAE clinical trial authorization' }
     ]
   };
 
@@ -172,8 +188,6 @@ const BatchRegulatoryGenerator = () => {
       }
     };
 
-    console.log(`Generating ${document.name} for ${document.country}`, apiData);
-
     // Use the existing generateIndModule function which handles all routing
     return await apiService.generateIndModule(apiData);
   };
@@ -181,12 +195,14 @@ const BatchRegulatoryGenerator = () => {
   // Start batch processing - UPDATED FOR BACKGROUND PROCESSING
   const startBatchProcessing = async () => {
     if (selectedDocuments.length === 0) {
-      alert('Please select at least one document to generate.');
+      // TODO: Replace with user-friendly notification system
+      // alert('Please select at least one document to generate.');
       return;
     }
 
     if (!formData.disease_name.trim()) {
-      alert('Please enter a disease/condition.');
+      // TODO: Replace with user-friendly notification system
+      // alert('Please enter a disease/condition.');
       return;
     }
 
@@ -202,7 +218,7 @@ const BatchRegulatoryGenerator = () => {
       result: null,
       error: null,
       startTime: null,
-      endTime: null
+      endTime: null,
     }));
 
     setBatchQueue(queue);
@@ -234,77 +250,20 @@ const BatchRegulatoryGenerator = () => {
     setBackgroundJobIds(jobIds);
     
     // Monitor all jobs
-    const checkJobsStatus = () => {
-      let allCompleted = true;
-      let hasError = false;
-      
-      jobIds.forEach((jobId, index) => {
-        const job = getJob(jobId);
-        if (job) {
-          if (job.status === 'completed') {
-            // Update batch queue
-            setBatchQueue(prev => prev.map((item, idx) => 
-              idx === index ? { 
-                ...item, 
-                status: 'completed', 
-                result: job.result,
-                endTime: new Date()
-              } : item
-            ));
-            
-            setCompletedDocuments(prev => [...prev, { ...queue[index], result: job.result }]);
-            
-          } else if (job.status === 'error') {
-            hasError = true;
-            // Update batch queue
-            setBatchQueue(prev => prev.map((item, idx) => 
-              idx === index ? { 
-                ...item, 
-                status: 'error', 
-                error: job.error,
-                endTime: new Date()
-              } : item
-            ));
-          } else {
-            allCompleted = false;
-          }
-        } else {
-          allCompleted = false;
-        }
-      });
-      
-      // Update progress
-      const completedCount = jobIds.filter(jobId => {
-        const job = getJob(jobId);
-        return job && job.status === 'completed';
-      }).length;
-      
-      setBatchProgress((completedCount / queue.length) * 100);
-      
-      if (allCompleted || hasError) {
-        setProcessingStatus('completed');
-        setCurrentProcessing(null);
-        setBackgroundJobIds([]);
-      } else {
-        // Jobs still running, check again in 2 seconds
-        setTimeout(checkJobsStatus, 2000);
-      }
-    };
-    
-    // Start monitoring
-    checkJobsStatus();
+    // The polling logic is now handled by useEffect
   };
 
   // Download individual document - FIXED VERSION
   const downloadDocument = (document) => {
     if (!document.result) {
-      alert('No document content available to download.');
+      // TODO: Replace with user-friendly notification system
+      // alert('No document content available to download.');
       return;
     }
 
     try {
       let content = '';
-      let filename = `${document.name.replace(/[^a-zA-Z0-9\s]/g, '_')}_${formData.disease_name.replace(/[^a-zA-Z0-9\s]/g, '_')}.txt`;
+      let filename = `${document.name.replace(/[^a-zA-Z0-9\s]/g, '_')}_${formData.disease_name.replace(/[^a-zA-Z0-9\s]/g, '_')}.pdf`;
 
       // Handle different result formats
       if (document.result.document_content) {
@@ -321,26 +280,22 @@ const BatchRegulatoryGenerator = () => {
 
       // Ensure content is not empty
       if (!content || content.trim() === '') {
-        alert('Document content is empty. Cannot download.');
+        // TODO: Replace with user-friendly notification system
+        // alert('Document content is empty. Cannot download.');
         return;
       }
 
-      // Create download using data URL (most compatible approach)
-      const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(content);
-      const downloadAnchorNode = window.document.createElement('a');
-      downloadAnchorNode.setAttribute("href", dataStr);
-      downloadAnchorNode.setAttribute("download", filename);
-      downloadAnchorNode.style.display = "none";
-      
-      window.document.body.appendChild(downloadAnchorNode);
-      downloadAnchorNode.click();
-      window.document.body.removeChild(downloadAnchorNode);
-      
-      console.log(`Successfully downloaded: ${filename}`);
+      // Generate PDF using jsPDF
+      const doc = new jsPDF();
+      doc.setFont('helvetica');
+      doc.setFontSize(12);
+      const lines = doc.splitTextToSize(content, 180);
+      doc.text(lines, 10, 10);
+      doc.save(filename);
       
     } catch (error) {
-      console.error('Download error:', error);
-      alert(`Download failed: ${error.message}`);
+      // TODO: Replace with user-friendly notification system
+      // alert(`Download failed: ${error.message}`);
     }
   };
 
@@ -349,17 +304,18 @@ const BatchRegulatoryGenerator = () => {
     const completedDocs = batchQueue.filter(doc => doc.status === 'completed' && doc.result);
     
     if (completedDocs.length === 0) {
-      alert('No completed documents to download.');
+      // TODO: Replace with user-friendly notification system
+      // alert('No completed documents to download.');
       return;
     }
 
     try {
-      console.log(`Starting download of ${completedDocs.length} documents...`);
+      // console.log(`Starting download of ${completedDocs.length} documents...`);
       
       // Download each document separately with a small delay
       for (let i = 0; i < completedDocs.length; i++) {
         const doc = completedDocs[i];
-        console.log(`Downloading document ${i + 1}/${completedDocs.length}: ${doc.name}`);
+        // console.log(`Downloading document ${i + 1}/${completedDocs.length}: ${doc.name}`);
         
         downloadDocument(doc);
         
@@ -369,11 +325,12 @@ const BatchRegulatoryGenerator = () => {
         }
       }
       
-      alert(`Successfully initiated download of ${completedDocs.length} documents.`);
+      // TODO: Replace with user-friendly notification system
+      // alert(`Successfully initiated download of ${completedDocs.length} documents.`);
       
     } catch (error) {
-      console.error('Batch download error:', error);
-      alert(`Batch download failed: ${error.message}`);
+      // TODO: Replace with user-friendly notification system
+      // alert(`Batch download failed: ${error.message}`);
     }
   };
 
@@ -432,6 +389,122 @@ const BatchRegulatoryGenerator = () => {
     return `${minutes}m ${seconds}s`;
   };
 
+  const handleShowPreviousDocs = async () => {
+    setShowPreviousDocs(!showPreviousDocs);
+    if (!showPreviousDocs && previousDocs.length === 0) {
+      setLoadingPreviousDocs(true);
+      setFetchError('');
+      try {
+        const docs = await fetchDocuments();
+        setPreviousDocs(docs.filter(doc => doc.type === 'REGULATORY'));
+      } catch (err) {
+        setPreviousDocs([]);
+        setFetchError('Error fetching previous regulatory documents. Please try again later.');
+      } finally {
+        setLoadingPreviousDocs(false);
+      }
+    }
+  };
+
+  const savedJobIds = useRef(new Set());
+  const jobIdsRef = useRef([]);
+  const batchQueueRef = useRef([]);
+
+  // Update refs whenever state changes
+  useEffect(() => { jobIdsRef.current = backgroundJobIds; }, [backgroundJobIds]);
+  useEffect(() => { batchQueueRef.current = batchQueue; }, [batchQueue]);
+
+  // Polling effect
+  useEffect(() => {
+    if (processingStatus !== 'processing') return;
+    const interval = setInterval(async () => {
+      const jobIds = jobIdsRef.current;
+      const prevQueue = batchQueueRef.current;
+      const updatedQueue = [];
+      let anyChanged = false;
+      // console.log('Polling batch jobs:', prevQueue, jobIds);
+      for (let idx = 0; idx < prevQueue.length; idx++) {
+        const item = prevQueue[idx];
+        const jobId = jobIds[idx];
+        const job = getJob(jobId);
+        // console.log('Job status:', jobId, job && job.status);
+        if (job) {
+          if (job.status === 'completed') {
+            if (!savedJobIds.current.has(jobId)) {
+              try {
+                // console.log('Attempting to save:', {
+                //   country: item.country,
+                //   region: item.region,
+                //   jobId,
+                //   data: {
+                //     type: 'REGULATORY',
+                //     title: `${item.name || item.documentType || 'Regulatory Document'} for ${formData.disease_name}`,
+                //     disease: formData.disease_name,
+                //     region: item.region || 'Unknown',
+                //     country: item.country || 'Unknown',
+                //     documentType: item.name || item.documentType || 'Unknown',
+                //     content: job.result.document_content || `CMC SECTION:\n${job.result.cmc_section}\n\nCLINICAL SECTION:\n${job.result.clinical_section}`,
+                //     cmcSection: job.result.cmc_section,
+                //     clinicalSection: job.result.clinical_section,
+                //   }
+                // });
+                await saveDocument({
+                  type: 'REGULATORY',
+                  title: `${item.name || item.documentType || 'Regulatory Document'} for ${formData.disease_name}`,
+                  disease: formData.disease_name,
+                  region: item.region || 'Unknown',
+                  country: item.country || 'Unknown',
+                  documentType: item.name || item.documentType || 'Unknown',
+                  content: job.result.document_content || `CMC SECTION:\n${job.result.cmc_section}\n\nCLINICAL SECTION:\n${job.result.clinical_section}`,
+                  cmcSection: job.result.cmc_section,
+                  clinicalSection: job.result.clinical_section,
+                });
+                savedJobIds.current.add(jobId);
+                // console.log('Saved document for country:', item.country, 'region:', item.region, 'jobId:', jobId);
+              } catch (err) {
+                // console.error('Failed to save document for', item.country, 'region:', item.region, 'jobId:', jobId, err);
+              }
+            }
+            updatedQueue.push({
+              ...item,
+              status: 'completed',
+              result: job.result,
+              endTime: item.endTime || new Date(),
+            });
+            anyChanged = true;
+          } else if (job.status === 'error') {
+            updatedQueue.push({
+              ...item,
+              status: 'error',
+              error: job.error,
+              endTime: item.endTime || new Date(),
+            });
+            anyChanged = true;
+          } else {
+            updatedQueue.push(item);
+          }
+        } else {
+          updatedQueue.push(item);
+        }
+      }
+      if (anyChanged) setBatchQueue(updatedQueue);
+      // Update progress
+      const completedCount = jobIds.filter(jobId => {
+        const job = getJob(jobId);
+        return job && job.status === 'completed';
+      }).length;
+      setBatchProgress((completedCount / (jobIds.length || 1)) * 100);
+      const allDone = updatedQueue.every(item => item.status === 'completed' || item.status === 'error');
+      if (allDone) {
+        setProcessingStatus('completed');
+        setCurrentProcessing(null);
+        setBackgroundJobIds([]);
+        clearInterval(interval);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [processingStatus, formData.disease_name, getJob]);
+
   return (
     <div className="batch-regulatory-generator" style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
       {/* Header */}
@@ -442,6 +515,20 @@ const BatchRegulatoryGenerator = () => {
         <p style={{ color: '#64748b', marginBottom: '1rem' }}>
           Generate multiple regulatory documents simultaneously for global submission
         </p>
+        <button
+          onClick={handleShowPreviousDocs}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '6px',
+            background: '#4299e1',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            marginRight: '1rem'
+          }}
+        >
+          {showPreviousDocs ? 'Hide Previous Docs' : 'Previous Docs'}
+        </button>
         <button
           onClick={() => navigate('/regulatory-documents')}
           style={{
@@ -456,6 +543,51 @@ const BatchRegulatoryGenerator = () => {
           ← Back to Single Document Generator
         </button>
       </div>
+      {showPreviousDocs && (
+        <div style={{ background: '#f7fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
+          <h4 style={{ margin: 0, marginBottom: '0.5rem' }}>Previous Regulatory Documents</h4>
+          <input
+            type="text"
+            placeholder="Search by title, disease, or country..."
+            value={searchTerm}
+            onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            style={{ marginBottom: '0.75rem', padding: '6px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', width: '100%' }}
+          />
+          {loadingPreviousDocs ? <p>Loading...</p> : fetchError ? <p style={{ color: 'red' }}>{fetchError}</p> : (
+            (() => {
+              const filtered = previousDocs.filter(doc =>
+                (doc.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 doc.disease?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 doc.country?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 doc.region?.toLowerCase().includes(searchTerm.toLowerCase()))
+              );
+              const totalPages = Math.ceil(filtered.length / docsPerPage);
+              const startIdx = (currentPage - 1) * docsPerPage;
+              const paginated = filtered.slice(startIdx, startIdx + docsPerPage);
+              return filtered.length === 0 ? <p>No previous regulatory documents found.</p> : (
+                <>
+                  <ul style={{ maxHeight: '200px', overflowY: 'auto', margin: 0, padding: 0 }}>
+                    {paginated.map(doc => (
+                      <li key={doc.id} style={{ marginBottom: '0.5rem', listStyle: 'none', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                        <strong>{doc.title}</strong> <span style={{ color: '#64748b', fontSize: '0.9em' }}>{doc.disease} {doc.region && `| ${doc.region}`} {doc.country && `| ${doc.country}`}</span>
+                        <button style={{ marginLeft: '1rem', padding: '2px 8px', borderRadius: '4px', background: '#64748b', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}>
+                          View
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem', gap: '0.5rem' }}>
+                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} style={{ minWidth: 60, padding: '6px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: currentPage === 1 ? '#e2e8f0' : '#4299e1', color: currentPage === 1 ? '#a0aec0' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: '1rem' }}>Previous</button>
+                    <span style={{ alignSelf: 'center', fontWeight: 500, fontSize: '1rem', color: '#1e293b' }}>Page {currentPage} of {totalPages}</span>
+                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} style={{ minWidth: 60, padding: '6px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: currentPage === totalPages ? '#e2e8f0' : '#4299e1', color: currentPage === totalPages ? '#a0aec0' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: '1rem' }}>Next</button>
+                  </div>
+                </>
+              );
+            })()
+          )}
+          <DocumentViewer open={viewerOpen} onClose={() => setViewerOpen(false)} title={viewerDoc?.title} content={viewerDoc?.content} metadata={{ disease: viewerDoc?.disease, country: viewerDoc?.country, documentType: viewerDoc?.documentType }} />
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
         {/* Form and Document Selection */}
@@ -994,113 +1126,9 @@ const BatchRegulatoryGenerator = () => {
               </div>
             </div>
 
+            {/* REMOVE: Document Selection from left panel */}
             {/* Document Selection */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '12px', 
-              padding: '1.5rem',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0, color: '#1e293b' }}>
-                  Select Documents ({selectedDocuments.length} selected)
-                </h2>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    onClick={handleClearSelections}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      backgroundColor: '#ef4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.875rem'
-                    }}
-                  >
-                    Clear All
-                  </button>
-                </div>
-              </div>
-
-              {Object.entries(documentLibrary).map(([region, documents]) => (
-                <div key={region} style={{ marginBottom: '1.5rem' }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    marginBottom: '0.75rem'
-                  }}>
-                    <h3 style={{ 
-                      fontSize: '1rem', 
-                      fontWeight: '600', 
-                      margin: 0,
-                      color: '#374151'
-                    }}>
-                      {region}
-                    </h3>
-                    <button
-                      onClick={() => handleSelectRegion(region)}
-                      style={{
-                        padding: '0.25rem 0.75rem',
-                        backgroundColor: '#3b82f6',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      Select All
-                    </button>
-                  </div>
-                  
-                  <div style={{ 
-                    display: 'grid', 
-                    gap: '0.5rem',
-                    maxHeight: '200px',
-                    overflowY: 'auto',
-                    padding: '0.5rem',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '6px'
-                  }}>
-                    {documents.map((doc) => {
-                      const isSelected = selectedDocuments.some(selected => selected.id === doc.id);
-                      return (
-                        <label
-                          key={doc.id}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '0.5rem',
-                            backgroundColor: isSelected ? '#dbeafe' : 'white',
-                            borderRadius: '4px',
-                            border: isSelected ? '1px solid #3b82f6' : '1px solid #e5e7eb',
-                            cursor: 'pointer',
-                            fontSize: '0.875rem'
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={(e) => handleDocumentSelect(doc, e.target.checked)}
-                            style={{ marginRight: '0.75rem' }}
-                          />
-                          <div>
-                            <div style={{ fontWeight: '500', color: '#1f2937' }}>
-                              {doc.name}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                              {doc.country} • {doc.description}
-                            </div>
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Right Panel: Document Selection and Processing */}
           </div>
 
           {/* Right Panel: Document Selection and Processing */}

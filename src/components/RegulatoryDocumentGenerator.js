@@ -4,7 +4,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
+import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
+import jsPDF from 'jspdf';
+import DocumentViewer from './common/DocumentViewer';
 
 const RegulatoryDocumentGenerator = () => {
   // Basic Information
@@ -167,8 +170,6 @@ const RegulatoryDocumentGenerator = () => {
         }
       };
       
-      console.log("Starting enhanced document generation with parameters:", enhancedFormData);
-      
       if (!disease || disease.trim() === '') {
         throw new Error('Disease/Condition is required');
       }
@@ -190,7 +191,6 @@ const RegulatoryDocumentGenerator = () => {
             
             // Process the result
             const response = job.result;
-            console.log("Enhanced API response received, response keys:", Object.keys(response));
             
             // Check structure of response to handle both response formats
             if (response.document_content) {
@@ -231,15 +231,51 @@ const RegulatoryDocumentGenerator = () => {
                 clinical_section: clinicalSection,
                 document_content: content
               });
+              // Save regulatory document to backend
+              saveDocument({
+                type: 'REGULATORY',
+                title: `${documentType} for ${disease}`,
+                disease,
+                country,
+                documentType,
+                cmcSection: cmcSection,
+                clinicalSection: clinicalSection,
+                content,
+                // add more fields as needed
+              });
             } else if (response.cmc_section && response.clinical_section) {
               // For document types that return separate CMC and clinical sections
               setResult(response);
+              // Save regulatory document to backend
+              saveDocument({
+                type: 'REGULATORY',
+                title: `${documentType} for ${disease}`,
+                disease,
+                country,
+                documentType,
+                cmcSection: response.cmc_section,
+                clinicalSection: response.clinical_section,
+                content: response.document_content || `CMC SECTION:\n${response.cmc_section}\n\nCLINICAL SECTION:\n${response.clinical_section}`,
+                // add more fields as needed
+              });
             } else {
               // Fallback: treat the entire response as clinical section
               setResult({
                 cmc_section: "",
                 clinical_section: typeof response === 'string' ? response : JSON.stringify(response, null, 2),
                 document_content: typeof response === 'string' ? response : JSON.stringify(response, null, 2)
+              });
+              // Save regulatory document to backend
+              saveDocument({
+                type: 'REGULATORY',
+                title: `${documentType} for ${disease}`,
+                disease,
+                country,
+                documentType,
+                cmcSection: "",
+                clinicalSection: typeof response === 'string' ? response : JSON.stringify(response, null, 2),
+                content: typeof response === 'string' ? response : JSON.stringify(response, null, 2),
+                // add more fields as needed
               });
             }
             
@@ -269,7 +305,6 @@ const RegulatoryDocumentGenerator = () => {
       checkJobStatus();
       
     } catch (err) {
-      console.error("Enhanced document generation error:", err);
       setError(`Failed to generate regulatory documents: ${err.message || 'Unknown error'}`);
       setLoading(false);
       setBackgroundJobId(null);
@@ -325,6 +360,33 @@ const RegulatoryDocumentGenerator = () => {
     );
   };
 
+  const [showPreviousDocs, setShowPreviousDocs] = useState(false);
+  const [previousDocs, setPreviousDocs] = useState([]);
+  const [loadingPreviousDocs, setLoadingPreviousDocs] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerDoc, setViewerDoc] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [docsPerPage] = useState(5);
+  const [fetchError, setFetchError] = useState('');
+
+  const handleShowPreviousDocs = async () => {
+    setShowPreviousDocs(!showPreviousDocs);
+    if (!showPreviousDocs && previousDocs.length === 0) {
+      setLoadingPreviousDocs(true);
+      setFetchError('');
+      try {
+        const docs = await fetchDocuments();
+        setPreviousDocs(docs.filter(doc => doc.type === 'REGULATORY'));
+      } catch (err) {
+        setPreviousDocs([]);
+        setFetchError('Error fetching previous regulatory documents. Please try again later.');
+      } finally {
+        setLoadingPreviousDocs(false);
+      }
+    }
+  };
+
   return (
     <div className="regulatory-document-generator">
       {/* Header with Back Button */}
@@ -333,28 +395,54 @@ const RegulatoryDocumentGenerator = () => {
           <h2>Enhanced Regulatory Document Generator</h2>
           <p>Generate comprehensive regulatory documentation with detailed trial design parameters</p>
         </div>
-        
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button 
-            onClick={handleBackToMap}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#4299e1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            ← Back to Map
-          </button>
-
-        </div>
+        <button onClick={handleShowPreviousDocs} style={{ padding: '8px 16px', borderRadius: '6px', background: '#4299e1', color: 'white', border: 'none', cursor: 'pointer' }}>
+          {showPreviousDocs ? 'Hide Previous Docs' : 'Previous Docs'}
+        </button>
       </div>
+      {showPreviousDocs && (
+        <div style={{ background: '#f7fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
+          <h4 style={{ margin: 0, marginBottom: '0.5rem' }}>Previous Regulatory Documents</h4>
+          <input
+            type="text"
+            placeholder="Search by title, disease, or country..."
+            value={searchTerm}
+            onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            style={{ marginBottom: '0.75rem', padding: '6px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', width: '100%' }}
+          />
+          {loadingPreviousDocs ? <p>Loading...</p> : fetchError ? <p style={{ color: 'red' }}>{fetchError}</p> : (
+            (() => {
+              const filtered = previousDocs.filter(doc =>
+                doc.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                doc.disease?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                doc.country?.toLowerCase().includes(searchTerm.toLowerCase())
+              );
+              const totalPages = Math.ceil(filtered.length / docsPerPage);
+              const startIdx = (currentPage - 1) * docsPerPage;
+              const paginated = filtered.slice(startIdx, startIdx + docsPerPage);
+              return filtered.length === 0 ? <p>No previous regulatory documents found.</p> : (
+                <>
+                  <ul style={{ maxHeight: '200px', overflowY: 'auto', margin: 0, padding: 0 }}>
+                    {paginated.map(doc => (
+                      <li key={doc.id} style={{ marginBottom: '0.5rem', listStyle: 'none', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                        <strong>{doc.title}</strong> <span style={{ color: '#64748b', fontSize: '0.9em' }}>{doc.disease} {doc.country && `| ${doc.country}`}</span>
+                        <button style={{ marginLeft: '1rem', padding: '2px 8px', borderRadius: '4px', background: '#64748b', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}>
+                          View
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem' }}>
+                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} style={{ marginRight: 8, padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', background: currentPage === 1 ? '#e2e8f0' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}>Prev</button>
+                    <span style={{ alignSelf: 'center' }}>Page {currentPage} of {totalPages}</span>
+                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} style={{ marginLeft: 8, padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', background: currentPage === totalPages ? '#e2e8f0' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}>Next</button>
+                  </div>
+                </>
+              );
+            })()
+          )}
+          <DocumentViewer open={viewerOpen} onClose={() => setViewerOpen(false)} title={viewerDoc?.title} content={viewerDoc?.content} metadata={{ disease: viewerDoc?.disease, country: viewerDoc?.country, documentType: viewerDoc?.documentType }} />
+        </div>
+      )}
 
       {/* Selected Country Info */}
       {selectedCountryData && (
@@ -854,19 +942,16 @@ const RegulatoryDocumentGenerator = () => {
             <button
               onClick={() => {
                 const content = `CMC SECTION:\n\n${result.cmc_section}\n\nCLINICAL SECTION:\n\n${result.clinical_section}`;
-                const blob = new Blob([content], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `Enhanced_${country || 'Regulatory'}_Document_${new Date().toISOString().slice(0, 10)}.txt`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                const doc = new jsPDF();
+                doc.setFont('helvetica');
+                doc.setFontSize(12);
+                const lines = doc.splitTextToSize(content, 180);
+                doc.text(lines, 10, 10);
+                doc.save(`Enhanced_${country || 'Regulatory'}_Document_${new Date().toISOString().slice(0, 10)}.pdf`);
               }}
               className="view-button"
             >
-              Download as Text
+              Download as PDF
             </button>
           </div>
         </div>

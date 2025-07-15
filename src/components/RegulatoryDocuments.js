@@ -1,5 +1,42 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from 'react-simple-maps';
+import { geoCentroid } from 'd3-geo';
+
+const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+
+const regionCountryMap = {
+  'north-america': ["United States", "Canada", "Mexico"],
+  'europe': ["United Kingdom", "France", "Germany", "Italy", "Spain", "Switzerland", "Russia", "European Union"],
+  'asia-pacific': ["Japan", "China", "South Korea", "Australia", "Singapore", "India", "Taiwan"],
+  'latin-america': ["Brazil", "Argentina", "Colombia", "Chile", "Peru", "Mexico"],
+  'africa-middle-east': ["South Africa", "Israel", "Saudi Arabia", "United Arab Emirates", "Egypt", "Nigeria"]
+};
+
+const regionColors = {
+  'north-america': '#4299e1',
+  'europe': '#48bb78',
+  'asia-pacific': '#ed8936',
+  'latin-america': '#9f7aea',
+  'africa-middle-east': '#e53e3e'
+};
+
+const regionNameMap = {
+  'north-america': 'North America',
+  'europe': 'Europe',
+  'asia-pacific': 'Asia Pacific',
+  'latin-america': 'Latin America',
+  'africa-middle-east': 'Africa & Middle East'
+};
+
+// Add centroid coordinates for each supported region
+const regionCentroids = {
+  'north-america': [-100, 45],
+  'europe': [15, 50],
+  'asia-pacific': [110, 20],
+  'latin-america': [-60, -15],
+  'africa-middle-east': [30, 10]
+};
 
 const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
   const [selectedRegion, setSelectedRegion] = useState(null);
@@ -253,6 +290,14 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
     }
   };
 
+  // Helper to get region by country name
+  const getRegionByCountry = (countryName) => {
+    for (const [region, countries] of Object.entries(regionCountryMap)) {
+      if (countries.includes(countryName)) return region;
+    }
+    return null;
+  };
+
   const handleRegionClick = (regionId) => {
     setSelectedRegion(selectedRegion === regionId ? null : regionId);
   };
@@ -267,109 +312,102 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
   };
 
   return (
-    <div style={{ 
-      backgroundColor: 'white', 
-      borderRadius: '12px', 
-      padding: '30px',
-      boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
-      maxWidth: '1200px',
-      margin: '0 auto'
-    }}>
+    <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '30px', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', maxWidth: '1200px', margin: '0 auto' }}>
       <h2 style={{ textAlign: 'center', marginBottom: '10px', color: '#2d3748' }}>
-        🌍 Global Regulatory Document Map
+        Global Regulatory Document Map
       </h2>
       <p style={{ textAlign: 'center', color: '#4a5568', marginBottom: '30px' }}>
         Select a region to explore available regulatory documents by country
       </p>
-
-      {/* Interactive World Map */}
-      <div style={{ position: 'relative', width: '100%', height: '350px', margin: '20px 0' }}>
-        <svg 
-          width="100%" 
-          height="350" 
-          viewBox="0 0 800 350"
-          style={{ 
-            backgroundColor: '#f7fafc', 
-            borderRadius: '8px',
-            border: '1px solid #e2e8f0'
-          }}
-        >
-          {/* Simplified world map background */}
-          <rect width="800" height="350" fill="#e2e8f0" />
-          
-          {/* Continental shapes (simplified) */}
-          <path d="M 50 80 L 300 80 L 300 180 L 50 180 Z" fill="#cbd5e0" opacity="0.3" />
-          <path d="M 420 70 L 600 70 L 600 160 L 420 160 Z" fill="#cbd5e0" opacity="0.3" />
-          <path d="M 620 90 L 780 90 L 780 280 L 620 280 Z" fill="#cbd5e0" opacity="0.3" />
-          <path d="M 180 160 L 320 160 L 320 300 L 180 300 Z" fill="#cbd5e0" opacity="0.3" />
-          <path d="M 500 140 L 600 140 L 600 280 L 500 280 Z" fill="#cbd5e0" opacity="0.3" />
-
-          {/* Region markers */}
-          {Object.entries(regions).map(([regionId, region]) => (
-            <g key={regionId}>
-              {/* Region circle */}
-              <circle
-                cx={region.coords.x}
-                cy={region.coords.y}
-                r={selectedRegion === regionId ? "35" : "25"}
-                fill={region.color}
-                opacity={hoveredRegion === regionId ? "0.8" : "0.6"}
-                stroke={selectedRegion === regionId ? "#2d3748" : "white"}
-                strokeWidth={selectedRegion === regionId ? "3" : "2"}
-                style={{ 
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={() => setHoveredRegion(regionId)}
-                onMouseLeave={() => setHoveredRegion(null)}
-                onClick={() => handleRegionClick(regionId)}
-              />
-              
-              {/* Region label */}
-              <text
-                x={region.coords.x}
-                y={region.coords.y + (selectedRegion === regionId ? 50 : 40)}
-                textAnchor="middle"
-                fill="#2d3748"
-                fontSize={selectedRegion === regionId ? "13" : "11"}
-                fontWeight={selectedRegion === regionId ? "bold" : "normal"}
-                style={{ 
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                onClick={() => handleRegionClick(regionId)}
-              >
-                {region.name}
-              </text>
-
-              {/* Country dots when region is selected */}
-              {selectedRegion === regionId && region.countries.map((country) => (
-                <g key={country.id}>
-                  <circle
-                    cx={country.coords.x}
-                    cy={country.coords.y}
-                    r="8"
-                    fill="white"
-                    stroke={region.color}
-                    strokeWidth="2"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleCountrySelect(country, regionId)}
-                  />
-                  <circle
-                    cx={country.coords.x}
-                    cy={country.coords.y}
-                    r="4"
-                    fill={region.color}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleCountrySelect(country, regionId)}
-                  />
-                </g>
-              ))}
-            </g>
-          ))}
-        </svg>
+      <div style={{ position: 'relative', width: '100%', height: '400px', margin: '20px 0' }}>
+        <ComposableMap projection="geoMercator" width={900} height={400} style={{ width: '100%', height: '400px' }}>
+          <ZoomableGroup center={[20, 20]} zoom={1}>
+            <Geographies geography={geoUrl}>
+              {({ geographies }) =>
+                geographies.map(geo => {
+                  const countryName = geo.properties.NAME;
+                  const region = getRegionByCountry(countryName);
+                  const isRegion = selectedRegion ? region === selectedRegion : false;
+                  const isRegionMain = Object.keys(regionCountryMap).some(r => regionCountryMap[r].includes(countryName) && r === selectedRegion);
+                  return (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      onClick={() => {
+                        if (!selectedRegion && region) {
+                          setSelectedRegion(region);
+                        } else if (selectedRegion && isRegion) {
+                          // Find country in regions[selectedRegion].countries
+                          const regionObj = regions[selectedRegion];
+                          if (regionObj) {
+                            const country = regionObj.countries.find(c => c.name === countryName);
+                            if (country) handleCountrySelect(country, selectedRegion);
+                          }
+                        }
+                      }}
+                      style={{
+                        default: {
+                          fill: selectedRegion
+                            ? (isRegion ? regionColors[selectedRegion] : '#e2e8f0')
+                            : (region ? regionColors[region] : '#e2e8f0'),
+                          stroke: '#fff',
+                          strokeWidth: 0.75,
+                          outline: 'none',
+                          cursor: region ? 'pointer' : 'default',
+                          opacity: selectedRegion ? (isRegion ? 1 : 0.5) : 0.85
+                        },
+                        hover: {
+                          fill: region ? regionColors[region] : '#cbd5e0',
+                          opacity: 1,
+                          outline: 'none',
+                          cursor: region ? 'pointer' : 'default'
+                        },
+                        pressed: {
+                          fill: region ? regionColors[region] : '#cbd5e0',
+                          outline: 'none',
+                          cursor: region ? 'pointer' : 'default'
+                        }
+                      }}
+                    />
+                  );
+                })
+              }
+            </Geographies>
+            {/* Add clickable region dots */}
+            {Object.entries(regionCentroids).map(([regionId, coords]) => (
+              <Marker key={regionId} coordinates={coords}>
+                <circle
+                  r={selectedRegion === regionId ? 18 : 13}
+                  fill={regionColors[regionId]}
+                  stroke="#2d3748"
+                  strokeWidth={selectedRegion === regionId ? 3 : 2}
+                  opacity={hoveredRegion === regionId ? 0.85 : 0.7}
+                  style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                  onMouseEnter={() => setHoveredRegion(regionId)}
+                  onMouseLeave={() => setHoveredRegion(null)}
+                  onClick={() => setSelectedRegion(regionId)}
+                />
+                <text
+                  textAnchor="middle"
+                  y={selectedRegion === regionId ? 35 : 28}
+                  style={{
+                    fontFamily: 'inherit',
+                    fontSize: selectedRegion === regionId ? 15 : 13,
+                    fontWeight: selectedRegion === regionId ? 'bold' : 'normal',
+                    fill: '#2d3748',
+                    cursor: 'pointer',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {regionNameMap[regionId]}
+                </text>
+              </Marker>
+            ))}
+          </ZoomableGroup>
+        </ComposableMap>
       </div>
-
       {/* Region Details */}
       {selectedRegion && (
         <div style={{
@@ -386,7 +424,7 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
             alignItems: 'center',
             gap: '10px'
           }}>
-            📍 {regions[selectedRegion].name}
+            {regions[selectedRegion].name}
             <span style={{ 
               fontSize: '0.8rem', 
               background: regions[selectedRegion].color,
@@ -459,7 +497,7 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
         border: '1px solid #bee3f8'
       }}>
         <div style={{ fontSize: '0.9rem', color: '#2c5282' }}>
-          💡 <strong>How to use:</strong> Click on a region above to see available countries, 
+          <strong>How to use:</strong> Click on a region above to see available countries, 
           then click on a country to proceed to the regulatory document generator with pre-selected options.
         </div>
       </div>
