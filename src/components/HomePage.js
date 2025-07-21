@@ -71,7 +71,7 @@ const HomePage = () => {
             <h2>{card.title}</h2>
             <p>{card.description}</p>
             <div className="card-button">
-              Access Tool
+              Access Tool →
             </div>
           </Link>
         ))}

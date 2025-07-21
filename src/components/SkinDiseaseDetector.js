@@ -3,11 +3,14 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { FileUpload, ResultsChat } from './common';
 import openaiService from '../services/openaiService';
+import AskLuminaPopup from './common/AskLuminaPopup';
+import FloatingButton from './common/FloatingButton';
 
 
 const SkinDiseaseDetector = () => {
   // Analysis mode state - 'image', 'textAudio', 'batch', or 'video'
   const [analysisMode, setAnalysisMode] = useState('image');
+  const [showAskLumina, setShowAskLumina] = useState(false);
 
   // Single image analysis states
   const [selectedImage, setSelectedImage] = useState(null);
@@ -38,7 +41,7 @@ const SkinDiseaseDetector = () => {
 
   // Video analysis states (coming soon)
   const [videoFile, setVideoFile] = useState(null);
-  const [videoPreview, setVideoPreview] = useState(null);
+  const [videoPreview, setVideoPreview] = useState('');
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -230,12 +233,7 @@ const SkinDiseaseDetector = () => {
       
       setPrediction(preds);
 
-      if (preds.length > 0) {
-        localStorage.setItem('detectedDisease', preds[0].label);
-        localStorage.setItem('metadata', JSON.stringify({
-          age, gender, race, skinColor, skinType, conditionDescription
-        }));
-      }
+      // Removed localStorage data saving
 
     } catch (error) {
       // console.error('Prediction error:', error);
@@ -285,9 +283,7 @@ const SkinDiseaseDetector = () => {
   };
 
   const goToPage = (path) => {
-    if (prediction.length > 0) {
-      localStorage.setItem('detectedDisease', prediction[0].label);
-    }
+    // Removed localStorage data saving
     window.location.href = path;
   };
   
@@ -353,7 +349,22 @@ const SkinDiseaseDetector = () => {
   const metaLines = metaBlock.trim().split('\n').map((l) => l.trim()).filter((l) => l);
 
   return (
-    <div className="skin-disease-detector">
+    <div className="skin-disease-detector" style={{ position: 'relative' }}>
+      {/* Ask Lumina Popup */}
+      <AskLuminaPopup 
+        isOpen={showAskLumina}
+        onClose={() => setShowAskLumina(false)}
+        contextData="Dermatology - Skin Disease Analysis"
+      />
+
+      {/* Professional Ask Lumina Floating Button */}
+      <FloatingButton
+        onClick={() => setShowAskLumina(true)}
+        icon="AI"
+        label="Ask Lumina™"
+        variant="primary"
+      />
+
        {showResultsChat && (
         <ResultsChat
           results={batchResults}
@@ -371,7 +382,7 @@ const SkinDiseaseDetector = () => {
           <span>Dermatology</span>
         </div>
         
-        <Link to="/diagnosis" className="back-to-specialties">
+        <Link to="/diagnosis" className="btn btn-secondary btn-sm">
           Back to Specialties
         </Link>
       </div>
@@ -385,25 +396,25 @@ const SkinDiseaseDetector = () => {
       {/* Analysis Type Tabs */}
       <div className="analysis-tabs">
         <button
-          className={`tab-button ${analysisMode === 'image' ? 'active' : ''}`}
+          className={`btn ${analysisMode === 'image' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setAnalysisMode('image')}
         >
           Image Analysis
         </button>
         <button
-          className={`tab-button ${analysisMode === 'batch' ? 'active' : ''}`}
+          className={`btn ${analysisMode === 'batch' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setAnalysisMode('batch')}
         >
           Batch Processing
         </button>
         <button
-          className={`tab-button ${analysisMode === 'textAudio' ? 'active' : ''}`}
+          className={`btn ${analysisMode === 'textAudio' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setAnalysisMode('textAudio')}
         >
           Text & Audio Analysis
         </button>
         <button
-          className={`tab-button ${analysisMode === 'video' ? 'active' : ''}`}
+          className="btn btn-secondary"
           onClick={() => setAnalysisMode('video')}
           disabled
         >
@@ -544,22 +555,15 @@ const SkinDiseaseDetector = () => {
             </div>
             
             <div style={{ marginTop: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#4a5568' }}>
+              <label className="form-label">
                 Clinical Description
               </label>
               <textarea
+                className="form-textarea"
                 placeholder="Detailed description of the lesion/condition (e.g., duration, symptoms, changes over time, associated pain/itching, family history, previous treatments)"
                 rows={4}
                 value={conditionDescription}
                 onChange={(e) => setConditionDescription(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  resize: 'vertical',
-                  fontFamily: 'inherit'
-                }}
               />
             </div>
 
@@ -778,7 +782,7 @@ const SkinDiseaseDetector = () => {
                       onClick={exportBatchResults}
                       className="btn btn-success"
                     >
-                      📊 Export Results
+                      Export Results
                     </button>
                      <button
                       onClick={() => setShowResultsChat(true)}
@@ -1044,13 +1048,13 @@ const SkinDiseaseDetector = () => {
           {transcript && (
             <div className="upload-card" style={{marginTop: '20px'}}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ margin: 0, color: '#2d3748' }}>📄 Text Preview</h3>
+                <h3 style={{ margin: 0, color: '#2d3748' }}>Text Preview</h3>
                 <button
                   onClick={handleDiagnose}
                   disabled={diagnosisLoading}
                   className="btn btn-primary"
                 >
-                  {diagnosisLoading ? '🔄 Analyzing...' : 'Generate Diagnosis'}
+                  {diagnosisLoading ? 'Analyzing...' : 'Generate Diagnosis'}
                 </button>
               </div>
               
@@ -1072,7 +1076,7 @@ const SkinDiseaseDetector = () => {
 
           {diagnosis && (
             <div className="upload-card" style={{marginTop: '20px'}}>
-              <h3 style={{ marginTop: 0, color: '#2d3748' }}>🎯 AI Diagnosis Analysis</h3>
+              <h3 style={{ marginTop: 0, color: '#2d3748' }}>AI Diagnosis Analysis</h3>
               
               <div style={{ 
                 backgroundColor: '#f0fff4',
@@ -1098,7 +1102,7 @@ const SkinDiseaseDetector = () => {
                   borderRadius: '8px',
                   padding: '20px'
                 }}>
-                  <h4 style={{ margin: '0 0 15px 0', color: '#2c5282' }}>📋 Extracted Clinical Data</h4>
+                  <h4 style={{ margin: '0 0 15px 0', color: '#2c5282' }}>Extracted Clinical Data</h4>
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
@@ -1122,7 +1126,7 @@ const SkinDiseaseDetector = () => {
                     className="btn btn-secondary"
                     style={{marginTop: '20px'}}
                   >
-                    🔄 Transfer Data to Image Analysis
+                    Transfer Data to Image Analysis
                   </button>
                 </div>
               )}

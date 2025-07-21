@@ -6,9 +6,12 @@ import { saveDocument, fetchDocuments } from '../services/api'; // <-- update im
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 import jsPDF from 'jspdf';
 import DocumentViewer from './common/DocumentViewer';
+import AskLuminaPopup from './common/AskLuminaPopup';
+import FloatingButton from './common/FloatingButton';
 
 const BatchRegulatoryGenerator = () => {
   const navigate = useNavigate();
+  const [showAskLumina, setShowAskLumina] = useState(false);
   
   // Form data state - ENHANCED WITH ALL FIELDS
   const [formData, setFormData] = useState({
@@ -140,13 +143,7 @@ const BatchRegulatoryGenerator = () => {
     ]
   };
 
-  // Load disease from localStorage
-  useEffect(() => {
-    const detectedDisease = localStorage.getItem('detectedDisease');
-    if (detectedDisease) {
-      setFormData(prev => ({ ...prev, disease_name: detectedDisease }));
-    }
-  }, []);
+  // Removed auto-population from localStorage
 
   // Handle form input changes
   const handleInputChange = (field, value) => {
@@ -506,52 +503,61 @@ const BatchRegulatoryGenerator = () => {
   }, [processingStatus, formData.disease_name, getJob]);
 
   return (
-    <div className="batch-regulatory-generator" style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
+    <div className="batch-regulatory-generator" style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem', position: 'relative' }}>
+      {/* Ask Lumina Popup */}
+      <AskLuminaPopup 
+        isOpen={showAskLumina}
+        onClose={() => setShowAskLumina(false)}
+        contextData="Batch Regulatory Generator - Global Document Submission"
+      />
+
+      {/* Professional Ask Lumina Floating Button */}
+      <FloatingButton
+        onClick={() => setShowAskLumina(true)}
+        icon="AI"
+        label="Ask Lumina™"
+        variant="primary"
+      />
+
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b' }}>
-          Batch Regulatory Document Generator
-        </h1>
-        <p style={{ color: '#64748b', marginBottom: '1rem' }}>
-          Generate multiple regulatory documents simultaneously for global submission
-        </p>
-        <button
-          onClick={handleShowPreviousDocs}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '6px',
-            background: '#4299e1',
-            color: 'white',
-            border: 'none',
-            cursor: 'pointer',
-            marginRight: '1rem'
-          }}
-        >
-          {showPreviousDocs ? 'Hide Previous Docs' : 'Previous Docs'}
-        </button>
-        <button
-          onClick={() => navigate('/regulatory-documents')}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#64748b',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          ← Back to Single Document Generator
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+          <div>
+            <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b' }}>
+              Batch Regulatory Document Generator
+            </h1>
+            <p style={{ color: '#64748b', marginBottom: '1rem' }}>
+              Generate multiple regulatory documents simultaneously for global submission
+            </p>
+
+            <br />
+            <button
+              onClick={() => navigate('/regulatory-documents')}
+              className="btn btn-secondary"
+            >
+              ← Back to Single Document Generator
+            </button>
+          </div>
+          <div>
+            <button
+              onClick={handleShowPreviousDocs}
+              className="btn btn-outline"
+            >
+              {showPreviousDocs ? 'Hide Previous Docs' : 'Previous Docs'}
+            </button>
+          </div>
+        </div>
       </div>
       {showPreviousDocs && (
         <div style={{ background: '#f7fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
           <h4 style={{ margin: 0, marginBottom: '0.5rem' }}>Previous Regulatory Documents</h4>
           <input
             type="text"
+            className="form-input"
             placeholder="Search by title, disease, or country..."
             value={searchTerm}
             onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            style={{ marginBottom: '0.75rem', padding: '6px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', width: '100%' }}
+            style={{ marginBottom: '0.75rem' }}
           />
           {loadingPreviousDocs ? <p>Loading...</p> : fetchError ? <p style={{ color: 'red' }}>{fetchError}</p> : (
             (() => {
@@ -607,21 +613,15 @@ const BatchRegulatoryGenerator = () => {
               </h2>
               
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
+                <label className="form-label">
                   Disease/Condition *
                 </label>
                 <input
                   type="text"
+                  className="form-input"
                   value={formData.disease_name}
                   onChange={(e) => handleInputChange('disease_name', e.target.value)}
                   placeholder="e.g., Psoriasis, Atopic Dermatitis"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '1rem'
-                  }}
                 />
               </div>
 
@@ -1150,7 +1150,7 @@ const BatchRegulatoryGenerator = () => {
                     onClick={handleClearSelections}
                     style={{
                       padding: '0.5rem 1rem',
-                      backgroundColor: '#ef4444',
+                      backgroundColor: 'var(--color-error)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
@@ -1183,7 +1183,7 @@ const BatchRegulatoryGenerator = () => {
                       onClick={() => handleSelectRegion(region)}
                       style={{
                         padding: '0.25rem 0.75rem',
-                        backgroundColor: '#3b82f6',
+                        backgroundColor: 'var(--color-primary)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -1274,19 +1274,8 @@ const BatchRegulatoryGenerator = () => {
                 <button
                   onClick={startBatchProcessing}
                   disabled={processingStatus === 'processing' || selectedDocuments.length === 0 || !formData.disease_name.trim()}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem 1.5rem',
-                    backgroundColor: processingStatus === 'processing' || selectedDocuments.length === 0 || !formData.disease_name.trim() 
-                      ? '#9ca3af' : '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: processingStatus === 'processing' || selectedDocuments.length === 0 || !formData.disease_name.trim() 
-                      ? 'not-allowed' : 'pointer',
-                    fontSize: '1rem',
-                    fontWeight: '500'
-                  }}
+                  className={`btn btn-success btn-lg ${processingStatus === 'processing' ? 'btn-loading' : ''}`}
+                  style={{ flex: 1 }}
                 >
                   {processingStatus === 'processing' ? 'Processing...' : `Generate ${selectedDocuments.length} Documents`}
                 </button>
@@ -1294,14 +1283,7 @@ const BatchRegulatoryGenerator = () => {
                 {(processingStatus === 'completed' || batchQueue.length > 0) && (
                   <button
                     onClick={resetBatch}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      backgroundColor: '#64748b',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer'
-                    }}
+                    className="btn btn-secondary"
                   >
                     Reset
                   </button>
@@ -1321,7 +1303,7 @@ const BatchRegulatoryGenerator = () => {
                       style={{ 
                         width: `${batchProgress}%`, 
                         height: '20px', 
-                        backgroundColor: '#3b82f6', 
+                        backgroundColor: 'var(--color-primary)', 
                         transition: 'width 0.3s ease' 
                       }}
                     />
@@ -1358,7 +1340,7 @@ const BatchRegulatoryGenerator = () => {
                       onClick={downloadAllDocuments}
                       style={{
                         padding: '0.5rem 1rem',
-                        backgroundColor: '#10b981',
+                        backgroundColor: 'var(--color-success)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '6px',
@@ -1416,7 +1398,7 @@ const BatchRegulatoryGenerator = () => {
                               onClick={() => downloadDocument(doc)}
                               style={{
                                 padding: '0.25rem 0.5rem',
-                                backgroundColor: '#3b82f6',
+                                backgroundColor: 'var(--color-primary)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',
@@ -1424,7 +1406,7 @@ const BatchRegulatoryGenerator = () => {
                                 fontSize: '0.75rem'
                               }}
                             >
-                              📥 Download
+                              ⬇ Download
                             </button>
                           )}
                         </div>

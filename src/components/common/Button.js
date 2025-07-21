@@ -3,7 +3,7 @@ import React from 'react';
 /**
  * Button component for consistent styling
  * @param {Object} props - Component props
- * @param {string} props.variant - Button variant: 'primary', 'secondary', 'success', 'danger'
+ * @param {string} props.variant - Button variant: 'primary', 'secondary', 'success', 'danger', 'outline'
  * @param {string} props.size - Button size: 'sm', 'md', 'lg'
  * @param {boolean} props.loading - Whether the button is in loading state
  * @param {boolean} props.disabled - Whether the button is disabled

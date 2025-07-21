@@ -430,7 +430,7 @@ const ClinicalDossierCompiler = () => {
                   disabled={!primaryIndication.trim() || validatingDocuments.size > 0}
                   style={{
                     padding: '0.5rem 1rem',
-                    backgroundColor: primaryIndication.trim() ? '#3b82f6' : '#94a3b8',
+                    backgroundColor: primaryIndication.trim() ? 'var(--color-primary)' : 'var(--color-gray-400)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -583,7 +583,7 @@ const ClinicalDossierCompiler = () => {
                           disabled={validatingDocuments.has(doc.id)}
                           style={{
                             padding: '0.5rem 0.75rem',
-                            backgroundColor: '#3b82f6',
+                            backgroundColor: 'var(--color-primary)',
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
@@ -599,7 +599,7 @@ const ClinicalDossierCompiler = () => {
                         className="remove-button"
                         style={{
                           padding: '0.5rem 1rem',
-                          backgroundColor: '#ef4444',
+                          backgroundColor: 'var(--color-error)',
                           color: 'white',
                           border: 'none',
                           borderRadius: '6px',
@@ -628,7 +628,7 @@ const ClinicalDossierCompiler = () => {
                 fontWeight: '600',
                 borderRadius: '12px',
                 border: 'none',
-                backgroundColor: isReadyToCompile() && !loading ? '#10b981' : '#94a3b8',
+                backgroundColor: isReadyToCompile() && !loading ? 'var(--color-success)' : 'var(--color-gray-400)',
                 color: 'white',
                 cursor: isReadyToCompile() && !loading ? 'pointer' : 'not-allowed',
                 transition: 'all 0.2s ease',
@@ -654,7 +654,7 @@ const ClinicalDossierCompiler = () => {
                 fontSize: '0.9rem',
                 fontWeight: '500'
               }}>
-                ⚠️ Some documents have validation issues. Review and address them before compiling.
+                ! Some documents have validation issues. Review and address them before compiling.
               </p>
             )}
           </div>

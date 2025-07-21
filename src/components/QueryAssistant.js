@@ -14,8 +14,7 @@ const QueryAssistant = () => {
 
   useEffect(() => {
     fetchProtocols();
-    const detectedDisease = localStorage.getItem('detectedDisease');
-    if (detectedDisease) setDiseaseContext(detectedDisease);
+    // Removed auto-population from localStorage
   }, []);
 
   const fetchProtocols = async () => {
@@ -178,9 +177,10 @@ Please rephrase your question to focus on clinical trials, protocol development,
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="question">Your Question</label>
+          <label htmlFor="question" className="form-label">Your Question</label>
           <textarea
             id="question"
+            className="form-textarea"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="e.g., What are key efficacy endpoints for psoriasis?"
@@ -191,9 +191,10 @@ Please rephrase your question to focus on clinical trials, protocol development,
 
         <div className="form-grid">
           <div className="form-group">
-            <label>Disease Context (Optional)</label>
+            <label className="form-label">Disease Context (Optional)</label>
             <input
               type="text"
+              className="form-input"
               value={diseaseContext}
               onChange={(e) => setDiseaseContext(e.target.value)}
               placeholder="e.g., Psoriasis, Eczema"
@@ -201,8 +202,9 @@ Please rephrase your question to focus on clinical trials, protocol development,
           </div>
 
           <div className="form-group">
-            <label>Reference Protocol (Optional)</label>
+            <label className="form-label">Reference Protocol (Optional)</label>
             <select
+              className="form-select"
               value={selectedProtocolId}
               onChange={(e) => setSelectedProtocolId(e.target.value)}
             >
@@ -216,13 +218,13 @@ Please rephrase your question to focus on clinical trials, protocol development,
           </div>
         </div>
 
-        <button type="submit" disabled={loading || !question}>
+        <button type="submit" disabled={loading || !question} className={`btn btn-primary ${loading ? 'btn-loading' : ''}`}>
           {loading ? 'Generating Answer...' : 'Submit Question'}
         </button>
       </form>
 
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">✅ Answer received!</div>}
+      {error && <div className="alert alert-error">{error}</div>}
+      {success && <div className="alert alert-success">Answer received!</div>}
 
       {answer && (
         <div className="answer-container">

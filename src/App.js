@@ -15,6 +15,7 @@ import LungCancerDetector from './components/LungCancerDetector';
 import DiseaseDiagnosis from './components/DiseaseDiagnosis';
 import BackgroundJobs from './components/common/BackgroundJobs'; // NEW IMPORT
 import './App.css';
+import './components.css';
 
 // Navigation component that only shows on non-landing pages
 const Navigation = () => {
@@ -30,7 +31,7 @@ const Navigation = () => {
       <ul>
         <li><Link to="/" className="home-link">Home</Link></li>
         <li><Link to="/protocol" className={location.pathname === '/protocol' ? 'active' : ''}>Protocol & Study Design Generator</Link></li>
-        <li><Link to="/regulatory-documents" className={location.pathname.includes('/regulatory') || location.pathname.includes('/ind-modules') || location.pathname.includes('/batch') ? 'active' : ''}>Regulatory Document Generator</Link></li>
+        <li><Link to="/regulatory-documents" className={location.pathname === '/regulatory-documents' || location.pathname === '/ind-modules' ? 'active' : ''}>Regulatory Document Generator</Link></li>
         <li><Link to="/batch-regulatory" className={location.pathname === '/batch-regulatory' ? 'active' : ''}>Batch Regulatory Generator</Link></li>
         <li><Link to="/clinical-dossier" className={location.pathname === '/clinical-dossier' ? 'active' : ''}>Clinical Dossier Compiler</Link></li>
         <li><Link to="/query" className={location.pathname === '/query' ? 'active' : ''}>Ask Lumina<span className="trademark">™</span></Link></li>

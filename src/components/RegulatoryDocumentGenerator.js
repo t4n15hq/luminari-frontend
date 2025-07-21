@@ -84,7 +84,7 @@ const RegulatoryDocumentGenerator = () => {
     'Custom/Other'
   ];
 
-  // Load parameters from navigation state or localStorage
+  // Load parameters from navigation state
   useEffect(() => {
     // Check for navigation state from map selection
     if (location.state) {
@@ -111,18 +111,14 @@ const RegulatoryDocumentGenerator = () => {
       }
     }
     
-    // Check localStorage as backup
-    const detectedDisease = localStorage.getItem('detectedDisease');
-    if (detectedDisease && !disease) {
-      setDisease(detectedDisease);
-    }
+    // Removed auto-population from localStorage
   }, [location.state, disease]);
 
   // Navigate back to map selection
   const handleBackToMap = () => {
     navigate('/regulatory-documents');
   };
-
+  
   // Main form submit handler - UPDATED FOR BACKGROUND PROCESSING
   const handleSubmit = async () => {
     setError('');
@@ -395,7 +391,7 @@ const RegulatoryDocumentGenerator = () => {
           <h2>Enhanced Regulatory Document Generator</h2>
           <p>Generate comprehensive regulatory documentation with detailed trial design parameters</p>
         </div>
-        <button onClick={handleShowPreviousDocs} style={{ padding: '8px 16px', borderRadius: '6px', background: '#4299e1', color: 'white', border: 'none', cursor: 'pointer' }}>
+        <button onClick={handleShowPreviousDocs} className="btn btn-outline">
           {showPreviousDocs ? 'Hide Previous Docs' : 'Previous Docs'}
         </button>
       </div>
@@ -404,10 +400,11 @@ const RegulatoryDocumentGenerator = () => {
           <h4 style={{ margin: 0, marginBottom: '0.5rem' }}>Previous Regulatory Documents</h4>
           <input
             type="text"
+            className="form-input"
             placeholder="Search by title, disease, or country..."
             value={searchTerm}
             onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            style={{ marginBottom: '0.75rem', padding: '6px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', width: '100%' }}
+            style={{ marginBottom: '0.75rem' }}
           />
           {loadingPreviousDocs ? <p>Loading...</p> : fetchError ? <p style={{ color: 'red' }}>{fetchError}</p> : (
             (() => {
@@ -507,10 +504,11 @@ const RegulatoryDocumentGenerator = () => {
           <h3>Basic Information</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="disease">Disease/Condition <span className="required">*</span></label>
+              <label htmlFor="disease" className="form-label">Disease/Condition <span className="required">*</span></label>
               <input
                 id="disease"
                 type="text"
+                className="form-input"
                 value={disease}
                 onChange={(e) => setDisease(e.target.value)}
                 placeholder="e.g., Psoriasis, Eczema, Atopic Dermatitis"
@@ -521,9 +519,10 @@ const RegulatoryDocumentGenerator = () => {
             {/* Document Type Selection */}
             {selectedCountryData && (
               <div className="form-group">
-                <label htmlFor="documentType">Document Type <span className="required">*</span></label>
+                <label htmlFor="documentType" className="form-label">Document Type <span className="required">*</span></label>
                 <select
                   id="documentType"
+                  className="form-select"
                   value={documentType}
                   onChange={(e) => setDocumentType(e.target.value)}
                 >
@@ -534,17 +533,18 @@ const RegulatoryDocumentGenerator = () => {
                     </option>
                   ))}
                 </select>
-                <div className="form-hint">
+                <div className="form-help">
                   {selectedCountryData.availableDocuments.find(doc => doc.name === documentType)?.purpose}
                 </div>
               </div>
             )}
 
             <div className="form-group">
-              <label htmlFor="drug-class">Drug Class</label>
+              <label htmlFor="drug-class" className="form-label">Drug Class</label>
               <input
                 id="drug-class"
                 type="text"
+                className="form-input"
                 value={drugClass}
                 onChange={(e) => setDrugClass(e.target.value)}
                 placeholder="e.g., Corticosteroid, Biologics, Small molecule"
@@ -859,24 +859,24 @@ const RegulatoryDocumentGenerator = () => {
             type="button"
             onClick={handleSubmit}
             disabled={loading || !disease}
-            className="generate-button"
+            className={`btn btn-primary btn-lg ${loading ? 'btn-loading' : ''}`}
           >
             {loading ? 'Generating...' : `Generate Enhanced ${documentType || 'Regulatory Documents'}`}
           </button>
           <button 
             type="button" 
             onClick={resetForm}
-            className="reset-button"
+            className="btn btn-secondary"
           >
             Reset Form
           </button>
         </div>
       </div>
 
-      {error && <div className="error-message" aria-live="polite">{error}</div>}
+      {error && <div className="alert alert-error" aria-live="polite">{error}</div>}
 
       {loading && <div className="loading-indicator">
-        <div className="spinner"></div>
+        <div className="loading-spinner"></div>
         <p>Generating comprehensive regulatory documentation with enhanced trial parameters...</p>
       </div>}
 
@@ -922,7 +922,7 @@ const RegulatoryDocumentGenerator = () => {
                   ? result.cmc_section
                   : result.clinical_section;
                 navigator.clipboard.writeText(content);
-                alert('✅ Current section copied!');
+                alert('Current section copied!');
               }}
               className="view-button"
             >
@@ -933,7 +933,7 @@ const RegulatoryDocumentGenerator = () => {
                 navigator.clipboard.writeText(
                   `CMC SECTION:\n\n${result.cmc_section}\n\nCLINICAL SECTION:\n\n${result.clinical_section}`
                 );
-                alert('✅ All sections copied!');
+                alert('All sections copied!');
               }}
               className="view-button"
             >
