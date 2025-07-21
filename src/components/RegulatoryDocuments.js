@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from 'react-simple-maps';
 import { geoCentroid } from 'd3-geo';
+import AskLuminaPopup from './common/AskLuminaPopup';
+import FloatingButton from './common/FloatingButton';
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -41,6 +43,7 @@ const regionCentroids = {
 const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [hoveredRegion, setHoveredRegion] = useState(null);
+  const [showAskLumina, setShowAskLumina] = useState(false);
 
   // Comprehensive regional data with regulatory documentation for each country
   const regions = {
@@ -312,13 +315,40 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
   };
 
   return (
-    <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '30px', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', maxWidth: '1200px', margin: '0 auto' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '10px', color: '#2d3748' }}>
-        Global Regulatory Document Map
-      </h2>
-      <p style={{ textAlign: 'center', color: '#4a5568', marginBottom: '30px' }}>
-        Select a region to explore available regulatory documents by country
-      </p>
+    <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '30px', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
+      {/* Ask Lumina Popup */}
+      <AskLuminaPopup 
+        isOpen={showAskLumina}
+        onClose={() => setShowAskLumina(false)}
+        contextData="Regulatory Documents - Global Market Requirements"
+      />
+
+      {/* Professional Ask Lumina Floating Button */}
+      <FloatingButton
+        onClick={() => setShowAskLumina(true)}
+        icon="AI"
+        label="Ask Lumina™"
+        variant="primary"
+      />
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        <div>
+          <h2 style={{ textAlign: 'left', marginBottom: '10px', color: '#2d3748', margin: 0 }}>
+            Global Regulatory Document Map
+          </h2>
+          <p style={{ textAlign: 'left', color: '#4a5568', margin: '0.5rem 0 0 0' }}>
+            Select a region to explore available regulatory documents by country
+          </p>
+        </div>
+        <a 
+          href="/batch-regulatory" 
+          className="btn btn-outline"
+          style={{ textDecoration: 'none' }}
+        >
+          Batch Generator
+        </a>
+      </div>
+      
       <div style={{ position: 'relative', width: '100%', height: '400px', margin: '20px 0' }}>
         <ComposableMap projection="geoMercator" width={900} height={400} style={{ width: '100%', height: '400px' }}>
           <ZoomableGroup center={[20, 20]} zoom={1}>

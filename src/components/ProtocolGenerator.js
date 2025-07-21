@@ -4,8 +4,12 @@ import { saveDocument, fetchDocuments } from '../services/api'; // <-- update im
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 import jsPDF from 'jspdf';
 import DocumentViewer from './common/DocumentViewer';
+import AskLuminaPopup from './common/AskLuminaPopup';
+import FloatingButton from './common/FloatingButton';
 
 const ProtocolGenerator = () => {
+  const [showAskLumina, setShowAskLumina] = useState(false);
+  
   // Basic Information
   const [disease, setDisease] = useState('');
   const [population, setPopulation] = useState('');
@@ -50,8 +54,8 @@ const ProtocolGenerator = () => {
   const [studyDesign, setStudyDesign] = useState(null);
   const [activeTab, setActiveTab] = useState('protocol');
   const [error, setError] = useState('');
-  const [showGeneratedInfo, setShowGeneratedInfo] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showGeneratedInfo, setShowGeneratedInfo] = useState(false);
   const [showPreviousProtocols, setShowPreviousProtocols] = useState(false);
   const [previousProtocols, setPreviousProtocols] = useState([]);
   const [loadingPrevious, setLoadingPrevious] = useState(false);
@@ -119,13 +123,7 @@ const ProtocolGenerator = () => {
     'Custom/Other'
   ];
 
-  // Get disease from localStorage on mount
-  useEffect(() => {
-    const detectedDisease = localStorage.getItem('detectedDisease');
-    if (detectedDisease) {
-      setDisease(detectedDisease);
-    }
-  }, []);
+  // Removed auto-population from localStorage
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -388,13 +386,29 @@ const ProtocolGenerator = () => {
   };
 
   return (
-    <div className="protocol-generator">
+    <div className="protocol-generator" style={{ position: 'relative' }}>
+      {/* Ask Lumina Popup */}
+      <AskLuminaPopup 
+        isOpen={showAskLumina}
+        onClose={() => setShowAskLumina(false)}
+        contextData="Protocol Generation - Clinical Study Design"
+      />
+
+      {/* Professional Ask Lumina Floating Button */}
+      <FloatingButton
+        onClick={() => setShowAskLumina(true)}
+        icon="AI"
+        label="Ask Lumina™"
+        variant="primary"
+      />
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h2>Clinical Study Protocol Generator</h2>
           <p>Generate a complete clinical study protocol with enhanced trial design parameters</p>
+          
         </div>
-        <button onClick={handleShowPreviousProtocols} style={{ padding: '8px 16px', borderRadius: '6px', background: '#4299e1', color: 'white', border: 'none', cursor: 'pointer' }}>
+        <button onClick={handleShowPreviousProtocols} className="btn btn-outline">
           {showPreviousProtocols ? 'Hide Previous Protocols' : 'Previous Protocols'}
         </button>
       </div>
@@ -403,29 +417,13 @@ const ProtocolGenerator = () => {
           <h4 style={{ margin: 0, marginBottom: '0.5rem' }}>Previous Documents</h4>
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem' }}>
             <button
-              style={{
-                padding: '6px 16px',
-                borderRadius: '6px',
-                border: previousDocType === 'PROTOCOL' ? '2px solid #4299e1' : '1px solid #cbd5e1',
-                background: previousDocType === 'PROTOCOL' ? '#4299e1' : 'white',
-                color: previousDocType === 'PROTOCOL' ? 'white' : '#2d3748',
-                cursor: 'pointer',
-                fontWeight: previousDocType === 'PROTOCOL' ? 600 : 400
-              }}
+              className={`btn btn-sm ${previousDocType === 'PROTOCOL' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setPreviousDocType('PROTOCOL')}
             >
               Protocols
             </button>
             <button
-              style={{
-                padding: '6px 16px',
-                borderRadius: '6px',
-                border: previousDocType === 'STUDY_DESIGN' ? '2px solid #4299e1' : '1px solid #cbd5e1',
-                background: previousDocType === 'STUDY_DESIGN' ? '#4299e1' : 'white',
-                color: previousDocType === 'STUDY_DESIGN' ? 'white' : '#2d3748',
-                cursor: 'pointer',
-                fontWeight: previousDocType === 'STUDY_DESIGN' ? 600 : 400
-              }}
+              className={`btn btn-sm ${previousDocType === 'STUDY_DESIGN' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setPreviousDocType('STUDY_DESIGN')}
             >
               Study Designs
@@ -433,10 +431,11 @@ const ProtocolGenerator = () => {
           </div>
           <input
             type="text"
+            className="form-input"
             placeholder={`Search by title or disease...`}
             value={searchTerm}
             onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            style={{ marginBottom: '0.75rem', padding: '6px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', width: '100%' }}
+            style={{ marginBottom: '0.75rem' }}
           />
           {loadingPrevious ? <p>Loading...</p> : fetchError ? <p style={{ color: 'red' }}>{fetchError}</p> : (
             (() => {
@@ -479,10 +478,11 @@ const ProtocolGenerator = () => {
           <h3>Basic Information</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="disease">Disease/Condition <span className="required">*</span></label>
+              <label htmlFor="disease" className="form-label">Disease/Condition <span className="required">*</span></label>
               <input
                 id="disease"
                 type="text"
+                className="form-input"
                 value={disease}
                 onChange={(e) => setDisease(e.target.value)}
                 placeholder="e.g., Psoriasis, Eczema, Atopic Dermatitis"
@@ -491,10 +491,11 @@ const ProtocolGenerator = () => {
             </div>
             
             <div className="form-group">
-              <label htmlFor="population">Target Population</label>
+              <label htmlFor="population" className="form-label">Target Population</label>
               <input
                 id="population"
                 type="text"
+                className="form-input"
                 value={population}
                 onChange={(e) => setPopulation(e.target.value)}
                 placeholder="e.g., Adults, Pediatric, Elderly"
@@ -502,10 +503,11 @@ const ProtocolGenerator = () => {
             </div>
             
             <div className="form-group">
-              <label htmlFor="drugClass">Drug Class</label>
+              <label htmlFor="drugClass" className="form-label">Drug Class</label>
               <input
                 id="drugClass"
                 type="text"
+                className="form-input"
                 value={drugClass}
                 onChange={(e) => setDrugClass(e.target.value)}
                 placeholder="e.g., small molecule JAK inhibitor"
@@ -513,10 +515,11 @@ const ProtocolGenerator = () => {
             </div>
             
             <div className="form-group">
-              <label htmlFor="mechanism">Mechanism of Action</label>
+              <label htmlFor="mechanism" className="form-label">Mechanism of Action</label>
               <input
                 id="mechanism"
                 type="text"
+                className="form-input"
                 value={mechanism}
                 onChange={(e) => setMechanism(e.target.value)}
                 placeholder="e.g., Selectively inhibits JAK1 and JAK2"
@@ -530,9 +533,10 @@ const ProtocolGenerator = () => {
           <h3>Trial Design & Basics</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="trialPhase">Trial Phase</label>
+              <label htmlFor="trialPhase" className="form-label">Trial Phase</label>
               <select
                 id="trialPhase"
+                className="form-select"
                 value={trialPhase}
                 onChange={(e) => setTrialPhase(e.target.value)}
               >
@@ -854,21 +858,21 @@ const ProtocolGenerator = () => {
           <button 
             type="submit"
             disabled={loading || !disease}
-            className="submit-btn"
+            className={`btn btn-primary btn-lg ${loading ? 'btn-loading' : ''}`}
           >
             {loading ? 'Generating...' : 'Generate Enhanced Protocol'}
           </button>
           
           {loading && (
             <div className="loading-indicator">
-              <div className="spinner"></div>
+              <div className="loading-spinner"></div>
               <p>Generating comprehensive protocol with all specified parameters...</p>
             </div>
           )}
         </div>
       </form>
       
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="alert alert-error">{error}</div>}
       
       {showGeneratedInfo && (
         <div className="success-message">

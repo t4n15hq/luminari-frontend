@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import AskLuminaPopup from './common/AskLuminaPopup';
+import FloatingButton from './common/FloatingButton';
 
 const DiseaseDiagnosis = () => {
+  const [showAskLumina, setShowAskLumina] = useState(false);
+
   // List of medical specialties - Dermatology and Pulmonology are now active
   const specialties = [
     { 
@@ -127,114 +131,128 @@ const DiseaseDiagnosis = () => {
   ];
 
   return (
-    <div className="disease-diagnosis-container">
-      <div className="page-header">
-        <h2>Disease Screening</h2>
-        <p className="subtitle">Select a medical specialty to access AI-powered diagnosis tools</p>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem', position: 'relative' }}>
+      {/* Ask Lumina Popup */}
+      <AskLuminaPopup 
+        isOpen={showAskLumina}
+        onClose={() => setShowAskLumina(false)}
+        contextData="Disease Screening - Medical Specialty Selection"
+      />
+
+      {/* Professional Ask Lumina Floating Button */}
+      <FloatingButton
+        onClick={() => setShowAskLumina(true)}
+        icon="AI"
+        label="Ask Lumina™"
+        variant="primary"
+      />
+
+      {/* Simple Header */}
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b' }}>
+         Disease Screening
+        </h1>
+        <p style={{ color: '#64748b' }}>
+          Select a medical specialty to access AI-powered diagnosis tools
+        </p>
+
       </div>
       
-      <div className="specialty-grid">
+      {/* Simple Grid */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+        gap: '1.5rem' 
+      }}>
         {specialties.map(specialty => (
           <div 
             key={specialty.id} 
-            className={`specialty-card ${specialty.isActive ? 'active' : 'inactive'}`}
-            style={{ borderLeft: `4px solid ${specialty.color}` }}
+            style={{
+              backgroundColor: 'white',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              padding: '1.5rem',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              transition: 'box-shadow 0.2s ease',
+              ...(specialty.isActive ? {} : { opacity: 0.6 })
+            }}
+            onMouseEnter={(e) => {
+              if (specialty.isActive) {
+                e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+            }}
           >
-            <div className="specialty-icon" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
-              {specialty.icon}
+            {/* Simple Icon */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              marginBottom: '1rem' 
+            }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '8px',
+                backgroundColor: '#f8f9fa',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: '1rem'
+              }}>
+{typeof specialty.icon === 'string' ? (
+                  <span style={{ fontSize: '24px' }}>{specialty.icon}</span>
+                ) : (
+                  <specialty.icon size={24} style={{ color: specialty.color }} />
+                )}
+              </div>
+              <h3 style={{ 
+                margin: 0, 
+                fontSize: '1.125rem', 
+                fontWeight: '600',
+                color: '#1e293b'
+              }}>
+                {specialty.name}
+              </h3>
             </div>
             
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem', fontWeight: '600' }}>
-              {specialty.name}
-            </h3>
-            
+            {/* Simple Description */}
             <p style={{ 
-              margin: '0 0 1rem 0', 
-              color: 'var(--color-text-light)', 
-              fontSize: '0.9rem',
-              lineHeight: '1.4'
+              margin: '0 0 1.5rem 0', 
+              color: '#64748b', 
+              fontSize: '0.875rem',
+              lineHeight: '1.5'
             }}>
               {specialty.description}
             </p>
-
-            {/* Feature list for active specialties */}
-            {specialty.isActive && specialty.features.length > 1 && (
-              <div style={{ marginBottom: '1rem' }}>
-                <ul style={{ 
-                  listStyle: 'none', 
-                  padding: 0, 
-                  margin: 0,
-                  fontSize: '0.8rem',
-                  color: 'var(--color-text-light)'
-                }}>
-                  {specialty.features.map((feature, index) => (
-                    <li key={index} style={{ 
-                      marginBottom: '0.25rem',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}>
-                      <span style={{ 
-                        color: specialty.color, 
-                        marginRight: '0.5rem',
-                        fontWeight: 'bold'
-                      }}>
-                        •
-                      </span>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
             
+            {/* Simple Button */}
             {specialty.isActive ? (
               <Link 
                 to={specialty.path} 
-                className="specialty-button active"
+                className="btn btn-primary"
                 style={{
-                  display: 'inline-block',
-                  padding: '0.75rem 1.5rem',
-                  backgroundColor: specialty.color,
-                  color: 'white',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  fontWeight: '500',
-                  fontSize: '0.9rem',
-                  transition: 'all 0.2s ease',
-                  textAlign: 'center',
+                  display: 'block',
                   width: '100%',
-                  boxSizing: 'border-box'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.opacity = '0.9';
-                  e.target.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.opacity = '1';
-                  e.target.style.transform = 'translateY(0)';
+                  textAlign: 'center',
+                  textDecoration: 'none'
                 }}
               >
-                Access Tools
+                 Access Tools
               </Link>
             ) : (
-              <span 
-                className="specialty-button inactive"
+              <button 
+                disabled
+                className="btn btn-secondary"
                 style={{
-                  display: 'inline-block',
-                  padding: '0.75rem 1.5rem',
-                  backgroundColor: '#e5e7eb',
-                  color: '#9ca3af',
-                  borderRadius: '0.5rem',
-                  fontWeight: '500',
-                  fontSize: '0.9rem',
-                  textAlign: 'center',
                   width: '100%',
-                  boxSizing: 'border-box',
-                  cursor: 'not-allowed'
+                  cursor: 'not-allowed',
+                  opacity: 0.6
                 }}
               >
-                Coming Soon
-              </span>
+                 Coming Soon
+              </button>
             )}
           </div>
         ))}

@@ -2,10 +2,25 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FileUpload, ResultsChat } from './common';
 import apiService from '../services/api';
+import { 
+  ArrowLeftIcon,
+  UploadIcon,
+  ActivityIcon,
+  FileTextIcon,
+  DownloadIcon,
+  CheckCircleIcon,
+  AlertCircleIcon,
+  HomeIcon,
+  ClockIcon,
+  BarChartIcon
+} from './icons/MedicalIcons';
+import AskLuminaPopup from './common/AskLuminaPopup';
+import FloatingButton from './common/FloatingButton';
 
 const LungCancerDetector = () => {
   // Analysis mode state - 'single' or 'batch'
   const [analysisMode, setAnalysisMode] = useState('single');
+  const [showAskLumina, setShowAskLumina] = useState(false);
 
   // Single analysis states
   const [transcript, setTranscript] = useState('');
@@ -203,8 +218,7 @@ const LungCancerDetector = () => {
         detected: response.probability >= 0.35
       });
 
-      localStorage.setItem('detectedDisease', 'Lung Cancer Detection Analysis');
-      localStorage.setItem('metadata', JSON.stringify({ analysisText: transcript }));
+      // Removed localStorage data saving
 
     } catch (error) {
       clearTimeout(timeout);
@@ -229,9 +243,7 @@ const LungCancerDetector = () => {
   };
 
   const goToPage = (path) => {
-    if (textPrediction) {
-      localStorage.setItem('detectedDisease', 'Lung Cancer Detection Analysis');
-    }
+    // Removed localStorage data saving
     window.location.href = path;
   };
   
@@ -248,7 +260,22 @@ const LungCancerDetector = () => {
   };
 
   return (
-    <div className="lung-cancer-detector">
+    <div className="lung-cancer-detector" style={{ position: 'relative' }}>
+      {/* Ask Lumina Popup */}
+      <AskLuminaPopup 
+        isOpen={showAskLumina}
+        onClose={() => setShowAskLumina(false)}
+        contextData="Pulmonology - Lung Cancer Risk Assessment"
+      />
+
+      {/* Professional Ask Lumina Floating Button */}
+      <FloatingButton
+        onClick={() => setShowAskLumina(true)}
+        icon="AI"
+        label="Ask Lumina™"
+        variant="primary"
+      />
+
       {showResultsChat && (
         <ResultsChat
           results={batchResults}
@@ -266,39 +293,39 @@ const LungCancerDetector = () => {
           <span>Pulmonology</span>
         </div>
         
-        <Link to="/diagnosis" className="back-to-specialties">
+        <Link to="/diagnosis" className="btn btn-secondary btn-sm">
+          <ArrowLeftIcon size={16} />
           Back to Specialties
         </Link>
       </div>
 
       {/* Page Header Section */}
       <div className="page-header">
-        <h1>Lung Cancer Detector</h1>
-        <p>Analyze medical text or audio recordings for potential lung cancer indicators using single or batch processing</p>
+        <h1>Pulmonology Text Analysis</h1>
+        <p>Clinical decision support tool for lung cancer risk assessment</p>
       </div>
 
-      {/* Analysis Mode Tabs */}
+      {/* Analysis Type Tabs */}
       <div className="analysis-tabs">
         <button
-          className={`tab-button ${analysisMode === 'single' ? 'active' : ''}`}
+          className={`btn ${analysisMode === 'single' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setAnalysisMode('single')}
         >
-          Single Analysis
+          Text Analysis
         </button>
         <button
-          className={`tab-button ${analysisMode === 'batch' ? 'active' : ''}`}
+          className={`btn ${analysisMode === 'batch' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setAnalysisMode('batch')}
         >
           Batch Processing
         </button>
-
         <button
-    className={`tab-button ${analysisMode === 'video' ? 'active' : ''}`}
-    onClick={() => setAnalysisMode('video')}
-    disabled
-  >
-    Video Analysis (In Development)
-  </button>
+          className="btn btn-secondary"
+          disabled
+          style={{ opacity: 0.5, cursor: 'not-allowed' }}
+        >
+          Video Analysis (Coming Soon)
+        </button>
       </div>
 
       {/* Single Analysis Section */}
@@ -308,7 +335,7 @@ const LungCancerDetector = () => {
           <div className="upload-card">
             <h3>Upload Audio File</h3>
             <FileUpload onTranscript={setTranscript} />
-            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-light)', marginTop: '10px' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '10px' }}>
               Upload MP3, WAV, or other audio files containing medical consultations or patient interviews
             </p>
           </div>
@@ -317,22 +344,14 @@ const LungCancerDetector = () => {
           <div className="upload-card" style={{ marginTop: '20px' }}>
             <h3>Or Enter Medical Text</h3>
             <textarea
+              className="form-textarea"
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
               placeholder="Enter clinical notes, patient history, medical consultation transcript, or any medical text related to respiratory symptoms..."
               rows={8}
-              style={{
-                width: '100%',
-                padding: '15px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'Arial, sans-serif',
-                resize: 'vertical',
-                minHeight: '150px'
-              }}
+              style={{ minHeight: '150px' }}
             />
-            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-light)', marginTop: '10px' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '10px' }}>
               Paste medical text, consultation notes, or patient descriptions of symptoms
             </p>
           </div>
@@ -411,7 +430,7 @@ const LungCancerDetector = () => {
                     borderRadius: '8px',
                     border: '1px solid #fecaca'
                   }}>
-                    <h4>❌ Analysis Error</h4>
+                    <h4>× Analysis Error</h4>
                     <p>{textPrediction.error}</p>
                   </div>
                 ) : (
@@ -429,7 +448,7 @@ const LungCancerDetector = () => {
                         fontSize: '4rem', 
                         marginBottom: '15px' 
                       }}>
-                        {textPrediction.detected ? '⚠️' : '✅'}
+                        {textPrediction.detected ? '!' : '✓'}
                       </div>
                       
                       <h2 style={{ 
@@ -469,7 +488,7 @@ const LungCancerDetector = () => {
                       marginBottom: '25px'
                     }}>
                       <h4 style={{ margin: '0 0 10px 0', color: '#374151' }}>
-                        📋 Recommendation:
+                        Recommendation:
                       </h4>
                       <p style={{ margin: 0, lineHeight: '1.6', color: '#4b5563' }}>
                         {textPrediction.detected 
@@ -489,19 +508,19 @@ const LungCancerDetector = () => {
                           onClick={() => goToPage('/protocol')} 
                           className="btn btn-secondary"
                         >
-                          📋 Generate Clinical Protocol
+                          Generate Clinical Protocol
                         </button>
                         <button 
                           onClick={() => goToPage('/ind-modules')} 
                           className="btn btn-secondary"
                         >
-                          📄 Generate Regulatory Document
+                          Generate Regulatory Document
                         </button>
                         <button 
                           onClick={() => goToPage('/query')} 
                           className="btn btn-secondary"
                         >
-                          ❓ Ask Clinical Question
+                          Ask Clinical Question
                         </button>
                       </div>
                     </div>
@@ -525,7 +544,7 @@ const LungCancerDetector = () => {
               onChange={handleBatchFileChange}
               style={{ marginBottom: '20px' }}
             />
-            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-light)', marginBottom: '15px' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: '15px' }}>
               Select multiple text files (.txt) or audio files (MP3, WAV) for batch processing.
             </p>
             
@@ -533,7 +552,7 @@ const LungCancerDetector = () => {
               onClick={addManualText}
               className="btn btn-success"
             >
-              + Add Manual Text Entry
+              Add Manual Text Entry
             </button>
           </div>
           
