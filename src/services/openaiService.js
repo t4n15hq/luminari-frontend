@@ -10,37 +10,45 @@ const OPENAI_CONFIG = {
   // For comprehensive regulatory documents requiring extensive detail
   COMPREHENSIVE: {
     model: "gpt-4o",
-    max_tokens: 16384,        // Maximum for GPT-4o
-    temperature: 0.3,         // Increased to prevent repetition
-    presence_penalty: 0.3,    // Higher to encourage diverse content
-    frequency_penalty: 0.5    // Much higher to prevent repetitive loops
+    max_tokens: 8192,         // Reduced to prevent truncation issues
+    temperature: 0.7,         // Optimal for creative but controlled content
+    presence_penalty: 0.1,    // Light penalty to encourage topic diversity
+    frequency_penalty: 0.2,   // Moderate penalty to reduce repetition
+    stream: false,            // Explicitly disable streaming
+    top_p: 0.9               // Add nucleus sampling for better quality
   },
   
   // For shorter, more precise content
   PRECISE: {
     model: "gpt-4o",
-    max_tokens: 8192,
-    temperature: 0.1,
+    max_tokens: 4096,
+    temperature: 0.3,         // Lower for precision
     presence_penalty: 0.05,
-    frequency_penalty: 0.05
+    frequency_penalty: 0.1,   // Light frequency penalty
+    stream: false,
+    top_p: 0.8
   },
   
   // For analysis and evaluation tasks
   ANALYTICAL: {
     model: "gpt-4o",
     max_tokens: 4096,
-    temperature: 0.05,
+    temperature: 0.2,         // Very controlled for analysis
     presence_penalty: 0,
-    frequency_penalty: 0
+    frequency_penalty: 0.05,  // Minimal to avoid affecting technical terms
+    stream: false,
+    top_p: 0.85
   },
 
   // Specialized configuration for regulatory documents
   REGULATORY: {
     model: "gpt-4o",
-    max_tokens: 16384,
-    temperature: 0.25,        // Increased to prevent loops while maintaining precision
-    presence_penalty: 0.4,    // Higher diversity for comprehensive coverage
-    frequency_penalty: 0.6    // Much higher to prevent repetitive regulatory jargon
+    max_tokens: 16384,        // Increased back to maximum for 10K+ word documents
+    temperature: 0.6,         // Balanced for regulatory content
+    presence_penalty: 0.15,   // Moderate for topic diversity
+    frequency_penalty: 0.25,  // MUCH LOWER - was 0.6, now 0.25
+    stream: false,
+    top_p: 0.9
   }
 };
 
