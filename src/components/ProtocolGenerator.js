@@ -292,8 +292,36 @@ const ProtocolGenerator = () => {
         const doc = new jsPDF();
         doc.setFont('helvetica');
         doc.setFontSize(12);
-        const lines = doc.splitTextToSize(content, 180);
-        doc.text(lines, 10, 10);
+        
+        // PDF page settings
+        const pageHeight = doc.internal.pageSize.height;
+        const pageWidth = doc.internal.pageSize.width;
+        const margin = 20;
+        const maxLineWidth = pageWidth - (margin * 2);
+        const lineHeight = 7; // Space between lines
+        const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
+        
+        // Split content into lines that fit the page width
+        const lines = doc.splitTextToSize(content, maxLineWidth);
+        
+        let currentLine = 0;
+        let currentPage = 1;
+        
+        // Add content with automatic page breaks
+        for (let i = 0; i < lines.length; i++) {
+          // Check if we need a new page
+          if (currentLine >= maxLinesPerPage) {
+            doc.addPage();
+            currentPage++;
+            currentLine = 0;
+          }
+          
+          // Add line to current page
+          const yPosition = margin + (currentLine * lineHeight);
+          doc.text(lines[i], margin, yPosition);
+          currentLine++;
+        }
+        
         doc.save(`${filename}.pdf`);
       }
     } catch (error) {

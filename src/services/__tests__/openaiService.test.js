@@ -5,21 +5,45 @@ import axios from 'axios';
 jest.mock('axios');
 const mockedAxios = axios;
 
+// Mock the axios.create method to return a mock with post method
+mockedAxios.create = jest.fn(() => ({
+  post: jest.fn()
+}));
+
 describe('OpenAI Service', () => {
+  let mockOpenaiApi;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset environment variables
-    process.env.REACT_APP_OPENAI_API_URL = 'http://localhost:5000';
+    
+    // Create mock for the openaiApi instance
+    mockOpenaiApi = {
+      post: jest.fn()
+    };
+    mockedAxios.create.mockReturnValue(mockOpenaiApi);
+    
+    // Set environment variables
+    process.env.REACT_APP_OPENAI_API_KEY = 'test-api-key';
   });
 
   describe('queryAssistant', () => {
-    test('sends POST request to correct endpoint with question only', async () => {
-      const mockResponse = {
+    test('sends POST request to OpenAI API with question only', async () => {
+      // Mock both relevance check and main response
+      const relevanceResponse = {
         data: {
-          answer: 'This is a test response from the AI assistant.'
+          choices: [{ message: { content: 'RELEVANT' } }]
         }
       };
-      mockedAxios.post.mockResolvedValue(mockResponse);
+      
+      const mainResponse = {
+        data: {
+          choices: [{ message: { content: 'This is a test response from the AI assistant.' } }]
+        }
+      };
+
+      mockOpenaiApi.post
+        .mockResolvedValueOnce(relevanceResponse)  // First call for relevance check
+        .mockResolvedValueOnce(mainResponse);     // Second call for main response
 
       const params = {
         question: 'What is a clinical trial?'
@@ -27,18 +51,30 @@ describe('OpenAI Service', () => {
 
       const result = await openaiService.queryAssistant(params);
 
-      expect(mockedAxios.post).toHaveBeenCalledWith(
-        'http://localhost:5000/api/query',
-        {
-          question: 'What is a clinical trial?',
-          disease_context: undefined
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      // Verify relevance check call
+      expect(mockOpenaiApi.post).toHaveBeenNthCalledWith(1, 'chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: expect.stringContaining("relevance checker")
+          },
+          { role: "user", content: 'What is a clinical trial?' }
+        ],
+        temperature: 0,
+        max_tokens: 10
+      });
+
+      // Verify main response call
+      expect(mockOpenaiApi.post).toHaveBeenNthCalledWith(2, 'chat/completions', expect.objectContaining({
+        model: "gpt-4o",
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: "user",
+            content: expect.stringContaining('What is a clinical trial?')
+          })
+        ])
+      }));
 
       expect(result).toEqual({
         answer: 'This is a test response from the AI assistant.'

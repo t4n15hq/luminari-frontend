@@ -4,6 +4,186 @@ import axios from 'axios';
 
 const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
 
+
+// Enhanced OpenAI Configuration for Optimal Content Generation
+const OPENAI_CONFIG = {
+  // For comprehensive regulatory documents requiring extensive detail
+  COMPREHENSIVE: {
+    model: "gpt-4o",
+    max_tokens: 16384,        // Maximum for GPT-4o
+    temperature: 0.3,         // Increased to prevent repetition
+    presence_penalty: 0.3,    // Higher to encourage diverse content
+    frequency_penalty: 0.5    // Much higher to prevent repetitive loops
+  },
+  
+  // For shorter, more precise content
+  PRECISE: {
+    model: "gpt-4o",
+    max_tokens: 8192,
+    temperature: 0.1,
+    presence_penalty: 0.05,
+    frequency_penalty: 0.05
+  },
+  
+  // For analysis and evaluation tasks
+  ANALYTICAL: {
+    model: "gpt-4o",
+    max_tokens: 4096,
+    temperature: 0.05,
+    presence_penalty: 0,
+    frequency_penalty: 0
+  },
+
+  // Specialized configuration for regulatory documents
+  REGULATORY: {
+    model: "gpt-4o",
+    max_tokens: 16384,
+    temperature: 0.25,        // Increased to prevent loops while maintaining precision
+    presence_penalty: 0.4,    // Higher diversity for comprehensive coverage
+    frequency_penalty: 0.6    // Much higher to prevent repetitive regulatory jargon
+  }
+};
+
+// Document type requirements and standards
+const DOCUMENT_REQUIREMENTS = {
+  protocol: { 
+    minWords: 8000, 
+    sections: 10,
+    config: 'COMPREHENSIVE',
+    type: 'Clinical Protocol'
+  },
+  ind: { 
+    minWords: 12000, 
+    sections: 16,
+    config: 'REGULATORY',
+    type: 'IND Application'
+  },
+  nda: { 
+    minWords: 10000, 
+    sections: 8,
+    config: 'REGULATORY',
+    type: 'NDA Submission'
+  },
+  bla: { 
+    minWords: 10000, 
+    sections: 8,
+    config: 'REGULATORY',
+    type: 'BLA Submission'
+  },
+  cta: { 
+    minWords: 8000, 
+    sections: 7,
+    config: 'REGULATORY',
+    type: 'CTA Application'
+  },
+  maa: { 
+    minWords: 9000, 
+    sections: 8,
+    config: 'REGULATORY',
+    type: 'MAA Application'
+  },
+  impd: { 
+    minWords: 7000, 
+    sections: 6,
+    config: 'COMPREHENSIVE',
+    type: 'IMPD Document'
+  }
+};
+
+// Required parameters by document type
+const REQUIRED_PARAMETERS = {
+  protocol: ['trial_phase', 'primary_endpoint', 'study_duration'],
+  ind: ['compound_name', 'indication', 'dosage_form'],
+  nda: ['trade_name', 'active_ingredient', 'indication'],
+  bla: ['product_name', 'indication', 'manufacturing_site'],
+  cta: ['protocol_number', 'indication', 'trial_phase'],
+  maa: ['trade_name', 'active_substance', 'therapeutic_indication'],
+  impd: ['active_substance', 'dosage_form', 'route_of_administration']
+};
+
+// Standardized formatting requirements
+const FORMATTING_STANDARDS = `
+FORMATTING REQUIREMENTS:
+- Use plain text formatting only - NO MARKDOWN, NO HTML
+- Use ALL CAPS for main section headings (e.g., "1. PROTOCOL SUMMARY")
+- Use Title Case for subsection headings with appropriate numbering (e.g., "1.1 Study Objectives")
+- Include proper spacing between sections (double line break)
+- Use professional document structure with consistent indentation
+- Reference applicable regulatory guidance documents with proper citations
+- Use standard medical and regulatory terminology throughout
+- Maintain consistent numbering and bullet point formatting
+`;
+
+// Enhanced parameter processing functions
+const validateDocumentRequirements = (diseaseData, docType) => {
+  const requirements = DOCUMENT_REQUIREMENTS[docType];
+  if (!requirements) {
+    throw new Error(`Unsupported document type: ${docType}`);
+  }
+
+  const requiredParams = REQUIRED_PARAMETERS[docType] || [];
+  const providedParams = diseaseData.additional_parameters || {};
+  const missing = requiredParams.filter(param => !providedParams[param]);
+  
+  if (missing.length > 0) {
+    console.warn(`Missing recommended parameters for ${docType}: ${missing.join(', ')}`);
+  }
+  
+  return requirements;
+};
+
+const formatParametersForDocument = (parameters, docType) => {
+  if (!parameters || Object.keys(parameters).length === 0) {
+    return 'No additional parameters provided.';
+  }
+
+  const relevantParams = Object.entries(parameters)
+    .filter(([key, value]) => value && value.toString().trim())
+    .map(([key, value]) => {
+      const formattedKey = key.replace(/_/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+      return `- ${formattedKey}: ${value}`;
+    });
+
+  return relevantParams.length > 0 ? relevantParams.join('\n') : 'No valid parameters provided.';
+};
+
+const getConfigForDocumentType = (docType) => {
+  const requirements = DOCUMENT_REQUIREMENTS[docType];
+  const configType = requirements?.config || 'COMPREHENSIVE';
+  return OPENAI_CONFIG[configType];
+};
+
+const createSystemPrompt = (expertise, docType, regulatoryFramework, detailedRequirements) => {
+  const requirements = DOCUMENT_REQUIREMENTS[docType];
+  const documentTypeDescription = requirements?.type || docType.toUpperCase();
+  
+  return `You are a ${expertise} with 25+ years of experience in ${documentTypeDescription.toLowerCase()} preparation and regulatory submissions. You have successfully authored over 200 ${documentTypeDescription.toLowerCase()}s and have intimate knowledge of ${regulatoryFramework} requirements.
+
+Your task is to generate a comprehensive, regulatory-compliant ${documentTypeDescription.toUpperCase()} that meets the highest standards expected by regulatory agencies.
+
+CRITICAL ${regulatoryFramework.toUpperCase()} REQUIREMENTS:
+${detailedRequirements}
+
+MINIMUM CONTENT REQUIREMENTS:
+- Total document length: ${requirements?.minWords || 8000}+ words minimum
+- Number of major sections: ${requirements?.sections || 8}+ comprehensive sections
+- Each section must contain detailed technical content with specific methodological details
+- Include comprehensive regulatory and scientific justification for all recommendations
+- Provide specific numerical parameters, timing, and acceptance criteria where applicable
+- Reference relevant regulatory guidance documents and industry standards
+- Use professional clinical research and regulatory terminology throughout
+
+${FORMATTING_STANDARDS}
+
+QUALITY STANDARDS:
+- Demonstrate deep understanding of regulatory requirements and industry best practices
+- Provide actionable, specific recommendations with clear rationale
+- Include risk assessments and mitigation strategies where appropriate
+- Ensure content is suitable for direct submission to regulatory authorities
+- Maintain consistency with international regulatory harmonization guidelines`;
+};
+
 // Create an Axios instance for OpenAI API
 const openaiApi = axios.create({
   baseURL: 'https://api.openai.com/v1/',
@@ -47,7 +227,7 @@ const openaiService = {
       const response = await openaiApi.post(
         "chat/completions",
         {
-          model: "gpt-4o", // UPGRADED
+          ...OPENAI_CONFIG.ANALYTICAL,
           messages: [
             {
               role: "system",
@@ -57,9 +237,7 @@ const openaiService = {
               role: "user",
               content: transcript
             }
-          ],
-          temperature: 0.1, // REDUCED for higher medical precision
-          max_tokens: 4000
+          ]
         }
       );
       return response.data.choices[0].message.content.trim();
@@ -70,72 +248,81 @@ const openaiService = {
   },
 
   /**
-   * Generate Protocol - Enhanced version
+   * Generate Protocol - Enhanced version with standardized approach
    */
   generateProtocol: async (diseaseData) => {
     try {
-      const response = await openaiApi.post(
-        'chat/completions',
-        {
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: `You are a senior regulatory affairs expert with 20+ years of experience in writing clinical study protocols for major pharmaceutical companies and regulatory agencies.
+      // Validate requirements and get configuration
+      const requirements = validateDocumentRequirements(diseaseData, 'protocol');
+      const config = getConfigForDocumentType('protocol');
+      
+      // Format parameters for document
+      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'protocol');
+      
+      // Create standardized system prompt
+      const systemPrompt = createSystemPrompt(
+        'Senior Clinical Development Director and Principal Investigator',
+        'protocol',
+        'FDA/ICH/GCP',
+        `Generate a comprehensive FDA/ICH-compliant clinical trial protocol with ${requirements.sections} detailed sections totaling ${requirements.minWords}+ words.
 
-              Your task is to generate a highly professional, ICH/FDA/EMA-compliant protocol EXECUTIVE SUMMARY for a clinical trial that meets industry standards for regulatory submission.
+REQUIRED SECTIONS:
+1. PROTOCOL SUMMARY (800+ words) - Overview, objectives, design, population, endpoints
+2. BACKGROUND & RATIONALE (1000+ words) - Disease context, unmet need, drug rationale  
+3. OBJECTIVES & ENDPOINTS (700+ words) - Primary/secondary objectives and endpoints
+4. STUDY DESIGN (1200+ words) - Design rationale, randomization, blinding, procedures
+5. STUDY POPULATION (800+ words) - Inclusion/exclusion criteria with rationale
+6. TREATMENTS (600+ words) - Dosing, administration, concomitant medications
+7. ASSESSMENTS (1000+ words) - Visit schedule, procedures, safety monitoring
+8. STATISTICS (1200+ words) - Sample size, analysis methods, missing data
+9. SAFETY MONITORING (600+ words) - Safety oversight, adverse event reporting
+10. REGULATORY COMPLIANCE (400+ words) - GCP compliance, quality assurance
 
-              CRITICAL REQUIREMENTS:
-              - This must be EXTREMELY DETAILED - you must generate at least 5,000 words (or more if required by the structure)
-              - Do not stop until all requirements and sections are fully met and the minimum word count is achieved
-              - If you reach the token limit, end with [END OF PART X] and wait for a continuation request. Continue in the next response until the document is complete.
-              - Do not skip or summarize any required section. Each section must be fully developed and detailed.
-              - Include specific numerical values, dosing regimens, and methodological details
-              - Reference established protocols and regulatory guidance documents
-              - Use professional medical and regulatory terminology throughout
-
-              STRICT FORMATTING REQUIREMENTS:
-              - Format according to ICH E6(R2) Good Clinical Practice guidelines
-              - Follow EXACTLY this section structure with numbered sections:
-                1. Protocol Summary / Synopsis
-                2. Introduction & Background
-                3. Objectives & Endpoints
-                4. Study Design & Investigational Plan
-                5. Study Population & Eligibility
-                6. Interventions / Treatments
-                7. Assessments & Procedures
-                8. Statistical Considerations & Data Analysis
-                9. Outcome Analysis (Efficacy, Safety, etc.)
-                10. References & Appendices / Supporting Documentation
-              - Use ALL CAPS for main section headings (e.g., "1. PROTOCOL SUMMARY / SYNOPSIS")
-              - Use Title Case for subsection headings with appropriate numbering
-              - DO NOT use markdown formatting or special characters
-              - Use plain text with proper spacing and indentation only
-
-              IMPORTANT: You must generate at least 5,000 words. Do not stop until this minimum is reached and all requirements are fully met. If you reach the token limit, end your response with [END OF PART X] and wait for a continuation request. Continue in the next response until the document is complete.`
-            },
-            {
-              role: "user",
-              content: `Generate a highly detailed and comprehensive ${diseaseData.additional_parameters?.trial_phase || 'Phase 2'} Clinical Study Protocol EXECUTIVE SUMMARY for the treatment of ${diseaseData.disease_name}.
-
-              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
-              ).filter(Boolean).join('\n')}
-
-              The executive summary must be extremely comprehensive and detailed while incorporating all provided trial design parameters to create a regulatory-compliant protocol suitable for FDA/EMA submission. You must generate at least 5,000 words. Do not stop until this minimum is reached and all requirements are fully met. If you reach the token limit, end your response with [END OF PART X] and wait for a continuation request. Continue in the next response until the document is complete.`  
-            }
-          ],
-          temperature: 0.15,
-          max_tokens: 12000
-        }
+REQUIREMENTS:
+- Reference FDA/ICH guidelines (E6(R2), E9(R1))
+- Include statistical parameters and regulatory justification
+- Use professional clinical research terminology
+- Ensure content suitable for regulatory submission`
       );
+
+      const userPrompt = `Generate a comprehensive ${diseaseData.additional_parameters?.trial_phase || 'Phase 2'} clinical trial protocol for ${diseaseData.disease_name}.
+
+STUDY PARAMETERS:
+${formattedParams}
+
+Create ${requirements.sections} sections with comprehensive content meeting the minimum word counts specified. Include regulatory justification, statistical parameters, and technical specifications suitable for FDA submission.`;
+
+
+      const response = await openaiApi.post('chat/completions', {
+        ...config,
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: userPrompt
+          }
+        ]
+      });
 
       return {
         protocol_id: `prot-${Date.now()}`,
         protocol: response.data.choices[0].message.content.trim()
       };
     } catch (error) {
-      console.error('Error in generateProtocol:', error.response?.data || error.message);
+      console.error('Error in generateProtocol:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+        config: error.config ? {
+          url: error.config.url,
+          method: error.config.method,
+          headers: error.config.headers
+        } : null
+      });
       throw error;
     }
   },
@@ -149,46 +336,85 @@ const openaiService = {
    */
   generateIndModule: async (diseaseData) => {
     try {
-      const response = await openaiApi.post(
-        'chat/completions',
-        {
-          model: "gpt-4o", // UPGRADED
-          messages: [
-            {
-              role: "system",
-              content: `You are a Principal Investigator and Clinical Trial Design Expert with 25+ years of experience in pharmaceutical development.
-              Your task is to generate a comprehensive, regulatory-compliant MAIN DOCUMENT for an Investigational New Drug (IND) application, focusing on the study design, CMC, and clinical sections. This document meets professional industry standards for submission to the FDA.
-              
-              CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-              - Generate MINIMUM 5,000-6,000 words of comprehensive content
-              - Each section must contain extensive detail with specific methodologies, procedures, and regulatory compliance information
-              - Include detailed subsections with numerical data, timelines, and specific protocols
-              - Provide complete regulatory rationale and scientific justification for all decisions
-              - Reference specific FDA guidance documents and regulatory requirements
-              
-              The document MUST be structured EXACTLY into these sections:
-              CMC SECTION: (Chemistry, Manufacturing, and Controls - EXTREMELY DETAILED)
-              CLINICAL SECTION: (numbered 1-10 with comprehensive clinical information - MINIMUM 3,000 words)
-              
-              Use plain text formatting only - NO MARKDOWN.
-              Incorporate ALL provided parameters systematically throughout both sections.
-              IMPORTANT: If you reach the maximum length or token limit, end your response with [END OF PART 1] and wait for a continuation request.`
-            },
-            {
-              role: "user",
-              content: `Generate a comprehensive, FDA-compliant MAIN DOCUMENT for an Investigational New Drug (IND) application for ${diseaseData.disease_name}.
+      // Validate requirements and get configuration
+      const requirements = validateDocumentRequirements(diseaseData, 'ind');
+      const config = getConfigForDocumentType('ind');
+      
+      // Format parameters for document
+      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'ind');
+      
+      // Create standardized system prompt
+      const systemPrompt = createSystemPrompt(
+        'Senior Regulatory Affairs Director and Principal Investigator',
+        'ind',
+        'FDA/21 CFR 312',
+        `You MUST generate comprehensive, detailed content that meets FDA requirements for IND applications as outlined in 21 CFR 312:
 
-              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
-              ).filter(Boolean).join('\n')}
+IND SECTION REQUIREMENTS (Minimum ${requirements.minWords} words total):
 
-              This MAIN DOCUMENT must incorporate all enhanced parameters to create a comprehensive, parameter-specific IND suitable for FDA submission with EXTENSIVE DETAIL in every section. If you reach the maximum length or token limit, end your response with [END OF PART 1] and wait for a continuation request.`
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 12000 // INCREASED
-        }
+CMC SECTION REQUIREMENTS (Chemistry, Manufacturing, and Controls - 4,500+ words):
+1. DRUG SUBSTANCE (700+ words) - Complete characterization including molecular structure, synthesis pathway, physicochemical properties, specifications, analytical methods, reference standards, and impurity profiles
+2. DRUG PRODUCT (700+ words) - Comprehensive formulation details, excipient justification, manufacturing process, in-process controls, finished product specifications, and packaging systems
+3. MANUFACTURING INFORMATION (600+ words) - Detailed process descriptions, critical process parameters, facility information, equipment specifications, and GMP compliance documentation
+4. CONTROLS OF DRUG SUBSTANCE AND DRUG PRODUCT (800+ words) - Extensive analytical methods validation, specifications justification, batch analysis data, and quality control procedures
+5. STABILITY (500+ words) - Complete stability study protocols, data analysis, degradation pathways, storage conditions, and shelf-life justification
+6. ENVIRONMENTAL ASSESSMENT (200+ words) - Environmental impact evaluation and categorical exclusion justification
+
+CLINICAL SECTION REQUIREMENTS (Comprehensive 7,500+ words):
+1. INTRODUCTION AND BACKGROUND (800+ words) - Detailed disease pathophysiology, epidemiology, current treatments, unmet medical need, and investigational product rationale
+2. STUDY DESIGN AND RATIONALE (1200+ words) - Complete study design justification, methodology, randomization procedures, blinding techniques, visit schedules, and statistical considerations
+3. STUDY POPULATION (800+ words) - Comprehensive inclusion/exclusion criteria with complete medical and scientific rationale, screening procedures, and population justification
+4. TREATMENTS AND INTERVENTIONS (700+ words) - Detailed dosing rationale, administration procedures, dose modifications, concomitant medications, and compliance monitoring
+5. EFFICACY ASSESSMENTS (800+ words) - Primary/secondary endpoints with measurement methodologies, timing considerations, and regulatory acceptability
+6. SAFETY ASSESSMENTS (800+ words) - Comprehensive safety monitoring plan, adverse event classification, stopping rules, and pharmacovigilance procedures
+7. STATISTICAL CONSIDERATIONS (1000+ words) - Sample size calculations with power analysis, primary analysis methods, handling of missing data, and interim analyses
+8. DATA MANAGEMENT AND QUALITY ASSURANCE (600+ words) - Data collection systems, monitoring procedures, quality control measures, and regulatory compliance
+9. REGULATORY AND ETHICAL CONSIDERATIONS (700+ words) - IRB requirements, informed consent, regulatory reporting, and patient protection measures
+10. RISK MANAGEMENT AND MITIGATION (1100+ words) - Comprehensive risk-benefit analysis, safety monitoring, risk mitigation strategies, and contingency plans
+
+CRITICAL FDA COMPLIANCE STANDARDS:
+- Reference specific FDA guidance documents (ICH Q8, Q9, Q10, E6(R2), E9(R1))
+- Include detailed technical specifications and numerical parameters
+- Provide comprehensive regulatory justification for all recommendations
+- Use professional regulatory terminology throughout
+- Ensure content meets FDA reviewer expectations for thoroughness`
       );
+
+      const response = await openaiApi.post('chat/completions', {
+        ...config,
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: `Generate a comprehensive, FDA-compliant MAIN DOCUMENT for an Investigational New Drug (IND) application for ${diseaseData.disease_name}.
+
+STUDY PARAMETERS:
+${formattedParams}
+
+MANDATORY REQUIREMENTS:
+- Generate exactly ${requirements.sections} major sections with comprehensive content
+- Total document must exceed ${requirements.minWords} words
+- Each section must meet the specified minimum word counts listed above
+- Include detailed technical specifications and regulatory justification
+- Reference specific FDA guidance documents throughout
+- Use professional regulatory terminology and language
+- Ensure content is suitable for direct FDA submission
+
+The document must be structured as:
+
+CMC SECTION:
+[All 6 CMC subsections with comprehensive technical detail]
+
+CLINICAL SECTION:
+[All 10 clinical subsections with extensive detail]
+
+Generate content that exceeds FDA reviewer expectations for thoroughness, technical accuracy, and regulatory compliance.`
+          }
+        ]
+      });
 
       const fullResponse = response.data.choices[0].message.content;
       
@@ -227,48 +453,65 @@ const openaiService = {
    */
   generateNDA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post(
-        'chat/completions',
-        {
-          model: "gpt-4o", // UPGRADED
-          messages: [
-            {
-              role: "system",
-              content: `You are a senior regulatory affairs expert with 25+ years of experience preparing New Drug Applications (NDAs) for FDA submission.
-              Your task is to generate a comprehensive, FDA-compliant NDA SUMMARY document. This document should highlight key information typically found in Module 2 (CTD Summaries) and relevant aspects of Module 5 (Clinical Study Reports) of an eCTD submission.
-              
-              CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-              - Generate MINIMUM 5,000-6,000 words of comprehensive regulatory content
-              - Each section must contain extensive detail with specific data, methodologies, and regulatory analysis
-              - Include detailed subsections with quantitative data, statistical analysis, and regulatory justification
-              - Provide complete regulatory rationale and compliance documentation
-              - Reference specific FDA guidance documents, regulations, and industry standards
-              
-              Structure according to FDA guidelines for NDA submissions, reflecting the Common Technical Document (CTD) structure:
-              1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY
-              2. OVERALL SUMMARY OF QUALITY (Based on CTD Module 2.3)
-              3. NONCLINICAL OVERVIEW AND SUMMARY (Based on CTD Modules 2.4 & 2.6)
-              4. CLINICAL OVERVIEW AND SUMMARY (Based on CTD Modules 2.5 & 2.7)
-              5. KEY CLINICAL STUDY REPORT SUMMARIES
-              
-              Use plain text formatting only - NO MARKDOWN.
-              IMPORTANT: If you reach the maximum length or token limit, end your response with [END OF PART 1] and wait for a continuation request.`
-            },
-            {
-              role: "user",
-              content: `Generate a comprehensive, FDA-compliant NDA SUMMARY for ${diseaseData.disease_name}.
+      // Validate requirements and get configuration
+      const requirements = validateDocumentRequirements(diseaseData, 'nda');
+      const config = getConfigForDocumentType('nda');
+      
+      // Format parameters for document
+      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'nda');
+      
+      // Create standardized system prompt
+      const systemPrompt = createSystemPrompt(
+        'Senior Regulatory Affairs Director and NDA Specialist',
+        'nda',
+        'FDA/eCTD/ICH CTD',
+        `You MUST generate comprehensive, detailed content that meets FDA requirements for New Drug Application (NDA) submissions following eCTD and ICH CTD guidelines:
 
-              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
-              ).filter(Boolean).join('\n')}
+NDA SUMMARY SECTION REQUIREMENTS (Minimum ${requirements.minWords} words total):
+1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY (1200+ words) - Complete regulatory overview, application details, proposed labeling summary, risk evaluation and mitigation strategies, and administrative compliance documentation
+2. OVERALL SUMMARY OF QUALITY (1500+ words) - Comprehensive CTD Module 2.3 summary including drug substance characterization, drug product development, manufacturing controls, analytical procedures, stability data, and pharmaceutical development rationale
+3. NONCLINICAL OVERVIEW AND SUMMARY (1800+ words) - Detailed CTD Modules 2.4 & 2.6 content including pharmacology, pharmacokinetics, toxicology studies, safety pharmacology, reproductive toxicity, genotoxicity, carcinogenicity, and integrated risk assessment
+4. CLINICAL OVERVIEW AND SUMMARY (2500+ words) - Comprehensive CTD Modules 2.5 & 2.7 content including development strategy, study design rationale, efficacy summary, safety analysis, benefit-risk assessment, and regulatory precedents
+5. KEY CLINICAL STUDY REPORT SUMMARIES (3000+ words) - Detailed summaries of pivotal studies including methodology, statistical analysis, primary/secondary endpoints, safety data, subgroup analyses, and regulatory implications
 
-              This NDA SUMMARY must incorporate all enhanced parameters to create a comprehensive, parameter-specific NDA suitable for FDA submission with EXTENSIVE DETAIL in every section. If you reach the maximum length or token limit, end your response with [END OF PART 1] and wait for a continuation request.`
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 12000 // INCREASED
-        }
+CRITICAL FDA NDA COMPLIANCE STANDARDS:
+- Reference specific FDA guidance documents (M4: Common Technical Document, ICH E2A-E2F, Quality guidelines)
+- Include detailed quantitative data, statistical analyses, and methodological specifications
+- Provide comprehensive regulatory rationale and compliance documentation
+- Include risk assessment and mitigation strategies throughout
+- Reference precedent approvals and regulatory pathway justification
+- Ensure content meets FDA reviewer expectations for marketing authorization
+- Include detailed benefit-risk analysis with population-specific considerations`
       );
+
+      const response = await openaiApi.post('chat/completions', {
+        ...config,
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: `Generate a comprehensive, FDA-compliant NDA SUMMARY for ${diseaseData.disease_name}.
+
+STUDY PARAMETERS:
+${formattedParams}
+
+MANDATORY REQUIREMENTS:
+- Generate exactly ${requirements.sections} major sections with comprehensive content
+- Total document must exceed ${requirements.minWords} words
+- Each section must meet the specified minimum word counts listed above
+- Include detailed quantitative data, statistical analyses, and regulatory justification
+- Reference specific FDA guidance documents and eCTD/CTD structure throughout
+- Use professional regulatory terminology and language suitable for FDA review
+- Ensure content demonstrates readiness for commercial marketing authorization
+
+Generate an NDA summary that exceeds FDA reviewer expectations for thoroughness, technical accuracy, and regulatory compliance. Each section must demonstrate comprehensive understanding of FDA requirements for new drug approval.`
+          }
+        ]
+      });
+
       return {
         document_content: response.data.choices[0].message.content.trim()
       };
@@ -283,53 +526,67 @@ const openaiService = {
    */
   generateBLA: async (diseaseData) => {
     try {
+      // Validate requirements and get configuration
+      const requirements = validateDocumentRequirements(diseaseData, 'bla');
+      const config = getConfigForDocumentType('bla');
+      
+      // Format parameters for document
+      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'bla');
+      
+      // Create standardized system prompt
+      const systemPrompt = createSystemPrompt(
+        'Senior Regulatory Affairs Director and Biologics Specialist',
+        'bla',
+        'FDA/Public Health Service Act/CBER',
+        `You MUST generate comprehensive, detailed content that meets FDA requirements for Biologics License Application (BLA) submissions under the Public Health Service Act:
+
+BLA SUMMARY SECTION REQUIREMENTS (Minimum ${requirements.minWords} words total):
+1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY (1200+ words) - Complete regulatory overview, biologic product details, proposed labeling summary, Risk Evaluation and Mitigation Strategies (REMS), and biologics-specific administrative compliance documentation
+2. OVERALL SUMMARY OF QUALITY - BIOLOGICS FOCUS (2000+ words) - Comprehensive biologics quality summary including biologic characterization, manufacturing process controls, cell line development, purification processes, analytical methods validation, stability studies, and adventitious agent testing
+3. NONCLINICAL OVERVIEW AND SUMMARY (1800+ words) - Detailed biologics-specific nonclinical data including pharmacology, pharmacokinetics, toxicology studies, safety pharmacology, immunotoxicology, reproductive toxicity, and integrated biologics risk assessment
+4. CLINICAL OVERVIEW AND SUMMARY (2500+ words) - Comprehensive clinical development summary including immunogenicity assessment, clinical pharmacology, efficacy analysis, safety evaluation, benefit-risk assessment for biologics, and population-specific considerations
+5. KEY CLINICAL STUDY REPORT SUMMARIES (2500+ words) - Detailed summaries of pivotal biologics studies including immunogenicity monitoring, bioanalytical methods, clinical endpoints, safety analysis, and regulatory implications for biologics approval
+
+CRITICAL FDA BLA BIOLOGICS-SPECIFIC COMPLIANCE STANDARDS:
+- Address biologics-specific manufacturing considerations (cell line characterization, process validation, scale-up)
+- Include comprehensive biologic characterization (structure, purity, potency, heterogeneity)
+- Document adventitious agent safety and viral clearance studies
+- Provide detailed immunogenicity assessment and clinical impact analysis
+- Reference specific FDA biologics guidance documents (ICH Q5A-Q5E, FDA biologics guidances)
+- Include comparability assessments for any manufacturing changes
+- Address Public Health Service Act Section 351 requirements
+- Demonstrate biologics-specific risk-benefit considerations`
+      );
+
       const response = await openaiApi.post('chat/completions', {
-        model: "gpt-4o", // UPGRADED
+        ...config,
         messages: [
           {
             role: "system",
-            content: `You are a senior regulatory affairs expert with 25+ years of experience preparing Biologics License Applications (BLAs) for FDA submission.
-            Your task is to generate a comprehensive BLA SUMMARY document, analogous to an NDA summary but with a focus on biologics-specific considerations.
-
-            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of comprehensive biologics regulatory content
-            - Each section must contain extensive detail with specific biologics data, methodologies, and regulatory analysis
-            - Include detailed subsections with quantitative data, characterization studies, and regulatory justification
-            - Provide complete regulatory rationale for biologics-specific requirements
-            - Reference specific FDA guidance documents for biologics, regulations, and industry standards
-
-            KEY BLA-SPECIFIC CONSIDERATIONS:
-            - Manufacturing process for biologics (cell lines, fermentation/culture, purification)
-            - Characterization of the biologic (structure, purity, potency, heterogeneity, immunogenicity)
-            - Comparability assessments (if manufacturing changes occurred)
-            - Stability of the biologic
-            - Adventitious agent safety
-            - Immunogenicity assessment and impact
-
-            STRUCTURE:
-            1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY
-            2. OVERALL SUMMARY OF QUALITY (BIOLOGICS FOCUS)
-            3. NONCLINICAL OVERVIEW AND SUMMARY
-            4. CLINICAL OVERVIEW AND SUMMARY
-            5. KEY CLINICAL STUDY REPORT SUMMARIES
-            
-            Use plain text formatting only - NO MARKDOWN.
-            Reference the Public Health Service Act where relevant for biologics.`
+            content: systemPrompt
           },
           {
             role: "user",
-            content: `Generate a comprehensive BLA SUMMARY document for a biologic treatment for ${diseaseData.disease_name}.
-            
-            ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-              value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
-            ).filter(Boolean).join('\n')}
+            content: `Generate a comprehensive, FDA-compliant BLA SUMMARY for a biologic treatment for ${diseaseData.disease_name}.
 
-            This BLA SUMMARY must be EXTREMELY DETAILED and meet FDA expectations for a biologic, emphasizing biologics-specific aspects (manufacturing, characterization, immunogenicity, comparability) with EXTENSIVE DETAIL in every section.`
+STUDY PARAMETERS:
+${formattedParams}
+
+MANDATORY REQUIREMENTS:
+- Generate exactly ${requirements.sections} major sections with comprehensive content
+- Total document must exceed ${requirements.minWords} words
+- Each section must meet the specified minimum word counts listed above
+- Include detailed biologics-specific technical specifications and regulatory justification
+- Reference specific FDA biologics guidance documents and CBER requirements throughout
+- Address all biologics-specific considerations (manufacturing, characterization, immunogenicity)
+- Use professional regulatory terminology suitable for FDA biologics review
+- Ensure content demonstrates readiness for biologics marketing authorization
+
+Generate a BLA summary that exceeds FDA reviewer expectations for biologics thoroughness, technical accuracy, and regulatory compliance. Each section must demonstrate comprehensive understanding of FDA requirements for biologic product approval.`
           }
-        ],
-        temperature: 0.2, 
-        max_tokens: 8000 // INCREASED
+        ]
       });
+
       return { document_content: response.data.choices[0].message.content.trim() };
     } catch (error) {
       console.error('Error in generateBLA:', error.response?.data || error.message);
@@ -397,8 +654,7 @@ const openaiService = {
             This application must meet Roszdravnadzor requirements for clinical trial authorization in Russia with MAXIMUM DETAIL, comprehensive regulatory analysis, and extensive documentation suitable for professional regulatory submission. Each section must be thoroughly developed with specific details, regulatory rationale, and compliance documentation.`
           }
         ],
-        temperature: 0.2, 
-        max_tokens: 10000 // SIGNIFICANTLY INCREASED for Russian documents
+        ...OPENAI_CONFIG.COMPREHENSIVE
       });
       return { document_content: response.data.choices[0].message.content.trim() };
     } catch (error) {
@@ -464,8 +720,7 @@ const openaiService = {
             This registration dossier must meet Roszdravnadzor requirements for Russian marketing authorization with MAXIMUM DETAIL, comprehensive regulatory analysis, and extensive documentation suitable for professional regulatory submission. Each section must be thoroughly developed with specific details, regulatory rationale, and compliance documentation.`
           }
         ],
-        temperature: 0.2, 
-        max_tokens: 10000 // SIGNIFICANTLY INCREASED
+        ...OPENAI_CONFIG.COMPREHENSIVE
       });
       return { document_content: response.data.choices[0].message.content.trim() };
     } catch (error) {
@@ -528,8 +783,7 @@ const openaiService = {
             This documentation must support GMP certification requirements for Russian manufacturing authorization with MAXIMUM DETAIL, comprehensive quality analysis, and extensive documentation suitable for professional regulatory submission. Each section must be thoroughly developed with specific details, quality rationale, and compliance documentation.`
           }
         ],
-        temperature: 0.2, 
-        max_tokens: 8000 // INCREASED
+        ...OPENAI_CONFIG.COMPREHENSIVE
       });
       return { document_content: response.data.choices[0].message.content.trim() };
     } catch (error) {
@@ -547,55 +801,68 @@ const openaiService = {
    */
   generateCTA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post(
-        'chat/completions',
-        {
-          model: "gpt-4o", // UPGRADED
-          messages: [
-            {
-              role: "system",
-              content: `You are a regulatory affairs expert specializing in European Clinical Trial Applications (CTAs) under the EU Clinical Trials Regulation (CTR).
-              Your task is to generate key sections of a CTA, focusing on Part I (dossier related to the investigational medicinal product - IMP - and the trial itself). This content should be suitable for inclusion in a CTIS submission.
+      // Validate requirements and get configuration
+      const requirements = validateDocumentRequirements(diseaseData, 'cta');
+      const config = getConfigForDocumentType('cta');
+      
+      // Format parameters for document
+      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'cta');
+      
+      // Create standardized system prompt
+      const systemPrompt = createSystemPrompt(
+        'Senior European Regulatory Affairs Director and CTIS Specialist',
+        'cta',
+        'EU CTR/CTIS/EMA',
+        `You MUST generate comprehensive, detailed content that meets EU Clinical Trials Regulation (CTR) requirements for Clinical Trial Applications via CTIS:
 
-              CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-              - Generate MINIMUM 5,000-6,000 words of comprehensive EU regulatory content
-              - Each section must contain extensive detail with specific methodologies, procedures, and regulatory compliance information
-              - Include detailed subsections with numerical data, timelines, and specific protocols
-              - Provide complete regulatory rationale and scientific justification for all decisions
-              - Reference specific EU CTR requirements, EMA guidelines, and ICH standards
+EU CTA SECTION REQUIREMENTS (Minimum ${requirements.minWords} words total):
+1. COVER LETTER AND APPLICATION FORM HIGHLIGHTS (800+ words) - Complete regulatory overview, trial classification, risk categorization, Member State assessment, CTIS reference numbers, and EU CTR compliance documentation
+2. PROTOCOL SUMMARY (1500+ words) - Comprehensive protocol overview including study design rationale, primary/secondary endpoints, statistical methodology, risk-benefit assessment, and regulatory precedents within EU framework
+3. INVESTIGATOR'S BROCHURE (IB) SUMMARY (1200+ words) - Detailed IMP characterization, pharmacology summary, nonclinical safety data, clinical experience, dose rationale, and safety profile analysis
+4. GMP COMPLIANCE AND IMPD SUMMARY (2000+ words) - Investigational Medicinal Product Dossier including quality data, manufacturing controls, analytical procedures, stability data, and GMP compliance documentation
+5. AUXILIARY MEDICINAL PRODUCTS AND MANUFACTURING AUTHORIZATIONS (1000+ words) - Complete auxiliary products justification, manufacturing site details, import/export authorizations, and supply chain documentation
+6. SCIENTIFIC ADVICE AND PIP CONSIDERATIONS (1500+ words) - EMA scientific advice summary, Paediatric Investigation Plan compliance, orphan designation details, and regulatory strategy alignment
+7. REGULATORY COMPLIANCE AND RISK ASSESSMENT (1000+ words) - Comprehensive EU CTR compliance analysis, risk categorization justification, data protection measures, and Member State specific considerations
 
-              STRICT FORMATTING REQUIREMENTS:
-              - Format according to EU CTR requirements for CTA submissions via CTIS.
-              - Focus on generating content for key sections of the CTA dossier, such as:
-                A. COVER LETTER AND APPLICATION FORM HIGHLIGHTS
-                B. PROTOCOL SUMMARY
-                C. INVESTIGATOR'S BROCHURE (IB) SUMMARY
-                D. GMP COMPLIANCE AND IMPD (Investigational Medicinal Product Dossier) - KEY SUMMARIES
-                   D.1. IMP Quality Data Summary
-                   D.2. IMP Non-Clinical Data Summary
-                   D.3. IMP Clinical Data Summary
-                E. AUXILIARY MEDICINAL PRODUCTS
-                F. SCIENTIFIC ADVICE AND PIP
-                G. MANUFACTURING AND IMPORTATION AUTHORIZATIONS
-              - Use ALL CAPS for main section headings.
-              - Use Title Case for subsection headings with appropriate lettering/numbering.
-              - DO NOT use markdown formatting. Provide clean plain text.`
-            },
-            {
-              role: "user",
-              content: `Generate key section summaries for a European Clinical Trial Application (CTA) for a trial on ${diseaseData.disease_name}.
-              
-              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
-              ).filter(Boolean).join('\n')}
-
-              The content must be EXTREMELY DETAILED for a CTA summary and meet EU CTR expectations for these sections with comprehensive regulatory analysis and extensive documentation.`
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 8000 // INCREASED
-        }
+CRITICAL EU CTR/CTIS COMPLIANCE STANDARDS:
+- Reference specific EU CTR provisions (Articles 13-19, Annex I requirements)
+- Include detailed CTIS submission requirements and technical specifications
+- Address Member State specific regulatory considerations
+- Reference EMA guidelines and ICH harmonized standards applicable in EU
+- Include comprehensive risk assessment per EU CTR risk categorization
+- Demonstrate GDPR compliance for clinical trial data protection
+- Address EU pharmaceutical legislation (Directive 2001/83/EC) where applicable`
       );
+
+      const response = await openaiApi.post('chat/completions', {
+        ...config,
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: `Generate comprehensive EU Clinical Trial Application (CTA) documentation for a clinical trial investigating ${diseaseData.disease_name}.
+
+STUDY PARAMETERS:
+${formattedParams}
+
+MANDATORY REQUIREMENTS:
+- Generate exactly ${requirements.sections} major sections with comprehensive content
+- Total document must exceed ${requirements.minWords} words
+- Each section must meet the specified minimum word counts listed above
+- Include detailed EU CTR-specific technical specifications and regulatory justification
+- Reference specific EU CTR provisions, EMA guidelines, and CTIS requirements throughout
+- Address all EU-specific regulatory considerations including Member State assessments
+- Use professional regulatory terminology suitable for CTIS submission and EMA review
+- Ensure content demonstrates readiness for EU clinical trial authorization
+
+Generate a CTA that exceeds EMA and Member State reviewer expectations for thoroughness, technical accuracy, and EU CTR compliance. Each section must demonstrate comprehensive understanding of European clinical trial regulatory requirements.`
+          }
+        ]
+      });
+
       return {
         document_content: response.data.choices[0].message.content.trim()
       };
@@ -610,50 +877,67 @@ const openaiService = {
    */
   generateMAA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post(
-        'chat/completions',
-        {
-          model: "gpt-4o", // UPGRADED
-          messages: [
-            {
-              role: "system",
-              content: `You are a senior regulatory affairs expert with extensive experience in preparing Marketing Authorisation Applications (MAAs) for submission to the European Medicines Agency (EMA).
-              Your task is to generate a comprehensive MAA SUMMARY document, mirroring the structure and content expectations of the Common Technical Document (CTD) Modules 2 (Summaries) and key highlights from Module 5 (Clinical Study Reports).
+      // Validate requirements and get configuration
+      const requirements = validateDocumentRequirements(diseaseData, 'maa');
+      const config = getConfigForDocumentType('maa');
+      
+      // Format parameters for document
+      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'maa');
+      
+      // Create standardized system prompt
+      const systemPrompt = createSystemPrompt(
+        'Senior European Regulatory Affairs Director and EMA MAA Specialist',
+        'maa',
+        'EMA/EU CTD/ICH',
+        `You MUST generate comprehensive, detailed content that meets EMA requirements for Marketing Authorization Application (MAA) submissions following EU CTD guidelines:
 
-              CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-              - Generate MINIMUM 5,000-6,000 words of comprehensive EU regulatory content
-              - Each section must contain extensive detail with specific data, methodologies, and regulatory compliance analysis
-              - Include detailed subsections with quantitative data, statistical analysis, and regulatory justification
-              - Provide complete regulatory rationale and scientific justification according to EMA standards
-              - Reference specific EMA guidelines, EU regulations, and ICH standards extensively
+EU MAA SUMMARY SECTION REQUIREMENTS (Minimum ${requirements.minWords} words total):
+1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY (1200+ words) - Complete regulatory overview, SmPC highlights, centralized procedure details, EMA scientific advice history, risk management plans, and EU-specific administrative compliance documentation
+2. QUALITY OVERALL SUMMARY (QOS - CTD Module 2.3) (2000+ words) - Comprehensive pharmaceutical quality summary including drug substance/product development, manufacturing strategy, analytical procedures, specifications, stability data, and quality risk management
+3. NON-CLINICAL OVERVIEW AND WRITTEN SUMMARIES (1800+ words) - Detailed CTD Modules 2.4 & 2.6 content including pharmacology, pharmacokinetics, toxicology studies, safety pharmacology, environmental risk assessment, and integrated non-clinical risk-benefit analysis
+4. CLINICAL OVERVIEW AND SUMMARY OF CLINICAL EFFICACY & SAFETY (2500+ words) - Comprehensive CTD Modules 2.5 & 2.7 content including clinical development strategy, efficacy analysis, safety evaluation, benefit-risk assessment, population-specific data, and EU regulatory precedents
+5. PIVOTAL CLINICAL STUDY REPORT SUMMARIES (1500+ words) - Detailed summaries of key pivotal studies including methodology, statistical analysis, regulatory endpoints, European population considerations, and marketing authorization implications
 
-              STRICT FORMATTING REQUIREMENTS:
-              - Format according to EMA guidelines for MAA submissions, reflecting the CTD structure.
-              - Focus on generating key summary sections of an MAA:
-                1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY (SmPC Highlights)
-                2. QUALITY OVERALL SUMMARY (QOS - CTD Module 2.3)
-                3. NON-CLINICAL OVERVIEW AND WRITTEN SUMMARIES (CTD Modules 2.4 & 2.6)
-                4. CLINICAL OVERVIEW AND SUMMARY OF CLINICAL EFFICACY & SAFETY (CTD Modules 2.5 & 2.7)
-                5. PIVOTAL CLINICAL STUDY REPORT SUMMARIES
-              - Use ALL CAPS for main section headings.
-              - Use Title Case for subsection headings with appropriate numbering.
-              - DO NOT use markdown formatting. Provide clean plain text.`
-            },
-            {
-              role: "user",
-              content: `Generate a comprehensive MAA SUMMARY document for the treatment of ${diseaseData.disease_name}, for submission to the EMA.
-              
-              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
-              ).filter(Boolean).join('\n')}
-
-              This MAA SUMMARY must be EXTREMELY DETAILED and meet EMA CTD standards for summary documents (Module 2 focus) with comprehensive regulatory analysis and extensive documentation.`
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 8000 // INCREASED
-        }
+CRITICAL EMA MAA COMPLIANCE STANDARDS:
+- Reference specific EMA guidelines and CHMP opinions relevant to therapeutic area
+- Include detailed EU-specific regulatory considerations and precedents
+- Address centralized procedure requirements and CHMP assessment criteria
+- Reference EU pharmaceutical legislation (Directive 2001/83/EC, Regulation 726/2004)
+- Include comprehensive benefit-risk analysis suitable for CHMP evaluation
+- Address pharmacovigilance and risk management requirements (EU RMP)
+- Demonstrate compliance with EU pediatric and orphan regulations where applicable
+- Include post-authorization commitments and regulatory strategy`
       );
+
+      const response = await openaiApi.post('chat/completions', {
+        ...config,
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: `Generate a comprehensive EU Marketing Authorization Application (MAA) summary for the treatment of ${diseaseData.disease_name}.
+
+STUDY PARAMETERS:
+${formattedParams}
+
+MANDATORY REQUIREMENTS:
+- Generate exactly ${requirements.sections} major sections with comprehensive content
+- Total document must exceed ${requirements.minWords} words
+- Each section must meet the specified minimum word counts listed above
+- Include detailed EU-specific technical specifications and regulatory justification
+- Reference specific EMA guidelines, CHMP opinions, and EU CTD requirements throughout
+- Address all EMA-specific regulatory considerations including centralized procedure requirements
+- Use professional regulatory terminology suitable for EMA review and CHMP assessment
+- Ensure content demonstrates readiness for EU marketing authorization
+
+Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thoroughness, technical accuracy, and EU regulatory compliance. Each section must demonstrate comprehensive understanding of European marketing authorization requirements.`
+          }
+        ]
+      });
+
       return {
         document_content: response.data.choices[0].message.content.trim()
       };
@@ -707,8 +991,7 @@ const openaiService = {
               Generate an EXTREMELY DETAILED IMPD-Q section with specific details for manufacturing, controls, specifications, and stability with comprehensive regulatory analysis and extensive documentation.`
             }
           ],
-          temperature: 0.2,
-          max_tokens: 8000 // INCREASED
+          ...OPENAI_CONFIG.COMPREHENSIVE // INCREASED
         }
       );
       return {
@@ -776,8 +1059,7 @@ const openaiService = {
             This CTA must meet Health Canada requirements and include all necessary sections for Canadian clinical trial authorization with EXTREMELY DETAILED content and comprehensive regulatory analysis.`
           }
         ],
-        temperature: 0.2, 
-        max_tokens: 8000 // INCREASED
+        ...OPENAI_CONFIG.COMPREHENSIVE
       });
       return { document_content: response.data.choices[0].message.content.trim() };
     } catch (error) {
@@ -3417,8 +3699,7 @@ const openaiService = {
             content: `Question: ${queryData.question}\n${queryData.disease_context ? `Disease Context: ${queryData.disease_context}` : ''}`
           }
         ],
-        temperature: 0.2,
-        max_tokens: 4000
+        ...OPENAI_CONFIG.PRECISE
       });
       
       return { answer: response.data.choices[0].message.content.trim() };
@@ -3596,8 +3877,7 @@ Consider that this document will be submitted to regulatory authorities and must
     const response = await openaiApi.post('chat/completions', {
       model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.1, // Very low for consistency
-      max_tokens: 1000, // Increased for detailed response
+      ...OPENAI_CONFIG.ANALYTICAL,
       response_format: { "type": "json_object" }
     });
 
@@ -3713,8 +3993,7 @@ Important: Base your analysis ONLY on the data provided above. Be accurate with 
           content: question
         }
       ],
-      temperature: 0.3,
-      max_tokens: 1000
+      ...OPENAI_CONFIG.ANALYTICAL
     });
 
     return { answer: response.data.choices[0].message.content.trim() };
