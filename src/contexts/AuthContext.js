@@ -65,10 +65,13 @@ export const AuthProvider = ({ children }) => {
       console.error('Login failed:', error.response?.data || error.message);
       
       // Temporary production bypass - remove after database is fixed
-      if (username === 'luminari' && password === 'luminariLogin123') {
+      const fallbackUser = process.env.REACT_APP_FALLBACK_USERNAME;
+      const fallbackPass = process.env.REACT_APP_FALLBACK_PASSWORD;
+      
+      if (fallbackUser && fallbackPass && username === fallbackUser && password === fallbackPass) {
         console.log('Using temporary production bypass');
         const tempToken = 'temp_prod_' + Date.now();
-        const tempUser = { id: 'temp_prod', username: 'luminari' };
+        const tempUser = { id: 'temp_prod', username: fallbackUser };
         
         localStorage.setItem('authToken', tempToken);
         localStorage.setItem('user', JSON.stringify(tempUser));
