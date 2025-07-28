@@ -1,3 +1,4 @@
+
 // src/App.js - Updated routing to include batch functionality
 
 import React from 'react';
@@ -15,6 +16,7 @@ import LungCancerDetector from './components/LungCancerDetector';
 import DiseaseDiagnosis from './components/DiseaseDiagnosis';
 import BackgroundJobs from './components/common/BackgroundJobs'; // NEW IMPORT
 import ProtectedRoute from './components/ProtectedRoute';
+import Login from './components/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import './App.css';
 import './components.css';
@@ -45,61 +47,82 @@ const Navigation = () => {
   );
 };
 
+const AppContent = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="App">
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <header className="App-header">
+                <div className="container">
+                  <h1>LumiPath<span className="trademark">™</span></h1>
+                  <p className="tagline">AI-driven clinical tools platform</p>
+                  <Navigation />
+                </div>
+              </header>
+              <main>
+                <div className="container">
+                  <Routes>
+                    {/* Home Page as default landing page */}
+                    <Route path="/" element={<HomePage />} />
+                    
+                    {/* Main tool routes */}
+                    <Route path="/protocol" element={<ProtocolGenerator />} />
+                    
+                    {/* REGULATORY DOCUMENT ROUTES - ENHANCED WITH BATCH */}
+                    <Route path="/regulatory-documents" element={<RegulatoryDocuments />} /> {/* MAP INTERFACE */}
+                    <Route path="/ind-modules" element={<RegulatoryDocumentGenerator />} />   {/* SINGLE FORM & LOGIC */}
+                    <Route path="/batch-regulatory" element={<BatchRegulatoryGenerator />} />  {/* NEW BATCH INTERFACE */}
+                    
+                    <Route path="/clinical-dossier" element={<ClinicalDossierCompiler />} />
+                    <Route path="/query" element={<QueryAssistant />} />
+                    
+                    {/* Disease Diagnosis routes */}
+                    <Route path="/diagnosis" element={<DiseaseDiagnosis />} />
+                    <Route path="/diagnosis/dermatology" element={<SkinDiseaseDetector />} />
+                    <Route path="/diagnosis/pulmonology" element={<LungCancerDetector />} />
+                    
+                    {/* Legacy routes with redirects */}
+                    <Route path="/skin-disease-detector" element={<Navigate to="/diagnosis/dermatology" replace />} />
+                    <Route path="/upload" element={<Navigate to="/diagnosis/dermatology" replace />} />
+                  </Routes>
+                </div>
+              </main>
+              <BackgroundJobs />
+              <footer>
+                <div className="container">
+                  <p><span className="copyright">©</span> {new Date().getFullYear()} Luminari. All rights reserved.</p>
+                </div>
+              </footer>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </div>
+  );
+}
+
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="App">
-          <ProtectedRoute>
-            <header className="App-header">
-              <div className="container">
-                <h1>LumiPath<span className="trademark">™</span></h1>
-                <p className="tagline">AI-driven clinical tools platform</p>
-                <Navigation />
-              </div>
-            </header>
-
-            <main>
-              <div className="container">
-                <Routes>
-                  {/* Home Page as default landing page */}
-                  <Route path="/" element={<HomePage />} />
-                  
-                  {/* Main tool routes */}
-                  <Route path="/protocol" element={<ProtocolGenerator />} />
-                  
-                  {/* REGULATORY DOCUMENT ROUTES - ENHANCED WITH BATCH */}
-                  <Route path="/regulatory-documents" element={<RegulatoryDocuments />} /> {/* MAP INTERFACE */}
-                  <Route path="/ind-modules" element={<RegulatoryDocumentGenerator />} />   {/* SINGLE FORM & LOGIC */}
-                  <Route path="/batch-regulatory" element={<BatchRegulatoryGenerator />} />  {/* NEW BATCH INTERFACE */}
-                  
-                  <Route path="/clinical-dossier" element={<ClinicalDossierCompiler />} />
-                  <Route path="/query" element={<QueryAssistant />} />
-                  
-                  {/* Disease Diagnosis routes */}
-                  <Route path="/diagnosis" element={<DiseaseDiagnosis />} />
-                  <Route path="/diagnosis/dermatology" element={<SkinDiseaseDetector />} />
-                  <Route path="/diagnosis/pulmonology" element={<LungCancerDetector />} />
-                  
-                  {/* Legacy routes with redirects */}
-                  <Route path="/skin-disease-detector" element={<Navigate to="/diagnosis/dermatology" replace />} />
-                  <Route path="/upload" element={<Navigate to="/diagnosis/dermatology" replace />} />
-                </Routes>
-              </div>
-            </main>
-            
-            {/* Background Jobs Component */}
-            <BackgroundJobs />
-            
-            <footer>
-              <div className="container">
-                <p><span className="copyright">©</span> {new Date().getFullYear()} Luminari. All rights reserved.</p>
-              </div>
-            </footer>
-          </ProtectedRoute>
-        </div>
-      </Router>
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
   );
 }
 
