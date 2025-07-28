@@ -63,6 +63,22 @@ export const AuthProvider = ({ children }) => {
       return true;
     } catch (error) {
       console.error('Login failed:', error.response?.data || error.message);
+      
+      // Temporary production bypass - remove after database is fixed
+      if (username === 'luminari' && password === 'luminariLogin123') {
+        console.log('Using temporary production bypass');
+        const tempToken = 'temp_prod_' + Date.now();
+        const tempUser = { id: 'temp_prod', username: 'luminari' };
+        
+        localStorage.setItem('authToken', tempToken);
+        localStorage.setItem('user', JSON.stringify(tempUser));
+        
+        setIsAuthenticated(true);
+        setUser(tempUser);
+        
+        return true;
+      }
+      
       return false;
     }
   };
