@@ -63,25 +63,6 @@ export const AuthProvider = ({ children }) => {
       return true;
     } catch (error) {
       console.error('Login failed:', error.response?.data || error.message);
-      
-      // Temporary production bypass - remove after database is fixed
-      const fallbackUser = process.env.REACT_APP_FALLBACK_USERNAME;
-      const fallbackPass = process.env.REACT_APP_FALLBACK_PASSWORD;
-      
-      if (fallbackUser && fallbackPass && username === fallbackUser && password === fallbackPass) {
-        console.log('Using temporary production bypass');
-        const tempToken = 'temp_prod_' + Date.now();
-        const tempUser = { id: 'temp_prod', username: fallbackUser };
-        
-        localStorage.setItem('authToken', tempToken);
-        localStorage.setItem('user', JSON.stringify(tempUser));
-        
-        setIsAuthenticated(true);
-        setUser(tempUser);
-        
-        return true;
-      }
-      
       return false;
     }
   };
