@@ -47,16 +47,11 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      console.log('🔐 Attempting login with API:', API_BASE_URL);
-      console.log('📝 Credentials:', { username, password: password.substring(0, 3) + '...' });
-      
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         username,
         password
       });
 
-      console.log('✅ Login response:', response.status, response.data);
-      
       const { token, user: userData } = response.data;
       
       localStorage.setItem('authToken', token);
@@ -67,8 +62,7 @@ export const AuthProvider = ({ children }) => {
       
       return true;
     } catch (error) {
-      console.error('❌ Login failed:', error.response?.data || error.message);
-      console.error('🌐 API URL used:', API_BASE_URL);
+      console.error('Login failed:', error.response?.data || error.message);
       return false;
     }
   };
