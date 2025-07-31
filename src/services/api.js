@@ -15,7 +15,12 @@ const DOCUMENTS_API_URL = process.env.REACT_APP_DOCUMENTS_API_URL || 'http://loc
  * @returns {Promise<Object>} - The saved document from the backend.
  */
 export async function saveDocument(documentData) {
-  const response = await axios.post(`${DOCUMENTS_API_URL}/documents`, documentData);
+  const token = localStorage.getItem('authToken');
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  
+  const response = await axios.post(`${DOCUMENTS_API_URL}/documents`, documentData, {
+    headers
+  });
   return response.data;
 }
 
@@ -24,7 +29,12 @@ export async function saveDocument(documentData) {
  * @returns {Promise<Array>} - Array of documents from the backend.
  */
 export async function fetchDocuments() {
-  const response = await axios.get(`${DOCUMENTS_API_URL}/documents`);
+  const token = localStorage.getItem('authToken');
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  
+  const response = await axios.get(`${DOCUMENTS_API_URL}/documents`, {
+    headers
+  });
   return response.data;
 }
 // Backend prediction endpoints
