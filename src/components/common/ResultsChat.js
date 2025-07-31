@@ -38,12 +38,18 @@ const ResultsChat = ({ results, onClose, contextName }) => {
     let rows = [];
 
     if (firstResult.topPrediction) { // SkinDiseaseDetector
-      cols = ['File Name', 'Top Prediction', 'Confidence', 'Status'];
+      cols = ['File Name', 'Top Prediction', 'Confidence', 'Status', 'Age', 'Gender', 'Race', 'Skin Color', 'Skin Type', 'Description'];
       rows = results.map(r => ({
         'File Name': r.name,
         'Top Prediction': r.topPrediction?.label || 'N/A',
         'Confidence': r.topPrediction ? `${(r.topPrediction.confidence * 100).toFixed(1)}%` : 'N/A',
         'Status': r.status,
+        'Age': r.metadata?.age || 'N/A',
+        'Gender': r.metadata?.gender || 'N/A',
+        'Race': r.metadata?.race || 'N/A',
+        'Skin Color': r.metadata?.skinColor || 'N/A',
+        'Skin Type': r.metadata?.skinType || 'N/A',
+        'Description': r.metadata?.conditionDescription || 'N/A'
       }));
     } else if (firstResult.prediction?.detected !== undefined) { // LungCancerDetector
       cols = ['File Name', 'Cancer Detected', 'Confidence', 'Status'];
@@ -85,11 +91,16 @@ const resultsCsv = useMemo(() => {
   
   // Set initial welcome message
   useEffect(() => {
+    const isSkindisease = results.some(r => r.topPrediction);
+    const welcomeText = isSkindisease 
+      ? `Welcome to the Analysis Results Chat for ${contextName}. I have full access to the complete results data including patient demographics and metadata.\n\nYou can ask me to:\n- Summarize findings by demographics (age, gender, race)\n- Analyze skin type distributions\n- Count specific outcomes or conditions\n- Compare confidence levels across patient groups\n- Identify patterns in condition descriptions\n\nFor example, try asking: "What's the age distribution of detected cases?" or "How do confidence levels vary by skin type?"`
+      : `Welcome to the Analysis Results Chat for ${contextName}. I have full access to the results table on the left.\n\nYou can ask me to:\n- Summarize the findings\n- Count specific outcomes\n- Identify trends or outliers\n\nFor example, try asking: "How many cases were positive?" or "What was the average confidence for detected cases?"`;
+    
     setMessages([{
       sender: 'ai',
-      text: `Welcome to the Analysis Results Chat for ${contextName}. I have full access to the results table on the left.\n\nYou can ask me to:\n- Summarize the findings\n- Count specific outcomes\n- Identify trends or outliers\n\nFor example, try asking: "How many cases were positive?" or "What was the average confidence for detected cases?"`
+      text: welcomeText
     }]);
-  }, [contextName]);
+  }, [contextName, results]);
 
   useEffect(() => {
     if (chatContainerRef.current) {

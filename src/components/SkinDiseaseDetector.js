@@ -5,6 +5,7 @@ import { FileUpload, ResultsChat } from './common';
 import openaiService from '../services/openaiService';
 import AskLuminaPopup from './common/AskLuminaPopup';
 import FloatingButton from './common/FloatingButton';
+import ResultsChart from './common/ResultsChart';
 
 
 const SkinDiseaseDetector = () => {
@@ -32,6 +33,7 @@ const SkinDiseaseDetector = () => {
   const [batchProgress, setBatchProgress] = useState(0);
   const [processingStatus, setProcessingStatus] = useState('');
   const [showResultsChat, setShowResultsChat] = useState(false);
+  const [showChart, setShowChart] = useState(false);
 
 
   // Text/Audio analysis states
@@ -369,6 +371,13 @@ const SkinDiseaseDetector = () => {
         <ResultsChat
           results={batchResults}
           onClose={() => setShowResultsChat(false)}
+          contextName="Dermatology Batch Analysis"
+        />
+      )}
+      {showChart && (
+        <ResultsChart
+          results={batchResults}
+          onClose={() => setShowChart(false)}
           contextName="Dermatology Batch Analysis"
         />
       )}
@@ -789,6 +798,12 @@ const SkinDiseaseDetector = () => {
                       className="btn btn-secondary"
                     >
                       Chat with Results
+                    </button>
+                    <button
+                      onClick={() => setShowChart(true)}
+                      className="btn btn-secondary"
+                    >
+                      Visualize Results
                     </button>
                     </>
                   )}

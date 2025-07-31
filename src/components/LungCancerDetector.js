@@ -16,6 +16,7 @@ import {
 } from './icons/MedicalIcons';
 import AskLuminaPopup from './common/AskLuminaPopup';
 import FloatingButton from './common/FloatingButton';
+import ResultsChart from './common/ResultsChart';
 
 const LungCancerDetector = () => {
   // Analysis mode state - 'single' or 'batch'
@@ -35,6 +36,7 @@ const LungCancerDetector = () => {
   const [batchProgress, setBatchProgress] = useState(0);
   const [processingStatus, setProcessingStatus] = useState('');
   const [showResultsChat, setShowResultsChat] = useState(false);
+  const [showChart, setShowChart] = useState(false);
 
   const handleBatchFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -280,6 +282,13 @@ const LungCancerDetector = () => {
         <ResultsChat
           results={batchResults}
           onClose={() => setShowResultsChat(false)}
+          contextName="Lung Cancer Batch Analysis"
+        />
+      )}
+      {showChart && (
+        <ResultsChart
+          results={batchResults}
+          onClose={() => setShowChart(false)}
           contextName="Lung Cancer Batch Analysis"
         />
       )}
@@ -659,6 +668,12 @@ const LungCancerDetector = () => {
                       className="btn btn-secondary btn-lg"
                     >
                       Chat with Results
+                    </button>
+                    <button
+                      onClick={() => setShowChart(true)}
+                      className="btn btn-secondary btn-lg"
+                    >
+                      Visualize Results
                     </button>
                   </>
                 )}

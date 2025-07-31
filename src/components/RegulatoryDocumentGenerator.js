@@ -177,8 +177,20 @@ const RegulatoryDocumentGenerator = () => {
       // Show loading state
       setLoading(true);
       
-      // Monitor job progress
-      const checkJobStatus = () => {
+      // Monitor job progress with timeout
+      let checkAttempts = 0;
+      const maxAttempts = 300; // 5 minutes max (300 * 1000ms)
+      
+      const checkJobStatus = async () => {
+        checkAttempts++;
+        
+        if (checkAttempts > maxAttempts) {
+          setError('Document generation timed out. Please try again.');
+          setLoading(false);
+          setBackgroundJobId(null);
+          return;
+        }
+        
         const job = getJob(jobId);
         if (job) {
           if (job.status === 'completed') {
@@ -227,52 +239,83 @@ const RegulatoryDocumentGenerator = () => {
                 clinical_section: clinicalSection,
                 document_content: content
               });
-              // Save regulatory document to backend
-              saveDocument({
-                type: 'REGULATORY',
-                title: `${documentType} for ${disease}`,
-                disease,
-                country,
-                documentType,
-                cmcSection: cmcSection,
-                clinicalSection: clinicalSection,
-                content,
-                // add more fields as needed
-              });
+              // Save regulatory document to backend (with authentication)
+              try {
+                await saveDocument({
+                  type: 'REGULATORY',
+                  title: `${documentType} for ${disease}`,
+                  disease,
+                  country,
+                  documentType,
+                  cmcSection: cmcSection,
+                  clinicalSection: clinicalSection,
+                  content,
+                });
+                console.log('Document saved to backend successfully');
+              } catch (saveError) {
+                if (saveError.response?.status === 413) {
+                  console.warn('Document too large to save to backend (413 error). Document generated successfully but not saved.');
+                  // Don't set error since generation was successful
+                } else {
+                  console.warn('Failed to save document to backend:', saveError);
+                }
+                // Continue with UI update even if save fails
+              }
             } else if (response.cmc_section && response.clinical_section) {
               // For document types that return separate CMC and clinical sections
               setResult(response);
-              // Save regulatory document to backend
-              saveDocument({
-                type: 'REGULATORY',
-                title: `${documentType} for ${disease}`,
-                disease,
-                country,
-                documentType,
-                cmcSection: response.cmc_section,
-                clinicalSection: response.clinical_section,
-                content: response.document_content || `CMC SECTION:\n${response.cmc_section}\n\nCLINICAL SECTION:\n${response.clinical_section}`,
-                // add more fields as needed
-              });
+              // Save regulatory document to backend (with authentication)
+              try {
+                await saveDocument({
+                  type: 'REGULATORY',
+                  title: `${documentType} for ${disease}`,
+                  disease,
+                  country,
+                  documentType,
+                  cmcSection: response.cmc_section,
+                  clinicalSection: response.clinical_section,
+                  content: response.document_content || `CMC SECTION:\n${response.cmc_section}\n\nCLINICAL SECTION:\n${response.clinical_section}`,
+                });
+                console.log('Document saved to backend successfully');
+              } catch (saveError) {
+                if (saveError.response?.status === 413) {
+                  console.warn('Document too large to save to backend (413 error). Document generated successfully but not saved.');
+                  // Don't set error since generation was successful
+                } else {
+                  console.warn('Failed to save document to backend:', saveError);
+                }
+                // Continue with UI update even if save fails
+              }
             } else {
               // Fallback: treat the entire response as clinical section
+              const fallbackContent = typeof response === 'string' ? response : JSON.stringify(response, null, 2);
               setResult({
                 cmc_section: "",
-                clinical_section: typeof response === 'string' ? response : JSON.stringify(response, null, 2),
-                document_content: typeof response === 'string' ? response : JSON.stringify(response, null, 2)
+                clinical_section: fallbackContent,
+                document_content: fallbackContent
               });
-              // Save regulatory document to backend
-              saveDocument({
-                type: 'REGULATORY',
-                title: `${documentType} for ${disease}`,
-                disease,
-                country,
-                documentType,
-                cmcSection: "",
-                clinicalSection: typeof response === 'string' ? response : JSON.stringify(response, null, 2),
-                content: typeof response === 'string' ? response : JSON.stringify(response, null, 2),
-                // add more fields as needed
-              });
+              // Save regulatory document to backend (with authentication)
+              try {
+                await saveDocument({
+                  type: 'REGULATORY',
+                  title: `${documentType} for ${disease}`,
+                  disease,
+                  country,
+                  documentType,
+                  cmcSection: "",
+                  clinicalSection: fallbackContent,
+                  content: fallbackContent,
+                });
+                console.log('Document saved to backend successfully');
+              } catch (saveError) {
+                if (saveError.response?.status === 413) {
+                  console.warn('Document too large to save to backend (413 error). Document generated successfully but not saved.');
+                  // Don't set error since generation was successful
+                } else {
+                  console.warn('Failed to save document to backend:', saveError);
+                }
+                // Continue with UI update even if save fails
+              }
             }
             
             // Automatically scroll to results
@@ -286,14 +329,27 @@ const RegulatoryDocumentGenerator = () => {
           } else if (job.status === 'error') {
             setLoading(false);
             setBackgroundJobId(null);
-            setError(`Failed to generate regulatory documents: ${job.error || 'Unknown error'}`);
+            console.error('Background job error details:', {
+              jobId,
+              error: job.error,
+              data: job.data,
+              type: job.type
+            });
+            setError(`Document generation failed: ${job.error || 'Unknown error occurred. Please check the console for details.'}`);
           } else {
             // Job still running, check again in 1 second
-            setTimeout(checkJobStatus, 1000);
+            setTimeout(() => checkJobStatus(), 1000);
           }
         } else {
-          // Job not found, check again in 1 second
-          setTimeout(checkJobStatus, 1000);
+          // Job not found - might have been lost, show warning
+          console.warn(`Background job ${jobId} not found, attempt ${checkAttempts}/${maxAttempts}`);
+          if (checkAttempts > 10) {
+            setError('Lost connection to background job. Please try again.');
+            setLoading(false);
+            setBackgroundJobId(null);
+            return;
+          }
+          setTimeout(() => checkJobStatus(), 1000);
         }
       };
       
@@ -301,7 +357,13 @@ const RegulatoryDocumentGenerator = () => {
       checkJobStatus();
       
     } catch (err) {
-      setError(`Failed to generate regulatory documents: ${err.message || 'Unknown error'}`);
+      console.error('Regulatory document generation error:', {
+        error: err,
+        message: err.message,
+        stack: err.stack,
+        formData: { disease, documentType, country }
+      });
+      setError(`Failed to start document generation: ${err.message || 'Unknown error occurred. Please check the console for details.'}`);
       setLoading(false);
       setBackgroundJobId(null);
     }
@@ -376,7 +438,11 @@ const RegulatoryDocumentGenerator = () => {
         setPreviousDocs(docs.filter(doc => doc.type === 'REGULATORY'));
       } catch (err) {
         setPreviousDocs([]);
-        setFetchError('Error fetching previous regulatory documents. Please try again later.');
+        if (err.response?.status === 401) {
+          setFetchError('Please log in to view previous documents.');
+        } else {
+          setFetchError('Error fetching previous regulatory documents. Please try again later.');
+        }
       } finally {
         setLoadingPreviousDocs(false);
       }
@@ -941,37 +1007,51 @@ const RegulatoryDocumentGenerator = () => {
             </button>
             <button
               onClick={() => {
-                const content = `CMC SECTION:\n\n${result.cmc_section}\n\nCLINICAL SECTION:\n\n${result.clinical_section}`;
-                const doc = new jsPDF();
-                doc.setFont('helvetica');
-                doc.setFontSize(12);
-                
-                // PDF page settings
-                const pageHeight = doc.internal.pageSize.height;
-                const pageWidth = doc.internal.pageSize.width;
-                const margin = 20;
-                const maxLineWidth = pageWidth - (margin * 2);
-                const lineHeight = 7;
-                const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
-                
-                // Split content into lines that fit the page width
-                const lines = doc.splitTextToSize(content, maxLineWidth);
-                
-                let currentLine = 0;
-                
-                // Add content with automatic page breaks
-                for (let i = 0; i < lines.length; i++) {
-                  if (currentLine >= maxLinesPerPage) {
-                    doc.addPage();
-                    currentLine = 0;
+                try {
+                  const content = `CMC SECTION:\n\n${result.cmc_section || 'No CMC content available'}\n\nCLINICAL SECTION:\n\n${result.clinical_section || 'No clinical content available'}`;
+                  
+                  // Check content size to prevent memory issues
+                  if (content.length > 1000000) { // 1MB limit
+                    alert('Document is too large for PDF generation. Please copy the content instead.');
+                    return;
                   }
                   
-                  const yPosition = margin + (currentLine * lineHeight);
-                  doc.text(lines[i], margin, yPosition);
-                  currentLine++;
+                  const doc = new jsPDF();
+                  doc.setFont('helvetica');
+                  doc.setFontSize(10); // Smaller font to fit more content
+                  
+                  // PDF page settings
+                  const pageHeight = doc.internal.pageSize.height;
+                  const pageWidth = doc.internal.pageSize.width;
+                  const margin = 15; // Smaller margins
+                  const maxLineWidth = pageWidth - (margin * 2);
+                  const lineHeight = 6; // Tighter line spacing
+                  const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
+                  
+                  // Split content into lines that fit the page width
+                  const lines = doc.splitTextToSize(content, maxLineWidth);
+                  
+                  let currentLine = 0;
+                  
+                  // Add content with automatic page breaks
+                  for (let i = 0; i < lines.length; i++) {
+                    if (currentLine >= maxLinesPerPage) {
+                      doc.addPage();
+                      currentLine = 0;
+                    }
+                    
+                    const yPosition = margin + (currentLine * lineHeight);
+                    doc.text(lines[i], margin, yPosition);
+                    currentLine++;
+                  }
+                  
+                  const fileName = `${documentType || 'Regulatory'}_${disease || 'Document'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+                  doc.save(fileName);
+                  
+                } catch (pdfError) {
+                  console.error('PDF generation failed:', pdfError);
+                  alert('PDF generation failed. You can copy the content using the "Copy All" button instead.');
                 }
-                
-                doc.save(`Enhanced_${country || 'Regulatory'}_Document_${new Date().toISOString().slice(0, 10)}.pdf`);
               }}
               className="view-button"
             >

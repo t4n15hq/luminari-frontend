@@ -26,23 +26,24 @@ const QueryAssistant = () => {
     }
   };
 
-  // Check if question is relevant to clinical trials/protocols
-  const isRelevantQuestion = (question) => {
-    const clinicalKeywords = [
-      'protocol', 'trial', 'clinical', 'study', 'endpoint', 'efficacy', 'safety', 
-      'patient', 'dose', 'dosing', 'treatment', 'therapy', 'drug', 'medication',
-      'adverse', 'side effect', 'inclusion', 'exclusion', 'criteria', 'randomization',
-      'blinding', 'placebo', 'regulatory', 'fda', 'ema', 'ich', 'gcp', 'phase',
-      'biomarker', 'outcome', 'measurement', 'assessment', 'monitoring', 'consent',
-      'ethics', 'irb', 'statistical', 'analysis', 'population', 'enrollment',
-      'dermatology', 'psoriasis', 'eczema', 'atopic dermatitis', 'skin',
-      'pulmonology', 'lung', 'respiratory', 'cancer', 'oncology', 'tumor',
-      'neurology', 'cardiology', 'gastroenterology', 'immunology',
-      'pharmaceutical', 'biotechnology', 'research', 'development'
+  // Check if question is completely off-topic (only filter out obviously non-medical questions)
+  const isCompletelyOffTopic = (question) => {
+    // Use word boundaries to avoid partial matches (like "eat" in "treated")
+    const offTopicKeywords = [
+      'weather', 'temperature', 'climate', 'rain', 'snow', 'sunny', 'cloudy',
+      'recipe', 'cooking', 'restaurant', 'meal', 'dinner', 'lunch',
+      'sports', 'football', 'basketball', 'soccer', 'game', 'score', 'team',
+      'movie', 'film', 'entertainment', 'celebrity', 'actor', 'actress',
+      'politics', 'election', 'vote', 'president', 'government',
+      'travel', 'vacation', 'hotel', 'flight', 'tourism'
     ];
 
     const questionLower = question.toLowerCase();
-    return clinicalKeywords.some(keyword => questionLower.includes(keyword));
+    // Use word boundaries to ensure exact word matches only
+    return offTopicKeywords.some(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+      return regex.test(questionLower);
+    });
   };
 
   // Generate standardized response for irrelevant questions
@@ -129,8 +130,8 @@ Please rephrase your question to focus on clinical trials, protocol development,
     setAnswer('');
 
     try {
-      // Check if question is relevant
-      if (!isRelevantQuestion(question)) {
+      // Only filter out completely off-topic questions, let the AI handle the rest
+      if (isCompletelyOffTopic(question)) {
         const standardResponse = getStandardizedResponse(question);
         setAnswer(standardResponse);
         setQueryHistory(prev => [{
@@ -145,7 +146,7 @@ Please rephrase your question to focus on clinical trials, protocol development,
         return;
       }
 
-      // Process relevant questions normally
+      // Send all other questions to the AI API
       const response = await apiService.queryAssistant({
         question,
         disease_context: diseaseContext || undefined,
@@ -173,7 +174,7 @@ Please rephrase your question to focus on clinical trials, protocol development,
   return (
     <div className="query-assistant">
       <h2>Ask Lumina<span className="trademark">™</span></h2>
-      <p>Ask targeted questions about clinical protocols, endpoints, or trial designs</p>
+      <p>Ask me anything about clinical protocols, medical research, treatment options, or health-related topics</p>
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
@@ -183,7 +184,7 @@ Please rephrase your question to focus on clinical trials, protocol development,
             className="form-textarea"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="e.g., What are key efficacy endpoints for psoriasis?"
+            placeholder="e.g., What are the symptoms of diabetes? How is psoriasis treated? What are clinical trial endpoints?"
             rows={3}
             required
           />
