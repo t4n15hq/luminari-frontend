@@ -16,12 +16,26 @@ const DOCUMENTS_API_URL = process.env.REACT_APP_DOCUMENTS_API_URL || 'http://loc
  */
 export async function saveDocument(documentData) {
   const token = localStorage.getItem('authToken');
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
   
-  const response = await axios.post(`${DOCUMENTS_API_URL}/documents`, documentData, {
-    headers
-  });
-  return response.data;
+  if (!token) {
+    console.error('No auth token found. Please log in first.');
+    throw new Error('Authentication required. Please log in to save documents.');
+  }
+  
+  const headers = { Authorization: `Bearer ${token}` };
+  
+  try {
+    const response = await axios.post(`${DOCUMENTS_API_URL}/documents`, documentData, {
+      headers
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      console.error('Authentication failed. Token may be expired.');
+      throw new Error('Session expired. Please log in again.');
+    }
+    throw error;
+  }
 }
 
 /**
@@ -30,12 +44,26 @@ export async function saveDocument(documentData) {
  */
 export async function fetchDocuments() {
   const token = localStorage.getItem('authToken');
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
   
-  const response = await axios.get(`${DOCUMENTS_API_URL}/documents`, {
-    headers
-  });
-  return response.data;
+  if (!token) {
+    console.error('No auth token found. Please log in first.');
+    throw new Error('Authentication required. Please log in to view documents.');
+  }
+  
+  const headers = { Authorization: `Bearer ${token}` };
+  
+  try {
+    const response = await axios.get(`${DOCUMENTS_API_URL}/documents`, {
+      headers
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      console.error('Authentication failed. Token may be expired.');
+      throw new Error('Session expired. Please log in again.');
+    }
+    throw error;
+  }
 }
 // Backend prediction endpoints
 const LUNG_CANCER_API_URL = process.env.REACT_APP_LUNG_CANCER_API_URL || 'https://lung-cancer-backend-n84h.onrender.com';
