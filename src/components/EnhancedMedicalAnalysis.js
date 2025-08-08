@@ -103,7 +103,7 @@ const EnhancedMedicalAnalysis = () => {
       <div className="generator-header">
         <div>
           <h2>Enhanced Medical Analysis</h2>
-          <p>Advanced AI-powered medical analysis using Claude's enhanced capabilities</p>
+          <p>Advanced AI-powered medical analysis with enhanced capabilities</p>
         </div>
       </div>
 
@@ -381,7 +381,7 @@ Example:
         <div className="loading-overlay">
           <div className="loading-spinner">
             <div className="spinner"></div>
-            <p>Processing with Claude API...</p>
+            <p>Processing medical analysis...</p>
           </div>
         </div>
       )}
