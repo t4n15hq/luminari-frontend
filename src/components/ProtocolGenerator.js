@@ -298,47 +298,194 @@ const ProtocolGenerator = () => {
     document.body.removeChild(element);
   };
   
+  // Generate PDF for selected sections with proper alignment
+  const generateSelectedSectionsPDF = async () => {
+    try {
+      setLoading(true);
+      
+      // Get all selected sections content
+      const selectedSections = [];
+      
+      // Add protocol sections
+      Array.from(selectedProtocolSections).forEach(sectionId => {
+        const sectionNumber = sectionId.replace('protocol-section-', '');
+        const sectionTitle = protocolSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
+        const sectionContent = sectionEdits[sectionId] || '';
+        
+        if (sectionContent) {
+          selectedSections.push({
+            title: sectionTitle,
+            content: sectionContent
+          });
+        }
+      });
+      
+      // Add study design sections
+      Array.from(selectedStudyDesignSections).forEach(sectionId => {
+        const sectionTitle = sectionId === 'cmc-section' ? 'CMC Section' : `Clinical Section ${sectionId.replace('clinical-section-', '')}`;
+        const sectionContent = sectionEdits[sectionId] || '';
+        
+        if (sectionContent) {
+          selectedSections.push({
+            title: sectionTitle,
+            content: sectionContent
+          });
+        }
+      });
+      
+      if (selectedSections.length === 0) {
+        setError('No sections selected for export');
+        return;
+      }
+      
+      // Create PDF document
+      const doc = new jsPDF();
+      
+      // PDF settings
+      const pageHeight = doc.internal.pageSize.height;
+      const pageWidth = doc.internal.pageSize.width;
+      const margin = 20;
+      const maxLineWidth = pageWidth - (margin * 2);
+      const lineHeight = 7;
+      const titleLineHeight = 10;
+      const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
+      
+      // Document header
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text('Selected Protocol Sections', pageWidth / 2, margin, { align: 'center' });
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, margin + 10, { align: 'center' });
+      doc.text(`Disease: ${disease}`, pageWidth / 2, margin + 17, { align: 'center' });
+      
+      let currentY = margin + 30;
+      let currentPage = 1;
+      
+      // Add each section
+      selectedSections.forEach((section, index) => {
+        // Check if we need a new page
+        if (currentY > pageHeight - margin - 50) {
+          doc.addPage();
+          currentPage++;
+          currentY = margin + 20;
+        }
+        
+        // Section title
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(section.title, margin, currentY);
+        currentY += titleLineHeight;
+        
+        // Section content
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        
+        // Convert HTML content to plain text and handle formatting
+        const plainText = section.content
+          .replace(/<[^>]*>/g, '') // Remove HTML tags
+          .replace(/&nbsp;/g, ' ') // Replace HTML entities
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"');
+        
+        // Split content into lines that fit the page width
+        const lines = doc.splitTextToSize(plainText, maxLineWidth);
+        
+        // Add lines with proper spacing
+        lines.forEach(line => {
+          // Check if we need a new page
+          if (currentY > pageHeight - margin - 20) {
+            doc.addPage();
+            currentPage++;
+            currentY = margin + 20;
+          }
+          
+          doc.text(line, margin, currentY);
+          currentY += lineHeight;
+        });
+        
+        // Add spacing between sections
+        currentY += 15;
+      });
+      
+      // Save the PDF
+      const filename = `Selected_Sections_${disease.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+      
+    } catch (error) {
+      console.error('Error generating selected sections PDF:', error);
+      setError('Failed to generate PDF. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const generatePDF = async (documentId, filename) => {
     try {
       setLoading(true);
       let content = '';
+      let title = '';
+      
       if (documentId === 'protocol') {
         content = result.protocol;
+        title = `Enhanced Protocol for ${disease}`;
       } else if (documentId === 'studyDesign') {
         content = `CMC SECTION:\n${studyDesign.cmc_section}\n\nCLINICAL SECTION:\n${studyDesign.clinical_section}`;
+        title = `Study Design for ${disease}`;
       }
+      
       if (content) {
         const doc = new jsPDF();
-        doc.setFont('helvetica');
-        doc.setFontSize(12);
         
         // PDF page settings
         const pageHeight = doc.internal.pageSize.height;
         const pageWidth = doc.internal.pageSize.width;
         const margin = 20;
         const maxLineWidth = pageWidth - (margin * 2);
-        const lineHeight = 7; // Space between lines
+        const lineHeight = 7;
+        const titleLineHeight = 10;
         const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
         
-        // Split content into lines that fit the page width
-        const lines = doc.splitTextToSize(content, maxLineWidth);
+        // Document header with proper alignment
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text(title, pageWidth / 2, margin, { align: 'center' });
         
-        let currentLine = 0;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, margin + 10, { align: 'center' });
+        doc.text(`Document ID: ${result.protocol_id}`, pageWidth / 2, margin + 17, { align: 'center' });
+        
+        let currentY = margin + 30;
         let currentPage = 1;
         
-        // Add content with automatic page breaks
+        // Convert HTML content to plain text and handle formatting
+        const plainText = content
+          .replace(/<[^>]*>/g, '') // Remove HTML tags
+          .replace(/&nbsp;/g, ' ') // Replace HTML entities
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"');
+        
+        // Split content into lines that fit the page width
+        const lines = doc.splitTextToSize(plainText, maxLineWidth);
+        
+        // Add content with automatic page breaks and proper alignment
         for (let i = 0; i < lines.length; i++) {
           // Check if we need a new page
-          if (currentLine >= maxLinesPerPage) {
+          if (currentY > pageHeight - margin - 20) {
             doc.addPage();
             currentPage++;
-            currentLine = 0;
+            currentY = margin + 20;
           }
           
-          // Add line to current page
-          const yPosition = margin + (currentLine * lineHeight);
-          doc.text(lines[i], margin, yPosition);
-          currentLine++;
+          // Add line to current page with proper alignment
+          doc.text(lines[i], margin, currentY);
+          currentY += lineHeight;
         }
         
         doc.save(`${filename}.pdf`);
@@ -1083,6 +1230,87 @@ const ProtocolGenerator = () => {
     setEditingSectionId(null);
   };
 
+  // Generate PDF for individual section
+  const generateSectionPDF = async (sectionId, sectionTitle, sectionContent) => {
+    try {
+      setLoading(true);
+      
+      if (!sectionContent || sectionContent.trim() === '') {
+        setError('No content to export');
+        return;
+      }
+      
+      // Create PDF document
+      const doc = new jsPDF();
+      
+      // PDF settings
+      const pageHeight = doc.internal.pageSize.height;
+      const pageWidth = doc.internal.pageSize.width;
+      const margin = 20;
+      const maxLineWidth = pageWidth - (margin * 2);
+      const lineHeight = 7;
+      const titleLineHeight = 10;
+      
+      // Document header
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text('Protocol Section', pageWidth / 2, margin, { align: 'center' });
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, margin + 10, { align: 'center' });
+      doc.text(`Disease: ${disease}`, pageWidth / 2, margin + 17, { align: 'center' });
+      
+      let currentY = margin + 30;
+      let currentPage = 1;
+      
+      // Section title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text(sectionTitle, margin, currentY);
+      currentY += titleLineHeight;
+      
+      // Section content
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      
+      // Convert HTML content to plain text and handle formatting
+      const plainText = sectionContent
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&nbsp;/g, ' ') // Replace HTML entities
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"');
+      
+      // Split content into lines that fit the page width
+      const lines = doc.splitTextToSize(plainText, maxLineWidth);
+      
+      // Add lines with proper spacing
+      lines.forEach(line => {
+        // Check if we need a new page
+        if (currentY > pageHeight - margin - 20) {
+          doc.addPage();
+          currentPage++;
+          currentY = margin + 20;
+        }
+        
+        doc.text(line, margin, currentY);
+        currentY += lineHeight;
+      });
+      
+      // Save the PDF
+      const filename = `${sectionTitle.replace(/\s+/g, '_')}_${disease.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+      
+    } catch (error) {
+      console.error('Error generating section PDF:', error);
+      setError('Failed to generate PDF. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="protocol-generator" style={{ position: 'relative' }}>
       {/* Ask Lumina Popup */}
@@ -1810,20 +2038,36 @@ const ProtocolGenerator = () => {
                                 <h5 style={{ margin: 0, color: '#374151' }}>{sectionTitle}</h5>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                   {!isEditingThis ? (
-                                    <button
-                                      onClick={() => startEditingSection(sectionId)}
-                                      style={{
-                                        background: '#10b981',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        padding: '4px 8px',
-                                        fontSize: '12px',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      Edit
-                                    </button>
+                                    <>
+                                      <button
+                                        onClick={() => startEditingSection(sectionId)}
+                                        style={{
+                                          background: '#10b981',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => generateSectionPDF(sectionId, sectionTitle, sectionContent)}
+                                        style={{
+                                          background: '#dc2626',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        PDF
+                                      </button>
+                                    </>
                                   ) : (
                                     <>
                                       <button
@@ -1944,6 +2188,20 @@ const ProtocolGenerator = () => {
                       }}
                     >
                       📝 Download Word Document
+                    </button>
+                    <button 
+                      onClick={generateSelectedSectionsPDF}
+                      style={{
+                        background: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📄 Download PDF Document
                     </button>
                     <button 
                       onClick={() => {
