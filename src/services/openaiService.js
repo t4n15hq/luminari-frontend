@@ -4028,6 +4028,47 @@ Important: Base your analysis ONLY on the data provided above. Be accurate with 
     // console.error('Error in chatWithResults:', error.response?.data || error.message);
     throw error;
   }
-}}
+},
+
+generateTextImprovement: async (userPrompt) => {
+  try {
+    console.log('generateTextImprovement called with:', userPrompt);
+    
+    const response = await openaiApi.post('chat/completions', {
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert medical writer and editor specializing in clinical documentation. Your task is to improve the selected text based on the user's request.
+          
+Provide the BEST single improvement that addresses the user's request. Focus on:
+- Grammar and clarity
+- Professional medical terminology
+- Logical flow and structure
+- Regulatory compliance language
+- Conciseness without losing important details
+
+Return only the improved text, without any explanations or additional text.`
+        },
+        {
+          role: "user",
+          content: `Please improve this text based on the following request: "${userPrompt}"`
+        }
+      ],
+      max_tokens: 500,
+      temperature: 0.3,
+      top_p: 0.9
+    });
+    
+    const improvedText = response.data.choices[0].message.content.trim();
+    console.log('AI improvement result:', improvedText);
+    return [improvedText]; // Return as array to maintain compatibility
+  } catch (error) {
+    console.error('Error generating text improvements:', error);
+    return ['Unable to generate improvement at this time. Please try again.'];
+  }
+}
+
+};
 
 export default openaiService;

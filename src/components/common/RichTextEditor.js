@@ -205,7 +205,12 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
 
         {/* Bold */}
         <button
-          onClick={() => formatText('bold')}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Bold button clicked');
+            formatText('bold');
+          }}
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
@@ -231,7 +236,12 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
 
         {/* Italic */}
         <button
-          onClick={() => formatText('italic')}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Italic button clicked');
+            formatText('italic');
+          }}
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
@@ -257,7 +267,12 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
 
         {/* Underline */}
         <button
-          onClick={() => formatText('underline')}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Underline button clicked');
+            formatText('underline');
+          }}
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
