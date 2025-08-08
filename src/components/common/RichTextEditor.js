@@ -14,42 +14,104 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
     setAiPromptEnabled(aiEnabled);
   }, [aiEnabled]);
 
-  // Rich text formatting functions
-  const execCommand = (command, value = null) => {
-    // Ensure the editor is focused
-    editorRef.current.focus();
-    
-    // Restore selection if we have a stored range
+  // Helper function to get current selection
+  const getCurrentSelection = () => {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      return selection.getRangeAt(0);
+    }
+    return null;
+  };
+
+  // Helper function to save current selection
+  const saveSelection = () => {
+    const range = getCurrentSelection();
+    if (range) {
+      setCurrentRange(range.cloneRange());
+    }
+  };
+
+  // Helper function to restore selection
+  const restoreSelection = () => {
     if (currentRange) {
       const selection = window.getSelection();
       selection.removeAllRanges();
       selection.addRange(currentRange);
     }
+  };
+
+  // Rich text formatting functions
+  const formatText = (command) => {
+    editorRef.current.focus();
+    saveSelection();
+    restoreSelection();
     
-    // Execute the command
-    document.execCommand(command, false, value);
+    switch (command) {
+      case 'bold':
+        document.execCommand('bold', false, null);
+        break;
+      case 'italic':
+        document.execCommand('italic', false, null);
+        break;
+      case 'underline':
+        document.execCommand('underline', false, null);
+        break;
+      case 'removeFormat':
+        document.execCommand('removeFormat', false, null);
+        break;
+      default:
+        document.execCommand(command, false, null);
+    }
     
-    // Trigger onChange to update the parent component
     onChange(editorRef.current.innerHTML);
-    
-    // Keep focus on the editor
     editorRef.current.focus();
   };
 
-  const formatText = (command) => {
-    execCommand(command);
-  };
-
   const changeFontSize = (size) => {
-    execCommand('fontSize', size);
+    editorRef.current.focus();
+    saveSelection();
+    restoreSelection();
+    document.execCommand('fontSize', false, size);
+    onChange(editorRef.current.innerHTML);
+    editorRef.current.focus();
   };
 
   const changeAlignment = (align) => {
-    execCommand(`justify${align.charAt(0).toUpperCase() + align.slice(1)}`);
+    editorRef.current.focus();
+    saveSelection();
+    restoreSelection();
+    
+    switch (align) {
+      case 'left':
+        document.execCommand('justifyLeft', false, null);
+        break;
+      case 'center':
+        document.execCommand('justifyCenter', false, null);
+        break;
+      case 'right':
+        document.execCommand('justifyRight', false, null);
+        break;
+      default:
+        document.execCommand(`justify${align.charAt(0).toUpperCase() + align.slice(1)}`, false, null);
+    }
+    
+    onChange(editorRef.current.innerHTML);
+    editorRef.current.focus();
   };
 
   const insertList = (type) => {
-    execCommand(`insert${type}List`);
+    editorRef.current.focus();
+    saveSelection();
+    restoreSelection();
+    
+    if (type === 'Unordered') {
+      document.execCommand('insertUnorderedList', false, null);
+    } else {
+      document.execCommand('insertOrderedList', false, null);
+    }
+    
+    onChange(editorRef.current.innerHTML);
+    editorRef.current.focus();
   };
 
   // Handle text selection for AI prompt
