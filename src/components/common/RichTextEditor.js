@@ -24,10 +24,20 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
     const success = document.execCommand(command, false, null);
     console.log('Command execution result:', success);
     
-    // Update the content
+    // Force a re-render by updating the content
     const newContent = editorRef.current.innerHTML;
     console.log('New content:', newContent);
     onChange(newContent);
+    
+    // Force focus back to ensure the formatting is applied
+    setTimeout(() => {
+      editorRef.current.focus();
+      // Force a re-render of the content
+      const currentContent = editorRef.current.innerHTML;
+      if (currentContent !== newContent) {
+        onChange(currentContent);
+      }
+    }, 10);
   };
 
   const changeFontSize = (size) => {
@@ -378,7 +388,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
         {/* Divider */}
         <div style={{ width: '1px', height: '20px', background: '#d1d5db', margin: '0 4px' }}></div>
 
-        {/* AI Prompt Toggle - Only show if aiEnabled prop is true */}
+        {/* AI Prompt Toggle - Always show if aiEnabled prop is true */}
         {aiEnabled && (
           <button
             onClick={() => setAiPromptEnabled(!aiPromptEnabled)}
@@ -399,7 +409,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
             }}
             onMouseOver={(e) => e.target.style.background = aiPromptEnabled ? '#a7f3d0' : '#eff6ff'}
             onMouseOut={(e) => e.target.style.background = aiPromptEnabled ? '#d1fae5' : '#ffffff'}
-            title="Toggle AI Prompt"
+            title={aiPromptEnabled ? 'AI Enabled - Click to disable' : 'AI Disabled - Click to enable'}
           >
             🤖 AI
           </button>
