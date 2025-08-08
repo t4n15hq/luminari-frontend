@@ -73,6 +73,7 @@ const ProtocolGenerator = () => {
   // Individual section editing state
   const [sectionEdits, setSectionEdits] = useState({});
   const [editingSectionId, setEditingSectionId] = useState(null);
+  const [aiEnabledSections, setAiEnabledSections] = useState(new Set());
   
   // Reference Protocol Panel State
   const [showReferencePanel, setShowReferencePanel] = useState(false);
@@ -1311,6 +1312,19 @@ const ProtocolGenerator = () => {
     }
   };
 
+  // Toggle AI for a specific section
+  const toggleAIForSection = (sectionId) => {
+    setAiEnabledSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="protocol-generator" style={{ position: 'relative' }}>
       {/* Ask Lumina Popup */}
@@ -2054,6 +2068,21 @@ const ProtocolGenerator = () => {
                                         Edit
                                       </button>
                                       <button
+                                        onClick={() => toggleAIForSection(sectionId)}
+                                        style={{
+                                          background: aiEnabledSections.has(sectionId) ? '#10b981' : '#6b7280',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                        title={aiEnabledSections.has(sectionId) ? 'AI Enabled' : 'Enable AI'}
+                                      >
+                                        🤖
+                                      </button>
+                                      <button
                                         onClick={() => generateSectionPDF(sectionId, sectionTitle, sectionContent)}
                                         style={{
                                           background: '#dc2626',
@@ -2112,6 +2141,7 @@ const ProtocolGenerator = () => {
                                     width: '100%',
                                     minHeight: '150px'
                                   }}
+                                  aiEnabled={aiEnabledSections.has(sectionId)}
                                 />
                               ) : (
                                 <div
@@ -2135,7 +2165,141 @@ const ProtocolGenerator = () => {
                           );
                         })
                       ) : (
-                        <div>Study Design sections will appear here</div>
+                        Array.from(selectedStudyDesignSections).map(sectionId => {
+                          const sectionNumber = sectionId.replace('studydesign-section-', '');
+                          const sectionTitle = studyDesignSections.find(s => s.id === sectionId)?.title || `Study Design Section ${sectionNumber}`;
+                          const isEditingThis = editingSectionId === sectionId;
+                          const sectionContent = sectionEdits[sectionId] || '';
+                          
+                          return (
+                            <div key={sectionId} style={{ 
+                              marginBottom: '1.5rem', 
+                              padding: '1rem', 
+                              border: '1px solid #d1d5db', 
+                              borderRadius: '6px', 
+                              backgroundColor: '#ffffff' 
+                            }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                marginBottom: '0.5rem' 
+                              }}>
+                                <h5 style={{ margin: 0, color: '#374151' }}>{sectionTitle}</h5>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                  {!isEditingThis ? (
+                                    <>
+                                      <button
+                                        onClick={() => startEditingSection(sectionId)}
+                                        style={{
+                                          background: '#10b981',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => toggleAIForSection(sectionId)}
+                                        style={{
+                                          background: aiEnabledSections.has(sectionId) ? '#10b981' : '#6b7280',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                        title={aiEnabledSections.has(sectionId) ? 'AI Enabled' : 'Enable AI'}
+                                      >
+                                        🤖
+                                      </button>
+                                      <button
+                                        onClick={() => generateSectionPDF(sectionId, sectionTitle, sectionContent)}
+                                        style={{
+                                          background: '#dc2626',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        PDF
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => saveSectionEdit(sectionId, sectionContent)}
+                                        style={{
+                                          background: '#3b82f6',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={cancelSectionEdit}
+                                        style={{
+                                          background: '#6b7280',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {isEditingThis ? (
+                                <RichTextEditor
+                                  value={sectionContent}
+                                  onChange={(content) => updateSectionContent(sectionId, content)}
+                                  placeholder={`Edit ${sectionTitle} content here...`}
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '150px'
+                                  }}
+                                  aiEnabled={aiEnabledSections.has(sectionId)}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '100px',
+                                    padding: '0.75rem',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '4px',
+                                    backgroundColor: '#f9fafb',
+                                    fontFamily: 'inherit',
+                                    fontSize: '14px',
+                                    lineHeight: '1.5',
+                                    overflowY: 'auto',
+                                    whiteSpace: 'pre-wrap'
+                                  }}
+                                  dangerouslySetInnerHTML={{ __html: sectionContent }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })
                       )}
                     </div>
                     

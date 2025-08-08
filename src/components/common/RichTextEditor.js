@@ -1,13 +1,18 @@
 import React, { useRef, useState, useEffect } from 'react';
 import AIFloatingPrompt from './AIFloatingPrompt';
 
-const RichTextEditor = ({ value, onChange, placeholder, style }) => {
+const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false }) => {
   const editorRef = useRef(null);
   const [showAIPrompt, setShowAIPrompt] = useState(false);
   const [selectedText, setSelectedText] = useState('');
   const [promptPosition, setPromptPosition] = useState({ x: 0, y: 0 });
   const [currentRange, setCurrentRange] = useState(null);
-  const [aiPromptEnabled, setAiPromptEnabled] = useState(false);
+  const [aiPromptEnabled, setAiPromptEnabled] = useState(aiEnabled);
+
+  // Update aiPromptEnabled when aiEnabled prop changes
+  useEffect(() => {
+    setAiPromptEnabled(aiEnabled);
+  }, [aiEnabled]);
 
   // Rich text formatting functions
   const execCommand = (command, value = null) => {
@@ -361,30 +366,32 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
         {/* Divider */}
         <div style={{ width: '1px', height: '20px', background: '#d1d5db', margin: '0 4px' }}></div>
 
-        {/* AI Prompt Toggle */}
-        <button
-          onClick={() => setAiPromptEnabled(!aiPromptEnabled)}
-          style={{
-            padding: '6px 10px',
-            border: `2px solid ${aiPromptEnabled ? '#10b981' : '#3b82f6'}`,
-            borderRadius: '6px',
-            background: aiPromptEnabled ? '#d1fae5' : '#ffffff',
-            cursor: 'pointer',
-            fontSize: '14px',
-            color: aiPromptEnabled ? '#065f46' : '#1e40af',
-            minWidth: '50px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-          }}
-          onMouseOver={(e) => e.target.style.background = aiPromptEnabled ? '#a7f3d0' : '#eff6ff'}
-          onMouseOut={(e) => e.target.style.background = aiPromptEnabled ? '#d1fae5' : '#ffffff'}
-          title="Toggle AI Prompt"
-        >
-          🤖 AI
-        </button>
+        {/* AI Prompt Toggle - Only show if aiEnabled prop is true */}
+        {aiEnabled && (
+          <button
+            onClick={() => setAiPromptEnabled(!aiPromptEnabled)}
+            style={{
+              padding: '6px 10px',
+              border: `2px solid ${aiPromptEnabled ? '#10b981' : '#3b82f6'}`,
+              borderRadius: '6px',
+              background: aiPromptEnabled ? '#d1fae5' : '#ffffff',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: aiPromptEnabled ? '#065f46' : '#1e40af',
+              minWidth: '50px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}
+            onMouseOver={(e) => e.target.style.background = aiPromptEnabled ? '#a7f3d0' : '#eff6ff'}
+            onMouseOut={(e) => e.target.style.background = aiPromptEnabled ? '#d1fae5' : '#ffffff'}
+            title="Toggle AI Prompt"
+          >
+            🤖 AI
+          </button>
+        )}
 
         {/* Clear Formatting */}
         <button
