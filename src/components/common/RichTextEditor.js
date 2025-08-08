@@ -13,37 +13,112 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
     setAiPromptEnabled(aiEnabled);
   }, [aiEnabled]);
 
-  // Simple formatting functions
+  // Modern formatting functions using selection API
   const formatText = (command) => {
     console.log('formatText called with:', command);
     
     // Focus the editor
     editorRef.current.focus();
     
-    // Execute the command
-    const success = document.execCommand(command, false, null);
-    console.log('Command execution result:', success);
+    // Get current selection
+    const selection = window.getSelection();
+    if (!selection.rangeCount) {
+      console.log('No selection found');
+      return;
+    }
     
-    // Force a re-render by updating the content
+    const range = selection.getRangeAt(0);
+    console.log('Selection range found:', range);
+    
+    // Apply formatting based on command
+    switch (command) {
+      case 'bold':
+        applyBold(range);
+        break;
+      case 'italic':
+        applyItalic(range);
+        break;
+      case 'underline':
+        applyUnderline(range);
+        break;
+      case 'removeFormat':
+        removeFormat(range);
+        break;
+      default:
+        console.log('Unknown command:', command);
+    }
+    
+    // Update content
     const newContent = editorRef.current.innerHTML;
-    console.log('New content:', newContent);
+    console.log('New content after formatting:', newContent);
     onChange(newContent);
-    
-    // Force focus back to ensure the formatting is applied
-    setTimeout(() => {
-      editorRef.current.focus();
-      // Force a re-render of the content
-      const currentContent = editorRef.current.innerHTML;
-      if (currentContent !== newContent) {
-        onChange(currentContent);
-      }
-    }, 10);
+  };
+
+  const applyBold = (range) => {
+    console.log('Applying bold to range');
+    const strong = document.createElement('strong');
+    try {
+      range.surroundContents(strong);
+    } catch (e) {
+      console.log('surroundContents failed, trying alternative approach');
+      const contents = range.extractContents();
+      strong.appendChild(contents);
+      range.insertNode(strong);
+    }
+  };
+
+  const applyItalic = (range) => {
+    console.log('Applying italic to range');
+    const em = document.createElement('em');
+    try {
+      range.surroundContents(em);
+    } catch (e) {
+      console.log('surroundContents failed, trying alternative approach');
+      const contents = range.extractContents();
+      em.appendChild(contents);
+      range.insertNode(em);
+    }
+  };
+
+  const applyUnderline = (range) => {
+    console.log('Applying underline to range');
+    const u = document.createElement('u');
+    try {
+      range.surroundContents(u);
+    } catch (e) {
+      console.log('surroundContents failed, trying alternative approach');
+      const contents = range.extractContents();
+      u.appendChild(contents);
+      range.insertNode(u);
+    }
+  };
+
+  const removeFormat = (range) => {
+    console.log('Removing format from range');
+    const contents = range.extractContents();
+    const textNode = document.createTextNode(contents.textContent);
+    range.insertNode(textNode);
   };
 
   const changeFontSize = (size) => {
     console.log('changeFontSize called with:', size);
     editorRef.current.focus();
-    document.execCommand('fontSize', false, size);
+    
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    
+    const range = selection.getRangeAt(0);
+    const span = document.createElement('span');
+    span.style.fontSize = `${size * 4}px`; // Convert size to pixels
+    
+    try {
+      range.surroundContents(span);
+    } catch (e) {
+      const contents = range.extractContents();
+      span.appendChild(contents);
+      range.insertNode(span);
+    }
+    
     onChange(editorRef.current.innerHTML);
   };
 
@@ -51,22 +126,23 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
     console.log('changeAlignment called with:', align);
     editorRef.current.focus();
     
-    let command = '';
-    switch (align) {
-      case 'left':
-        command = 'justifyLeft';
-        break;
-      case 'center':
-        command = 'justifyCenter';
-        break;
-      case 'right':
-        command = 'justifyRight';
-        break;
-      default:
-        command = 'justifyLeft';
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    
+    const range = selection.getRangeAt(0);
+    const div = document.createElement('div');
+    div.style.textAlign = align;
+    
+    // Get the parent block element
+    let blockElement = range.commonAncestorContainer;
+    while (blockElement && blockElement.nodeType !== 1) {
+      blockElement = blockElement.parentNode;
     }
     
-    document.execCommand(command, false, null);
+    if (blockElement) {
+      blockElement.style.textAlign = align;
+    }
+    
     onChange(editorRef.current.innerHTML);
   };
 
@@ -74,11 +150,18 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
     console.log('insertList called with:', type);
     editorRef.current.focus();
     
-    if (type === 'Unordered') {
-      document.execCommand('insertUnorderedList', false, null);
-    } else {
-      document.execCommand('insertOrderedList', false, null);
-    }
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    
+    const range = selection.getRangeAt(0);
+    const listType = type === 'Unordered' ? 'ul' : 'ol';
+    const list = document.createElement(listType);
+    const li = document.createElement('li');
+    
+    const contents = range.extractContents();
+    li.appendChild(contents);
+    list.appendChild(li);
+    range.insertNode(list);
     
     onChange(editorRef.current.innerHTML);
   };
