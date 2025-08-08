@@ -8,6 +8,8 @@ import ProtocolGenerator from './components/ProtocolGenerator';
 import RegulatoryDocuments from './components/RegulatoryDocuments';
 import RegulatoryDocumentGenerator from './components/RegulatoryDocumentGenerator';
 import BatchRegulatoryGenerator from './components/BatchRegulatoryGenerator'; // NEW IMPORT
+import UnifiedRegulatoryGenerator from './components/UnifiedRegulatoryGenerator'; // TEST COMPONENT
+import EnhancedMedicalAnalysis from './components/EnhancedMedicalAnalysis'; // TIER 1 ENHANCEMENTS
 import ClinicalDossierCompiler from './components/ClinicalDossierCompiler';
 import QueryAssistant from './components/QueryAssistant';
 import SkinDiseaseDetector from './components/SkinDiseaseDetector';
@@ -75,6 +77,10 @@ const AppContent = () => {
                         <Route path="/regulatory-documents" element={<RegulatoryDocuments />} /> {/* MAP INTERFACE */}
                         <Route path="/ind-modules" element={<RegulatoryDocumentGenerator />} />   {/* SINGLE FORM & LOGIC */}
                         <Route path="/batch-regulatory" element={<BatchRegulatoryGenerator />} />  {/* NEW BATCH INTERFACE */}
+                        <Route path="/unified-regulatory" element={<UnifiedRegulatoryGenerator />} />  {/* TEST: NEW UNIFIED COMPONENT */}
+                        
+                        {/* TIER 1 ENHANCED FEATURES */}
+                        <Route path="/enhanced-analysis" element={<EnhancedMedicalAnalysis />} />  {/* NEW: CLAUDE API ENHANCEMENTS */}
                         
                         <Route path="/clinical-dossier" element={<ClinicalDossierCompiler />} />
                         <Route path="/query" element={<QueryAssistant />} />

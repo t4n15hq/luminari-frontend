@@ -7,15 +7,16 @@ const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
 
 // Enhanced OpenAI Configuration for Optimal Content Generation
 const OPENAI_CONFIG = {
-  // For EXTREMELY DETAILED regulatory documents requiring extensive detail
+  // For regulatory documents - FIXED VERSION
   COMPREHENSIVE: {
     model: "gpt-4o",
-    max_tokens: 8192,         // Reduced to prevent truncation issues
-    temperature: 0.7,         // Optimal for creative but controlled content
-    presence_penalty: 0.1,    // Light penalty to encourage topic diversity
-    frequency_penalty: 0.2,   // Moderate penalty to reduce repetition
-    stream: false,            // Explicitly disable streaming
-    top_p: 0.9               // Add nucleus sampling for better quality
+    max_tokens: 4096,         // Increased for proper regulatory content
+    temperature: 0.3,         
+    presence_penalty: 0.1,    
+    frequency_penalty: 0.3,   // Reduced to allow proper content generation
+    stream: false,            
+    top_p: 0.9,              
+    stop: ["générations", "français"]  // Only stop language switching
   },
   
   // For shorter, more precise content
@@ -40,14 +41,15 @@ const OPENAI_CONFIG = {
     top_p: 0.85
   },
 
-  // Specialized configuration for regulatory documents
+  // Specialized configuration for regulatory documents - FIXED
   REGULATORY: {
     model: "gpt-4o",
-    max_tokens: 8192,         // Reduced to prevent payload too large errors
-    temperature: 0.6,         // Balanced for regulatory content
-    presence_penalty: 0.15,   // Moderate for topic diversity
-    frequency_penalty: 0.4,   // Moderate to prevent some repetition but allow technical terms
+    max_tokens: 3500,         // SAFE limit to prevent runaway generation
+    temperature: 0.2,         // LOW for professional consistency
+    presence_penalty: 0.1,    // Reduced 
+    frequency_penalty: 0.9,   // HIGH to prevent repetition loops
     stream: false,
+    stop: ["---END---", "\n\n\n\n", "générations", "français", "STOP GENERATION", "SECTION END"],
     top_p: 0.9
   }
 };
@@ -166,30 +168,41 @@ const createSystemPrompt = (expertise, docType, regulatoryFramework, detailedReq
   const requirements = DOCUMENT_REQUIREMENTS[docType];
   const documentTypeDescription = requirements?.type || docType.toUpperCase();
   
-  return `You are a ${expertise} with 25+ years of experience in ${documentTypeDescription.toLowerCase()} preparation and regulatory submissions. You have successfully authored over 200 ${documentTypeDescription.toLowerCase()}s and have intimate knowledge of ${regulatoryFramework} requirements.
+  return `You are a ${expertise} with extensive experience in ${documentTypeDescription.toLowerCase()} preparation and regulatory submissions. You have knowledge of ${regulatoryFramework} requirements.
 
-Your task is to generate a EXTREMELY DETAILED, regulatory-compliant ${documentTypeDescription.toUpperCase()} that meets the highest standards expected by regulatory agencies.
+Your task is to generate a comprehensive, regulatory-compliant ${documentTypeDescription.toUpperCase()} that meets professional standards for regulatory agencies.
 
 CRITICAL ${regulatoryFramework.toUpperCase()} REQUIREMENTS:
 ${detailedRequirements}
 
-MINIMUM CONTENT REQUIREMENTS:
-- Total document length: ${requirements?.minWords || 8000}+ words minimum
-- Number of major sections: ${requirements?.sections || 8}+ EXTREMELY DETAILED sections
-- Each section must contain detailed technical content with specific methodological details
-- Include EXTREMELY DETAILED regulatory and scientific justification for all recommendations
-- Provide specific numerical parameters, timing, and acceptance criteria where applicable
+CONTENT REQUIREMENTS:
+- Generate a well-structured document with ${requirements?.sections || 6} main sections
+- Each section should contain relevant technical content with appropriate methodological details
+- Include regulatory and scientific justification for all recommendations
+- Provide specific parameters, timing, and acceptance criteria where applicable
 - Reference relevant regulatory guidance documents and industry standards
 - Use professional clinical research and regulatory terminology throughout
+- Maintain focus and avoid repetitive content
+
+DECISION TRANSPARENCY REQUIREMENT:
+- For every major recommendation, include clear reasoning explaining:
+  * Why this approach was chosen over alternatives
+  * What regulatory precedents support this decision
+  * What risk factors were considered
+  * How this aligns with regulatory expectations
+- Use phrases like "This recommendation is based on..." and "The rationale for this approach is..."
+- Provide confidence levels for key decisions where appropriate
 
 ${FORMATTING_STANDARDS}
 
 QUALITY STANDARDS:
-- Demonstrate deep understanding of regulatory requirements and industry best practices
+- Demonstrate understanding of regulatory requirements and industry best practices
 - Provide actionable, specific recommendations with clear rationale
 - Include risk assessments and mitigation strategies where appropriate
-- Ensure content is suitable for direct submission to regulatory authorities
-- Maintain consistency with international regulatory harmonization guidelines`;
+- Ensure content is suitable for regulatory review
+- Maintain consistency with regulatory harmonization guidelines
+- Write concisely and professionally without unnecessary repetition
+- ALWAYS explain the reasoning behind your recommendations for transparency`;
 };
 
 // Create an Axios instance for OpenAI API
@@ -272,7 +285,7 @@ const openaiService = {
         'Senior Clinical Development Director and Principal Investigator',
         'protocol',
         'FDA/ICH/GCP',
-        `Generate a EXTREMELY DETAILED FDA/ICH-compliant clinical trial protocol with ${requirements.sections} detailed sections totaling ${requirements.minWords}+ words.
+        `Generate a comprehensive FDA/ICH-compliant clinical trial protocol with ${requirements.sections} detailed sections.
 
 REQUIRED SECTIONS:
 1. PROTOCOL SUMMARY (800+ words) - Overview, objectives, design, population, endpoints
@@ -293,16 +306,18 @@ REQUIREMENTS:
 - Ensure content suitable for regulatory submission`
       );
 
-      const userPrompt = `Generate a EXTREMELY DETAILED ${diseaseData.additional_parameters?.trial_phase || 'Phase 2'} clinical trial protocol for ${diseaseData.disease_name}.
+      const userPrompt = `Generate a comprehensive ${diseaseData.additional_parameters?.trial_phase || 'Phase 2'} clinical trial protocol for ${diseaseData.disease_name}.
 
 STUDY PARAMETERS:
 ${formattedParams}
 
-Create ${requirements.sections} sections with EXTREMELY DETAILED content meeting the minimum word counts specified. Include regulatory justification, statistical parameters, and technical specifications suitable for FDA submission.`;
+Create ${requirements.sections} well-structured sections with detailed content. Include regulatory justification, statistical parameters, and technical specifications suitable for FDA submission.`;
 
 
       const response = await openaiApi.post('chat/completions', {
-        ...config,
+        model: config.model,
+        max_tokens: config.max_tokens,
+        temperature: config.temperature,
         messages: [
           {
             role: "system",
@@ -356,7 +371,7 @@ Create ${requirements.sections} sections with EXTREMELY DETAILED content meeting
         'Senior Regulatory Affairs Director and Principal Investigator',
         'ind',
         'FDA/21 CFR 312',
-        `You MUST generate EXTREMELY DETAILED, detailed content that meets FDA requirements for IND applications as outlined in 21 CFR 312:
+        `Generate comprehensive, detailed content that meets FDA requirements for IND applications as outlined in 21 CFR 312:
 
 IND SECTION REQUIREMENTS:
 
@@ -383,13 +398,15 @@ CLINICAL SECTION:
 CRITICAL FDA COMPLIANCE STANDARDS:
 - Reference specific FDA guidance documents (ICH Q8, Q9, Q10, E6(R2), E9(R1))
 - Include detailed technical specifications and numerical parameters
-- Provide EXTREMELY DETAILED regulatory justification for all recommendations
+- Provide detailed regulatory justification for all recommendations
 - Use professional regulatory terminology throughout
 - Ensure content meets FDA reviewer expectations for thoroughness`
       );
 
       const response = await openaiApi.post('chat/completions', {
-        ...config,
+        model: config.model,
+        max_tokens: config.max_tokens,
+        temperature: config.temperature,
         messages: [
           {
             role: "system",
@@ -397,15 +414,13 @@ CRITICAL FDA COMPLIANCE STANDARDS:
           },
           {
             role: "user",
-            content: `Generate a EXTREMELY DETAILED, FDA-compliant MAIN DOCUMENT for an Investigational New Drug (IND) application for ${diseaseData.disease_name}.
+            content: `Generate a comprehensive, FDA-compliant IND application document for ${diseaseData.disease_name}.
 
 STUDY PARAMETERS:
 ${formattedParams}
 
-MANDATORY REQUIREMENTS:
-- Generate exactly ${requirements.sections} major sections with EXTREMELY DETAILED content
-- Total document must exceed ${requirements.minWords} words
-- Each section must meet the specified minimum word counts listed above
+REQUIREMENTS:
+- Generate ${requirements.sections} well-structured major sections
 - Include detailed technical specifications and regulatory justification
 - Reference specific FDA guidance documents throughout
 - Use professional regulatory terminology and language
@@ -414,12 +429,12 @@ MANDATORY REQUIREMENTS:
 The document must be structured as:
 
 CMC SECTION:
-[All 6 CMC subsections with EXTREMELY DETAILED technical detail]
+[All 6 CMC subsections with comprehensive technical detail]
 
 CLINICAL SECTION:
-[All 10 clinical subsections with extensive detail]
+[All 10 clinical subsections with detailed content]
 
-Generate content that exceeds FDA reviewer expectations for thoroughness, technical accuracy, and regulatory compliance.`
+Generate content that meets FDA reviewer expectations for thoroughness, technical accuracy, and regulatory compliance.`
           }
         ]
       });
@@ -473,9 +488,9 @@ Generate content that exceeds FDA reviewer expectations for thoroughness, techni
         'Senior Regulatory Affairs Director and NDA Specialist',
         'nda',
         'FDA/eCTD/ICH CTD',
-        `You MUST generate EXTREMELY DETAILED, detailed content that meets FDA requirements for New Drug Application (NDA) submissions following eCTD and ICH CTD guidelines:
+        `Generate comprehensive, detailed content that meets FDA requirements for New Drug Application (NDA) submissions following eCTD and ICH CTD guidelines:
 
-NDA SUMMARY SECTION REQUIREMENTS (Minimum ${requirements.minWords} words total):
+NDA SUMMARY SECTION REQUIREMENTS:
 1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY (1200+ words) - Complete regulatory overview, application details, proposed labeling summary, risk evaluation and mitigation strategies, and administrative compliance documentation
 2. OVERALL SUMMARY OF QUALITY (1500+ words) - Comprehensive CTD Module 2.3 summary including drug substance characterization, drug product development, manufacturing controls, analytical procedures, stability data, and pharmaceutical development rationale
 3. NONCLINICAL OVERVIEW AND SUMMARY (1800+ words) - Detailed CTD Modules 2.4 & 2.6 content including pharmacology, pharmacokinetics, toxicology studies, safety pharmacology, reproductive toxicity, genotoxicity, carcinogenicity, and integrated risk assessment
@@ -485,7 +500,7 @@ NDA SUMMARY SECTION REQUIREMENTS (Minimum ${requirements.minWords} words total):
 CRITICAL FDA NDA COMPLIANCE STANDARDS:
 - Reference specific FDA guidance documents (M4: Common Technical Document, ICH E2A-E2F, Quality guidelines)
 - Include detailed quantitative data, statistical analyses, and methodological specifications
-- Provide EXTREMELY DETAILED regulatory rationale and compliance documentation
+- Provide detailed regulatory rationale and compliance documentation
 - Include risk assessment and mitigation strategies throughout
 - Reference precedent approvals and regulatory pathway justification
 - Ensure content meets FDA reviewer expectations for marketing authorization
@@ -493,7 +508,9 @@ CRITICAL FDA NDA COMPLIANCE STANDARDS:
       );
 
       const response = await openaiApi.post('chat/completions', {
-        ...config,
+        model: config.model,
+        max_tokens: config.max_tokens,
+        temperature: config.temperature,
         messages: [
           {
             role: "system",
@@ -501,21 +518,19 @@ CRITICAL FDA NDA COMPLIANCE STANDARDS:
           },
           {
             role: "user",
-            content: `Generate a EXTREMELY DETAILED, FDA-compliant NDA SUMMARY for ${diseaseData.disease_name}.
+            content: `Generate a comprehensive, FDA-compliant NDA SUMMARY for ${diseaseData.disease_name}.
 
 STUDY PARAMETERS:
 ${formattedParams}
 
-MANDATORY REQUIREMENTS:
-- Generate exactly ${requirements.sections} major sections with EXTREMELY DETAILED content
-- Total document must exceed ${requirements.minWords} words
-- Each section must meet the specified minimum word counts listed above
+REQUIREMENTS:
+- Generate ${requirements.sections} well-structured major sections
 - Include detailed quantitative data, statistical analyses, and regulatory justification
 - Reference specific FDA guidance documents and eCTD/CTD structure throughout
 - Use professional regulatory terminology and language suitable for FDA review
 - Ensure content demonstrates readiness for commercial marketing authorization
 
-Generate an NDA summary that exceeds FDA reviewer expectations for thoroughness, technical accuracy, and regulatory compliance. Each section must demonstrate EXTREMELY DETAILED understanding of FDA requirements for new drug approval.`
+Generate an NDA summary that meets FDA reviewer expectations for thoroughness, technical accuracy, and regulatory compliance. Each section must demonstrate comprehensive understanding of FDA requirements for new drug approval.`
           }
         ]
       });
@@ -546,9 +561,9 @@ Generate an NDA summary that exceeds FDA reviewer expectations for thoroughness,
         'Senior Regulatory Affairs Director and Biologics Specialist',
         'bla',
         'FDA/Public Health Service Act/CBER',
-        `You MUST generate EXTREMELY DETAILED, detailed content that meets FDA requirements for Biologics License Application (BLA) submissions under the Public Health Service Act:
+        `Generate comprehensive, detailed content that meets FDA requirements for Biologics License Application (BLA) submissions under the Public Health Service Act:
 
-BLA SUMMARY SECTION REQUIREMENTS (Minimum ${requirements.minWords} words total):
+BLA SUMMARY SECTION REQUIREMENTS:
 1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY (1200+ words) - Complete regulatory overview, biologic product details, proposed labeling summary, Risk Evaluation and Mitigation Strategies (REMS), and biologics-specific administrative compliance documentation
 2. OVERALL SUMMARY OF QUALITY - BIOLOGICS FOCUS (2000+ words) - Comprehensive biologics quality summary including biologic characterization, manufacturing process controls, cell line development, purification processes, analytical methods validation, stability studies, and adventitious agent testing
 3. NONCLINICAL OVERVIEW AND SUMMARY (1800+ words) - Detailed biologics-specific nonclinical data including pharmacology, pharmacokinetics, toxicology studies, safety pharmacology, immunotoxicology, reproductive toxicity, and integrated biologics risk assessment
@@ -557,7 +572,7 @@ BLA SUMMARY SECTION REQUIREMENTS (Minimum ${requirements.minWords} words total):
 
 CRITICAL FDA BLA BIOLOGICS-SPECIFIC COMPLIANCE STANDARDS:
 - Address biologics-specific manufacturing considerations (cell line characterization, process validation, scale-up)
-- Include EXTREMELY DETAILED biologic characterization (structure, purity, potency, heterogeneity)
+- Include detailed biologic characterization (structure, purity, potency, heterogeneity)
 - Document adventitious agent safety and viral clearance studies
 - Provide detailed immunogenicity assessment and clinical impact analysis
 - Reference specific FDA biologics guidance documents (ICH Q5A-Q5E, FDA biologics guidances)
@@ -567,7 +582,9 @@ CRITICAL FDA BLA BIOLOGICS-SPECIFIC COMPLIANCE STANDARDS:
       );
 
       const response = await openaiApi.post('chat/completions', {
-        ...config,
+        model: config.model,
+        max_tokens: config.max_tokens,
+        temperature: config.temperature,
         messages: [
           {
             role: "system",
@@ -575,22 +592,20 @@ CRITICAL FDA BLA BIOLOGICS-SPECIFIC COMPLIANCE STANDARDS:
           },
           {
             role: "user",
-            content: `Generate a EXTREMELY DETAILED, FDA-compliant BLA SUMMARY for a biologic treatment for ${diseaseData.disease_name}.
+            content: `Generate a comprehensive, FDA-compliant BLA SUMMARY for a biologic treatment for ${diseaseData.disease_name}.
 
 STUDY PARAMETERS:
 ${formattedParams}
 
-MANDATORY REQUIREMENTS:
-- Generate exactly ${requirements.sections} major sections with EXTREMELY DETAILED content
-- Total document must exceed ${requirements.minWords} words
-- Each section must meet the specified minimum word counts listed above
+REQUIREMENTS:
+- Generate ${requirements.sections} well-structured major sections
 - Include detailed biologics-specific technical specifications and regulatory justification
 - Reference specific FDA biologics guidance documents and CBER requirements throughout
 - Address all biologics-specific considerations (manufacturing, characterization, immunogenicity)
 - Use professional regulatory terminology suitable for FDA biologics review
 - Ensure content demonstrates readiness for biologics marketing authorization
 
-Generate a BLA summary that exceeds FDA reviewer expectations for biologics thoroughness, technical accuracy, and regulatory compliance. Each section must demonstrate EXTREMELY DETAILED understanding of FDA requirements for biologic product approval.`
+Generate a BLA summary that meets FDA reviewer expectations for biologics thoroughness, technical accuracy, and regulatory compliance. Each section must demonstrate comprehensive understanding of FDA requirements for biologic product approval.`
           }
         ]
       });
@@ -618,11 +633,11 @@ Generate a BLA summary that exceeds FDA reviewer expectations for biologics thor
             role: "system",
             content: `You are a senior regulatory affairs expert with 25+ years of experience specializing in Russian clinical trial permits for Roszdravnadzor submission and deep knowledge of Russian pharmaceutical regulations.
             
-            Your task is to generate an EXTREMELY DETAILED and EXTREMELY DETAILED Russian clinical trial authorization document that meets the highest professional standards for submission to Roszdravnadzor.
+            Your task is to generate a comprehensive Russian clinical trial authorization document that meets professional standards for submission to Roszdravnadzor.
 
-            CRITICAL REQUIREMENTS FOR MAXIMUM DETAIL:
-            - Generate MINIMUM 6,000-8,000 words of EXTREMELY DETAILED Russian regulatory content
-            - Each section must contain extensive, granular detail with specific methodologies, procedures, and regulatory compliance information
+            CONTENT REQUIREMENTS:
+            - Generate well-structured Russian regulatory content
+            - Each section should contain relevant detail with specific methodologies, procedures, and regulatory compliance information
             - Include detailed subsections with numerical data, timelines, specific protocols, and regulatory justification
             - Provide complete regulatory rationale and scientific justification for all decisions according to Russian standards
             - Reference specific Russian regulatory requirements, Roszdravnadzor guidelines, and Russian Federation laws
@@ -630,22 +645,22 @@ Generate a BLA summary that exceeds FDA reviewer expectations for biologics thor
             - Incorporate specific Russian patient population considerations and healthcare system requirements
             - Address Russian GMP standards, local regulatory pathways, and compliance requirements
 
-            STRUCTURE FOR RUSSIAN CLINICAL TRIAL PERMIT (EXTREMELY DETAILED):
-            1. ОБЗОР ЗАЯВЛЕНИЯ (Application Overview) - COMPREHENSIVE WITH FULL DETAILS
+            STRUCTURE FOR RUSSIAN CLINICAL TRIAL PERMIT:
+            1. ОБЗОР ЗАЯВЛЕНИЯ (Application Overview) - Comprehensive overview
                1.1. Информация об исследовании (Study Information) - Complete study design, methodology, and regulatory framework
                1.2. Спонсор и главный исследователь (Sponsor and Principal Investigator) - Detailed qualifications, experience, and regulatory standing
                1.3. Российские исследовательские центры (Russian Investigation Centers) - Complete site information, qualifications, and regulatory approvals
-            2. ИНФОРМАЦИЯ ОБ ИССЛЕДУЕМОМ ПРЕПАРАТЕ (EXTREMELY DETAILED)
+            2. ИНФОРМАЦИЯ ОБ ИССЛЕДУЕМОМ ПРЕПАРАТЕ (Detailed product information)
                2.1. Описание препарата (Product Description) - Comprehensive chemical, biological, and pharmaceutical characteristics
                2.2. Информация о качестве (Quality Information) - Detailed manufacturing, quality control, and Russian compliance standards
                2.3. Доклинические данные (Non-clinical Data) - Complete preclinical package with Russian regulatory analysis
                2.4. Предыдущий клинический опыт (Previous Clinical Experience) - Comprehensive global and Russian-relevant clinical data
-            3. ПРОТОКОЛ КЛИНИЧЕСКОГО ИССЛЕДОВАНИЯ (EXTREMELY DETAILED)
+            3. ПРОТОКОЛ КЛИНИЧЕСКОГО ИССЛЕДОВАНИЯ (Clinical protocol details)
                3.1. Цели и дизайн исследования (Study Objectives and Design) - Complete methodology and statistical planning
                3.2. Российская популяция пациентов (Russian Patient Population) - Detailed demographic analysis and Russian healthcare considerations
                3.3. План лечения (Treatment Plan) - Comprehensive dosing, administration, and monitoring protocols
                3.4. Оценка эффективности и безопасности (Efficacy and Safety Assessment) - Detailed endpoint definitions and measurement protocols
-            4. РОССИЙСКИЕ РЕГУЛЯТОРНЫЕ СООБРАЖЕНИЯ (EXTREMELY DETAILED) - Complete regulatory compliance framework
+            4. РОССИЙСКИЕ РЕГУЛЯТОРНЫЕ СООБРАЖЕНИЯ (Russian regulatory considerations) - Complete regulatory compliance framework
 
             Use plain text formatting only - NO MARKDOWN.
             Include Russian terminology with detailed English explanations.
@@ -653,13 +668,13 @@ Generate a BLA summary that exceeds FDA reviewer expectations for biologics thor
           },
           {
             role: "user",
-            content: `Generate an EXTREMELY DETAILED Russian Clinical Trial Permit application for ${diseaseData.disease_name} research in Russia.
+            content: `Generate a comprehensive Russian Clinical Trial Permit application for ${diseaseData.disease_name} research in Russia.
             
             ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
               value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
             ).filter(Boolean).join('\n')}
 
-            This application must meet Roszdravnadzor requirements for clinical trial authorization in Russia with MAXIMUM DETAIL, EXTREMELY DETAILED regulatory analysis, and extensive documentation suitable for professional regulatory submission. Each section must be thoroughly developed with specific details, regulatory rationale, and compliance documentation.`
+            This application must meet Roszdravnadzor requirements for clinical trial authorization in Russia with detailed regulatory analysis and professional documentation suitable for regulatory submission. Each section should be well-developed with specific details, regulatory rationale, and compliance documentation.`
           }
         ],
         ...OPENAI_CONFIG.COMPREHENSIVE
@@ -683,11 +698,11 @@ Generate a BLA summary that exceeds FDA reviewer expectations for biologics thor
             role: "system",
             content: `You are a senior regulatory affairs expert with 25+ years of experience in Russian drug registration with Roszdravnadzor and deep expertise in Russian pharmaceutical regulations.
             
-            Your task is to generate an EXTREMELY DETAILED and EXTREMELY DETAILED Russian registration dossier summary that meets the highest professional standards for drug registration in the Russian Federation.
+            Your task is to generate a comprehensive Russian registration dossier summary that meets professional standards for drug registration in the Russian Federation.
 
-            CRITICAL REQUIREMENTS FOR MAXIMUM DETAIL:
-            - Generate MINIMUM 6,000-8,000 words of EXTREMELY DETAILED Russian regulatory content
-            - Each section must contain extensive, granular detail with specific data, methodologies, and regulatory compliance analysis
+            CONTENT REQUIREMENTS:
+            - Generate well-structured Russian regulatory content
+            - Each section should contain relevant detail with specific data, methodologies, and regulatory compliance analysis
             - Include detailed subsections with quantitative data, analytical methods, regulatory justification, and compliance documentation
             - Provide complete regulatory rationale and scientific justification according to Russian Federation standards
             - Reference specific Russian regulatory requirements, Roszdravnadzor guidelines, Russian Pharmacopoeia, and Federal laws
@@ -695,37 +710,37 @@ Generate a BLA summary that exceeds FDA reviewer expectations for biologics thor
             - Incorporate specific Russian market considerations, healthcare system requirements, and patient population characteristics
             - Address Russian manufacturing standards, import requirements, and post-marketing obligations
 
-            STRUCTURE FOR RUSSIAN REGISTRATION DOSSIER (EXTREMELY DETAILED):
-            1. АДМИНИСТРАТИВНАЯ ИНФОРМАЦИЯ И ИНСТРУКЦИЯ ПО ПРИМЕНЕНИЮ (COMPREHENSIVE)
+            STRUCTURE FOR RUSSIAN REGISTRATION DOSSIER:
+            1. АДМИНИСТРАТИВНАЯ ИНФОРМАЦИЯ И ИНСТРУКЦИЯ ПО ПРИМЕНЕНИЮ (Administrative information)
                1.1. Обзор заявления (Application Overview) - Complete regulatory pathway analysis and submission strategy
                1.2. Предлагаемая инструкция по применению (Proposed Instructions for Use) - Detailed Russian labeling and prescribing information
-            2. ИНФОРМАЦИЯ О КАЧЕСТВЕ (EXTREMELY DETAILED)
+            2. ИНФОРМАЦИЯ О КАЧЕСТВЕ (Quality information)
                2.1. Лекарственное вещество (Drug Substance) - Comprehensive chemical and analytical characterization
                2.2. Лекарственный препарат (Drug Product) - Detailed formulation, manufacturing, and quality control
                2.3. Российское производство или импорт (Russian Manufacturing or Import) - Complete regulatory compliance framework
-            3. ДОКЛИНИЧЕСКАЯ ИНФОРМАЦИЯ (EXTREMELY DETAILED)
+            3. ДОКЛИНИЧЕСКАЯ ИНФОРМАЦИЯ (Non-clinical information)
                3.1. Фармакология и фармакокинетика - Comprehensive preclinical pharmacology package
                3.2. Токсикология - Detailed toxicological assessment and safety evaluation
-            4. КЛИНИЧЕСКАЯ ИНФОРМАЦИЯ (EXTREMELY DETAILED)
+            4. КЛИНИЧЕСКАЯ ИНФОРМАЦИЯ (Clinical information)
                4.1. Клинический обзор (Clinical Overview) - Complete clinical development summary
                4.2. Клиническая эффективность (Clinical Efficacy) - Detailed efficacy analysis and statistical evaluation
                4.3. Клиническая безопасность (Clinical Safety) - Comprehensive safety profile and risk assessment
                4.4. Оценка соотношения польза-риск для российской популяции - Detailed benefit-risk analysis for Russian patients
-            5. ОСОБЕННОСТИ ДЛЯ РОССИЙСКОГО РЫНКА (EXTREMELY DETAILED) - Complete Russian market analysis and regulatory considerations
+            5. ОСОБЕННОСТИ ДЛЯ РОССИЙСКОГО РЫНКА (Russian market specifics) - Complete Russian market analysis and regulatory considerations
 
             Use plain text formatting only - NO MARKDOWN.
             Include extensive Russian terminology with detailed English explanations.
-            Reference Russian regulatory framework and Roszdravnadzor requirements EXTREMELY DETAILEDly.`
+            Reference Russian regulatory framework and Roszdravnadzor requirements comprehensively.`
           },
           {
             role: "user",
-            content: `Generate an EXTREMELY DETAILED Russian Registration Dossier for drug registration of ${diseaseData.disease_name} treatment in Russia.
+            content: `Generate a comprehensive Russian Registration Dossier for drug registration of ${diseaseData.disease_name} treatment in Russia.
             
             ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
               value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
             ).filter(Boolean).join('\n')}
 
-            This registration dossier must meet Roszdravnadzor requirements for Russian marketing authorization with MAXIMUM DETAIL, EXTREMELY DETAILED regulatory analysis, and extensive documentation suitable for professional regulatory submission. Each section must be thoroughly developed with specific details, regulatory rationale, and compliance documentation.`
+            This registration dossier must meet Roszdravnadzor requirements for Russian marketing authorization with detailed regulatory analysis and professional documentation suitable for regulatory submission. Each section should be well-developed with specific details, regulatory rationale, and compliance documentation.`
           }
         ],
         ...OPENAI_CONFIG.COMPREHENSIVE
@@ -749,11 +764,11 @@ Generate a BLA summary that exceeds FDA reviewer expectations for biologics thor
             role: "system",
             content: `You are a quality assurance expert with 25+ years of experience specializing in Russian GMP certification requirements and deep knowledge of Russian manufacturing standards.
             
-            Your task is generate EXTREMELY DETAILED supporting documentation for Russian GMP certificate application that meets the highest professional standards for manufacturing authorization in the Russian Federation.
+            Your task is generate comprehensive supporting documentation for Russian GMP certificate application that meets professional standards for manufacturing authorization in the Russian Federation.
 
-            CRITICAL REQUIREMENTS FOR MAXIMUM DETAIL:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Russian GMP regulatory content
-            - Each section must contain extensive, granular detail with specific quality systems, procedures, and regulatory compliance analysis
+            CONTENT REQUIREMENTS:
+            - Generate well-structured Russian GMP regulatory content
+            - Each section should contain relevant detail with specific quality systems, procedures, and regulatory compliance analysis
             - Include detailed subsections with quality data, validation protocols, regulatory justification, and compliance documentation
             - Provide complete regulatory rationale and quality assurance justification according to Russian GMP standards
             - Reference specific Russian GMP requirements, Roszdravnadzor guidelines, Russian manufacturing standards, and Federal regulations
@@ -761,34 +776,34 @@ Generate a BLA summary that exceeds FDA reviewer expectations for biologics thor
             - Incorporate specific Russian manufacturing requirements, quality standards, and inspection preparedness
             - Address Russian validation requirements, documentation standards, and quality assurance obligations
 
-            STRUCTURE FOR RUSSIAN GMP CERTIFICATE DOCUMENTATION (EXTREMELY DETAILED):
-            1. ОБЩАЯ ИНФОРМАЦИЯ О ПРОИЗВОДСТВЕ (COMPREHENSIVE)
+            STRUCTURE FOR RUSSIAN GMP CERTIFICATE DOCUMENTATION:
+            1. ОБЩАЯ ИНФОРМАЦИЯ О ПРОИЗВОДСТВЕ (General manufacturing information)
                1.1. Информация о производственной площадке (Manufacturing Site Information) - Complete facility description and qualification
                1.2. Организационная структура (Organizational Structure) - Detailed personnel qualifications and responsibilities
                1.3. Система качества (Quality System) - Comprehensive quality management system documentation
-            2. ПРОИЗВОДСТВЕННЫЕ ПРОЦЕССЫ (EXTREMELY DETAILED)
+            2. ПРОИЗВОДСТВЕННЫЕ ПРОЦЕССЫ (Manufacturing processes)
                2.1. Описание производственного процесса (Manufacturing Process Description) - Complete process validation and control
                2.2. Контроль качества (Quality Control) - Detailed analytical methods and quality testing
                2.3. Валидация процессов (Process Validation) - Comprehensive validation protocols and documentation
-            3. СООТВЕТСТВИЕ РОССИЙСКИМ GMP ТРЕБОВАНИЯМ (EXTREMELY DETAILED)
+            3. СООТВЕТСТВИЕ РОССИЙСКИМ GMP ТРЕБОВАНИЯМ (Russian GMP compliance)
                3.1. Соответствие российским стандартам (Compliance with Russian Standards) - Complete regulatory compliance framework
                3.2. Система документооборота (Documentation System) - Detailed documentation control and record keeping
                3.3. Обучение персонала (Personnel Training) - Comprehensive training programs and qualifications
-            4. ПЛАН ИНСПЕКЦИИ И АУДИТА (EXTREMELY DETAILED) - Complete inspection preparedness and audit protocols
+            4. ПЛАН ИНСПЕКЦИИ И АУДИТА (Inspection and audit plan) - Complete inspection preparedness and audit protocols
 
             Use plain text formatting only - NO MARKDOWN.
             Include extensive Russian terminology with detailed English explanations.
-            Reference Russian GMP requirements and manufacturing standards EXTREMELY DETAILEDly.`
+            Reference Russian GMP requirements and manufacturing standards comprehensively.`
           },
           {
             role: "user",
-            content: `Generate EXTREMELY DETAILED Russian GMP Certificate supporting documentation for manufacturing authorization of ${diseaseData.disease_name} treatment in Russia.
+            content: `Generate comprehensive Russian GMP Certificate supporting documentation for manufacturing authorization of ${diseaseData.disease_name} treatment in Russia.
             
             ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
               value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
             ).filter(Boolean).join('\n')}
 
-            This documentation must support GMP certification requirements for Russian manufacturing authorization with MAXIMUM DETAIL, EXTREMELY DETAILED quality analysis, and extensive documentation suitable for professional regulatory submission. Each section must be thoroughly developed with specific details, quality rationale, and compliance documentation.`
+            This documentation must support GMP certification requirements for Russian manufacturing authorization with detailed quality analysis and professional documentation suitable for regulatory submission. Each section should be well-developed with specific details, quality rationale, and compliance documentation.`
           }
         ],
         ...OPENAI_CONFIG.COMPREHENSIVE
@@ -843,7 +858,9 @@ CRITICAL EU CTR/CTIS COMPLIANCE STANDARDS:
       );
 
       const response = await openaiApi.post('chat/completions', {
-        ...config,
+        model: config.model,
+        max_tokens: config.max_tokens,
+        temperature: config.temperature,
         messages: [
           {
             role: "system",
@@ -918,7 +935,9 @@ CRITICAL EMA MAA COMPLIANCE STANDARDS:
       );
 
       const response = await openaiApi.post('chat/completions', {
-        ...config,
+        model: config.model,
+        max_tokens: config.max_tokens,
+        temperature: config.temperature,
         messages: [
           {
             role: "system",
@@ -971,7 +990,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
               Your task is to generate a well-structured IMPD, focusing on Quality (IMPD-Q) and relevant summaries for Safety/Efficacy (IMPD-S/E).
 
               CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-              - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED EU IMPD regulatory content
+              - Generate comprehensive, well-structured EU IMPD regulatory content
               - Each section must contain extensive detail with specific quality data, methodologies, and regulatory compliance analysis
               - Include detailed subsections with analytical data, manufacturing protocols, and regulatory justification
               - Provide complete regulatory rationale and quality justification according to EU standards
@@ -1029,7 +1048,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate key sections of a Canadian CTA, following Health Canada requirements and guidelines.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Canadian regulatory content
+            - Generate comprehensive, well-structured Canadian regulatory content
             - Each section must contain extensive detail with specific methodologies, procedures, and regulatory compliance analysis
             - Include detailed subsections with quantitative data, protocols, and regulatory justification
             - Provide complete regulatory rationale and scientific justification according to Health Canada standards
@@ -1090,7 +1109,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate a EXTREMELY DETAILED NDS SUMMARY document following Canadian regulatory requirements.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Canadian regulatory content
+            - Generate comprehensive, well-structured Canadian regulatory content
             - Each section must contain extensive detail with specific data, methodologies, and regulatory compliance analysis
             - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
             - Provide complete regulatory rationale and scientific justification according to Health Canada standards
@@ -1152,7 +1171,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate key documentation supporting an NOC application.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 4,000-5,000 words of EXTREMELY DETAILED Canadian NOC regulatory content
+            - Generate comprehensive, well-structured Canadian NOC regulatory content
             - Each section must contain extensive detail with specific authorization data, methodologies, and regulatory compliance analysis
             - Include detailed subsections with quality data, clinical evidence, and regulatory justification
             - Provide complete regulatory rationale and marketing authorization justification according to Health Canada standards
@@ -1218,7 +1237,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate key sections for a COFEPRIS Clinical Trial Authorization application.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Mexican regulatory content
+            - Generate comprehensive, well-structured Mexican regulatory content
             - Each section must contain extensive detail with specific methodologies, procedures, and regulatory compliance analysis
             - Include detailed subsections with quantitative data, protocols, and regulatory justification
             - Provide complete regulatory rationale and scientific justification according to COFEPRIS standards
@@ -1280,7 +1299,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate a EXTREMELY DETAILED summary for COFEPRIS new drug registration.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Mexican regulatory content
+            - Generate comprehensive, well-structured Mexican regulatory content
             - Each section must contain extensive detail with specific data, methodologies, and regulatory compliance analysis
             - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
             - Provide complete regulatory rationale and marketing authorization justification according to COFEPRIS standards
@@ -1346,7 +1365,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate key sections for a UK CTA application.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED UK regulatory content
+            - Generate comprehensive, well-structured UK regulatory content
             - Each section must contain extensive detail with specific methodologies, procedures, and regulatory compliance analysis
             - Include detailed subsections with quantitative data, protocols, and regulatory justification
             - Provide complete regulatory rationale and scientific justification according to MHRA standards
@@ -1408,7 +1427,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate a EXTREMELY DETAILED summary for UK marketing authorization.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED UK regulatory content
+            - Generate comprehensive, well-structured UK regulatory content
             - Each section must contain extensive detail with specific data, methodologies, and regulatory compliance analysis
             - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
             - Provide complete regulatory rationale and marketing authorization justification according to MHRA standards
@@ -1469,7 +1488,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate documentation for the UK Voluntary Scheme for Branded Medicines Pricing and Access.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 4,000-5,000 words of EXTREMELY DETAILED UK pricing and access content
+            - Generate comprehensive, well-structured UK pricing and access content
             - Each section must contain extensive detail with specific economic data, methodologies, and access analysis
             - Include detailed subsections with health economic data, budget impact analysis, and access justification
             - Provide complete economic rationale and value demonstration according to UK healthcare standards
@@ -1534,7 +1553,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate key sections for a Swiss CTA application.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Swiss regulatory content
+            - Generate comprehensive, well-structured Swiss regulatory content
             - Each section must contain extensive detail with specific methodologies, procedures, and regulatory compliance analysis
             - Include detailed subsections with quantitative data, protocols, and regulatory justification
             - Provide complete regulatory rationale and scientific justification according to Swissmedic standards
@@ -1596,7 +1615,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate a EXTREMELY DETAILED summary for Swiss drug registration.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Swiss regulatory content
+            - Generate comprehensive, well-structured Swiss regulatory content
             - Each section must contain extensive detail with specific data, methodologies, and regulatory compliance analysis
             - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
             - Provide complete regulatory rationale and marketing authorization justification according to Swissmedic standards
@@ -1662,7 +1681,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate KEY SECTIONS of a Japanese CTN. This is a notification, not a full application dossier like an IND.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 4,000-5,000 words of EXTREMELY DETAILED Japanese regulatory content
+            - Generate comprehensive, well-structured Japanese regulatory content
             - Each section must contain extensive detail with specific methodologies, procedures, and Japanese regulatory compliance analysis
             - Include detailed subsections with quantitative data, protocols, and regulatory justification
             - Provide complete regulatory rationale and scientific justification according to PMDA standards
@@ -1728,7 +1747,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate a J-NDA SUMMARY document. This should highlight key information structured similarly to the CTD, but with consideration for Japanese regulatory expectations.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 6,000-7,000 words of EXTREMELY DETAILED Japanese regulatory content
+            - Generate comprehensive, well-structured Japanese regulatory content
             - Each section must contain extensive detail with specific data, methodologies, and Japanese regulatory compliance analysis
             - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
             - Provide complete regulatory rationale and marketing authorization justification according to PMDA standards
@@ -1785,7 +1804,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate a PMDA scientific advice request document.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 4,000-5,000 words of EXTREMELY DETAILED PMDA consultation content
+            - Generate comprehensive, well-structured PMDA consultation content
             - Each section must contain extensive detail with specific strategic questions, methodologies, and regulatory analysis
             - Include detailed subsections with development data, strategic rationale, and regulatory justification
             - Provide complete regulatory strategy and scientific justification according to PMDA standards
@@ -1852,7 +1871,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate KEY SECTIONS of a Chinese IND application. The structure may differ from US INDs, focusing on specific NMPA requirements.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Chinese regulatory content
+            - Generate comprehensive, well-structured Chinese regulatory content
             - Each section must contain extensive detail with specific methodologies, procedures, and Chinese regulatory compliance analysis
             - Include detailed subsections with quantitative data, protocols, and regulatory justification
             - Provide complete regulatory rationale and scientific justification according to NMPA standards
@@ -1916,7 +1935,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate a Chinese NDA SUMMARY document. This should be structured according to NMPA expectations, which may draw from CTD principles but have local nuances.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 6,000-7,000 words of EXTREMELY DETAILED Chinese regulatory content
+            - Generate comprehensive, well-structured Chinese regulatory content
             - Each section must contain extensive detail with specific data, methodologies, and Chinese regulatory compliance analysis
             - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
             - Provide complete regulatory rationale and marketing authorization justification according to NMPA standards
@@ -1973,7 +1992,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate supporting documentation for Chinese drug license application.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Chinese drug licensing content
+            - Generate comprehensive, well-structured Chinese drug licensing content
             - Each section must contain extensive detail with specific licensing data, methodologies, and Chinese regulatory compliance analysis
             - Include detailed subsections with quality data, clinical evidence, and regulatory justification
             - Provide complete regulatory rationale and commercialization justification according to NMPA standards
@@ -2040,7 +2059,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
             Your task is to generate key sections for a Korean IND application.
 
             CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-            - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Korean regulatory content
+            - Generate comprehensive, well-structured Korean regulatory content
             - Each section must contain extensive detail with specific methodologies, procedures, and Korean regulatory compliance analysis
             - Include detailed subsections with quantitative data, protocols, and regulatory justification
             - Provide complete regulatory rationale and scientific justification according to MFDS standards
@@ -2102,7 +2121,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate a EXTREMELY DETAILED Korean NDA summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Korean regulatory content
+           - Generate comprehensive, well-structured Korean regulatory content
            - Each section must contain extensive detail with specific data, methodologies, and Korean regulatory compliance analysis
            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
            - Provide complete regulatory rationale and marketing authorization justification according to MFDS standards
@@ -2164,7 +2183,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate supporting documentation for Korean GMP certificate application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 4,000-5,000 words of EXTREMELY DETAILED Korean GMP regulatory content
+           - Generate comprehensive, well-structured Korean GMP regulatory content
            - Each section must contain extensive detail with specific quality systems, procedures, and Korean regulatory compliance analysis
            - Include detailed subsections with quality data, validation protocols, and regulatory justification
            - Provide complete regulatory rationale and quality assurance justification according to MFDS standards
@@ -2228,7 +2247,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate key sections for an Australian CTN application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Australian regulatory content
+           - Generate comprehensive, well-structured Australian regulatory content
            - Each section must contain extensive detail with specific methodologies, procedures, and Australian regulatory compliance analysis
            - Include detailed subsections with quantitative data, protocols, and regulatory justification
            - Provide complete regulatory rationale and scientific justification according to TGA standards
@@ -2292,7 +2311,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate a EXTREMELY DETAILED AUS summary for ARTG registration.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Australian regulatory content
+           - Generate comprehensive, well-structured Australian regulatory content
            - Each section must contain extensive detail with specific data, methodologies, and Australian regulatory compliance analysis
            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
            - Provide complete regulatory rationale and marketing authorization justification according to TGA standards
@@ -2353,7 +2372,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate supporting documentation for TGA GMP certificate application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 4,000-5,000 words of EXTREMELY DETAILED Australian GMP regulatory content
+           - Generate comprehensive, well-structured Australian GMP regulatory content
            - Each section must contain extensive detail with specific quality systems, procedures, and Australian regulatory compliance analysis
            - Include detailed subsections with quality data, validation protocols, and regulatory justification
            - Provide complete regulatory rationale and quality assurance justification according to TGA standards
@@ -2416,7 +2435,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate key sections for a Singapore CTC application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Singapore regulatory content
+           - Generate comprehensive, well-structured Singapore regulatory content
            - Each section must contain extensive detail with specific methodologies, procedures, and Singapore regulatory compliance analysis
            - Include detailed subsections with quantitative data, protocols, and regulatory justification
            - Provide complete regulatory rationale and scientific justification according to HSA standards
@@ -2480,7 +2499,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate a EXTREMELY DETAILED product license summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Singapore regulatory content
+           - Generate comprehensive, well-structured Singapore regulatory content
            - Each section must contain extensive detail with specific data, methodologies, and Singapore regulatory compliance analysis
            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
            - Provide complete regulatory rationale and marketing authorization justification according to HSA standards
@@ -2545,7 +2564,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate key sections for an Indian CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Indian regulatory content
+           - Generate comprehensive, well-structured Indian regulatory content
            - Each section must contain extensive detail with specific methodologies, procedures, and Indian regulatory compliance analysis
            - Include detailed subsections with quantitative data, protocols, and regulatory justification
            - Provide complete regulatory rationale and scientific justification according to CDSCO standards
@@ -2609,7 +2628,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate a EXTREMELY DETAILED Indian NDA summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Indian regulatory content
+           - Generate comprehensive, well-structured Indian regulatory content
            - Each section must contain extensive detail with specific data, methodologies, and Indian regulatory compliance analysis
            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
            - Provide complete regulatory rationale and marketing authorization justification according to CDSCO standards
@@ -2670,7 +2689,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate supporting documentation for Indian drug import authorization.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 4,000-5,000 words of EXTREMELY DETAILED Indian import licensing content
+           - Generate comprehensive, well-structured Indian import licensing content
            - Each section must contain extensive detail with specific import data, methodologies, and Indian regulatory compliance analysis
            - Include detailed subsections with quality data, import protocols, and regulatory justification
            - Provide complete regulatory rationale and import authorization justification according to CDSCO standards
@@ -2737,7 +2756,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate key sections for a Taiwan IND application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Taiwan regulatory content
+           - Generate comprehensive, well-structured Taiwan regulatory content
            - Each section must contain extensive detail with specific methodologies, procedures, and Taiwan regulatory compliance analysis
            - Include detailed subsections with quantitative data, protocols, and regulatory justification
            - Provide complete regulatory rationale and scientific justification according to TFDA standards
@@ -2799,7 +2818,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate a EXTREMELY DETAILED Taiwan NDA summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Taiwan regulatory content
+           - Generate comprehensive, well-structured Taiwan regulatory content
            - Each section must contain extensive detail with specific data, methodologies, and Taiwan regulatory compliance analysis
            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
            - Provide complete regulatory rationale and marketing authorization justification according to TFDA standards
@@ -2865,7 +2884,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate key sections for an ANVISA CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Brazilian regulatory content
+           - Generate comprehensive, well-structured Brazilian regulatory content
            - Each section must contain extensive detail with specific methodologies, procedures, and Brazilian regulatory compliance analysis
            - Include detailed subsections with quantitative data, protocols, and regulatory justification
            - Provide complete regulatory rationale and scientific justification according to ANVISA standards
@@ -2927,7 +2946,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate a EXTREMELY DETAILED ANVISA registration dossier summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Brazilian regulatory content
+           - Generate comprehensive, well-structured Brazilian regulatory content
            - Each section must contain extensive detail with specific data, methodologies, and Brazilian regulatory compliance analysis
            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
            - Provide complete regulatory rationale and marketing authorization justification according to ANVISA standards
@@ -2989,7 +3008,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate supporting documentation for ANVISA GMP certificate application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 4,000-5,000 words of EXTREMELY DETAILED Brazilian GMP regulatory content
+           - Generate comprehensive, well-structured Brazilian GMP regulatory content
            - Each section must contain extensive detail with specific quality systems, procedures, and Brazilian regulatory compliance analysis
            - Include detailed subsections with quality data, validation protocols, and regulatory justification
            - Provide complete regulatory rationale and quality assurance justification according to ANVISA standards
@@ -3049,7 +3068,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate key sections for an ANMAT CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Argentine regulatory content
+           - Generate comprehensive, well-structured Argentine regulatory content
            - Each section must contain extensive detail with specific methodologies, procedures, and Argentine regulatory compliance analysis
            - Include detailed subsections with quantitative data, protocols, and regulatory justification
            - Provide complete regulatory rationale and scientific justification according to ANMAT standards
@@ -3111,7 +3130,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate a EXTREMELY DETAILED ANMAT registration summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Argentine regulatory content
+           - Generate comprehensive, well-structured Argentine regulatory content
            - Each section must contain extensive detail with specific data, methodologies, and Argentine regulatory compliance analysis
            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
            - Provide complete regulatory rationale and marketing authorization justification according to ANMAT standards
@@ -3172,7 +3191,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate key sections for an INVIMA CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Colombian regulatory content
+           - Generate comprehensive, well-structured Colombian regulatory content
            - Each section must contain extensive detail with specific methodologies, procedures, and Colombian regulatory compliance analysis
            - Include detailed subsections with quantitative data, protocols, and regulatory justification
            - Provide complete regulatory rationale and scientific justification according to INVIMA standards
@@ -3326,7 +3345,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate key sections for a SAHPRA CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED South African regulatory content
+           - Generate comprehensive, well-structured South African regulatory content
            - Each section must contain extensive detail with specific methodologies, procedures, and South African regulatory compliance analysis
            - Include detailed subsections with quantitative data, protocols, and regulatory justification
            - Provide complete regulatory rationale and scientific justification according to SAHPRA standards
@@ -3370,7 +3389,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate a EXTREMELY DETAILED SAHPRA registration summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED South African regulatory content
+           - Generate comprehensive, well-structured South African regulatory content
            - Each section must contain extensive detail with specific data, methodologies, and South African regulatory compliance analysis
            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
            - Provide complete regulatory rationale and marketing authorization justification according to SAHPRA standards
@@ -3414,7 +3433,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate key sections for an Israeli MOH CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Israeli regulatory content
+           - Generate comprehensive, well-structured Israeli regulatory content
            - Each section must contain extensive detail with specific methodologies, procedures, and Israeli regulatory compliance analysis
            - Include detailed subsections with quantitative data, protocols, and regulatory justification
            - Provide complete regulatory rationale and scientific justification according to Israeli MOH standards
@@ -3459,7 +3478,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate a EXTREMELY DETAILED Israeli registration summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Israeli regulatory content
+           - Generate comprehensive, well-structured Israeli regulatory content
            - Each section must contain extensive detail with specific data, methodologies, and Israeli regulatory compliance analysis
            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
            - Provide complete regulatory rationale and marketing authorization justification according to Israeli standards
@@ -3504,7 +3523,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate key sections for an SFDA CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Saudi regulatory content
+           - Generate comprehensive, well-structured Saudi regulatory content
            - Each section must contain extensive detail with specific methodologies, procedures, and Saudi regulatory compliance analysis
            - Include detailed subsections with quantitative data, protocols, and regulatory justification
            - Provide complete regulatory rationale and scientific justification according to SFDA standards
@@ -3549,7 +3568,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate a EXTREMELY DETAILED SFDA registration summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED Saudi regulatory content
+           - Generate comprehensive, well-structured Saudi regulatory content
            - Each section must contain extensive detail with specific data, methodologies, and Saudi regulatory compliance analysis
            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
            - Provide complete regulatory rationale and marketing authorization justification according to SFDA standards
@@ -3594,7 +3613,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate key sections for a DHA CTA application.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED UAE regulatory content
+           - Generate comprehensive, well-structured UAE regulatory content
            - Each section must contain extensive detail with specific methodologies, procedures, and UAE regulatory compliance analysis
            - Include detailed subsections with quantitative data, protocols, and regulatory justification
            - Provide complete regulatory rationale and scientific justification according to DHA standards
@@ -3639,7 +3658,7 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
            Your task is to generate a EXTREMELY DETAILED UAE registration summary.
 
            CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-           - Generate MINIMUM 5,000-6,000 words of EXTREMELY DETAILED UAE regulatory content
+           - Generate comprehensive, well-structured UAE regulatory content
            - Each section must contain extensive detail with specific data, methodologies, and UAE regulatory compliance analysis
            - Include detailed subsections with quantitative data, analytical methods, and regulatory justification
            - Provide complete regulatory rationale and marketing authorization justification according to UAE standards
