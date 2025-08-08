@@ -10,8 +10,15 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
 
   // Update aiPromptEnabled when aiEnabled prop changes
   useEffect(() => {
+    console.log('aiEnabled prop changed:', aiEnabled);
     setAiPromptEnabled(aiEnabled);
   }, [aiEnabled]);
+
+  // Debug logging for AI button visibility
+  useEffect(() => {
+    console.log('AI button should be visible:', aiEnabled);
+    console.log('AI prompt enabled state:', aiPromptEnabled);
+  }, [aiEnabled, aiPromptEnabled]);
 
   // Modern formatting functions using selection API
   const formatText = (command) => {
@@ -22,13 +29,21 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
     
     // Get current selection
     const selection = window.getSelection();
+    console.log('Selection object:', selection);
+    console.log('Range count:', selection.rangeCount);
+    
     if (!selection.rangeCount) {
-      console.log('No selection found');
-      return;
+      console.log('No selection found - creating a test selection');
+      // If no selection, select all text in the editor
+      const range = document.createRange();
+      range.selectNodeContents(editorRef.current);
+      selection.removeAllRanges();
+      selection.addRange(range);
     }
     
     const range = selection.getRangeAt(0);
     console.log('Selection range found:', range);
+    console.log('Range content:', range.toString());
     
     // Apply formatting based on command
     switch (command) {
@@ -56,40 +71,61 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
 
   const applyBold = (range) => {
     console.log('Applying bold to range');
+    if (range.collapsed) {
+      console.log('Range is collapsed, cannot apply formatting');
+      return;
+    }
+    
     const strong = document.createElement('strong');
     try {
       range.surroundContents(strong);
+      console.log('Bold applied successfully using surroundContents');
     } catch (e) {
-      console.log('surroundContents failed, trying alternative approach');
+      console.log('surroundContents failed, trying alternative approach:', e);
       const contents = range.extractContents();
       strong.appendChild(contents);
       range.insertNode(strong);
+      console.log('Bold applied successfully using alternative method');
     }
   };
 
   const applyItalic = (range) => {
     console.log('Applying italic to range');
+    if (range.collapsed) {
+      console.log('Range is collapsed, cannot apply formatting');
+      return;
+    }
+    
     const em = document.createElement('em');
     try {
       range.surroundContents(em);
+      console.log('Italic applied successfully using surroundContents');
     } catch (e) {
-      console.log('surroundContents failed, trying alternative approach');
+      console.log('surroundContents failed, trying alternative approach:', e);
       const contents = range.extractContents();
       em.appendChild(contents);
       range.insertNode(em);
+      console.log('Italic applied successfully using alternative method');
     }
   };
 
   const applyUnderline = (range) => {
     console.log('Applying underline to range');
+    if (range.collapsed) {
+      console.log('Range is collapsed, cannot apply formatting');
+      return;
+    }
+    
     const u = document.createElement('u');
     try {
       range.surroundContents(u);
+      console.log('Underline applied successfully using surroundContents');
     } catch (e) {
-      console.log('surroundContents failed, trying alternative approach');
+      console.log('surroundContents failed, trying alternative approach:', e);
       const contents = range.extractContents();
       u.appendChild(contents);
       range.insertNode(u);
+      console.log('Underline applied successfully using alternative method');
     }
   };
 
