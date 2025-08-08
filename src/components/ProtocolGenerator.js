@@ -3,9 +3,11 @@ import apiService from '../services/api';
 import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 import jsPDF from 'jspdf';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 import DocumentViewer from './common/DocumentViewer';
 import AskLuminaPopup from './common/AskLuminaPopup';
 import FloatingButton from './common/FloatingButton';
+import RichTextEditor from './common/RichTextEditor';
 
 const ProtocolGenerator = () => {
   const [showAskLumina, setShowAskLumina] = useState(false);
@@ -67,6 +69,23 @@ const ProtocolGenerator = () => {
   const [fetchError, setFetchError] = useState('');
   // Add state for previous doc type
   const [previousDocType, setPreviousDocType] = useState('PROTOCOL'); // 'PROTOCOL' or 'STUDY_DESIGN'
+
+  // Individual section editing state
+  const [sectionEdits, setSectionEdits] = useState({});
+  const [editingSectionId, setEditingSectionId] = useState(null);
+  
+  // Reference Protocol Panel State
+  const [showReferencePanel, setShowReferencePanel] = useState(false);
+  const [selectedReferenceProtocol, setSelectedReferenceProtocol] = useState(null);
+  const [referenceProtocolTOC, setReferenceProtocolTOC] = useState([]);
+  const [selectedReferenceSection, setSelectedReferenceSection] = useState(null);
+  const [selectedReferenceSectionContent, setSelectedReferenceSectionContent] = useState('');
+  
+  // Section Selection and Editing State
+  const [selectedProtocolSections, setSelectedProtocolSections] = useState(new Set());
+  const [selectedStudyDesignSections, setSelectedStudyDesignSections] = useState(new Set());
+  const [editableSelectedContent, setEditableSelectedContent] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   // Background processing
   const { startJob, getJob } = useBackgroundJobs('protocol');
@@ -279,47 +298,194 @@ const ProtocolGenerator = () => {
     document.body.removeChild(element);
   };
   
+  // Generate PDF for selected sections with proper alignment
+  const generateSelectedSectionsPDF = async () => {
+    try {
+      setLoading(true);
+      
+      // Get all selected sections content
+      const selectedSections = [];
+      
+      // Add protocol sections
+      Array.from(selectedProtocolSections).forEach(sectionId => {
+        const sectionNumber = sectionId.replace('protocol-section-', '');
+        const sectionTitle = protocolSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
+        const sectionContent = sectionEdits[sectionId] || '';
+        
+        if (sectionContent) {
+          selectedSections.push({
+            title: sectionTitle,
+            content: sectionContent
+          });
+        }
+      });
+      
+      // Add study design sections
+      Array.from(selectedStudyDesignSections).forEach(sectionId => {
+        const sectionTitle = sectionId === 'cmc-section' ? 'CMC Section' : `Clinical Section ${sectionId.replace('clinical-section-', '')}`;
+        const sectionContent = sectionEdits[sectionId] || '';
+        
+        if (sectionContent) {
+          selectedSections.push({
+            title: sectionTitle,
+            content: sectionContent
+          });
+        }
+      });
+      
+      if (selectedSections.length === 0) {
+        setError('No sections selected for export');
+        return;
+      }
+      
+      // Create PDF document
+      const doc = new jsPDF();
+      
+      // PDF settings
+      const pageHeight = doc.internal.pageSize.height;
+      const pageWidth = doc.internal.pageSize.width;
+      const margin = 20;
+      const maxLineWidth = pageWidth - (margin * 2);
+      const lineHeight = 7;
+      const titleLineHeight = 10;
+      const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
+      
+      // Document header
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text('Selected Protocol Sections', pageWidth / 2, margin, { align: 'center' });
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, margin + 10, { align: 'center' });
+      doc.text(`Disease: ${disease}`, pageWidth / 2, margin + 17, { align: 'center' });
+      
+      let currentY = margin + 30;
+      let currentPage = 1;
+      
+      // Add each section
+      selectedSections.forEach((section, index) => {
+        // Check if we need a new page
+        if (currentY > pageHeight - margin - 50) {
+          doc.addPage();
+          currentPage++;
+          currentY = margin + 20;
+        }
+        
+        // Section title
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(section.title, margin, currentY);
+        currentY += titleLineHeight;
+        
+        // Section content
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        
+        // Convert HTML content to plain text and handle formatting
+        const plainText = section.content
+          .replace(/<[^>]*>/g, '') // Remove HTML tags
+          .replace(/&nbsp;/g, ' ') // Replace HTML entities
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"');
+        
+        // Split content into lines that fit the page width
+        const lines = doc.splitTextToSize(plainText, maxLineWidth);
+        
+        // Add lines with proper spacing
+        lines.forEach(line => {
+          // Check if we need a new page
+          if (currentY > pageHeight - margin - 20) {
+            doc.addPage();
+            currentPage++;
+            currentY = margin + 20;
+          }
+          
+          doc.text(line, margin, currentY);
+          currentY += lineHeight;
+        });
+        
+        // Add spacing between sections
+        currentY += 15;
+      });
+      
+      // Save the PDF
+      const filename = `Selected_Sections_${disease.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+      
+    } catch (error) {
+      console.error('Error generating selected sections PDF:', error);
+      setError('Failed to generate PDF. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const generatePDF = async (documentId, filename) => {
     try {
       setLoading(true);
       let content = '';
+      let title = '';
+      
       if (documentId === 'protocol') {
         content = result.protocol;
+        title = `Enhanced Protocol for ${disease}`;
       } else if (documentId === 'studyDesign') {
         content = `CMC SECTION:\n${studyDesign.cmc_section}\n\nCLINICAL SECTION:\n${studyDesign.clinical_section}`;
+        title = `Study Design for ${disease}`;
       }
+      
       if (content) {
         const doc = new jsPDF();
-        doc.setFont('helvetica');
-        doc.setFontSize(12);
         
         // PDF page settings
         const pageHeight = doc.internal.pageSize.height;
         const pageWidth = doc.internal.pageSize.width;
         const margin = 20;
         const maxLineWidth = pageWidth - (margin * 2);
-        const lineHeight = 7; // Space between lines
+        const lineHeight = 7;
+        const titleLineHeight = 10;
         const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
         
-        // Split content into lines that fit the page width
-        const lines = doc.splitTextToSize(content, maxLineWidth);
+        // Document header with proper alignment
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text(title, pageWidth / 2, margin, { align: 'center' });
         
-        let currentLine = 0;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, margin + 10, { align: 'center' });
+        doc.text(`Document ID: ${result.protocol_id}`, pageWidth / 2, margin + 17, { align: 'center' });
+        
+        let currentY = margin + 30;
         let currentPage = 1;
         
-        // Add content with automatic page breaks
+        // Convert HTML content to plain text and handle formatting
+        const plainText = content
+          .replace(/<[^>]*>/g, '') // Remove HTML tags
+          .replace(/&nbsp;/g, ' ') // Replace HTML entities
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"');
+        
+        // Split content into lines that fit the page width
+        const lines = doc.splitTextToSize(plainText, maxLineWidth);
+        
+        // Add content with automatic page breaks and proper alignment
         for (let i = 0; i < lines.length; i++) {
           // Check if we need a new page
-          if (currentLine >= maxLinesPerPage) {
+          if (currentY > pageHeight - margin - 20) {
             doc.addPage();
             currentPage++;
-            currentLine = 0;
+            currentY = margin + 20;
           }
           
-          // Add line to current page
-          const yPosition = margin + (currentLine * lineHeight);
-          doc.text(lines[i], margin, yPosition);
-          currentLine++;
+          // Add line to current page with proper alignment
+          doc.text(lines[i], margin, currentY);
+          currentY += lineHeight;
         }
         
         doc.save(`${filename}.pdf`);
@@ -332,9 +498,411 @@ const ProtocolGenerator = () => {
     }
   };
 
+  // Generate Word document for selected sections
+  const generateSelectedSectionsWord = async () => {
+    try {
+      setLoading(true);
+      
+      // Get all selected sections content
+      const selectedSections = [];
+      
+      // Add protocol sections
+      Array.from(selectedProtocolSections).forEach(sectionId => {
+        const sectionNumber = sectionId.replace('protocol-section-', '');
+        const sectionTitle = protocolSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
+        const sectionContent = sectionEdits[sectionId] || '';
+        
+        if (sectionContent) {
+          selectedSections.push({
+            title: sectionTitle,
+            content: sectionContent
+          });
+        }
+      });
+      
+      // Add study design sections
+      Array.from(selectedStudyDesignSections).forEach(sectionId => {
+        const sectionTitle = sectionId === 'cmc-section' ? 'CMC Section' : `Clinical Section ${sectionId.replace('clinical-section-', '')}`;
+        const sectionContent = sectionEdits[sectionId] || '';
+        
+        if (sectionContent) {
+          selectedSections.push({
+            title: sectionTitle,
+            content: sectionContent
+          });
+        }
+      });
+      
+      if (selectedSections.length === 0) {
+        setError('No sections selected for export');
+        return;
+      }
+      
+      // Create Word document
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            // Title
+            new Paragraph({
+              text: `Selected Sections - ${disease} Protocol`,
+              heading: HeadingLevel.HEADING_1,
+              alignment: AlignmentType.CENTER,
+              spacing: {
+                after: 400,
+                before: 400
+              }
+            }),
+            
+            // Date
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Generated on: ${new Date().toLocaleDateString()}`,
+                  size: 20,
+                  color: '666666'
+                })
+              ],
+              alignment: AlignmentType.CENTER,
+              spacing: {
+                after: 600
+              }
+            }),
+            
+            // Separator
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: '─'.repeat(50),
+                  size: 20,
+                  color: 'CCCCCC'
+                })
+              ],
+              alignment: AlignmentType.CENTER,
+              spacing: {
+                after: 400
+              }
+            }),
+            
+            // Sections
+            ...selectedSections.flatMap((section, index) => [
+              // Section title
+              new Paragraph({
+                text: section.title,
+                heading: HeadingLevel.HEADING_2,
+                spacing: {
+                  after: 200,
+                  before: index > 0 ? 400 : 200
+                }
+              }),
+              
+              // Section content (convert HTML to plain text)
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: section.content.replace(/<[^>]*>/g, ''), // Remove HTML tags
+                    size: 24,
+                    spacing: {
+                      line: 360 // 1.5 line spacing
+                    }
+                  })
+                ],
+                spacing: {
+                  after: 400
+                }
+              }),
+              
+              // Separator between sections
+              ...(index < selectedSections.length - 1 ? [
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: '─'.repeat(30),
+                      size: 20,
+                      color: 'CCCCCC'
+                    })
+                  ],
+                  alignment: AlignmentType.CENTER,
+                  spacing: {
+                    after: 400
+                  }
+                })
+              ] : [])
+            ])
+          ]
+        }]
+      });
+      
+      // Generate and download the document
+      const blob = await Packer.toBlob(doc);
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Selected_Sections_${disease.replace(/\s+/g, '_')}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error generating Word document:', error);
+      setError('Error generating Word document');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate Word document for full protocol
+  const generateFullProtocolWord = async () => {
+    try {
+      setLoading(true);
+      
+      if (!result || !result.protocol) {
+        setError('No protocol content available');
+        return;
+      }
+      
+      // Create Word document
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            // Title
+            new Paragraph({
+              text: `Clinical Protocol - ${disease}`,
+              heading: HeadingLevel.HEADING_1,
+              alignment: AlignmentType.CENTER,
+              spacing: {
+                after: 400,
+                before: 400
+              }
+            }),
+            
+            // Date
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Generated on: ${new Date().toLocaleDateString()}`,
+                  size: 20,
+                  color: '666666'
+                })
+              ],
+              alignment: AlignmentType.CENTER,
+              spacing: {
+                after: 600
+              }
+            }),
+            
+            // Separator
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: '─'.repeat(50),
+                  size: 20,
+                  color: 'CCCCCC'
+                })
+              ],
+              alignment: AlignmentType.CENTER,
+              spacing: {
+                after: 400
+              }
+            }),
+            
+            // Protocol content (convert HTML to plain text)
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: result.protocol.replace(/<[^>]*>/g, ''), // Remove HTML tags
+                  size: 24,
+                  spacing: {
+                    line: 360 // 1.5 line spacing
+                  }
+                })
+              ],
+              spacing: {
+                after: 400
+              }
+            })
+          ]
+        }]
+      });
+      
+      // Generate and download the document
+      const blob = await Packer.toBlob(doc);
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Full_Protocol_${disease.replace(/\s+/g, '_')}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error generating Word document:', error);
+      setError('Error generating Word document');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate Word document for full study design
+  const generateFullStudyDesignWord = async () => {
+    try {
+      setLoading(true);
+      
+      if (!studyDesign) {
+        setError('No study design content available');
+        return;
+      }
+      
+      const fullContent = `CMC SECTION:\n${studyDesign.cmc_section}\n\nCLINICAL SECTION:\n${studyDesign.clinical_section}`;
+      
+      // Create Word document
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            // Title
+            new Paragraph({
+              text: `Study Design - ${disease}`,
+              heading: HeadingLevel.HEADING_1,
+              alignment: AlignmentType.CENTER,
+              spacing: {
+                after: 400,
+                before: 400
+              }
+            }),
+            
+            // Date
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Generated on: ${new Date().toLocaleDateString()}`,
+                  size: 20,
+                  color: '666666'
+                })
+              ],
+              alignment: AlignmentType.CENTER,
+              spacing: {
+                after: 600
+              }
+            }),
+            
+            // Separator
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: '─'.repeat(50),
+                  size: 20,
+                  color: 'CCCCCC'
+                })
+              ],
+              alignment: AlignmentType.CENTER,
+              spacing: {
+                after: 400
+              }
+            }),
+            
+            // Study design content (convert HTML to plain text)
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: fullContent.replace(/<[^>]*>/g, ''), // Remove HTML tags
+                  size: 24,
+                  spacing: {
+                    line: 360 // 1.5 line spacing
+                  }
+                })
+              ],
+              spacing: {
+                after: 400
+              }
+            })
+          ]
+        }]
+      });
+      
+      // Generate and download the document
+      const blob = await Packer.toBlob(doc);
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Full_Study_Design_${disease.replace(/\s+/g, '_')}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error generating Word document:', error);
+      setError('Error generating Word document');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Function to identify protocol sections and add IDs for navigation
   const renderProtocolSections = (content) => {
-    if (!content) return null;
+    if (!content) {
+      // Show a test section when no content is available
+      return (
+        <div style={{ 
+          padding: '1rem', 
+          border: '1px solid #e5e7eb', 
+          borderRadius: '8px', 
+          backgroundColor: '#f9fafb',
+          marginBottom: '1rem'
+        }}>
+          <h4 style={{ color: '#6b7280', marginBottom: '1rem' }}>Test Section (Generate a protocol to see real sections)</h4>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '10px',
+            marginBottom: '10px',
+            padding: '8px',
+            borderRadius: '6px',
+            transition: 'background-color 0.2s'
+          }}>
+            <button
+              onClick={() => handleProtocolSectionToggle('protocol-section-1')}
+              style={{
+                background: selectedProtocolSections.has('protocol-section-1') ? '#3b82f6' : '#f3f4f6',
+                color: selectedProtocolSections.has('protocol-section-1') ? 'white' : '#374151',
+                border: '2px solid #d1d5db',
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease'
+              }}
+              title={selectedProtocolSections.has('protocol-section-1') ? 'Remove from selection' : 'Add to selection'}
+            >
+              {selectedProtocolSections.has('protocol-section-1') ? '✓' : '+'}
+            </button>
+            <h4 style={{ margin: 0, flex: 1 }}>1. Test Section Header</h4>
+          </div>
+          <p style={{ color: '#6b7280', fontSize: '14px' }}>
+            This is a test section to demonstrate the "+" button functionality. 
+            Generate a protocol to see real sections with "+" buttons.
+          </p>
+        </div>
+      );
+    }
     
     const lines = content.split('\n');
     const sectionsMarkup = [];
@@ -344,20 +912,53 @@ const ProtocolGenerator = () => {
       const sectionMatch = line.match(/^(\d+)\.\s+(.*)/i);
       
       if (sectionMatch && parseInt(sectionMatch[1]) >= 1 && parseInt(sectionMatch[1]) <= 10) {
+        const sectionId = `protocol-section-${sectionMatch[1]}`;
+        const isSelected = selectedProtocolSections.has(sectionId);
+        
         sectionsMarkup.push(
-          <h4 
-            key={`section-${idx}`} 
-            id={`protocol-section-${sectionMatch[1]}`} 
-            className="section-title"
-          >
-            {line}
-          </h4>
+          <div key={`section-${idx}`} style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '10px',
+            marginBottom: '10px',
+            padding: '8px',
+            borderRadius: '6px',
+            transition: 'background-color 0.2s'
+          }}>
+            <button
+              onClick={() => handleProtocolSectionToggle(sectionId)}
+              style={{
+                background: isSelected ? '#3b82f6' : '#f3f4f6',
+                color: isSelected ? 'white' : '#374151',
+                border: '2px solid #d1d5db',
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease'
+              }}
+              title={isSelected ? 'Remove from selection' : 'Add to selection'}
+            >
+              {isSelected ? '✓' : '+'}
+            </button>
+            <h4 
+              id={sectionId} 
+              style={{ margin: 0, flex: 1 }}
+            >
+              {line}
+            </h4>
+          </div>
         );
       } else if (line.trim()) {
         // For other text content
         if (line.match(/^[A-Z][a-z]/) || line.match(/^\d+\.\d+/)) {
           // Possible subsection title
-          sectionsMarkup.push(<h5 key={`subsection-${idx}`} className="subsection-title">{line}</h5>);
+          sectionsMarkup.push(<h5 key={`subsection-${idx}`}>{line}</h5>);
         } else {
           // Regular paragraph
           sectionsMarkup.push(<p key={`p-${idx}`}>{line}</p>);
@@ -411,6 +1012,303 @@ const ProtocolGenerator = () => {
     });
     
     return sectionsMarkup;
+  };
+
+  const updateSectionContent = (sectionId, content) => {
+    setSectionEdits(prev => ({
+      ...prev,
+      [sectionId]: content
+    }));
+  };
+
+  // Reference Protocol Panel Functions
+  const handleReferenceProtocolSelect = (protocol) => {
+    setSelectedReferenceProtocol(protocol);
+    setShowReferencePanel(true);
+    
+    // Generate TOC for the selected protocol
+    if (protocol.content) {
+      const lines = protocol.content.split('\n');
+      const toc = [];
+      
+      lines.forEach((line, index) => {
+        const sectionMatch = line.match(/^(\d+)\.\s+(.*)/i);
+        if (sectionMatch && parseInt(sectionMatch[1]) >= 1 && parseInt(sectionMatch[1]) <= 10) {
+          toc.push({
+            id: `ref-section-${sectionMatch[1]}`,
+            title: line,
+            number: sectionMatch[1]
+          });
+        }
+      });
+      
+      setReferenceProtocolTOC(toc);
+      setSelectedReferenceSection(null);
+      setSelectedReferenceSectionContent('');
+    }
+  };
+
+  const handleReferenceSectionClick = (section) => {
+    setSelectedReferenceSection(section);
+    
+    // Extract content for the selected section
+    if (selectedReferenceProtocol && selectedReferenceProtocol.content) {
+      const lines = selectedReferenceProtocol.content.split('\n');
+      const sectionNumber = section.number;
+      let inSection = false;
+      let sectionContent = [];
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const sectionMatch = line.match(/^(\d+)\.\s+(.*)/i);
+        
+        if (sectionMatch && parseInt(sectionMatch[1]) === parseInt(sectionNumber)) {
+          inSection = true;
+          sectionContent.push(line);
+        } else if (inSection && sectionMatch && parseInt(sectionMatch[1]) > parseInt(sectionNumber)) {
+          break;
+        } else if (inSection) {
+          sectionContent.push(line);
+        }
+      }
+      
+      setSelectedReferenceSectionContent(sectionContent.join('\n'));
+    }
+  };
+
+  const closeReferencePanel = () => {
+    setShowReferencePanel(false);
+    setSelectedReferenceProtocol(null);
+    setReferenceProtocolTOC([]);
+    setSelectedReferenceSection(null);
+    setSelectedReferenceSectionContent('');
+  };
+
+  // Section Selection Handlers
+  const handleProtocolSectionToggle = (sectionId) => {
+    const newSelected = new Set(selectedProtocolSections);
+    if (newSelected.has(sectionId)) {
+      newSelected.delete(sectionId);
+      // Remove section content when deselected
+      const newSectionEdits = { ...sectionEdits };
+      delete newSectionEdits[sectionId];
+      setSectionEdits(newSectionEdits);
+    } else {
+      newSelected.add(sectionId);
+      // Initialize section content when selected
+      const sectionContent = extractSectionContent(result?.protocol, sectionId);
+      setSectionEdits(prev => ({
+        ...prev,
+        [sectionId]: sectionContent
+      }));
+    }
+    setSelectedProtocolSections(newSelected);
+  };
+
+  const handleStudyDesignSectionToggle = (sectionId) => {
+    const newSelected = new Set(selectedStudyDesignSections);
+    if (newSelected.has(sectionId)) {
+      newSelected.delete(sectionId);
+      // Remove section content when deselected
+      const newSectionEdits = { ...sectionEdits };
+      delete newSectionEdits[sectionId];
+      setSectionEdits(newSectionEdits);
+    } else {
+      newSelected.add(sectionId);
+      // Initialize section content when selected
+      const sectionContent = extractStudyDesignSectionContent(studyDesign, sectionId);
+      setSectionEdits(prev => ({
+        ...prev,
+        [sectionId]: sectionContent
+      }));
+    }
+    setSelectedStudyDesignSections(newSelected);
+  };
+
+  // Content extraction functions
+  const extractSectionContent = (content, sectionId) => {
+    if (!content) return '';
+    
+    const lines = content.split('\n');
+    const sectionNumber = sectionId.replace('protocol-section-', '');
+    let inSection = false;
+    let sectionContent = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const sectionMatch = line.match(/^(\d+)\.\s+(.*)/i);
+      
+      if (sectionMatch && parseInt(sectionMatch[1]) === parseInt(sectionNumber)) {
+        inSection = true;
+        // Format the main section header with HTML
+        sectionContent.push(`<h3 style="color: #1e40af; margin-bottom: 1rem; font-size: 1.25rem;">${line}</h3>`);
+      } else if (inSection && sectionMatch && parseInt(sectionMatch[1]) > parseInt(sectionNumber)) {
+        break;
+      } else if (inSection) {
+        // Check for subsections (like 2.1, 2.2, etc.)
+        const subsectionMatch = line.match(/^(\d+)\.(\d+)\s+(.*)/i);
+        if (subsectionMatch) {
+          sectionContent.push(`<h4 style="color: #374151; margin: 1rem 0 0.5rem 0; font-size: 1.1rem;">${line}</h4>`);
+        } else if (line.trim()) {
+          // Regular paragraph content
+          sectionContent.push(`<p style="margin: 0.5rem 0; line-height: 1.6;">${line}</p>`);
+        } else {
+          // Empty line
+          sectionContent.push('<br>');
+        }
+      }
+    }
+    
+    return sectionContent.join('');
+  };
+
+  const extractStudyDesignSectionContent = (content, sectionId) => {
+    if (!content) return '';
+    
+    if (sectionId === 'cmc-section') {
+      const cmcContent = content.cmc_section || '';
+      const lines = cmcContent.split('\n');
+      const formattedLines = lines.map(line => {
+        if (line.match(/^[A-Z\s]{5,}$/)) {
+          return `<h4 style="color: #1e40af; margin: 1rem 0 0.5rem 0; font-size: 1.1rem;">${line}</h4>`;
+        } else if (line.trim()) {
+          return `<p style="margin: 0.5rem 0; line-height: 1.6;">${line}</p>`;
+        } else {
+          return '<br>';
+        }
+      });
+      return formattedLines.join('');
+    }
+    
+    const lines = content.clinical_section ? content.clinical_section.split('\n') : [];
+    const sectionNumber = sectionId.replace('clinical-section-', '');
+    let inSection = false;
+    let sectionContent = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const sectionMatch = line.match(/^(\d+)\.\s+(.*)/i);
+      
+      if (sectionMatch && parseInt(sectionMatch[1]) === parseInt(sectionNumber)) {
+        inSection = true;
+        // Format the main section header with HTML
+        sectionContent.push(`<h3 style="color: #1e40af; margin-bottom: 1rem; font-size: 1.25rem;">${line}</h3>`);
+      } else if (inSection && sectionMatch && parseInt(sectionMatch[1]) > parseInt(sectionNumber)) {
+        break;
+      } else if (inSection) {
+        // Check for subsections (like 2.1, 2.2, etc.)
+        const subsectionMatch = line.match(/^(\d+)\.(\d+)\s+(.*)/i);
+        if (subsectionMatch) {
+          sectionContent.push(`<h4 style="color: #374151; margin: 1rem 0 0.5rem 0; font-size: 1.1rem;">${line}</h4>`);
+        } else if (line.trim()) {
+          // Regular paragraph content
+          sectionContent.push(`<p style="margin: 0.5rem 0; line-height: 1.6;">${line}</p>`);
+        } else {
+          // Empty line
+          sectionContent.push('<br>');
+        }
+      }
+    }
+    
+    return sectionContent.join('');
+  };
+
+  // Individual section editing functions
+  const startEditingSection = (sectionId) => {
+    setEditingSectionId(sectionId);
+  };
+
+  const saveSectionEdit = (sectionId, content) => {
+    setSectionEdits(prev => ({
+      ...prev,
+      [sectionId]: content
+    }));
+    setEditingSectionId(null);
+  };
+
+  const cancelSectionEdit = () => {
+    setEditingSectionId(null);
+  };
+
+  // Generate PDF for individual section
+  const generateSectionPDF = async (sectionId, sectionTitle, sectionContent) => {
+    try {
+      setLoading(true);
+      
+      if (!sectionContent || sectionContent.trim() === '') {
+        setError('No content to export');
+        return;
+      }
+      
+      // Create PDF document
+      const doc = new jsPDF();
+      
+      // PDF settings
+      const pageHeight = doc.internal.pageSize.height;
+      const pageWidth = doc.internal.pageSize.width;
+      const margin = 20;
+      const maxLineWidth = pageWidth - (margin * 2);
+      const lineHeight = 7;
+      const titleLineHeight = 10;
+      
+      // Document header
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text('Protocol Section', pageWidth / 2, margin, { align: 'center' });
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, margin + 10, { align: 'center' });
+      doc.text(`Disease: ${disease}`, pageWidth / 2, margin + 17, { align: 'center' });
+      
+      let currentY = margin + 30;
+      let currentPage = 1;
+      
+      // Section title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text(sectionTitle, margin, currentY);
+      currentY += titleLineHeight;
+      
+      // Section content
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      
+      // Convert HTML content to plain text and handle formatting
+      const plainText = sectionContent
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&nbsp;/g, ' ') // Replace HTML entities
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"');
+      
+      // Split content into lines that fit the page width
+      const lines = doc.splitTextToSize(plainText, maxLineWidth);
+      
+      // Add lines with proper spacing
+      lines.forEach(line => {
+        // Check if we need a new page
+        if (currentY > pageHeight - margin - 20) {
+          doc.addPage();
+          currentPage++;
+          currentY = margin + 20;
+        }
+        
+        doc.text(line, margin, currentY);
+        currentY += lineHeight;
+      });
+      
+      // Save the PDF
+      const filename = `${sectionTitle.replace(/\s+/g, '_')}_${disease.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+      
+    } catch (error) {
+      console.error('Error generating section PDF:', error);
+      setError('Failed to generate PDF. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -484,6 +1382,9 @@ const ProtocolGenerator = () => {
                         <button style={{ marginLeft: '1rem', padding: '2px 8px', borderRadius: '4px', background: '#64748b', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}>
                           View
                         </button>
+                        <button style={{ marginLeft: '0.5rem', padding: '2px 8px', borderRadius: '4px', background: '#3b82f6', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => handleReferenceProtocolSelect(doc)}>
+                          Reference
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -497,6 +1398,112 @@ const ProtocolGenerator = () => {
             })()
           )}
           <DocumentViewer open={viewerOpen} onClose={() => setViewerOpen(false)} title={viewerDoc?.title} content={viewerDoc?.content} metadata={{ disease: viewerDoc?.disease, protocolId: viewerDoc?.protocolId, cmcSection: viewerDoc?.cmcSection, clinicalSection: viewerDoc?.clinicalSection }} />
+        </div>
+      )}
+      
+      {/* Reference Protocol Panel */}
+      {showReferencePanel && selectedReferenceProtocol && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          right: '20px',
+          transform: 'translateY(-50%)',
+          width: '400px',
+          maxHeight: '80vh',
+          background: '#ffffff',
+          border: '2px solid #3b82f6',
+          borderRadius: '8px',
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          {/* Header */}
+          <div style={{
+            padding: '1rem',
+            borderBottom: '1px solid #e5e7eb',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: '#f0f9ff'
+          }}>
+            <h4 style={{ margin: 0, color: '#1e40af', fontSize: '1rem' }}>
+              📋 Reference Protocol
+            </h4>
+            <button
+              onClick={closeReferencePanel}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '1.2rem',
+                cursor: 'pointer',
+                color: '#6b7280',
+                padding: '0'
+              }}
+            >
+              ×
+            </button>
+          </div>
+          
+          {/* Protocol Info */}
+          <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>
+            <h5 style={{ margin: '0 0 0.5rem 0', color: '#374151' }}>
+              {selectedReferenceProtocol.title}
+            </h5>
+            <p style={{ margin: 0, fontSize: '0.875rem', color: '#6b7280' }}>
+              Disease: {selectedReferenceProtocol.disease}
+            </p>
+          </div>
+          
+          {/* Table of Contents */}
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>
+              <h6 style={{ margin: '0 0 0.5rem 0', color: '#374151' }}>Table of Contents</h6>
+              <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                {referenceProtocolTOC.map(section => (
+                  <button
+                    key={section.id}
+                    onClick={() => handleReferenceSectionClick(section)}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.5rem',
+                      margin: '0.25rem 0',
+                      background: selectedReferenceSection?.id === section.id ? '#eff6ff' : 'transparent',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: selectedReferenceSection?.id === section.id ? '#1e40af' : '#374151'
+                    }}
+                  >
+                    {section.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Section Content */}
+            {selectedReferenceSection && (
+              <div style={{ flex: 1, padding: '1rem', overflowY: 'auto' }}>
+                <h6 style={{ margin: '0 0 0.5rem 0', color: '#374151' }}>
+                  {selectedReferenceSection.title}
+                </h6>
+                <div style={{
+                  background: '#f9fafb',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '4px',
+                  padding: '0.75rem',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.5',
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {selectedReferenceSectionContent}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
       
@@ -957,6 +1964,266 @@ const ProtocolGenerator = () => {
                 {renderProtocolSections(result.protocol)}
               </div>
               
+              {/* Selected Sections Display */}
+              {(selectedProtocolSections.size > 0 || selectedStudyDesignSections.size > 0) && (
+                <div style={{ 
+                  marginTop: '2rem', 
+                  padding: '1rem', 
+                  border: '2px solid #3b82f6', 
+                  borderRadius: '8px', 
+                  backgroundColor: '#f0f9ff' 
+                }}>
+                  {/* Header with Reference Protocol Button */}
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    marginBottom: '1rem' 
+                  }}>
+                    <h4 style={{ margin: 0, color: '#1e40af' }}>
+                      Individual Editable Sections ({activeTab === 'protocol' ? selectedProtocolSections.size : selectedStudyDesignSections.size})
+                    </h4>
+                    <button
+                      onClick={() => setShowReferencePanel(!showReferencePanel)}
+                      style={{
+                        background: showReferencePanel ? '#ef4444' : '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      {showReferencePanel ? '✕' : '📋'} 
+                      {showReferencePanel ? 'Close Reference' : 'Open Reference Protocol'}
+                    </button>
+                  </div>
+                  
+                  {/* Main Content Area with Side-by-Side Layout */}
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '1rem',
+                    alignItems: 'flex-start'
+                  }}>
+                    {/* Editable Sections */}
+                    <div style={{ 
+                      flex: showReferencePanel ? '1' : '1',
+                      minWidth: showReferencePanel ? '50%' : '100%'
+                    }}>
+                      {activeTab === 'protocol' ? (
+                        Array.from(selectedProtocolSections).map(sectionId => {
+                          const sectionNumber = sectionId.replace('protocol-section-', '');
+                          const sectionTitle = protocolSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
+                          const isEditingThis = editingSectionId === sectionId;
+                          const sectionContent = sectionEdits[sectionId] || '';
+                          
+                          return (
+                            <div key={sectionId} style={{ 
+                              marginBottom: '1.5rem', 
+                              padding: '1rem', 
+                              border: '1px solid #d1d5db', 
+                              borderRadius: '6px', 
+                              backgroundColor: '#ffffff' 
+                            }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                marginBottom: '0.5rem' 
+                              }}>
+                                <h5 style={{ margin: 0, color: '#374151' }}>{sectionTitle}</h5>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                  {!isEditingThis ? (
+                                    <>
+                                      <button
+                                        onClick={() => startEditingSection(sectionId)}
+                                        style={{
+                                          background: '#10b981',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => generateSectionPDF(sectionId, sectionTitle, sectionContent)}
+                                        style={{
+                                          background: '#dc2626',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        PDF
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => saveSectionEdit(sectionId, sectionContent)}
+                                        style={{
+                                          background: '#3b82f6',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={cancelSectionEdit}
+                                        style={{
+                                          background: '#6b7280',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {isEditingThis ? (
+                                <RichTextEditor
+                                  value={sectionContent}
+                                  onChange={(content) => updateSectionContent(sectionId, content)}
+                                  placeholder={`Edit ${sectionTitle} content here...`}
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '150px'
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '100px',
+                                    padding: '0.75rem',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '4px',
+                                    backgroundColor: '#f9fafb',
+                                    fontFamily: 'inherit',
+                                    fontSize: '14px',
+                                    lineHeight: '1.5',
+                                    overflowY: 'auto',
+                                    whiteSpace: 'pre-wrap'
+                                  }}
+                                  dangerouslySetInnerHTML={{ __html: sectionContent }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div>Study Design sections will appear here</div>
+                      )}
+                    </div>
+                    
+                    {/* Reference Protocol Panel */}
+                    {showReferencePanel && (
+                      <div style={{ 
+                        width: '400px',
+                        background: '#ffffff',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        padding: '1rem'
+                      }}>
+                        <h5 style={{ margin: '0 0 1rem 0', color: '#374151' }}>Reference Protocol</h5>
+                        <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                          Select a reference protocol from the previous protocols list to view it here.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Download All Selected Sections */}
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+                    <button 
+                      onClick={() => {
+                        const allContent = Object.values(sectionEdits).join('\n\n---\n\n');
+                        downloadDocument(allContent, `All_Selected_Sections_${disease.replace(/\s+/g, '_')}.txt`);
+                      }}
+                      style={{
+                        background: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📄 Download Text
+                    </button>
+                    <button 
+                      onClick={generateSelectedSectionsWord}
+                      style={{
+                        background: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📝 Download Word Document
+                    </button>
+                    <button 
+                      onClick={generateSelectedSectionsPDF}
+                      style={{
+                        background: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📄 Download PDF Document
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const allContent = Object.values(sectionEdits).join('\n\n---\n\n');
+                        navigator.clipboard.writeText(allContent);
+                      }}
+                      style={{
+                        background: '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📋 Copy All to Clipboard
+                    </button>
+                  </div>
+                </div>
+              )}
+              
               <div className="action-buttons">
                 <button onClick={() => navigator.clipboard.writeText(result.protocol)}>
                   <i className="icon-copy"></i> Copy to Clipboard
@@ -966,6 +2233,9 @@ const ProtocolGenerator = () => {
                 </button>
                 <button onClick={() => generatePDF('protocol', `Enhanced_Protocol_${disease.replace(/\s+/g, '_')}_${result.protocol_id}`)}>
                   <i className="icon-pdf"></i> Download PDF
+                </button>
+                <button onClick={() => generateFullProtocolWord()}>
+                  <i className="icon-word"></i> Download Word
                 </button>
                 <button onClick={() => window.print()}>
                   <i className="icon-print"></i> Print
@@ -1045,6 +2315,9 @@ const ProtocolGenerator = () => {
                 </button>
                 <button onClick={() => generatePDF('studyDesign', `Enhanced_Study_Design_${disease.replace(/\s+/g, '_')}`)}>
                   <i className="icon-pdf"></i> Download PDF
+                </button>
+                <button onClick={() => generateFullStudyDesignWord()}>
+                  <i className="icon-word"></i> Download Word
                 </button>
                 <button onClick={() => window.print()}>
                   <i className="icon-print"></i> Print
