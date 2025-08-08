@@ -6,7 +6,6 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
   const [showAIPrompt, setShowAIPrompt] = useState(false);
   const [selectedText, setSelectedText] = useState('');
   const [promptPosition, setPromptPosition] = useState({ x: 0, y: 0 });
-  const [currentRange, setCurrentRange] = useState(null);
   const [aiPromptEnabled, setAiPromptEnabled] = useState(aiEnabled);
 
   // Update aiPromptEnabled when aiEnabled prop changes
@@ -14,102 +13,56 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
     setAiPromptEnabled(aiEnabled);
   }, [aiEnabled]);
 
-  // Helper function to get current selection
-  const getCurrentSelection = () => {
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      return selection.getRangeAt(0);
-    }
-    return null;
-  };
-
-  // Helper function to save current selection
-  const saveSelection = () => {
-    const range = getCurrentSelection();
-    if (range) {
-      setCurrentRange(range.cloneRange());
-    }
-  };
-
-  // Helper function to restore selection
-  const restoreSelection = () => {
-    if (currentRange) {
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(currentRange);
-    }
-  };
-
-  // Rich text formatting functions
+  // Simple formatting functions
   const formatText = (command) => {
     console.log('formatText called with:', command);
-    editorRef.current.focus();
-    saveSelection();
-    restoreSelection();
     
-    switch (command) {
-      case 'bold':
-        console.log('Executing bold command');
-        document.execCommand('bold', false, null);
-        break;
-      case 'italic':
-        console.log('Executing italic command');
-        document.execCommand('italic', false, null);
-        break;
-      case 'underline':
-        console.log('Executing underline command');
-        document.execCommand('underline', false, null);
-        break;
-      case 'removeFormat':
-        console.log('Executing removeFormat command');
-        document.execCommand('removeFormat', false, null);
-        break;
-      default:
-        console.log('Executing default command:', command);
-        document.execCommand(command, false, null);
-    }
-    
-    console.log('Editor content after formatting:', editorRef.current.innerHTML);
-    onChange(editorRef.current.innerHTML);
+    // Focus the editor
     editorRef.current.focus();
+    
+    // Execute the command
+    const success = document.execCommand(command, false, null);
+    console.log('Command execution result:', success);
+    
+    // Update the content
+    const newContent = editorRef.current.innerHTML;
+    console.log('New content:', newContent);
+    onChange(newContent);
   };
 
   const changeFontSize = (size) => {
+    console.log('changeFontSize called with:', size);
     editorRef.current.focus();
-    saveSelection();
-    restoreSelection();
     document.execCommand('fontSize', false, size);
     onChange(editorRef.current.innerHTML);
-    editorRef.current.focus();
   };
 
   const changeAlignment = (align) => {
+    console.log('changeAlignment called with:', align);
     editorRef.current.focus();
-    saveSelection();
-    restoreSelection();
     
+    let command = '';
     switch (align) {
       case 'left':
-        document.execCommand('justifyLeft', false, null);
+        command = 'justifyLeft';
         break;
       case 'center':
-        document.execCommand('justifyCenter', false, null);
+        command = 'justifyCenter';
         break;
       case 'right':
-        document.execCommand('justifyRight', false, null);
+        command = 'justifyRight';
         break;
       default:
-        document.execCommand(`justify${align.charAt(0).toUpperCase() + align.slice(1)}`, false, null);
+        command = 'justifyLeft';
     }
     
+    document.execCommand(command, false, null);
     onChange(editorRef.current.innerHTML);
-    editorRef.current.focus();
   };
 
   const insertList = (type) => {
+    console.log('insertList called with:', type);
     editorRef.current.focus();
-    saveSelection();
-    restoreSelection();
     
     if (type === 'Unordered') {
       document.execCommand('insertUnorderedList', false, null);
@@ -118,7 +71,6 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
     }
     
     onChange(editorRef.current.innerHTML);
-    editorRef.current.focus();
   };
 
   // Handle text selection for AI prompt
@@ -128,14 +80,13 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
     const selection = window.getSelection();
     const selectedText = selection.toString().trim();
     
+    console.log('Selection detected:', selectedText);
+    
     if (selectedText.length > 0 && selection.rangeCount > 0) {
       setSelectedText(selectedText);
       
-      // Store the current range for later use
-      const range = selection.getRangeAt(0);
-      setCurrentRange(range.cloneRange());
-      
       // Get selection position
+      const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       
       // Position the prompt above the selection
@@ -147,52 +98,44 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
       setShowAIPrompt(true);
     } else {
       setShowAIPrompt(false);
-      setCurrentRange(null);
     }
   };
 
   // Apply AI suggestion
   const applyAISuggestion = (suggestion) => {
-    if (currentRange) {
-      // Clear the current selection
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(currentRange);
+    console.log('Applying AI suggestion:', suggestion);
+    
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(document.createTextNode(suggestion));
       
-      // Apply the new text
-      currentRange.deleteContents();
-      currentRange.insertNode(document.createTextNode(suggestion));
-      
-      // Trigger onChange with updated content
-      if (editorRef.current) {
-        onChange(editorRef.current.innerHTML);
-      }
-      
-      // Clear the range and close prompt
-      setCurrentRange(null);
-      setShowAIPrompt(false);
-      setSelectedText('');
-      
-      // Keep focus on the editor
-      editorRef.current.focus();
+      // Update content
+      onChange(editorRef.current.innerHTML);
     }
+    
+    setShowAIPrompt(false);
+    setSelectedText('');
+    editorRef.current.focus();
   };
 
   // Close AI prompt
   const closeAIPrompt = () => {
     setShowAIPrompt(false);
     setSelectedText('');
-    setCurrentRange(null);
   };
 
-  // Add event listeners
+  // Add event listeners for AI
   useEffect(() => {
     const editor = editorRef.current;
     if (editor && aiPromptEnabled) {
+      console.log('Adding AI event listeners');
       editor.addEventListener('mouseup', handleSelection);
       editor.addEventListener('keyup', handleSelection);
       
       return () => {
+        console.log('Removing AI event listeners');
         editor.removeEventListener('mouseup', handleSelection);
         editor.removeEventListener('keyup', handleSelection);
       };
@@ -493,7 +436,10 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
         ref={editorRef}
         contentEditable
         dangerouslySetInnerHTML={{ __html: value }}
-        onInput={(e) => onChange(e.target.innerHTML)}
+        onInput={(e) => {
+          console.log('Editor input detected:', e.target.innerHTML);
+          onChange(e.target.innerHTML);
+        }}
         style={{
           ...style,
           padding: '12px',
@@ -508,6 +454,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
         }}
         placeholder={placeholder}
         onFocus={(e) => {
+          console.log('Editor focused');
           // Ensure cursor is at the end when focusing
           const range = document.createRange();
           const selection = window.getSelection();
