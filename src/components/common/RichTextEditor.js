@@ -42,27 +42,34 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
 
   // Rich text formatting functions
   const formatText = (command) => {
+    console.log('formatText called with:', command);
     editorRef.current.focus();
     saveSelection();
     restoreSelection();
     
     switch (command) {
       case 'bold':
+        console.log('Executing bold command');
         document.execCommand('bold', false, null);
         break;
       case 'italic':
+        console.log('Executing italic command');
         document.execCommand('italic', false, null);
         break;
       case 'underline':
+        console.log('Executing underline command');
         document.execCommand('underline', false, null);
         break;
       case 'removeFormat':
+        console.log('Executing removeFormat command');
         document.execCommand('removeFormat', false, null);
         break;
       default:
+        console.log('Executing default command:', command);
         document.execCommand(command, false, null);
     }
     
+    console.log('Editor content after formatting:', editorRef.current.innerHTML);
     onChange(editorRef.current.innerHTML);
     editorRef.current.focus();
   };
