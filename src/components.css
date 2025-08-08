@@ -1457,3 +1457,91 @@
     margin-bottom: var(--space-lg);
   }
 }
+
+/* Rich Text Editor Styles */
+.ql-toolbar {
+  border: 1px solid #ccc !important;
+  border-radius: 4px 4px 0 0 !important;
+  background-color: #f8f9fa !important;
+  padding: 8px !important;
+}
+
+.ql-container {
+  border: 1px solid #ccc !important;
+  border-top: none !important;
+  border-radius: 0 0 4px 4px !important;
+  min-height: 200px !important;
+}
+
+.ql-editor {
+  min-height: 200px !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  padding: 12px !important;
+}
+
+.ql-toolbar button {
+  background: #fff !important;
+  border: 1px solid #ddd !important;
+  border-radius: 3px !important;
+  padding: 4px 8px !important;
+  margin: 0 2px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.ql-toolbar button:hover {
+  background: #e9ecef !important;
+  border-color: #adb5bd !important;
+}
+
+.ql-toolbar button.ql-active {
+  background: #007bff !important;
+  color: white !important;
+  border-color: #007bff !important;
+}
+
+.ql-toolbar select {
+  background: #fff !important;
+  border: 1px solid #ddd !important;
+  border-radius: 3px !important;
+  padding: 4px 8px !important;
+  margin: 0 2px !important;
+  cursor: pointer !important;
+}
+
+.ql-toolbar select:hover {
+  border-color: #adb5bd !important;
+}
+
+/* Custom toolbar button styles */
+.ql-bold strong {
+  font-weight: bold !important;
+}
+
+.ql-italic em {
+  font-style: italic !important;
+}
+
+.ql-underline u {
+  text-decoration: underline !important;
+}
+
+/* Rich text editor container */
+.rich-text-editor-container {
+  border: 2px solid #3b82f6 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.rich-text-editor-container .ql-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #3b82f6 !important;
+  border-radius: 0 !important;
+}
+
+.rich-text-editor-container .ql-container {
+  border: none !important;
+  border-radius: 0 !important;
+}
