@@ -1,144 +1,146 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import AIFloatingPrompt from './AIFloatingPrompt';
 
-const RichTextEditor = ({ value, onChange, placeholder, style }) => {
+const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false }) => {
   const editorRef = useRef(null);
   const [showAIPrompt, setShowAIPrompt] = useState(false);
   const [selectedText, setSelectedText] = useState('');
   const [promptPosition, setPromptPosition] = useState({ x: 0, y: 0 });
-  const [currentRange, setCurrentRange] = useState(null);
+  const [aiPromptEnabled, setAiPromptEnabled] = useState(aiEnabled);
+  const [editorContent, setEditorContent] = useState(value);
 
-  // Rich text formatting functions
+  // Update editor content when value prop changes
+  useEffect(() => {
+    setEditorContent(value);
+  }, [value]);
+
+  // Update aiPromptEnabled when aiEnabled prop changes
+  useEffect(() => {
+    setAiPromptEnabled(aiEnabled);
+  }, [aiEnabled]);
+
+  // Simple formatting functions using execCommand
   const execCommand = (command, value = null) => {
-    document.execCommand(command, false, value);
     editorRef.current.focus();
+    
+    // If no text is selected, select all text
+    const selection = window.getSelection();
+    if (!selection.toString()) {
+      const range = document.createRange();
+      range.selectNodeContents(editorRef.current);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    
+    // Execute the command
+    document.execCommand(command, false, value);
+    
+    // Get the updated content
+    const newContent = editorRef.current.innerHTML;
+    setEditorContent(newContent);
+    onChange(newContent);
   };
 
-  const formatText = (command) => {
-    execCommand(command);
-  };
-
+  // Formatting functions
+  const makeBold = () => execCommand('bold');
+  const makeItalic = () => execCommand('italic');
+  const makeUnderline = () => execCommand('underline');
+  
   const changeFontSize = (size) => {
-    execCommand('fontSize', size);
+    const fontSizeMap = {
+      '1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7'
+    };
+    execCommand('fontSize', fontSizeMap[size] || '3');
   };
 
-  const changeAlignment = (align) => {
-    execCommand(`justify${align.charAt(0).toUpperCase() + align.slice(1)}`);
+  const alignText = (alignment) => {
+    execCommand(`justify${alignment.charAt(0).toUpperCase() + alignment.slice(1)}`);
   };
 
   const insertList = (type) => {
-    execCommand(`insert${type}List`);
+    const command = type === 'Unordered' ? 'insertUnorderedList' : 'insertOrderedList';
+    execCommand(command);
   };
 
+  const clearFormatting = () => execCommand('removeFormat');
+
   // Handle text selection for AI prompt
-  const handleSelection = () => {
+  const handleSelection = useCallback(() => {
+    if (!aiPromptEnabled) return;
+    
     const selection = window.getSelection();
     const selectedText = selection.toString().trim();
     
     if (selectedText.length > 0 && selection.rangeCount > 0) {
       setSelectedText(selectedText);
       
-      // Store the current range for later use
-      const range = selection.getRangeAt(0);
-      setCurrentRange(range.cloneRange());
-      
       // Get selection position
+      const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       
-      // Position the prompt above the selection
-      setPromptPosition({
-        x: rect.left + rect.width / 2,
-        y: rect.top - 10
-      });
+      // Calculate position
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
       
+      let x = rect.left + rect.width / 2;
+      let y = rect.top - 10;
+      
+      // Ensure prompt doesn't go off-screen
+      if (x < 150) x = 150;
+      if (x > viewportWidth - 150) x = viewportWidth - 150;
+      if (y < 200) y = rect.bottom + 10;
+      if (y > viewportHeight - 300) y = viewportHeight - 300;
+      
+      setPromptPosition({ x, y });
       setShowAIPrompt(true);
-      
-      // Add visual highlighting
-      highlightSelection(range);
     } else {
       setShowAIPrompt(false);
-      setCurrentRange(null);
-      removeHighlighting();
     }
-  };
-
-  // Add visual highlighting to selected text
-  const highlightSelection = (range) => {
-    removeHighlighting(); // Remove any existing highlights
-    
-    const span = document.createElement('span');
-    span.style.backgroundColor = '#ffeb3b';
-    span.style.color = '#000';
-    span.style.padding = '2px 0';
-    span.style.borderRadius = '2px';
-    
-    try {
-      range.surroundContents(span);
-    } catch (e) {
-      // If surroundContents fails, try a different approach
-      const contents = range.extractContents();
-      span.appendChild(contents);
-      range.insertNode(span);
-    }
-  };
-
-  // Remove highlighting
-  const removeHighlighting = () => {
-    const highlights = editorRef.current.querySelectorAll('span[style*="background-color: rgb(255, 235, 59)"]');
-    highlights.forEach(highlight => {
-      const parent = highlight.parentNode;
-      parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
-      parent.normalize(); // Merge adjacent text nodes
-    });
-  };
+  }, [aiPromptEnabled]);
 
   // Apply AI suggestion
-  const applyAISuggestion = (suggestion) => {
-    if (currentRange) {
-      // Remove highlighting first
-      removeHighlighting();
+  const applyAISuggestion = useCallback((suggestion) => {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(document.createTextNode(suggestion));
       
-      // Clear the current selection
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      
-      // Apply the new text
-      currentRange.deleteContents();
-      currentRange.insertNode(document.createTextNode(suggestion));
-      
-      // Trigger onChange with updated content
-      if (editorRef.current) {
-        onChange(editorRef.current.innerHTML);
-      }
-      
-      // Clear the range
-      setCurrentRange(null);
+      const newContent = editorRef.current.innerHTML;
+      setEditorContent(newContent);
+      onChange(newContent);
     }
-  };
-
-  // Close AI prompt
-  const closeAIPrompt = () => {
+    
     setShowAIPrompt(false);
     setSelectedText('');
-    setCurrentRange(null);
-    removeHighlighting();
+    editorRef.current.focus();
+  }, [onChange]);
+
+  // Close AI prompt
+  const closeAIPrompt = useCallback(() => {
+    setShowAIPrompt(false);
+    setSelectedText('');
+  }, []);
+
+  // Handle input changes
+  const handleInput = (e) => {
+    const newContent = e.target.innerHTML;
+    setEditorContent(newContent);
+    onChange(newContent);
   };
 
-  // Add event listeners
+  // Add event listeners for AI
   useEffect(() => {
     const editor = editorRef.current;
-    if (editor) {
-      editor.addEventListener('mouseup', handleSelection);
-      editor.addEventListener('keyup', handleSelection);
-      editor.addEventListener('selectionchange', handleSelection);
-      
-      return () => {
-        editor.removeEventListener('mouseup', handleSelection);
-        editor.removeEventListener('keyup', handleSelection);
-        editor.removeEventListener('selectionchange', handleSelection);
+    if (editor && aiPromptEnabled) {
+      const handleMouseUp = () => {
+        setTimeout(() => handleSelection(), 100);
       };
+      
+      editor.addEventListener('mouseup', handleMouseUp);
+      return () => editor.removeEventListener('mouseup', handleMouseUp);
     }
-  }, []);
+  }, [aiPromptEnabled, handleSelection]);
 
   // Handle clicks outside to close prompt
   useEffect(() => {
@@ -148,11 +150,11 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showAIPrompt]);
+    if (showAIPrompt) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showAIPrompt, closeAIPrompt]);
 
   return (
     <div style={{ border: '1px solid #d1d5db', borderRadius: '4px' }}>
@@ -191,7 +193,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
 
         {/* Bold */}
         <button
-          onClick={() => formatText('bold')}
+          onClick={makeBold}
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
@@ -217,7 +219,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
 
         {/* Italic */}
         <button
-          onClick={() => formatText('italic')}
+          onClick={makeItalic}
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
@@ -243,7 +245,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
 
         {/* Underline */}
         <button
-          onClick={() => formatText('underline')}
+          onClick={makeUnderline}
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
@@ -272,7 +274,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
 
         {/* Alignment */}
         <button
-          onClick={() => changeAlignment('left')}
+          onClick={() => alignText('left')}
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
@@ -296,7 +298,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
         </button>
 
         <button
-          onClick={() => changeAlignment('center')}
+          onClick={() => alignText('center')}
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
@@ -320,7 +322,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
         </button>
 
         <button
-          onClick={() => changeAlignment('right')}
+          onClick={() => alignText('right')}
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
@@ -343,58 +345,10 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
           ➡
         </button>
 
-        <button
-          onClick={() => changeAlignment('full')}
-          style={{
-            padding: '6px 10px',
-            border: '2px solid #3b82f6',
-            borderRadius: '6px',
-            background: '#ffffff',
-            cursor: 'pointer',
-            fontSize: '14px',
-            color: '#1e40af',
-            minWidth: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-          }}
-          onMouseOver={(e) => e.target.style.background = '#eff6ff'}
-          onMouseOut={(e) => e.target.style.background = '#ffffff'}
-          title="Justify"
-        >
-          ⬌
-        </button>
-
         {/* Divider */}
         <div style={{ width: '1px', height: '20px', background: '#d1d5db', margin: '0 4px' }}></div>
 
         {/* Lists */}
-        <button
-          onClick={() => insertList('Ordered')}
-          style={{
-            padding: '6px 10px',
-            border: '2px solid #3b82f6',
-            borderRadius: '6px',
-            background: '#ffffff',
-            cursor: 'pointer',
-            fontSize: '14px',
-            color: '#1e40af',
-            minWidth: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-          }}
-          onMouseOver={(e) => e.target.style.background = '#eff6ff'}
-          onMouseOut={(e) => e.target.style.background = '#ffffff'}
-          title="Numbered List"
-        >
-          1.
-        </button>
-
         <button
           onClick={() => insertList('Unordered')}
           style={{
@@ -422,9 +376,36 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
         {/* Divider */}
         <div style={{ width: '1px', height: '20px', background: '#d1d5db', margin: '0 4px' }}></div>
 
+        {/* AI Prompt Toggle */}
+        {aiEnabled && (
+          <button
+            onClick={() => setAiPromptEnabled(!aiPromptEnabled)}
+            style={{
+              padding: '6px 10px',
+              border: `2px solid ${aiPromptEnabled ? '#10b981' : '#3b82f6'}`,
+              borderRadius: '6px',
+              background: aiPromptEnabled ? '#d1fae5' : '#ffffff',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: aiPromptEnabled ? '#065f46' : '#1e40af',
+              minWidth: '50px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}
+            onMouseOver={(e) => e.target.style.background = aiPromptEnabled ? '#a7f3d0' : '#eff6ff'}
+            onMouseOut={(e) => e.target.style.background = aiPromptEnabled ? '#d1fae5' : '#ffffff'}
+            title={aiPromptEnabled ? 'AI Enabled - Click to disable' : 'AI Disabled - Click to enable'}
+          >
+            🤖 AI
+          </button>
+        )}
+
         {/* Clear Formatting */}
         <button
-          onClick={() => formatText('removeFormat')}
+          onClick={clearFormatting}
           style={{
             padding: '6px 10px',
             border: '2px solid #ef4444',
@@ -452,8 +433,8 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
       <div
         ref={editorRef}
         contentEditable
-        dangerouslySetInnerHTML={{ __html: value }}
-        onInput={(e) => onChange(e.target.innerHTML)}
+        dangerouslySetInnerHTML={{ __html: editorContent }}
+        onInput={handleInput}
         style={{
           ...style,
           padding: '12px',
@@ -467,26 +448,18 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
           backgroundColor: '#ffffff'
         }}
         placeholder={placeholder}
-        onFocus={(e) => {
-          // Ensure cursor is at the end when focusing
-          const range = document.createRange();
-          const selection = window.getSelection();
-          range.selectNodeContents(e.target);
-          range.collapse(false);
-          selection.removeAllRanges();
-          selection.addRange(range);
-        }}
       />
       
       {/* AI Floating Prompt */}
       {showAIPrompt && (
         <div
+          className="ai-prompt-container"
           style={{
             position: 'fixed',
             left: `${promptPosition.x}px`,
             top: `${promptPosition.y}px`,
             transform: 'translateX(-50%)',
-            zIndex: 1001
+            zIndex: 10001
           }}
         >
           <AIFloatingPrompt
@@ -494,6 +467,25 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
             onClose={closeAIPrompt}
             selectedText={selectedText}
           />
+        </div>
+      )}
+      
+      {/* Debug info */}
+      {aiPromptEnabled && (
+        <div style={{ 
+          position: 'fixed', 
+          bottom: '10px', 
+          right: '10px', 
+          background: '#f0f0f0', 
+          padding: '5px', 
+          fontSize: '12px',
+          zIndex: 1000,
+          border: '1px solid #ccc',
+          borderRadius: '4px'
+        }}>
+          AI: {aiPromptEnabled ? 'ON' : 'OFF'} | 
+          Prompt: {showAIPrompt ? 'SHOWING' : 'HIDDEN'} | 
+          Selected: {selectedText.length} chars
         </div>
       )}
     </div>

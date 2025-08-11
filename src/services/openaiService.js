@@ -4,6 +4,11 @@ import axios from 'axios';
 
 const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
 
+// Check if API key is available
+if (!OPENAI_API_KEY) {
+  console.warn('OpenAI API key not found. AI features will not work. Please set REACT_APP_OPENAI_API_KEY environment variable.');
+}
+
 
 // Enhanced OpenAI Configuration for Optimal Content Generation
 const OPENAI_CONFIG = {
@@ -136,7 +141,10 @@ const validateDocumentRequirements = (diseaseData, docType) => {
   const missing = requiredParams.filter(param => !providedParams[param]);
   
   if (missing.length > 0) {
-    console.warn(`Missing recommended parameters for ${docType}: ${missing.join(', ')}`);
+    // Only log in development and make it less verbose
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Note: Optional parameters not provided for ${docType}: ${missing.join(', ')}`);
+    }
   }
   
   return requirements;
@@ -1660,6 +1668,75 @@ Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thor
     } catch (error) {
       console.error('Error in generateMA_CH:', error.response?.data || error.message);
       throw error;
+    }
+  },
+
+  // =============================================================================
+  // AI TEXT IMPROVEMENT FUNCTION
+  // =============================================================================
+  
+  /**
+   * Generate text improvements using AI
+   */
+  generateTextImprovement: async (userPrompt) => {
+    try {
+      console.log('generateTextImprovement called with:', userPrompt);
+      
+      // Check if API key is available
+      if (!OPENAI_API_KEY) {
+        console.warn('OpenAI API key not available. Using fallback response.');
+        // Extract the selected text from the prompt for fallback
+        const selectedTextMatch = userPrompt.match(/Selected text: "([^"]+)"/);
+        const selectedText = selectedTextMatch ? selectedTextMatch[1] : '';
+        const requestMatch = userPrompt.match(/User request: (.+)$/);
+        const request = requestMatch ? requestMatch[1] : '';
+        
+        // Simple fallback improvements based on request
+        let improvedText = selectedText;
+        if (request.toLowerCase().includes('concise')) {
+          improvedText = selectedText.split(' ').slice(0, Math.floor(selectedText.split(' ').length * 0.7)).join(' ');
+        } else if (request.toLowerCase().includes('professional')) {
+          improvedText = selectedText.replace(/\b\w/g, l => l.toUpperCase());
+        } else if (request.toLowerCase().includes('simplify')) {
+          improvedText = selectedText.replace(/[^\w\s]/g, '');
+        } else if (request.toLowerCase().includes('grammar')) {
+          improvedText = selectedText.charAt(0).toUpperCase() + selectedText.slice(1) + '.';
+        }
+        
+        return [improvedText || selectedText];
+      }
+      
+      const response = await openaiApi.post('chat/completions', {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert medical writer and editor specializing in clinical documentation. Your task is to improve the selected text based on the user's request.
+            
+Provide the BEST single improvement that addresses the user's request. Focus on:
+- Grammar and clarity
+- Professional medical terminology
+- Logical flow and structure
+- Regulatory compliance language
+- Conciseness without losing important details
+
+Return only the improved text, without any explanations or additional text.`
+          },
+          {
+            role: "user",
+            content: `Please improve this text based on the following request: "${userPrompt}"`
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.3,
+        top_p: 0.9
+      });
+      const improvedText = response.data.choices[0].message.content.trim();
+      console.log('AI improvement result:', improvedText);
+      return [improvedText]; // Return as array to maintain compatibility
+    } catch (error) {
+      console.error('Error generating text improvements:', error);
+      return ['Unable to generate improvement at this time. Please try again.'];
     }
   },
 
@@ -4028,6 +4105,47 @@ Important: Base your analysis ONLY on the data provided above. Be accurate with 
     // console.error('Error in chatWithResults:', error.response?.data || error.message);
     throw error;
   }
-}}
+},
+
+generateTextImprovement: async (userPrompt) => {
+  try {
+    console.log('generateTextImprovement called with:', userPrompt);
+    
+    const response = await openaiApi.post('chat/completions', {
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert medical writer and editor specializing in clinical documentation. Your task is to improve the selected text based on the user's request.
+          
+Provide the BEST single improvement that addresses the user's request. Focus on:
+- Grammar and clarity
+- Professional medical terminology
+- Logical flow and structure
+- Regulatory compliance language
+- Conciseness without losing important details
+
+Return only the improved text, without any explanations or additional text.`
+        },
+        {
+          role: "user",
+          content: `Please improve this text based on the following request: "${userPrompt}"`
+        }
+      ],
+      max_tokens: 500,
+      temperature: 0.3,
+      top_p: 0.9
+    });
+    
+    const improvedText = response.data.choices[0].message.content.trim();
+    console.log('AI improvement result:', improvedText);
+    return [improvedText]; // Return as array to maintain compatibility
+  } catch (error) {
+    console.error('Error generating text improvements:', error);
+    return ['Unable to generate improvement at this time. Please try again.'];
+  }
+}
+
+};
 
 export default openaiService;
