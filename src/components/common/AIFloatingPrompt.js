@@ -10,22 +10,33 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText }) => {
     e.preventDefault();
     if (!prompt.trim()) return;
 
+    console.log('Submitting AI request:', { prompt, selectedText });
     setIsProcessing(true);
+    
     try {
       // Include the selected text in the prompt
       const fullPrompt = `Selected text: "${selectedText}"\n\nUser request: ${prompt}`;
+      console.log('Full prompt being sent:', fullPrompt);
+      
       const response = await openaiService.generateTextImprovement(fullPrompt);
+      console.log('AI service response:', response);
       
       // Automatically apply the first (best) suggestion
       if (response && response.length > 0) {
+        console.log('AI response received:', response[0]);
+        console.log('Calling onApplySuggestion with:', response[0]);
         onApplySuggestion(response[0]);
         setPrompt('');
         onClose();
+      } else {
+        console.error('No response received from AI service');
+        alert('No response received from AI service. Please try again.');
       }
     } catch (error) {
       console.error('Error generating AI suggestions:', error);
+      console.error('Error details:', error.response || error.message);
       // Show a brief error message
-      alert('Unable to process your request. Please try again.');
+      alert(`Unable to process your request: ${error.message || 'Unknown error'}. Please try again.`);
     } finally {
       setIsProcessing(false);
     }
@@ -50,14 +61,16 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText }) => {
       className="ai-prompt-container"
       style={{
         position: 'fixed',
-        zIndex: 1000,
+        zIndex: 10000,
         background: '#ffffff',
         border: '2px solid #3b82f6',
         borderRadius: '8px',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)',
         padding: '1rem',
         minWidth: '300px',
-        maxWidth: '500px'
+        maxWidth: '500px',
+        transform: 'translateX(-50%)',
+        animation: 'slideInPrompt 0.3s ease-out'
       }}
     >
       {/* Header */}
@@ -74,6 +87,7 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText }) => {
         </h4>
         <button
           onClick={onClose}
+          className="close-btn"
           style={{
             background: 'none',
             border: 'none',
@@ -89,17 +103,11 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText }) => {
 
       {/* Selected Text Display */}
       {selectedText && (
-        <div style={{ 
-          marginBottom: '1rem', 
-          padding: '0.5rem', 
-          background: '#f3f4f6', 
-          borderRadius: '4px',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+        <div className="selected-text-display">
+          <div className="selected-text-label">
             Selected text:
           </div>
-          <div style={{ fontSize: '0.875rem', color: '#374151', fontStyle: 'italic' }}>
+          <div className="selected-text-content">
             "{selectedText.length > 100 ? selectedText.substring(0, 100) + '...' : selectedText}"
           </div>
         </div>
@@ -150,6 +158,7 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText }) => {
               <button
                 key={action}
                 type="button"
+                className="quick-action-btn"
                 onClick={() => {
                   setPrompt(action);
                   // Auto-submit when quick action is clicked

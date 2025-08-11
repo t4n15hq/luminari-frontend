@@ -307,8 +307,14 @@ const ProtocolGenerator = () => {
       // Get all selected sections content
       const selectedSections = [];
       
-      // Add protocol sections
-      Array.from(selectedProtocolSections).forEach(sectionId => {
+      // Add protocol sections (sorted)
+      Array.from(selectedProtocolSections)
+        .sort((a, b) => {
+          const aNum = parseInt(a.replace('protocol-section-', ''));
+          const bNum = parseInt(b.replace('protocol-section-', ''));
+          return aNum - bNum;
+        })
+        .forEach(sectionId => {
         const sectionNumber = sectionId.replace('protocol-section-', '');
         const sectionTitle = protocolSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
         const sectionContent = sectionEdits[sectionId] || '';
@@ -321,8 +327,19 @@ const ProtocolGenerator = () => {
         }
       });
       
-      // Add study design sections
-      Array.from(selectedStudyDesignSections).forEach(sectionId => {
+      // Add study design sections (sorted)
+      Array.from(selectedStudyDesignSections)
+        .sort((a, b) => {
+          // Handle cmc-section (should come first)
+          if (a === 'cmc-section') return -1;
+          if (b === 'cmc-section') return 1;
+          
+          // Handle clinical-section-X
+          const aNum = parseInt(a.replace('clinical-section-', ''));
+          const bNum = parseInt(b.replace('clinical-section-', ''));
+          return aNum - bNum;
+        })
+        .forEach(sectionId => {
         const sectionTitle = sectionId === 'cmc-section' ? 'CMC Section' : `Clinical Section ${sectionId.replace('clinical-section-', '')}`;
         const sectionContent = sectionEdits[sectionId] || '';
         
@@ -423,7 +440,7 @@ const ProtocolGenerator = () => {
       setLoading(false);
     }
   };
-
+  
   const generatePDF = async (documentId, filename) => {
     try {
       setLoading(true);
@@ -507,8 +524,14 @@ const ProtocolGenerator = () => {
       // Get all selected sections content
       const selectedSections = [];
       
-      // Add protocol sections
-      Array.from(selectedProtocolSections).forEach(sectionId => {
+      // Add protocol sections (sorted)
+      Array.from(selectedProtocolSections)
+        .sort((a, b) => {
+          const aNum = parseInt(a.replace('protocol-section-', ''));
+          const bNum = parseInt(b.replace('protocol-section-', ''));
+          return aNum - bNum;
+        })
+        .forEach(sectionId => {
         const sectionNumber = sectionId.replace('protocol-section-', '');
         const sectionTitle = protocolSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
         const sectionContent = sectionEdits[sectionId] || '';
@@ -521,8 +544,19 @@ const ProtocolGenerator = () => {
         }
       });
       
-      // Add study design sections
-      Array.from(selectedStudyDesignSections).forEach(sectionId => {
+      // Add study design sections (sorted)
+      Array.from(selectedStudyDesignSections)
+        .sort((a, b) => {
+          // Handle cmc-section (should come first)
+          if (a === 'cmc-section') return -1;
+          if (b === 'cmc-section') return 1;
+          
+          // Handle clinical-section-X
+          const aNum = parseInt(a.replace('clinical-section-', ''));
+          const bNum = parseInt(b.replace('clinical-section-', ''));
+          return aNum - bNum;
+        })
+        .forEach(sectionId => {
         const sectionTitle = sectionId === 'cmc-section' ? 'CMC Section' : `Clinical Section ${sectionId.replace('clinical-section-', '')}`;
         const sectionContent = sectionEdits[sectionId] || '';
         
@@ -950,9 +984,9 @@ const ProtocolGenerator = () => {
             <h4 
               id={sectionId} 
               style={{ margin: 0, flex: 1 }}
-            >
-              {line}
-            </h4>
+          >
+            {line}
+          </h4>
           </div>
         );
       } else if (line.trim()) {
@@ -1217,6 +1251,12 @@ const ProtocolGenerator = () => {
   // Individual section editing functions
   const startEditingSection = (sectionId) => {
     setEditingSectionId(sectionId);
+    // Automatically enable AI when editing starts
+    setAiEnabledSections(prev => {
+      const newSet = new Set(prev);
+      newSet.add(sectionId);
+      return newSet;
+    });
   };
 
   const saveSectionEdit = (sectionId, content) => {
@@ -1225,10 +1265,17 @@ const ProtocolGenerator = () => {
       [sectionId]: content
     }));
     setEditingSectionId(null);
+    // Keep AI enabled when saving (user can still toggle it)
   };
 
   const cancelSectionEdit = () => {
     setEditingSectionId(null);
+    // Disable AI when editing is cancelled
+    setAiEnabledSections(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(editingSectionId);
+      return newSet;
+    });
   };
 
   // Generate PDF for individual section
@@ -2029,7 +2076,13 @@ const ProtocolGenerator = () => {
                       minWidth: showReferencePanel ? '50%' : '100%'
                     }}>
                       {activeTab === 'protocol' ? (
-                        Array.from(selectedProtocolSections).map(sectionId => {
+                        Array.from(selectedProtocolSections)
+                          .sort((a, b) => {
+                            const aNum = parseInt(a.replace('protocol-section-', ''));
+                            const bNum = parseInt(b.replace('protocol-section-', ''));
+                            return aNum - bNum;
+                          })
+                          .map(sectionId => {
                           const sectionNumber = sectionId.replace('protocol-section-', '');
                           const sectionTitle = protocolSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
                           const isEditingThis = editingSectionId === sectionId;
@@ -2066,21 +2119,6 @@ const ProtocolGenerator = () => {
                                         }}
                                       >
                                         Edit
-                                      </button>
-                                      <button
-                                        onClick={() => toggleAIForSection(sectionId)}
-                                        style={{
-                                          background: aiEnabledSections.has(sectionId) ? '#10b981' : '#6b7280',
-                                          color: 'white',
-                                          border: 'none',
-                                          borderRadius: '4px',
-                                          padding: '4px 8px',
-                                          fontSize: '12px',
-                                          cursor: 'pointer'
-                                        }}
-                                        title={aiEnabledSections.has(sectionId) ? 'AI Enabled' : 'Enable AI'}
-                                      >
-                                        🤖
                                       </button>
                                       <button
                                         onClick={() => generateSectionPDF(sectionId, sectionTitle, sectionContent)}
@@ -2165,8 +2203,19 @@ const ProtocolGenerator = () => {
                           );
                         })
                       ) : (
-                        Array.from(selectedStudyDesignSections).map(sectionId => {
-                          const sectionNumber = sectionId.replace('studydesign-section-', '');
+                        Array.from(selectedStudyDesignSections)
+                          .sort((a, b) => {
+                            // Handle cmc-section (should come first)
+                            if (a === 'cmc-section') return -1;
+                            if (b === 'cmc-section') return 1;
+                            
+                            // Handle clinical-section-X
+                            const aNum = parseInt(a.replace('clinical-section-', ''));
+                            const bNum = parseInt(b.replace('clinical-section-', ''));
+                            return aNum - bNum;
+                          })
+                          .map(sectionId => {
+                          const sectionNumber = sectionId === 'cmc-section' ? 'CMC' : sectionId.replace('clinical-section-', '');
                           const sectionTitle = studyDesignSections.find(s => s.id === sectionId)?.title || `Study Design Section ${sectionNumber}`;
                           const isEditingThis = editingSectionId === sectionId;
                           const sectionContent = sectionEdits[sectionId] || '';
@@ -2202,21 +2251,6 @@ const ProtocolGenerator = () => {
                                         }}
                                       >
                                         Edit
-                                      </button>
-                                      <button
-                                        onClick={() => toggleAIForSection(sectionId)}
-                                        style={{
-                                          background: aiEnabledSections.has(sectionId) ? '#10b981' : '#6b7280',
-                                          color: 'white',
-                                          border: 'none',
-                                          borderRadius: '4px',
-                                          padding: '4px 8px',
-                                          fontSize: '12px',
-                                          cursor: 'pointer'
-                                        }}
-                                        title={aiEnabledSections.has(sectionId) ? 'AI Enabled' : 'Enable AI'}
-                                      >
-                                        🤖
                                       </button>
                                       <button
                                         onClick={() => generateSectionPDF(sectionId, sectionTitle, sectionContent)}
