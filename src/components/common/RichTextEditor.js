@@ -7,12 +7,20 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
   const [selectedText, setSelectedText] = useState('');
   const [promptPosition, setPromptPosition] = useState({ x: 0, y: 0 });
   const [currentRange, setCurrentRange] = useState(null);
+  const [editorContent, setEditorContent] = useState(value || '');
+
+  // Sync editor content when value prop changes
+  useEffect(() => {
+    setEditorContent(value || '');
+  }, [value]);
 
   // Simple execCommand wrapper
   const execCommand = (command, value = null) => {
     editorRef.current.focus();
     document.execCommand(command, false, value);
-    onChange(editorRef.current.innerHTML);
+    const newContent = editorRef.current.innerHTML;
+    setEditorContent(newContent);
+    onChange(newContent);
   };
 
   const formatText = (command) => {
@@ -75,7 +83,9 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
       
       // Trigger onChange with updated content
       if (editorRef.current) {
-        onChange(editorRef.current.innerHTML);
+        const newContent = editorRef.current.innerHTML;
+        setEditorContent(newContent);
+        onChange(newContent);
       }
       
       // Clear the range
@@ -418,8 +428,12 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
       <div
         ref={editorRef}
         contentEditable
-        dangerouslySetInnerHTML={{ __html: value }}
-        onInput={(e) => onChange(e.target.innerHTML)}
+        dangerouslySetInnerHTML={{ __html: editorContent }}
+        onInput={(e) => {
+          const newContent = e.target.innerHTML;
+          setEditorContent(newContent);
+          onChange(newContent);
+        }}
         style={{
           ...style,
           padding: '12px',
