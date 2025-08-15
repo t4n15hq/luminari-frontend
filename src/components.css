@@ -1711,3 +1711,35 @@
   border: none !important;
   border-radius: 0 !important;
 }
+
+/* Enhanced text selection highlighting for RichTextEditor */
+[contenteditable="true"]::selection {
+  background: rgba(59, 130, 246, 0.4) !important;
+  color: inherit !important;
+}
+
+[contenteditable="true"]::-moz-selection {
+  background: rgba(59, 130, 246, 0.4) !important;
+  color: inherit !important;
+}
+
+/* Ensure selection highlight persists when AI prompt is active */
+[contenteditable="true"]:has(+ .ai-prompt-container)::selection,
+[contenteditable="true"]:has(~ .ai-prompt-container)::selection {
+  background: rgba(59, 130, 246, 0.6) !important;
+  color: inherit !important;
+}
+
+[contenteditable="true"]:has(+ .ai-prompt-container)::-moz-selection,
+[contenteditable="true"]:has(~ .ai-prompt-container)::-moz-selection {
+  background: rgba(59, 130, 246, 0.6) !important;
+  color: inherit !important;
+}
+
+/* Force selection to be visible */
+[contenteditable="true"] {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}

@@ -1,17 +1,18 @@
 import React, { useRef, useState, useEffect } from 'react';
 import AIFloatingPrompt from './AIFloatingPrompt';
 
-const RichTextEditor = ({ value, onChange, placeholder, style }) => {
+const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false }) => {
   const editorRef = useRef(null);
   const [showAIPrompt, setShowAIPrompt] = useState(false);
   const [selectedText, setSelectedText] = useState('');
   const [promptPosition, setPromptPosition] = useState({ x: 0, y: 0 });
   const [currentRange, setCurrentRange] = useState(null);
 
-  // Rich text formatting functions
+  // Simple execCommand wrapper
   const execCommand = (command, value = null) => {
-    document.execCommand(command, false, value);
     editorRef.current.focus();
+    document.execCommand(command, false, value);
+    onChange(editorRef.current.innerHTML);
   };
 
   const formatText = (command) => {
@@ -32,72 +33,38 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
 
   // Handle text selection for AI prompt
   const handleSelection = () => {
-    const selection = window.getSelection();
-    const selectedText = selection.toString().trim();
-    
-    if (selectedText.length > 0 && selection.rangeCount > 0) {
-      setSelectedText(selectedText);
+    // Add a small delay to ensure selection is stable
+    setTimeout(() => {
+      const selection = window.getSelection();
+      const selectedText = selection.toString().trim();
       
-      // Store the current range for later use
-      const range = selection.getRangeAt(0);
-      setCurrentRange(range.cloneRange());
-      
-      // Get selection position
-      const rect = range.getBoundingClientRect();
-      
-      // Position the prompt above the selection
-      setPromptPosition({
-        x: rect.left + rect.width / 2,
-        y: rect.top - 10
-      });
-      
-      setShowAIPrompt(true);
-      
-      // Add visual highlighting
-      highlightSelection(range);
-    } else {
-      setShowAIPrompt(false);
-      setCurrentRange(null);
-      removeHighlighting();
-    }
-  };
-
-  // Add visual highlighting to selected text
-  const highlightSelection = (range) => {
-    removeHighlighting(); // Remove any existing highlights
-    
-    const span = document.createElement('span');
-    span.style.backgroundColor = '#ffeb3b';
-    span.style.color = '#000';
-    span.style.padding = '2px 0';
-    span.style.borderRadius = '2px';
-    
-    try {
-      range.surroundContents(span);
-    } catch (e) {
-      // If surroundContents fails, try a different approach
-      const contents = range.extractContents();
-      span.appendChild(contents);
-      range.insertNode(span);
-    }
-  };
-
-  // Remove highlighting
-  const removeHighlighting = () => {
-    const highlights = editorRef.current.querySelectorAll('span[style*="background-color: rgb(255, 235, 59)"]');
-    highlights.forEach(highlight => {
-      const parent = highlight.parentNode;
-      parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
-      parent.normalize(); // Merge adjacent text nodes
-    });
+      if (selectedText.length > 0 && selection.rangeCount > 0) {
+        setSelectedText(selectedText);
+        
+        // Store the current range for later use
+        const range = selection.getRangeAt(0);
+        setCurrentRange(range.cloneRange());
+        
+        // Get selection position
+        const rect = range.getBoundingClientRect();
+        
+        // Position the prompt above the selection
+        setPromptPosition({
+          x: rect.left + rect.width / 2,
+          y: rect.top - 10
+        });
+        
+        setShowAIPrompt(true);
+      } else {
+        setShowAIPrompt(false);
+        setCurrentRange(null);
+      }
+    }, 100);
   };
 
   // Apply AI suggestion
   const applyAISuggestion = (suggestion) => {
     if (currentRange) {
-      // Remove highlighting first
-      removeHighlighting();
-      
       // Clear the current selection
       const selection = window.getSelection();
       selection.removeAllRanges();
@@ -121,13 +88,12 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
     setShowAIPrompt(false);
     setSelectedText('');
     setCurrentRange(null);
-    removeHighlighting();
   };
 
-  // Add event listeners
+  // Add event listeners for AI functionality
   useEffect(() => {
     const editor = editorRef.current;
-    if (editor) {
+    if (editor && aiEnabled) {
       editor.addEventListener('mouseup', handleSelection);
       editor.addEventListener('keyup', handleSelection);
       editor.addEventListener('selectionchange', handleSelection);
@@ -138,7 +104,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style }) => {
         editor.removeEventListener('selectionchange', handleSelection);
       };
     }
-  }, []);
+  }, [aiEnabled]);
 
   // Handle clicks outside to close prompt
   useEffect(() => {
