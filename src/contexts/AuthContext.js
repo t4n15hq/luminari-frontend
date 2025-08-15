@@ -3,7 +3,16 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-const API_BASE_URL = process.env.REACT_APP_DOCUMENTS_API_URL || 'http://localhost:4000';
+// Use proxy for development to avoid CORS issues
+const API_BASE_URL = process.env.NODE_ENV === 'development' ? '' : (process.env.REACT_APP_DOCUMENTS_API_URL || 'http://localhost:4000');
+
+// Create axios instance
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 export const useAuth = () => {
   return useContext(AuthContext);
@@ -25,7 +34,7 @@ export const AuthProvider = ({ children }) => {
 
   const verifyToken = async (token) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/auth/verify`, {
+      const response = await apiClient.get('/auth/verify', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -47,7 +56,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+      console.log('Attempting login to:', API_BASE_URL);
+      const response = await apiClient.post('/auth/login', {
         username,
         password
       });
@@ -63,6 +73,7 @@ export const AuthProvider = ({ children }) => {
       return true;
     } catch (error) {
       console.error('Login failed:', error.response?.data || error.message);
+      console.error('Full error:', error);
       return false;
     }
   };
