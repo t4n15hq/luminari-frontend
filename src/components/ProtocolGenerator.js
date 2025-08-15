@@ -306,8 +306,14 @@ const ProtocolGenerator = () => {
       // Get all selected sections content
       const selectedSections = [];
       
-      // Add protocol sections
-      Array.from(selectedProtocolSections).forEach(sectionId => {
+      // Add protocol sections (sorted)
+      Array.from(selectedProtocolSections)
+        .sort((a, b) => {
+          const aNum = parseInt(a.replace('protocol-section-', ''));
+          const bNum = parseInt(b.replace('protocol-section-', ''));
+          return aNum - bNum;
+        })
+        .forEach(sectionId => {
         const sectionNumber = sectionId.replace('protocol-section-', '');
         const sectionTitle = protocolSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
         const sectionContent = sectionEdits[sectionId] || '';
@@ -320,8 +326,19 @@ const ProtocolGenerator = () => {
         }
       });
       
-      // Add study design sections
-      Array.from(selectedStudyDesignSections).forEach(sectionId => {
+      // Add study design sections (sorted)
+      Array.from(selectedStudyDesignSections)
+        .sort((a, b) => {
+          // Handle cmc-section (should come first)
+          if (a === 'cmc-section') return -1;
+          if (b === 'cmc-section') return 1;
+          
+          // Handle clinical-section-X
+          const aNum = parseInt(a.replace('clinical-section-', ''));
+          const bNum = parseInt(b.replace('clinical-section-', ''));
+          return aNum - bNum;
+        })
+        .forEach(sectionId => {
         const sectionTitle = sectionId === 'cmc-section' ? 'CMC Section' : `Clinical Section ${sectionId.replace('clinical-section-', '')}`;
         const sectionContent = sectionEdits[sectionId] || '';
         
@@ -506,8 +523,14 @@ const ProtocolGenerator = () => {
       // Get all selected sections content
       const selectedSections = [];
       
-      // Add protocol sections
-      Array.from(selectedProtocolSections).forEach(sectionId => {
+      // Add protocol sections (sorted)
+      Array.from(selectedProtocolSections)
+        .sort((a, b) => {
+          const aNum = parseInt(a.replace('protocol-section-', ''));
+          const bNum = parseInt(b.replace('protocol-section-', ''));
+          return aNum - bNum;
+        })
+        .forEach(sectionId => {
         const sectionNumber = sectionId.replace('protocol-section-', '');
         const sectionTitle = protocolSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
         const sectionContent = sectionEdits[sectionId] || '';
@@ -520,8 +543,19 @@ const ProtocolGenerator = () => {
         }
       });
       
-      // Add study design sections
-      Array.from(selectedStudyDesignSections).forEach(sectionId => {
+      // Add study design sections (sorted)
+      Array.from(selectedStudyDesignSections)
+        .sort((a, b) => {
+          // Handle cmc-section (should come first)
+          if (a === 'cmc-section') return -1;
+          if (b === 'cmc-section') return 1;
+          
+          // Handle clinical-section-X
+          const aNum = parseInt(a.replace('clinical-section-', ''));
+          const bNum = parseInt(b.replace('clinical-section-', ''));
+          return aNum - bNum;
+        })
+        .forEach(sectionId => {
         const sectionTitle = sectionId === 'cmc-section' ? 'CMC Section' : `Clinical Section ${sectionId.replace('clinical-section-', '')}`;
         const sectionContent = sectionEdits[sectionId] || '';
         
@@ -2015,7 +2049,13 @@ const ProtocolGenerator = () => {
                       minWidth: showReferencePanel ? '50%' : '100%'
                     }}>
                       {activeTab === 'protocol' ? (
-                        Array.from(selectedProtocolSections).map(sectionId => {
+                        Array.from(selectedProtocolSections)
+                          .sort((a, b) => {
+                            const aNum = parseInt(a.replace('protocol-section-', ''));
+                            const bNum = parseInt(b.replace('protocol-section-', ''));
+                            return aNum - bNum;
+                          })
+                          .map(sectionId => {
                           const sectionNumber = sectionId.replace('protocol-section-', '');
                           const sectionTitle = protocolSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
                           const isEditingThis = editingSectionId === sectionId;
@@ -2112,6 +2152,7 @@ const ProtocolGenerator = () => {
                                     width: '100%',
                                     minHeight: '150px'
                                   }}
+                                  aiEnabled={true}
                                 />
                               ) : (
                                 <div
@@ -2135,7 +2176,137 @@ const ProtocolGenerator = () => {
                           );
                         })
                       ) : (
-                        <div>Study Design sections will appear here</div>
+                        Array.from(selectedStudyDesignSections)
+                          .sort((a, b) => {
+                            // Handle cmc-section (should come first)
+                            if (a === 'cmc-section') return -1;
+                            if (b === 'cmc-section') return 1;
+                            
+                            // Handle clinical-section-X
+                            const aNum = parseInt(a.replace('clinical-section-', ''));
+                            const bNum = parseInt(b.replace('clinical-section-', ''));
+                            return aNum - bNum;
+                          })
+                          .map(sectionId => {
+                          const sectionNumber = sectionId === 'cmc-section' ? 'CMC' : sectionId.replace('clinical-section-', '');
+                          const sectionTitle = studyDesignSections.find(s => s.id === sectionId)?.title || `Study Design Section ${sectionNumber}`;
+                          const isEditingThis = editingSectionId === sectionId;
+                          const sectionContent = sectionEdits[sectionId] || '';
+                          
+                          return (
+                            <div key={sectionId} style={{ 
+                              marginBottom: '1.5rem', 
+                              padding: '1rem', 
+                              border: '1px solid #d1d5db', 
+                              borderRadius: '6px', 
+                              backgroundColor: '#ffffff' 
+                            }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                marginBottom: '0.5rem' 
+                              }}>
+                                <h5 style={{ margin: 0, color: '#374151' }}>{sectionTitle}</h5>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                  {!isEditingThis ? (
+                                    <>
+                                      <button
+                                        onClick={() => startEditingSection(sectionId)}
+                                        style={{
+                                          background: '#10b981',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => generateSectionPDF(sectionId, sectionTitle, sectionContent)}
+                                        style={{
+                                          background: '#dc2626',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        PDF
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => saveSectionEdit(sectionId, sectionContent)}
+                                        style={{
+                                          background: '#3b82f6',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={cancelSectionEdit}
+                                        style={{
+                                          background: '#6b7280',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {isEditingThis ? (
+                                <RichTextEditor
+                                  value={sectionContent}
+                                  onChange={(content) => updateSectionContent(sectionId, content)}
+                                  placeholder={`Edit ${sectionTitle} content here...`}
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '150px'
+                                  }}
+                                  aiEnabled={true}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '100px',
+                                    padding: '0.75rem',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '4px',
+                                    backgroundColor: '#f9fafb',
+                                    fontFamily: 'inherit',
+                                    fontSize: '14px',
+                                    lineHeight: '1.5',
+                                    overflowY: 'auto',
+                                    whiteSpace: 'pre-wrap'
+                                  }}
+                                  dangerouslySetInnerHTML={{ __html: sectionContent }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })
                       )}
                     </div>
                     
