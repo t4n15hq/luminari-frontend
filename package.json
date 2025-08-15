@@ -51,6 +51,7 @@
       "node_modules/(?!(axios)/)"
     ]
   },
+  "proxy": "http://localhost:4000",
   "browserslist": {
     "production": [
       ">0.2%",

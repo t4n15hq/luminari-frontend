@@ -1,5 +1,171 @@
 /* Component Styles - Medical Grade Polish */
 
+/* AI Floating Prompt Styles */
+.ai-prompt-container {
+  position: fixed !important;
+  z-index: 10000 !important;
+  background: #ffffff !important;
+  border: 2px solid #3b82f6 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  padding: 1rem !important;
+  min-width: 300px !important;
+  max-width: 500px !important;
+  transform: translateX(-50%) !important;
+  animation: slideInPrompt 0.3s ease-out !important;
+}
+
+@keyframes slideInPrompt {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Text Selection Highlighting */
+[contenteditable="true"]::selection {
+  background: rgba(59, 130, 246, 0.3) !important;
+  color: inherit !important;
+}
+
+[contenteditable="true"]::-moz-selection {
+  background: rgba(59, 130, 246, 0.3) !important;
+  color: inherit !important;
+}
+
+/* Enhanced selection highlighting for AI functionality */
+[contenteditable="true"].ai-enabled::selection {
+  background: rgba(16, 185, 129, 0.4) !important;
+  color: inherit !important;
+}
+
+[contenteditable="true"].ai-enabled::-moz-selection {
+  background: rgba(16, 185, 129, 0.4) !important;
+  color: inherit !important;
+}
+
+/* Force selection highlight to persist when AI prompt is active */
+[contenteditable="true"].ai-enabled:has(+ .ai-prompt-container)::selection,
+[contenteditable="true"].ai-enabled:has(~ .ai-prompt-container)::selection {
+  background: rgba(16, 185, 129, 0.6) !important;
+  color: inherit !important;
+}
+
+[contenteditable="true"].ai-enabled:has(+ .ai-prompt-container)::-moz-selection,
+[contenteditable="true"].ai-enabled:has(~ .ai-prompt-container)::-moz-selection {
+  background: rgba(16, 185, 129, 0.6) !important;
+  color: inherit !important;
+}
+
+/* Alternative approach for browsers that don't support :has() */
+.ai-prompt-active [contenteditable="true"]::selection {
+  background: rgba(16, 185, 129, 0.6) !important;
+  color: inherit !important;
+}
+
+.ai-prompt-active [contenteditable="true"]::-moz-selection {
+  background: rgba(16, 185, 129, 0.6) !important;
+  color: inherit !important;
+}
+
+
+
+/* AI Prompt Container Positioning */
+.ai-prompt-wrapper {
+  position: fixed !important;
+  z-index: 10000 !important;
+  pointer-events: auto !important;
+}
+
+/* AI Prompt Form Elements */
+.ai-prompt-container textarea {
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  padding: 0.75rem !important;
+  font-size: 0.875rem !important;
+  resize: vertical !important;
+  font-family: inherit !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.ai-prompt-container textarea:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.ai-prompt-container button {
+  transition: all 0.2s ease !important;
+}
+
+.ai-prompt-container button:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Quick action buttons */
+.ai-prompt-container .quick-action-btn {
+  background: #f3f4f6 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  cursor: pointer !important;
+  color: #374151 !important;
+  transition: all 0.2s ease !important;
+}
+
+.ai-prompt-container .quick-action-btn:hover {
+  background: #e5e7eb !important;
+  border-color: #9ca3af !important;
+}
+
+/* Processing state */
+.ai-prompt-container .processing {
+  opacity: 0.7 !important;
+  pointer-events: none !important;
+}
+
+/* Close button styling */
+.ai-prompt-container .close-btn {
+  background: none !important;
+  border: none !important;
+  font-size: 1.2rem !important;
+  cursor: pointer !important;
+  color: #6b7280 !important;
+  padding: 0 !important;
+  transition: color 0.2s ease !important;
+}
+
+.ai-prompt-container .close-btn:hover {
+  color: #374151 !important;
+}
+
+/* Selected text display */
+.ai-prompt-container .selected-text-display {
+  margin-bottom: 1rem !important;
+  padding: 0.5rem !important;
+  background: #f3f4f6 !important;
+  border-radius: 4px !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.ai-prompt-container .selected-text-label {
+  font-size: 0.75rem !important;
+  color: #6b7280 !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.ai-prompt-container .selected-text-content {
+  font-size: 0.875rem !important;
+  color: #374151 !important;
+  font-style: italic !important;
+}
+
 /* Card Components with Enhanced Medical Design */
 .card {
   background: linear-gradient(145deg, #ffffff 0%, #fdfdfd 100%);
