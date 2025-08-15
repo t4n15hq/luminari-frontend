@@ -21,6 +21,12 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
     onChange(editorRef.current.innerHTML);
   };
 
+  const changeAlignment = (align) => {
+    editorRef.current.focus();
+    document.execCommand(`justify${align.charAt(0).toUpperCase() + align.slice(1)}`, false, null);
+    onChange(editorRef.current.innerHTML);
+  };
+
   // Handle text selection for AI prompt
   const handleSelection = () => {
     if (!aiToggle) return;
@@ -76,7 +82,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
       editor.addEventListener('mouseup', handleMouseUp);
       return () => editor.removeEventListener('mouseup', handleMouseUp);
     }
-  }, [aiToggle]);
+  }, [aiToggle, handleSelection]);
 
   // Handle clicks outside to close prompt
   useEffect(() => {
@@ -204,6 +210,85 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
         >
           U
         </button>
+
+        {/* Divider */}
+        <div style={{ width: '1px', height: '20px', background: '#d1d5db', margin: '0 4px' }}></div>
+
+        {/* Alignment */}
+        <button
+          onClick={() => changeAlignment('left')}
+          style={{
+            padding: '6px 10px',
+            border: '2px solid #3b82f6',
+            borderRadius: '6px',
+            background: '#ffffff',
+            cursor: 'pointer',
+            fontSize: '14px',
+            color: '#1e40af',
+            minWidth: '32px',
+            textAlign: 'left'
+          }}
+          title="Align Left"
+        >
+          ⬅
+        </button>
+
+        <button
+          onClick={() => changeAlignment('center')}
+          style={{
+            padding: '6px 10px',
+            border: '2px solid #3b82f6',
+            borderRadius: '6px',
+            background: '#ffffff',
+            cursor: 'pointer',
+            fontSize: '14px',
+            color: '#1e40af',
+            minWidth: '32px',
+            textAlign: 'center'
+          }}
+          title="Align Center"
+        >
+          ↔
+        </button>
+
+        <button
+          onClick={() => changeAlignment('right')}
+          style={{
+            padding: '6px 10px',
+            border: '2px solid #3b82f6',
+            borderRadius: '6px',
+            background: '#ffffff',
+            cursor: 'pointer',
+            fontSize: '14px',
+            color: '#1e40af',
+            minWidth: '32px',
+            textAlign: 'right'
+          }}
+          title="Align Right"
+        >
+          ➡
+        </button>
+
+        <button
+          onClick={() => changeAlignment('full')}
+          style={{
+            padding: '6px 10px',
+            border: '2px solid #3b82f6',
+            borderRadius: '6px',
+            background: '#ffffff',
+            cursor: 'pointer',
+            fontSize: '14px',
+            color: '#1e40af',
+            minWidth: '32px',
+            textAlign: 'justify'
+          }}
+          title="Justify"
+        >
+          ⬌
+        </button>
+
+        {/* Divider */}
+        <div style={{ width: '1px', height: '20px', background: '#d1d5db', margin: '0 4px' }}></div>
 
         {/* Clear Formatting */}
         <button
