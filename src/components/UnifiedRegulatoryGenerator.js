@@ -413,6 +413,126 @@ const UnifiedRegulatoryGenerator = () => {
     { id: 'regulatory-section-10', title: '10. Regulatory Compliance' }
   ];
 
+  // Smart Content Distribution Function
+  const distributeContentToSections = (fullContent) => {
+    console.log('🔍 Smart content distribution starting...');
+    console.log('Content length:', fullContent.length);
+    
+    const newSectionEdits = { ...sectionEdits };
+    
+    // Split content into paragraphs/sections
+    const contentParts = fullContent.split(/\n\s*\n+/).filter(part => part.trim().length > 50);
+    console.log('Content parts found:', contentParts.length);
+    
+    // Keywords for each regulatory section
+    const sectionKeywords = {
+      'regulatory-section-1': [ // CMC
+        'chemistry', 'manufacturing', 'controls', 'cmc', 'drug substance', 'drug product', 
+        'formulation', 'quality', 'specifications', 'stability', 'container', 'closure',
+        'analytical methods', 'impurities', 'batch', 'process', 'raw materials'
+      ],
+      'regulatory-section-2': [ // Nonclinical Pharmacology and Toxicology
+        'nonclinical', 'toxicology', 'pharmacology', 'animal', 'preclinical', 'toxicity',
+        'carcinogenicity', 'genotoxicity', 'reproductive', 'safety pharmacology',
+        'toxicokinetics', 'acute', 'chronic', 'dose', 'species', 'in vivo', 'in vitro'
+      ],
+      'regulatory-section-3': [ // Clinical Pharmacology
+        'clinical pharmacology', 'pharmacokinetics', 'pharmacodynamics', 'pk', 'pd',
+        'absorption', 'distribution', 'metabolism', 'excretion', 'adme', 'bioavailability',
+        'bioequivalence', 'drug interaction', 'population pk', 'exposure', 'clearance'
+      ],
+      'regulatory-section-4': [ // Clinical Study Reports
+        'clinical study', 'trial', 'patient', 'subject', 'efficacy', 'endpoint', 'primary',
+        'secondary', 'inclusion', 'exclusion', 'randomized', 'controlled', 'phase',
+        'study design', 'protocol', 'adverse events', 'demographics', 'results'
+      ],
+      'regulatory-section-5': [ // Statistical Analysis
+        'statistical', 'analysis', 'statistics', 'power', 'sample size', 'significance',
+        'confidence interval', 'p-value', 'hypothesis', 'test', 'regression', 'anova',
+        'chi-square', 'survival', 'kaplan-meier', 'intention to treat', 'per protocol'
+      ],
+      'regulatory-section-6': [ // Integrated Summary of Efficacy
+        'efficacy', 'effectiveness', 'response', 'outcome', 'benefit', 'improvement',
+        'clinical response', 'remission', 'cure', 'success rate', 'therapeutic effect',
+        'treatment response', 'clinical benefit', 'functional improvement'
+      ],
+      'regulatory-section-7': [ // Integrated Summary of Safety
+        'safety', 'adverse', 'side effect', 'tolerability', 'toxicity', 'death',
+        'serious adverse event', 'discontinuation', 'laboratory abnormalities',
+        'vital signs', 'ecg', 'risk', 'contraindication', 'warning', 'precaution'
+      ],
+      'regulatory-section-8': [ // Risk Assessment and Risk Management
+        'risk', 'benefit', 'management', 'mitigation', 'rems', 'monitoring',
+        'risk minimization', 'safety concern', 'identified risk', 'potential risk',
+        'risk evaluation', 'pharmacovigilance', 'signal detection'
+      ],
+      'regulatory-section-9': [ // Labeling
+        'labeling', 'label', 'indication', 'dosage', 'administration', 'contraindication',
+        'warning', 'precaution', 'adverse reaction', 'drug interaction', 'use in specific populations',
+        'overdosage', 'description', 'clinical pharmacology', 'how supplied'
+      ],
+      'regulatory-section-10': [ // Regulatory Compliance
+        'regulatory', 'compliance', 'guideline', 'regulation', 'ich', 'fda', 'ema',
+        'gcp', 'gmp', 'glp', 'quality system', 'inspection', 'audit', 'deviation',
+        'corrective action', 'regulatory pathway', 'submission', 'approval'
+      ]
+    };
+    
+    // Score each content part against each section
+    contentParts.forEach(content => {
+      const contentLower = content.toLowerCase();
+      let bestSection = null;
+      let bestScore = 0;
+      
+      // Calculate keyword match scores for each section
+      Object.entries(sectionKeywords).forEach(([sectionId, keywords]) => {
+        const score = keywords.reduce((acc, keyword) => {
+          const matches = (contentLower.match(new RegExp(keyword.replace(/\s+/g, '\\s+'), 'g')) || []).length;
+          return acc + matches * keyword.split(' ').length; // Weight multi-word keywords higher
+        }, 0);
+        
+        if (score > bestScore) {
+          bestScore = score;
+          bestSection = sectionId;
+        }
+      });
+      
+      // Only assign if we have a reasonable confidence (score > 2)
+      if (bestSection && bestScore > 2) {
+        console.log(`✅ Matched content to ${bestSection} (score: ${bestScore})`);
+        if (newSectionEdits[bestSection]) {
+          // Append to existing content with separator
+          newSectionEdits[bestSection] += '\n\n' + content.trim();
+        } else {
+          newSectionEdits[bestSection] = content.trim();
+        }
+      } else {
+        // Fallback: assign to the first empty section or append to a general section
+        const emptySections = regulatoryDocumentSections.filter(section => !newSectionEdits[section.id]);
+        if (emptySections.length > 0) {
+          newSectionEdits[emptySections[0].id] = content.trim();
+        } else {
+          // Append to Clinical Study Reports as a general fallback
+          if (newSectionEdits['regulatory-section-4']) {
+            newSectionEdits['regulatory-section-4'] += '\n\n' + content.trim();
+          } else {
+            newSectionEdits['regulatory-section-4'] = content.trim();
+          }
+        }
+      }
+    });
+    
+    console.log('📋 Final section distribution:');
+    Object.entries(newSectionEdits).forEach(([sectionId, content]) => {
+      if (content) {
+        const sectionTitle = regulatoryDocumentSections.find(s => s.id === sectionId)?.title || sectionId;
+        console.log(`${sectionTitle}: ${content.length} characters`);
+      }
+    });
+    
+    return newSectionEdits;
+  };
+
   // Helper Functions for Enhanced Editing
   const handleSectionEdit = (sectionId, content) => {
     setSectionEdits(prev => ({
@@ -1041,25 +1161,17 @@ const UnifiedRegulatoryGenerator = () => {
               document_content: content
             });
 
-            // Populate section edits for the main page display
-            const newSectionEdits = { ...sectionEdits };
-            newSectionEdits['regulatory-section-1'] = cmcSection;
-            newSectionEdits['regulatory-section-4'] = clinicalSection;
-            
-            // Distribute content to other sections if available
-            const sections = content.split(/(?=\d+\.\s|\n#{1,3}\s)/);
-            if (sections.length > 2) {
-              sections.forEach((section, index) => {
-                if (section.trim() && index < regulatoryDocumentSections.length) {
-                  const sectionId = regulatoryDocumentSections[index].id;
-                  if (!newSectionEdits[sectionId]) {
-                    newSectionEdits[sectionId] = section.trim();
-                  }
-                }
-              });
-            }
-            
-            setSectionEdits(newSectionEdits);
+            // Use smart content distribution to populate sections appropriately
+            const smartSectionEdits = distributeContentToSections(content);
+            setSectionEdits(smartSectionEdits);
+
+            // Auto-scroll to editable sections
+            setTimeout(() => {
+              const sectionsElement = document.querySelector('.document-sections');
+              if (sectionsElement) {
+                sectionsElement.scrollIntoView({ behavior: 'smooth' });
+              }
+            }, 500);
 
             // Save to backend - DISABLED FOR NOW
             console.log("Single mode: Document generation successful, skipping save for now");
@@ -1089,15 +1201,19 @@ const UnifiedRegulatoryGenerator = () => {
             // Set result regardless of structure
             setResult(response);
             
-            // Populate section edits for the main page display
-            const newSectionEdits = { ...sectionEdits };
-            if (response.cmc_section) {
-              newSectionEdits['regulatory-section-1'] = response.cmc_section;
-            }
-            if (response.clinical_section) {
-              newSectionEdits['regulatory-section-4'] = response.clinical_section;
-            }
-            setSectionEdits(newSectionEdits);
+            // Use smart content distribution for this response format too
+            const fullContent = response.document_content || 
+                               `${response.cmc_section || ''}\n\n${response.clinical_section || ''}`;
+            const smartSectionEdits = distributeContentToSections(fullContent.trim());
+            setSectionEdits(smartSectionEdits);
+            
+            // Auto-scroll to editable sections
+            setTimeout(() => {
+              const sectionsElement = document.querySelector('.document-sections');
+              if (sectionsElement) {
+                sectionsElement.scrollIntoView({ behavior: 'smooth' });
+              }
+            }, 500);
             
             try {
               console.log("Single mode: Document generation successful, skipping save for now");
@@ -2061,6 +2177,69 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
               Reset Form
             </button>
           </div>
+
+          {/* Single Document Results - Editable Sections */}
+          {result && (
+          <div className="document-sections" style={{ 
+            marginTop: '2rem', 
+            padding: '1.5rem', 
+            border: '2px solid #10b981', 
+            borderRadius: '8px',
+            backgroundColor: '#f0fdf4' 
+          }}>
+            <div className="sections-header">
+              <h3 style={{ color: '#065f46', fontSize: '1.5rem', marginBottom: '1rem' }}>
+                ✅ Document Generated! Edit Sections Below:
+              </h3>
+              <div className="section-actions">
+                <button 
+                  onClick={exportToWord}
+                  className="btn btn-outline"
+                  disabled={Object.keys(sectionEdits).length === 0}
+                >
+                  📄 Export to Word
+                </button>
+              </div>
+            </div>
+
+            <div className="sections-grid">
+              {regulatoryDocumentSections.map(section => {
+                const sectionContent = sectionEdits[section.id] || '';
+                
+                return (
+                  <div key={section.id} className="document-section">
+                    <div className="section-header">
+                      <h4>{section.title}</h4>
+                      <button
+                        onClick={() => toggleAIForSection(section.id)}
+                        style={{
+                          background: aiEnabledSections.has(section.id) ? '#10b981' : '#6b7280',
+                          color: 'white',
+                          border: 'none',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {aiEnabledSections.has(section.id) ? '🤖 AI ON' : '🤖 AI OFF'}
+                      </button>
+                    </div>
+                    
+                    <RichTextEditor
+                      value={sectionContent}
+                      onChange={(content) => handleSectionEdit(section.id, content)}
+                      placeholder={sectionContent ? `Edit ${section.title}...` : `Content for ${section.title} will appear here after you generate the regulatory document above...`}
+                      minHeight="200px"
+                      context={`regulatory document ${section.title.toLowerCase()}`}
+                      aiEnabled={aiEnabledSections.has(section.id)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          )}
         </div>
       )}
 
@@ -2287,168 +2466,6 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
         <div className="alert alert-error" aria-live="polite">
           {error}
         </div>
-      )}
-
-      {/* Single Document Results */}
-      {/* Regulatory Document Sections - Show After Generation */}
-      {result && (
-        <div className="document-sections">
-        <div className="sections-header">
-          <h3>Regulatory Document Sections</h3>
-          <div className="section-actions">
-            <button 
-              onClick={exportToWord}
-              className="btn btn-outline"
-              disabled={Object.keys(sectionEdits).length === 0}
-            >
-              📄 Export to Word
-            </button>
-          </div>
-        </div>
-
-        <div className="sections-grid">
-          {regulatoryDocumentSections.map(section => {
-            const sectionContent = sectionEdits[section.id] || '';
-            
-            return (
-              <div key={section.id} className="document-section">
-                <div className="section-header">
-                  <h4>{section.title}</h4>
-                  <button
-                    onClick={() => toggleAIForSection(section.id)}
-                    style={{
-                      background: aiEnabledSections.has(section.id) ? '#10b981' : '#6b7280',
-                      color: 'white',
-                      border: 'none',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '10px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {aiEnabledSections.has(section.id) ? '🤖 AI ON' : '🤖 AI OFF'}
-                  </button>
-                </div>
-                
-                <RichTextEditor
-                  value={sectionContent}
-                  onChange={(content) => handleSectionEdit(section.id, content)}
-                  placeholder={sectionContent ? `Edit ${section.title}...` : `Content for ${section.title} will appear here after you generate the regulatory document above...`}
-                  minHeight="200px"
-                  context={`regulatory document ${section.title.toLowerCase()}`}
-                  aiEnabled={aiEnabledSections.has(section.id)}
-                />
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="result-container" aria-live="polite">
-          <div className="tabs">
-            <button
-              className={`tab-btn ${activeTab === 'cmc' ? 'active' : ''}`}
-              onClick={() => setActiveTab('cmc')}
-            >
-              CMC Section
-            </button>
-            <button
-              className={`tab-btn ${activeTab === 'clinical' ? 'active' : ''}`}
-              onClick={() => setActiveTab('clinical')}
-            >
-              Clinical Section
-            </button>
-          </div>
-
-          <div className="module-content">
-            {activeTab === 'cmc' ? (
-              <>
-                <h3>Chemistry, Manufacturing, and Controls (CMC)</h3>
-                <div className="content-area">
-                  <pre>{result.cmc_section}</pre>
-                </div>
-              </>
-            ) : (
-              <>
-                <h3>Clinical Section</h3>
-                <div className="content-area">
-                  <pre>{result.clinical_section}</pre>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="action-buttons">
-            <button
-              onClick={() => {
-                const content = activeTab === 'cmc' ? result.cmc_section : result.clinical_section;
-                navigator.clipboard.writeText(content);
-                alert('Current section copied!');
-              }}
-              className="btn btn-outline"
-            >
-              Copy Current Section
-            </button>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(
-                  `CMC SECTION:\n\n${result.cmc_section}\n\nCLINICAL SECTION:\n\n${result.clinical_section}`
-                );
-                alert('All sections copied!');
-              }}
-              className="btn btn-outline"
-            >
-              Copy All
-            </button>
-            <button
-              onClick={() => {
-                try {
-                  const content = `CMC SECTION:\n\n${result.cmc_section || 'No CMC content available'}\n\nCLINICAL SECTION:\n\n${result.clinical_section || 'No clinical content available'}`;
-                  
-                  if (content.length > 1000000) {
-                    alert('Document is too large for PDF generation. Please copy the content instead.');
-                    return;
-                  }
-                  
-                  const doc = new jsPDF();
-                  doc.setFont('helvetica');
-                  doc.setFontSize(10);
-                  
-                  const pageHeight = doc.internal.pageSize.height;
-                  const pageWidth = doc.internal.pageSize.width;
-                  const margin = 15;
-                  const maxLineWidth = pageWidth - (margin * 2);
-                  const lineHeight = 6;
-                  const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
-                  
-                  const lines = doc.splitTextToSize(content, maxLineWidth);
-                  let currentLine = 0;
-                  
-                  for (let i = 0; i < lines.length; i++) {
-                    if (currentLine >= maxLinesPerPage) {
-                      doc.addPage();
-                      currentLine = 0;
-                    }
-                    
-                    const yPosition = margin + (currentLine * lineHeight);
-                    doc.text(lines[i], margin, yPosition);
-                    currentLine++;
-                  }
-                  
-                  const fileName = `${studyName || documentType || 'Regulatory'}_${disease || 'Document'}_${new Date().toISOString().slice(0, 10)}.pdf`;
-                  doc.save(fileName);
-                  
-                } catch (pdfError) {
-                  console.error('PDF generation failed:', pdfError);
-                  alert('PDF generation failed. You can copy the content using the "Copy All" button instead.');
-                }
-              }}
-              className="btn btn-primary"
-            >
-              Download as PDF
-            </button>
-          </div>
-        </div>
-      </div>
       )}
     </div>
   );

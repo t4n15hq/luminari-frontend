@@ -2134,6 +2134,20 @@ const ProtocolGenerator = () => {
                                       >
                                         PDF
                                       </button>
+                                      <button
+                                        onClick={() => toggleAIForSection(sectionId)}
+                                        style={{
+                                          background: aiEnabledSections.has(sectionId) ? '#10b981' : '#6b7280',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        {aiEnabledSections.has(sectionId) ? '🤖 AI ON' : '🤖 AI OFF'}
+                                      </button>
                                     </>
                                   ) : (
                                     <>
@@ -2265,6 +2279,20 @@ const ProtocolGenerator = () => {
                                         }}
                                       >
                                         PDF
+                                      </button>
+                                      <button
+                                        onClick={() => toggleAIForSection(sectionId)}
+                                        style={{
+                                          background: aiEnabledSections.has(sectionId) ? '#10b981' : '#6b7280',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        {aiEnabledSections.has(sectionId) ? '🤖 AI ON' : '🤖 AI OFF'}
                                       </button>
                                     </>
                                   ) : (

@@ -8,10 +8,12 @@ import jsPDF from 'jspdf';
 import DocumentViewer from './common/DocumentViewer';
 import AskLuminaPopup from './common/AskLuminaPopup';
 import FloatingButton from './common/FloatingButton';
+import RichTextEditor from './common/RichTextEditor';
 
 const BatchRegulatoryGenerator = () => {
   const navigate = useNavigate();
   const [showAskLumina, setShowAskLumina] = useState(false);
+  const [aiEnabledFields, setAiEnabledFields] = useState(new Set());
   
   // Form data state - ENHANCED WITH ALL FIELDS
   const [formData, setFormData] = useState({
@@ -148,6 +150,19 @@ const BatchRegulatoryGenerator = () => {
   // Handle form input changes
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Toggle AI for specific fields
+  const toggleAIForField = (fieldId) => {
+    setAiEnabledFields(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(fieldId)) {
+        newSet.delete(fieldId);
+      } else {
+        newSet.add(fieldId);
+      }
+      return newSet;
+    });
   };
 
   // Handle document selection
@@ -889,39 +904,61 @@ const BatchRegulatoryGenerator = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
-                    Inclusion Criteria
-                  </label>
-                  <textarea
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <label style={{ fontWeight: '500', color: '#374151' }}>
+                      Inclusion Criteria
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => toggleAIForField('inclusion_criteria')}
+                      style={{
+                        background: aiEnabledFields.has('inclusion_criteria') ? '#10b981' : '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {aiEnabledFields.has('inclusion_criteria') ? '🤖 AI ON' : '🤖 AI OFF'}
+                    </button>
+                  </div>
+                  <RichTextEditor
                     value={formData.inclusion_criteria}
-                    onChange={(e) => handleInputChange('inclusion_criteria', e.target.value)}
+                    onChange={(content) => handleInputChange('inclusion_criteria', content)}
                     placeholder="e.g., Adults aged 18-75 years, Confirmed diagnosis of moderate-to-severe condition..."
-                    rows="4"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '6px',
-                      resize: 'vertical'
-                    }}
+                    style={{ minHeight: '120px' }}
+                    aiEnabled={aiEnabledFields.has('inclusion_criteria')}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
-                    Exclusion Criteria
-                  </label>
-                  <textarea
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <label style={{ fontWeight: '500', color: '#374151' }}>
+                      Exclusion Criteria
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => toggleAIForField('exclusion_criteria')}
+                      style={{
+                        background: aiEnabledFields.has('exclusion_criteria') ? '#10b981' : '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {aiEnabledFields.has('exclusion_criteria') ? '🤖 AI ON' : '🤖 AI OFF'}
+                    </button>
+                  </div>
+                  <RichTextEditor
                     value={formData.exclusion_criteria}
-                    onChange={(e) => handleInputChange('exclusion_criteria', e.target.value)}
+                    onChange={(content) => handleInputChange('exclusion_criteria', content)}
                     placeholder="e.g., Pregnancy, Active infection, Immunocompromised state..."
-                    rows="4"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '6px',
-                      resize: 'vertical'
-                    }}
+                    style={{ minHeight: '120px' }}
+                    aiEnabled={aiEnabledFields.has('exclusion_criteria')}
                   />
                 </div>
               </div>
@@ -1036,40 +1073,62 @@ const BatchRegulatoryGenerator = () => {
               </h2>
               
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
-                  Primary Endpoint(s)
-                </label>
-                <textarea
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <label style={{ fontWeight: '500', color: '#374151' }}>
+                    Primary Endpoint(s)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => toggleAIForField('primary_endpoints')}
+                    style={{
+                      background: aiEnabledFields.has('primary_endpoints') ? '#10b981' : '#6b7280',
+                      color: 'white',
+                      border: 'none',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {aiEnabledFields.has('primary_endpoints') ? '🤖 AI ON' : '🤖 AI OFF'}
+                  </button>
+                </div>
+                <RichTextEditor
                   value={formData.primary_endpoints}
-                  onChange={(e) => handleInputChange('primary_endpoints', e.target.value)}
+                  onChange={(content) => handleInputChange('primary_endpoints', content)}
                   placeholder="e.g., Proportion of patients achieving PASI 75 at Week 16"
-                  rows="3"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    resize: 'vertical'
-                  }}
+                  style={{ minHeight: '100px' }}
+                  aiEnabled={aiEnabledFields.has('primary_endpoints')}
                 />
               </div>
 
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>
-                  Secondary Endpoint(s)
-                </label>
-                <textarea
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <label style={{ fontWeight: '500', color: '#374151' }}>
+                    Secondary Endpoint(s)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => toggleAIForField('secondary_endpoints')}
+                    style={{
+                      background: aiEnabledFields.has('secondary_endpoints') ? '#10b981' : '#6b7280',
+                      color: 'white',
+                      border: 'none',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {aiEnabledFields.has('secondary_endpoints') ? '🤖 AI ON' : '🤖 AI OFF'}
+                  </button>
+                </div>
+                <RichTextEditor
                   value={formData.secondary_endpoints}
-                  onChange={(e) => handleInputChange('secondary_endpoints', e.target.value)}
+                  onChange={(content) => handleInputChange('secondary_endpoints', content)}
                   placeholder="e.g., PASI 90 response, sPGA score, Quality of life measures"
-                  rows="3"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    resize: 'vertical'
-                  }}
+                  style={{ minHeight: '100px' }}
+                  aiEnabled={aiEnabledFields.has('secondary_endpoints')}
                 />
               </div>
 

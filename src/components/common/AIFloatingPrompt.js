@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import openaiService from '../../services/openaiService';
 
-const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText }) => {
+const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText, position }) => {
   const [prompt, setPrompt] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const promptRef = useRef(null);
@@ -10,21 +10,41 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText }) => {
     e.preventDefault();
     if (!prompt.trim()) return;
 
-    // Validate that the request is medical/clinical related
+    // Validate that the request is medical/clinical related or basic editing
     const medicalKeywords = [
       'clinical', 'medical', 'patient', 'disease', 'treatment', 'therapy', 'drug', 'protocol',
-      'regulatory', 'study', 'trial', 'research', 'pharmaceutical', 'diagnosis', 'symptom',
-      'professional', 'grammar', 'clarity', 'improve', 'rewrite', 'edit', 'formal', 'technical'
+      'regulatory', 'study', 'trial', 'research', 'pharmaceutical', 'diagnosis', 'symptom'
+    ];
+    
+    const editingKeywords = [
+      'professional', 'grammar', 'clarity', 'improve', 'rewrite', 'edit', 'formal', 'technical',
+      'concise', 'simplify', 'academic', 'fix', 'tone', 'style', 'clear', 'readable'
+    ];
+    
+    const offTopicKeywords = [
+      'weather', 'recipe', 'cooking', 'sports', 'movie', 'film', 'politics', 'election',
+      'music', 'song', 'travel', 'vacation', 'restaurant', 'food', 'shopping', 'fashion',
+      'car', 'automobile', 'game', 'gaming', 'cryptocurrency', 'bitcoin', 'dating', 'marriage'
     ];
     
     const promptLower = prompt.toLowerCase();
     const selectedTextLower = selectedText?.toLowerCase() || '';
     
+    // Allow if it's medical content, editing commands, or if we can't determine context
     const isMedicalContext = medicalKeywords.some(keyword => 
       promptLower.includes(keyword) || selectedTextLower.includes(keyword)
     );
     
-    if (!isMedicalContext) {
+    const isEditingCommand = editingKeywords.some(keyword => 
+      promptLower.includes(keyword)
+    );
+    
+    const isObviouslyOffTopic = offTopicKeywords.some(keyword => 
+      promptLower.includes(keyword)
+    );
+    
+    // Only block if it's obviously off-topic AND not an editing command
+    if (isObviouslyOffTopic && !isEditingCommand && !isMedicalContext) {
       alert('🏥 This AI assistant only helps with medical research and clinical documentation. Please provide text related to clinical trials, regulatory submissions, or medical research.');
       return;
     }
@@ -80,6 +100,9 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText }) => {
       className="ai-prompt-container"
       style={{
         position: 'fixed',
+        left: `${position?.x || 0}px`,
+        top: `${position?.y || 0}px`,
+        transform: 'translateX(-50%)',
         zIndex: 10000,
         background: '#ffffff',
         border: '2px solid #3b82f6',
@@ -87,9 +110,7 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText }) => {
         boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)',
         padding: '1rem',
         minWidth: '300px',
-        maxWidth: '500px',
-        transform: 'translateX(-50%)',
-        animation: 'slideInPrompt 0.3s ease-out'
+        maxWidth: '500px'
       }}
     >
       {/* Header */}
