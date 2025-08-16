@@ -11,6 +11,40 @@ const AskLuminaPopup = ({ isOpen, onClose, contextData = null }) => {
     e.preventDefault();
     if (!query.trim() || isLoading) return;
 
+    // Client-side theme validation
+    const offTopicKeywords = [
+      'weather', 'recipe', 'cooking', 'sports', 'movie', 'film', 'politics', 'election', 'voting',
+      'music', 'song', 'concert', 'travel', 'vacation', 'restaurant', 'food', 'shopping', 'fashion',
+      'car', 'automobile', 'game', 'gaming', 'cryptocurrency', 'bitcoin', 'stock', 'investment',
+      'relationship', 'dating', 'marriage', 'school', 'homework', 'vacation', 'holiday'
+    ];
+    
+    const queryLower = query.toLowerCase();
+    const isObviouslyOffTopic = offTopicKeywords.some(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+      return regex.test(queryLower);
+    });
+    
+    if (isObviouslyOffTopic) {
+      const userMessage = {
+        id: Date.now(),
+        type: 'user',
+        content: query,
+        timestamp: new Date()
+      };
+      
+      const restrictionMessage = {
+        id: Date.now() + 1,
+        type: 'ai',
+        content: '🏥 I can only help with medical research, clinical trials, and regulatory affairs. Please ask a question related to healthcare, drug development, clinical protocols, or medical documentation.',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, userMessage, restrictionMessage]);
+      setQuery('');
+      return;
+    }
+
     const userMessage = {
       id: Date.now(),
       type: 'user',
@@ -169,10 +203,26 @@ const AskLuminaPopup = ({ isOpen, onClose, contextData = null }) => {
                 fontWeight: '600',
                 color: '#3b82f6'
               }}>?</div>
-              <h4 style={{ margin: '0 0 0.5rem 0', color: '#374151' }}>Ask me anything!</h4>
+              <h4 style={{ margin: '0 0 0.5rem 0', color: '#374151' }}>Ask me about medical research!</h4>
               <p style={{ margin: 0, fontSize: '0.875rem' }}>
-                I can help with clinical protocols, regulatory documentation, trial design, and medical research questions.
+                I specialize in clinical trials, regulatory submissions, drug development, and medical documentation. Ask me about protocols, study design, FDA/EMA processes, or medical conditions.
               </p>
+              <div style={{ 
+                marginTop: '1rem', 
+                padding: '0.75rem', 
+                backgroundColor: '#f0f9ff', 
+                borderRadius: '0.5rem',
+                border: '1px solid #e0f2fe'
+              }}>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: '0.75rem', 
+                  color: '#0369a1',
+                  fontWeight: '500'
+                }}>
+                  ⚠️ I only answer questions about medical research, clinical trials, and regulatory affairs.
+                </p>
+              </div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -263,7 +313,7 @@ const AskLuminaPopup = ({ isOpen, onClose, contextData = null }) => {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask about protocols, regulations, trial design..."
+                placeholder="Ask about clinical trials, regulatory submissions, medical research..."
                 style={{
                   width: '100%',
                   padding: '0.75rem 1rem',

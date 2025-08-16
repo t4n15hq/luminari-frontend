@@ -3,8 +3,8 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-// Use proxy for development to avoid CORS issues
-const API_BASE_URL = process.env.NODE_ENV === 'development' ? '' : (process.env.REACT_APP_DOCUMENTS_API_URL || 'http://localhost:4000');
+// Use your deployed backend server
+const API_BASE_URL = process.env.REACT_APP_DOCUMENTS_API_URL || 'https://luminari-be.onrender.com';
 
 // Create axios instance
 const apiClient = axios.create({

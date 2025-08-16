@@ -8,7 +8,11 @@ import apiService from '../services/api';
 import { saveDocument, fetchDocuments } from '../services/api';
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs';
 import jsPDF from 'jspdf';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 import JSZip from 'jszip';
+import AskLuminaPopup from './common/AskLuminaPopup';
+import FloatingButton from './common/FloatingButton';
+import RichTextEditor from './common/RichTextEditor';
 import './UnifiedRegulatoryGenerator.css';
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -302,6 +306,9 @@ const UnifiedRegulatoryGenerator = () => {
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [hoveredRegion, setHoveredRegion] = useState(null);
   
+  // Dropdown region/country state
+  const [selectedDropdownRegion, setSelectedDropdownRegion] = useState('');
+  
   // Single Document State - Comprehensive Form Fields
   const [disease, setDisease] = useState('');
   const [drugClass, setDrugClass] = useState('');
@@ -353,6 +360,11 @@ const UnifiedRegulatoryGenerator = () => {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('cmc');
   const [selectedCountryData, setSelectedCountryData] = useState(null);
+  const [showAskLumina, setShowAskLumina] = useState(false);
+  
+  // Enhanced Editing State
+  const [sectionEdits, setSectionEdits] = useState({});
+  const [aiEnabledSections, setAiEnabledSections] = useState(new Set());
   
   // Interactive Map State
   const [showMap, setShowMap] = useState(false);
@@ -372,6 +384,9 @@ const UnifiedRegulatoryGenerator = () => {
   const [previousDocs, setPreviousDocs] = useState([]);
   const [loadingPreviousDocs, setLoadingPreviousDocs] = useState(false);
   const [fetchError, setFetchError] = useState('');
+  
+  // Country Reference State
+  const [showCountryReference, setShowCountryReference] = useState(false);
 
   // Dropdown Options
   const trialPhases = ['Phase I', 'Phase II', 'Phase III', 'Phase IV'];
@@ -383,6 +398,80 @@ const UnifiedRegulatoryGenerator = () => {
   const routeOptions = ['Oral', 'Intravenous', 'Subcutaneous', 'Intramuscular', 'Topical', 'Inhalation'];
   const controlOptions = ['Placebo', 'Active Comparator', 'Historical Control', 'No Control'];
   const measurementTools = ['PASI', 'EASI', 'sPGA', 'DLQI', 'HAM-D', 'MADRS', 'ACR20/50/70', 'DAS28', 'CDAI'];
+
+  // Regulatory document sections for navigation
+  const regulatoryDocumentSections = [
+    { id: 'regulatory-section-1', title: '1. Chemistry, Manufacturing, and Controls (CMC)' },
+    { id: 'regulatory-section-2', title: '2. Nonclinical Pharmacology and Toxicology' },
+    { id: 'regulatory-section-3', title: '3. Clinical Pharmacology' },
+    { id: 'regulatory-section-4', title: '4. Clinical Study Reports' },
+    { id: 'regulatory-section-5', title: '5. Statistical Analysis' },
+    { id: 'regulatory-section-6', title: '6. Integrated Summary of Efficacy' },
+    { id: 'regulatory-section-7', title: '7. Integrated Summary of Safety' },
+    { id: 'regulatory-section-8', title: '8. Risk Assessment and Risk Management' },
+    { id: 'regulatory-section-9', title: '9. Labeling' },
+    { id: 'regulatory-section-10', title: '10. Regulatory Compliance' }
+  ];
+
+  // Helper Functions for Enhanced Editing
+  const handleSectionEdit = (sectionId, content) => {
+    setSectionEdits(prev => ({
+      ...prev,
+      [sectionId]: content
+    }));
+  };
+
+  const toggleAIForSection = (sectionId) => {
+    setAiEnabledSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
+  };
+
+  const exportToWord = async () => {
+    try {
+      const allContent = Object.values(sectionEdits).join('\n\n---\n\n');
+      
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            new Paragraph({
+              text: 'Regulatory Document',
+              heading: HeadingLevel.TITLE,
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              text: `Generated on: ${new Date().toLocaleDateString()}`,
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              text: '\n' + allContent,
+            }),
+          ],
+        }],
+      });
+
+      const buffer = await Packer.toBuffer(doc);
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `unified-regulatory-document-${new Date().toISOString().split('T')[0]}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting to Word:', error);
+      alert('Error exporting to Word: ' + error.message);
+    }
+  };
 
   // Load parameters from navigation state (map selection)
   useEffect(() => {
@@ -461,8 +550,48 @@ const UnifiedRegulatoryGenerator = () => {
     return null;
   };
 
+  // Get available countries for selected region
+  const getCountriesForRegion = (regionKey) => {
+    return regions[regionKey]?.countries || [];
+  };
+
+  // Handle region change in dropdown
+  const handleDropdownRegionChange = (regionKey) => {
+    setSelectedDropdownRegion(regionKey);
+    setCountry(''); // Reset country when region changes
+    setDocumentType(''); // Reset document type
+    setSelectedCountryData(null);
+  };
+
+  // Handle country change in dropdown
+  const handleDropdownCountryChange = (countryName) => {
+    setCountry(countryName);
+    
+    // Find the country data and set selectedCountryData
+    if (selectedDropdownRegion) {
+      const regionData = regions[selectedDropdownRegion];
+      const countryData = regionData?.countries.find(c => c.name === countryName);
+      
+      if (countryData) {
+        setSelectedCountryData({
+          country: countryData.name,
+          countryId: countryData.id,
+          region: regionData.name,
+          availableDocuments: countryData.documents
+        });
+        
+        // Auto-select first document type if available
+        if (countryData.documents && countryData.documents.length > 0) {
+          setDocumentType(countryData.documents[0].name);
+        }
+      }
+    }
+  };
+
   // Handle map country selection
   const handleMapCountrySelect = (country, region) => {
+    // Sync both map selection and dropdown selection
+    setSelectedDropdownRegion(region);
     setCountry(country.name);
     setSelectedCountryData({
       country: country.name,
@@ -476,19 +605,70 @@ const UnifiedRegulatoryGenerator = () => {
     }
   };
 
-  // Generate CSV Template
+  // Generate CSV Template with standardized country names
   const generateCsvTemplate = () => {
     const headers = csvTemplate.join(',');
+    
+    // Get all available countries from regions data
+    const availableCountries = Object.values(regions).flatMap(region => 
+      region.countries.map(country => ({
+        name: country.name,
+        region: region.name,
+        documents: country.documents.map(doc => doc.name)
+      }))
+    );
+    
     const sampleData = [
-      // Complete sample row with all fields
-      'PSORA-301,Moderate to Severe Psoriasis,Biologics,IL-17A inhibition,LUM-2024,Phase III,Interventional,Double-blind,Yes,18,75,All,300,"Adults aged 18-75 years with moderate-to-severe plaque psoriasis","Pregnancy or breastfeeding; active infections",Injection,Subcutaneous,150mg at Week 0 and 4 then every 12 weeks,Placebo,"PASI-75 response at Week 16","PASI-90 response; sPGA 0/1; DLQI improvement",PASI,80,0.05,United States,IND',
+      // Complete sample row with all fields using exact country names
+      'PSORA-301,Moderate to Severe Psoriasis,Biologics,IL-17A inhibition,LUM-2024,Phase III,Interventional,Double-blind,Yes,18,75,All,300,"Adults aged 18-75 years with moderate-to-severe plaque psoriasis","Pregnancy or breastfeeding; active infections",Injection,Subcutaneous,150mg at Week 0 and 4 then every 12 weeks,Placebo,"PASI-75 response at Week 16","PASI-90 response; sPGA 0/1; DLQI improvement",PASI,80,0.05,United States,IND (Investigational New Drug)',
       
-      'ECZEMA-201,Atopic Dermatitis,Small molecule,JAK1/JAK3 inhibition,LUM-2025,Phase II,Interventional,Double-blind,Yes,12,65,All,150,"Moderate-to-severe atopic dermatitis; inadequate response to topical treatments","Immunocompromised patients; active malignancy",Tablet,Oral,10mg once daily for 16 weeks,Placebo,"EASI-75 response at Week 12","Itch NRS improvement; sleep quality; QoL measures",EASI,80,0.05,European Union,CTA',
+      'ECZEMA-201,Atopic Dermatitis,Small molecule,JAK1/JAK3 inhibition,LUM-2025,Phase II,Interventional,Double-blind,Yes,12,65,All,150,"Moderate-to-severe atopic dermatitis; inadequate response to topical treatments","Immunocompromised patients; active malignancy",Tablet,Oral,10mg once daily for 16 weeks,Placebo,"EASI-75 response at Week 12","Itch NRS improvement; sleep quality; QoL measures",EASI,80,0.05,European Union,CTA (Clinical Trial Application)',
       
-      'ARTHRO-302,Rheumatoid Arthritis,Biologics,TNF-alpha inhibition,LUM-2026,Phase III,Interventional,Double-blind,Yes,18,80,All,400,"Active RA despite MTX; DAS28 > 5.1","Previous anti-TNF therapy; serious infections",IV Infusion,Intravenous,5mg/kg at Week 0-2-6 then every 8 weeks,Active Comparator,"ACR20 response at Week 24","ACR50/70 response; DAS28 remission; radiographic progression",DAS28,90,0.01,Canada,CTA'
+      'ARTHRO-302,Rheumatoid Arthritis,Biologics,TNF-alpha inhibition,LUM-2026,Phase III,Interventional,Double-blind,Yes,18,80,All,400,"Active RA despite MTX; DAS28 > 5.1","Previous anti-TNF therapy; serious infections",IV Infusion,Intravenous,5mg/kg at Week 0-2-6 then every 8 weeks,Active Comparator,"ACR20 response at Week 24","ACR50/70 response; DAS28 remission; radiographic progression",DAS28,90,0.01,Canada,Clinical Trial Application (Health Canada)',
+      
+      'ONCO-401,Non-Small Cell Lung Cancer,Monoclonal Antibody,PD-1 inhibition,LUM-2027,Phase I,Interventional,Open-label,No,18,80,All,60,"Advanced NSCLC; ECOG 0-1; adequate organ function","Active brain metastases; autoimmune disease",IV Infusion,Intravenous,10mg/kg every 2 weeks for 24 weeks,No Control,"Safety and tolerability; MTD determination","ORR; PFS; biomarker analysis",RECIST,80,0.05,Japan,Clinical Trial Notification (CTN)'
     ];
     
-    const csvContent = [headers, ...sampleData].join('\n');
+    // Add reference section with available countries and documents
+    const referenceSection = [
+      '',
+      '# REFERENCE: Available Countries and Document Types',
+      '# Copy the exact country name and document type from below:',
+      '',
+      '# NORTH AMERICA:',
+      '# United States: IND (Investigational New Drug), NDA (New Drug Application), BLA (Biologics License Application)',
+      '# Canada: Clinical Trial Application (Health Canada), New Drug Submission (NDS), Notice of Compliance (NOC)',
+      '# Mexico: COFEPRIS Clinical Trial Authorization, COFEPRIS New Drug Registration',
+      '',
+      '# EUROPE:',
+      '# European Union: CTA (Clinical Trial Application), MAA (Marketing Authorization Application), IMPD (Investigational Medicinal Product Dossier)',
+      '# United Kingdom: Clinical Trial Authorisation (UK), Marketing Authorisation (UK), Voluntary Scheme for Branded Medicines Pricing',
+      '# Switzerland: Clinical Trial Authorisation (Swissmedic), Marketing Authorisation (Switzerland)',
+      '# Russia: Clinical Trial Permit (Roszdravnadzor), Registration Dossier (Russia), Russian GMP Certificate',
+      '',
+      '# ASIA PACIFIC:',
+      '# Japan: Clinical Trial Notification (CTN), J-NDA (New Drug Application), PMDA Scientific Advice',
+      '# China: IND (China), NDA (China), Drug Registration Certificate',
+      '# South Korea: IND (Korea), NDA (Korea), Korean GMP Certificate',
+      '# Australia: CTN (Clinical Trial Notification), AUS (Australian Submission), TGA GMP Certificate',
+      '# Singapore: Clinical Trial Certificate (HSA), Product License (Singapore)',
+      '# India: Clinical Trial Permission (CDSCO), New Drug Application (India), Import License',
+      '# Taiwan: IND (Taiwan), NDA (Taiwan)',
+      '',
+      '# LATIN AMERICA:',
+      '# Brazil: ANVISA Clinical Trial Authorization, ANVISA Registration Dossier, ANVISA GMP Certificate',
+      '# Argentina: ANMAT Clinical Trial Authorization, ANMAT Drug Registration',
+      '# Colombia: INVIMA Clinical Trial Permit, INVIMA Drug Registration',
+      '# Chile: ISP Clinical Trial Authorization, ISP Drug Registration',
+      '',
+      '# AFRICA & MIDDLE EAST:',
+      '# South Africa: SAHPRA Clinical Trial Authorization, SAHPRA Medicine Registration',
+      '# Israel: Israeli MOH Clinical Trial Permit, Israeli Drug Registration',
+      '# Saudi Arabia: SFDA Clinical Trial Authorization, SFDA Drug Registration',
+      '# United Arab Emirates: DHA Clinical Trial Permit, UAE Drug Registration'
+    ];
+    
+    const csvContent = [headers, ...sampleData, ...referenceSection].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -512,7 +692,10 @@ const UnifiedRegulatoryGenerator = () => {
     reader.onload = (e) => {
       try {
         const text = e.target.result;
-        const lines = text.split('\n').filter(line => line.trim());
+        const lines = text.split('\n')
+          .filter(line => line.trim()) // Remove empty lines
+          .filter(line => !line.trim().startsWith('#')); // Remove comment lines starting with #
+        
         const headers = lines[0].split(',').map(h => h.trim());
         
         const data = lines.slice(1).map((line, index) => {
@@ -628,28 +811,54 @@ const UnifiedRegulatoryGenerator = () => {
           [row.id]: { status: 'processing', progress: 25 }
         }));
 
-        // Debug: Log the row data
-        console.log('CSV Row data:', row);
-        
-        // Map country to region for backend
+        // Map country to region for backend using our regions data
         const getRegionFromCountry = (country) => {
-          const regionMap = {
-            'United States': 'North America',
-            'Canada': 'North America', 
-            'Mexico': 'North America',
-            'European Union': 'Europe',
-            'United Kingdom': 'Europe',
-            'Germany': 'Europe',
-            'France': 'Europe',
-            'Japan': 'Asia Pacific',
-            'China': 'Asia Pacific',
-            'Australia': 'Asia Pacific',
-            'Brazil': 'Latin America',
-            'Argentina': 'Latin America',
-            'South Africa': 'Africa & Middle East'
+          // First try exact match
+          for (const [regionKey, regionData] of Object.entries(regions)) {
+            const foundCountry = regionData.countries.find(c => 
+              c.name.toLowerCase() === country.toLowerCase()
+            );
+            if (foundCountry) {
+              return regionData.name;
+            }
+          }
+          
+          // Fallback mapping for common variations
+          const fallbackMap = {
+            'usa': 'North America',
+            'us': 'North America',
+            'uk': 'Europe',
+            'eu': 'Europe',
+            'korea': 'Asia Pacific',
+            'south korea': 'Asia Pacific'
           };
-          return regionMap[country] || 'Unknown';
+          
+          return fallbackMap[country.toLowerCase()] || 'Unknown';
         };
+        
+        // Validate country and document type
+        const validateCountryAndDocument = (country, documentType) => {
+          for (const [regionKey, regionData] of Object.entries(regions)) {
+            const foundCountry = regionData.countries.find(c => 
+              c.name.toLowerCase() === country.toLowerCase()
+            );
+            if (foundCountry) {
+              const foundDocument = foundCountry.documents.find(doc => 
+                doc.name.toLowerCase().includes(documentType.toLowerCase()) ||
+                documentType.toLowerCase().includes(doc.name.toLowerCase())
+              );
+              if (foundDocument) {
+                return { isValid: true, country: foundCountry.name, document: foundDocument.name };
+              }
+            }
+          }
+          return { isValid: false, country, document: documentType };
+        };
+        
+        const validation = validateCountryAndDocument(row.country, row.document_type);
+        if (!validation.isValid) {
+          console.warn(`Warning: Country "${row.country}" or document type "${row.document_type}" not found in our database for study ${row.study_name}`);
+        }
         
         const formData = {
           disease_name: row.disease_condition || row.disease_name,
@@ -832,6 +1041,26 @@ const UnifiedRegulatoryGenerator = () => {
               document_content: content
             });
 
+            // Populate section edits for the main page display
+            const newSectionEdits = { ...sectionEdits };
+            newSectionEdits['regulatory-section-1'] = cmcSection;
+            newSectionEdits['regulatory-section-4'] = clinicalSection;
+            
+            // Distribute content to other sections if available
+            const sections = content.split(/(?=\d+\.\s|\n#{1,3}\s)/);
+            if (sections.length > 2) {
+              sections.forEach((section, index) => {
+                if (section.trim() && index < regulatoryDocumentSections.length) {
+                  const sectionId = regulatoryDocumentSections[index].id;
+                  if (!newSectionEdits[sectionId]) {
+                    newSectionEdits[sectionId] = section.trim();
+                  }
+                }
+              });
+            }
+            
+            setSectionEdits(newSectionEdits);
+
             // Save to backend - DISABLED FOR NOW
             console.log("Single mode: Document generation successful, skipping save for now");
             /*try {
@@ -856,8 +1085,19 @@ const UnifiedRegulatoryGenerator = () => {
               }
             }
 
-          } else if (response.cmc_section && response.clinical_section) {
+          } else if (response.cmc_section || response.clinical_section || response) {
+            // Set result regardless of structure
             setResult(response);
+            
+            // Populate section edits for the main page display
+            const newSectionEdits = { ...sectionEdits };
+            if (response.cmc_section) {
+              newSectionEdits['regulatory-section-1'] = response.cmc_section;
+            }
+            if (response.clinical_section) {
+              newSectionEdits['regulatory-section-4'] = response.clinical_section;
+            }
+            setSectionEdits(newSectionEdits);
             
             try {
               console.log("Single mode: Document generation successful, skipping save for now");
@@ -1116,6 +1356,10 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
     setResult(null);
     setError('');
     
+    // Reset dropdown state
+    setSelectedDropdownRegion('');
+    setSelectedCountryData(null);
+    
     // Reset batch state
     setCsvData([]);
     setCsvPreview([]);
@@ -1130,6 +1374,20 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
 
   return (
     <div className="unified-regulatory-generator">
+      {/* AI Assistant Popup */}
+      <AskLuminaPopup 
+        isOpen={showAskLumina}
+        onClose={() => setShowAskLumina(false)}
+        context="unified regulatory document generation"
+      />
+      
+      {/* Floating AI Assistant Button */}
+      <FloatingButton
+        onClick={() => setShowAskLumina(true)}
+        icon="🤖"
+        tooltip="Ask Lumina AI for help"
+      />
+
       {/* Header */}
       <div className="generator-header">
         <div>
@@ -1392,6 +1650,93 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
       {/* Single Document Mode */}
       {mode === 'single' && (
         <div className="single-mode">
+          {/* Regulatory Submission Section - Moved to Top */}
+          <div className="form-section">
+            <h3>🌍 Regulatory Submission</h3>
+            {selectedCountryData && (
+              <div className="selected-country-info">
+                <h4>📍 Selected: {selectedCountryData.country} ({selectedCountryData.region})</h4>
+                <p>Available documents: {selectedCountryData.availableDocuments.map(doc => doc.name).join(', ')}</p>
+              </div>
+            )}
+            
+            <div className="form-grid">
+              <div className="form-group">
+                <label className="form-label">Study Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={studyName}
+                  onChange={(e) => setStudyName(e.target.value)}
+                  placeholder="e.g., PSORA-301"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Compound Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={compoundName}
+                  onChange={(e) => setCompoundName(e.target.value)}
+                  placeholder="e.g., LUM-2024"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Region/Continent</label>
+                <select
+                  className="form-select"
+                  value={selectedDropdownRegion}
+                  onChange={(e) => handleDropdownRegionChange(e.target.value)}
+                >
+                  <option value="">Select Region</option>
+                  {Object.entries(regions).map(([key, region]) => (
+                    <option key={key} value={key}>
+                      {region.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedDropdownRegion && (
+                <div className="form-group">
+                  <label className="form-label">Country</label>
+                  <select
+                    className="form-select"
+                    value={country}
+                    onChange={(e) => handleDropdownCountryChange(e.target.value)}
+                  >
+                    <option value="">Select Country</option>
+                    {getCountriesForRegion(selectedDropdownRegion).map(country => (
+                      <option key={country.id} value={country.name}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {selectedCountryData && (
+                <div className="form-group">
+                  <label className="form-label">Document Type</label>
+                  <select
+                    className="form-select"
+                    value={documentType}
+                    onChange={(e) => setDocumentType(e.target.value)}
+                  >
+                    <option value="">Select Document Type</option>
+                    {selectedCountryData.availableDocuments.map(doc => (
+                      <option key={doc.id} value={doc.name}>
+                        {doc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Basic Information */}
           <div className="form-section">
             <h3>📋 Basic Information</h3>
@@ -1703,70 +2048,6 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
             </div>
           </div>
 
-          {/* Regulatory Submission Section */}
-          <div className="form-section">
-            <h3>🌍 Regulatory Submission</h3>
-            {selectedCountryData && (
-              <div className="selected-country-info">
-                <h4>📍 Selected: {selectedCountryData.country} ({selectedCountryData.region})</h4>
-                <p>Available documents: {selectedCountryData.availableDocuments.map(doc => doc.name).join(', ')}</p>
-              </div>
-            )}
-            
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Study Name</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={studyName}
-                  onChange={(e) => setStudyName(e.target.value)}
-                  placeholder="e.g., PSORA-301"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Compound Name</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={compoundName}
-                  onChange={(e) => setCompoundName(e.target.value)}
-                  placeholder="e.g., LUM-2024"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Country</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  placeholder="Select from map or enter manually"
-                />
-              </div>
-
-              {selectedCountryData && (
-                <div className="form-group">
-                  <label className="form-label">Document Type</label>
-                  <select
-                    className="form-select"
-                    value={documentType}
-                    onChange={(e) => setDocumentType(e.target.value)}
-                  >
-                    <option value="">Select Document Type</option>
-                    {selectedCountryData.availableDocuments.map(doc => (
-                      <option key={doc.id} value={doc.name}>
-                        {doc.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Generate Button */}
           <div className="action-buttons">
             <button
@@ -1792,6 +2073,21 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
             {/* CSV Upload */}
             <div className="csv-upload-section">
               <h4>📄 Upload Pipeline Data</h4>
+              <div className="csv-guidance" style={{ 
+                background: '#f8f9fa', 
+                padding: '15px', 
+                borderRadius: '8px', 
+                marginBottom: '15px',
+                border: '1px solid #dee2e6'
+              }}>
+                <strong>📋 Country & Document Guidelines:</strong>
+                <ul style={{ marginTop: '8px', marginBottom: '0' }}>
+                  <li>Use exact country names from the template (e.g., "United States", "European Union", "Japan")</li>
+                  <li>Use exact document type names (e.g., "IND (Investigational New Drug)", "CTA (Clinical Trial Application)")</li>
+                  <li>Download the template below to see all available options</li>
+                  <li>The template includes a reference section with all valid country/document combinations</li>
+                </ul>
+              </div>
               <div className="upload-area">
                 <input
                   ref={fileInputRef}
@@ -1821,9 +2117,61 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                   >
                     📥 Download CSV Template
                   </button>
+                  <button 
+                    onClick={() => setShowCountryReference(!showCountryReference)}
+                    className="btn btn-outline"
+                    type="button"
+                  >
+                    🌍 {showCountryReference ? 'Hide' : 'Show'} Available Countries
+                  </button>
                 </div>
               </div>
             </div>
+
+            {/* Country Reference */}
+            {showCountryReference && (
+              <div className="country-reference-section" style={{
+                background: '#f8f9fa',
+                padding: '20px',
+                borderRadius: '8px',
+                marginTop: '20px',
+                border: '1px solid #dee2e6'
+              }}>
+                <h4>🌍 Available Countries and Document Types</h4>
+                <p>Copy these exact names for your CSV:</p>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginTop: '15px' }}>
+                  {Object.entries(regions).map(([regionKey, regionData]) => (
+                    <div key={regionKey} style={{
+                      background: 'white',
+                      padding: '15px',
+                      borderRadius: '8px',
+                      border: '1px solid #e9ecef'
+                    }}>
+                      <h5 style={{ 
+                        margin: '0 0 10px 0', 
+                        color: regionData.color,
+                        fontWeight: 'bold'
+                      }}>
+                        {regionData.name}
+                      </h5>
+                      {regionData.countries.map(country => (
+                        <div key={country.id} style={{ marginBottom: '10px' }}>
+                          <strong style={{ fontSize: '14px' }}>{country.name}</strong>
+                          <ul style={{ margin: '5px 0 0 0', paddingLeft: '20px' }}>
+                            {country.documents.map(doc => (
+                              <li key={doc.id} style={{ fontSize: '12px', color: '#6c757d' }}>
+                                {doc.name}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* CSV Preview */}
             {showCsvPreview && csvPreview.length > 0 && (
@@ -1942,7 +2290,59 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
       )}
 
       {/* Single Document Results */}
-      {mode === 'single' && result && (
+      {/* Regulatory Document Sections - Show After Generation */}
+      {result && (
+        <div className="document-sections">
+        <div className="sections-header">
+          <h3>Regulatory Document Sections</h3>
+          <div className="section-actions">
+            <button 
+              onClick={exportToWord}
+              className="btn btn-outline"
+              disabled={Object.keys(sectionEdits).length === 0}
+            >
+              📄 Export to Word
+            </button>
+          </div>
+        </div>
+
+        <div className="sections-grid">
+          {regulatoryDocumentSections.map(section => {
+            const sectionContent = sectionEdits[section.id] || '';
+            
+            return (
+              <div key={section.id} className="document-section">
+                <div className="section-header">
+                  <h4>{section.title}</h4>
+                  <button
+                    onClick={() => toggleAIForSection(section.id)}
+                    style={{
+                      background: aiEnabledSections.has(section.id) ? '#10b981' : '#6b7280',
+                      color: 'white',
+                      border: 'none',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {aiEnabledSections.has(section.id) ? '🤖 AI ON' : '🤖 AI OFF'}
+                  </button>
+                </div>
+                
+                <RichTextEditor
+                  value={sectionContent}
+                  onChange={(content) => handleSectionEdit(section.id, content)}
+                  placeholder={sectionContent ? `Edit ${section.title}...` : `Content for ${section.title} will appear here after you generate the regulatory document above...`}
+                  minHeight="200px"
+                  context={`regulatory document ${section.title.toLowerCase()}`}
+                  aiEnabled={aiEnabledSections.has(section.id)}
+                />
+              </div>
+            );
+          })}
+        </div>
+
         <div className="result-container" aria-live="polite">
           <div className="tabs">
             <button
@@ -2048,6 +2448,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
             </button>
           </div>
         </div>
+      </div>
       )}
     </div>
   );

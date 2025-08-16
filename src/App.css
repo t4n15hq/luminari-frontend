@@ -110,7 +110,7 @@
 }
 
 .logout-button:hover {
-  background: var(--color-bg-secondary);
+  background: var(--color-background-subtle);
   border-color: var(--color-text-muted);
 }
 

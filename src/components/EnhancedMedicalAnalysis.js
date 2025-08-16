@@ -174,6 +174,11 @@ Patient is a 45-year-old male with a 3-month history of progressive dyspnea and 
                 <span className="timestamp">Generated: {new Date(textResults.timestamp).toLocaleString()}</span>
                 <span className="type-badge">Type: {textResults.processingType}</span>
               </div>
+              <div className="confidence-explanation">
+                <small style={{ color: '#6b7280', fontStyle: 'italic', fontSize: '0.8rem' }}>
+                  💡 Confidence Score: Indicates how certain the AI is about the accuracy of the extracted information (higher = more reliable)
+                </small>
+              </div>
               <div className="result-content">
                 <pre>{textResults.extractedData}</pre>
               </div>
@@ -257,6 +262,11 @@ Example:
                 <span className="timestamp">Generated: {new Date(patternResults.timestamp).toLocaleString()}</span>
                 <span className="type-badge">Analysis: {patternResults.analysisType}</span>
               </div>
+              <div className="confidence-explanation">
+                <small style={{ color: '#6b7280', fontStyle: 'italic', fontSize: '0.8rem' }}>
+                  💡 Confidence Score: Shows how reliable the AI considers its pattern analysis findings (higher = stronger patterns detected)
+                </small>
+              </div>
               <div className="result-content">
                 <pre>{patternResults.patterns}</pre>
               </div>
@@ -335,6 +345,11 @@ Example:
                 <span className="timestamp">Generated: {new Date(reasoningResults.timestamp).toLocaleString()}</span>
                 <span className="type-badge">Type: {reasoningResults.decisionType}</span>
               </div>
+              <div className="confidence-explanation">
+                <small style={{ color: '#6b7280', fontStyle: 'italic', fontSize: '0.8rem' }}>
+                  💡 Confidence Score: Reflects how certain the AI is about its decision and reasoning (higher = more confident in recommendation)
+                </small>
+              </div>
               
               <div className="reasoning-breakdown">
                 <div className="decision-summary">
@@ -376,12 +391,29 @@ Example:
         </div>
       )}
 
-      {/* Loading Overlay */}
+      {/* Professional Loading Overlay */}
       {loading && (
         <div className="loading-overlay">
-          <div className="loading-spinner">
-            <div className="spinner"></div>
-            <p>Processing medical analysis...</p>
+          <div className="professional-loading-container">
+            <div className="medical-spinner">
+              <div className="pulse-ring"></div>
+              <div className="pulse-ring delay-1"></div>
+              <div className="pulse-ring delay-2"></div>
+              <div className="center-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+              </div>
+            </div>
+            <div className="loading-content">
+              <h3>Analyzing Medical Data</h3>
+              <p>Analyzing data...</p>
+              <div className="progress-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
           </div>
         </div>
       )}

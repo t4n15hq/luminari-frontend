@@ -10,6 +10,25 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText }) => {
     e.preventDefault();
     if (!prompt.trim()) return;
 
+    // Validate that the request is medical/clinical related
+    const medicalKeywords = [
+      'clinical', 'medical', 'patient', 'disease', 'treatment', 'therapy', 'drug', 'protocol',
+      'regulatory', 'study', 'trial', 'research', 'pharmaceutical', 'diagnosis', 'symptom',
+      'professional', 'grammar', 'clarity', 'improve', 'rewrite', 'edit', 'formal', 'technical'
+    ];
+    
+    const promptLower = prompt.toLowerCase();
+    const selectedTextLower = selectedText?.toLowerCase() || '';
+    
+    const isMedicalContext = medicalKeywords.some(keyword => 
+      promptLower.includes(keyword) || selectedTextLower.includes(keyword)
+    );
+    
+    if (!isMedicalContext) {
+      alert('🏥 This AI assistant only helps with medical research and clinical documentation. Please provide text related to clinical trials, regulatory submissions, or medical research.');
+      return;
+    }
+
     console.log('Submitting AI request:', { prompt, selectedText });
     setIsProcessing(true);
     
@@ -82,9 +101,14 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText }) => {
         borderBottom: '1px solid #e5e7eb',
         paddingBottom: '0.5rem'
       }}>
-        <h4 style={{ margin: 0, color: '#1e40af', fontSize: '1rem' }}>
-          🤖 AI Text Assistant
-        </h4>
+        <div>
+          <h4 style={{ margin: 0, color: '#1e40af', fontSize: '1rem' }}>
+            🤖 AI Text Assistant
+          </h4>
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: '#6b7280' }}>
+            For medical & clinical content only
+          </p>
+        </div>
         <button
           onClick={onClose}
           className="close-btn"

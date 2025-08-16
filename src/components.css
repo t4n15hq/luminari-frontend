@@ -1623,3 +1623,94 @@
     margin-bottom: var(--space-lg);
   }
 }
+
+/* Regulatory Document Sections Styles */
+.document-sections {
+  margin-top: var(--space-2xl);
+  background: var(--color-background-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+}
+
+.sections-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-md);
+  border-bottom: 2px solid var(--color-border-light);
+}
+
+.sections-header h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+}
+
+.section-actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.sections-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-xl);
+}
+
+.document-section {
+  background: var(--color-background-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  transition: all var(--transition-normal);
+}
+
+.document-section:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.section-header h4 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+/* Responsive design for document sections */
+@media (min-width: 1200px) {
+  .sections-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .document-sections {
+    padding: var(--space-lg);
+    margin-top: var(--space-lg);
+  }
+  
+  .sections-header {
+    flex-direction: column;
+    gap: var(--space-md);
+    align-items: stretch;
+  }
+  
+  .section-actions {
+    justify-content: center;
+  }
+  
+  .document-section {
+    padding: var(--space-md);
+  }
+}

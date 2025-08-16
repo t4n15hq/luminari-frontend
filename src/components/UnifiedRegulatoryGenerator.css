@@ -5,7 +5,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  font-family: var(--font-family-primary);
+  font-family: var(--font-body);
 }
 
 /* Header */
@@ -40,7 +40,7 @@
 .interactive-map-container {
   background: var(--color-background-card);
   border: 1px solid var(--color-border-light);
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--radius-lg);
   padding: 2rem;
   margin-bottom: 2rem;
 }
@@ -49,7 +49,7 @@
   text-align: center;
   padding: 2rem;
   border: 2px dashed var(--color-border-medium);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-md);
   background: var(--color-background-subtle);
 }
 
@@ -57,7 +57,7 @@
 .previous-docs-section {
   background: var(--color-background-card);
   border: 1px solid var(--color-border-light);
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -79,7 +79,7 @@
   align-items: center;
   padding: 0.75rem;
   background: var(--color-background-subtle);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-sm);
   border-left: 4px solid var(--color-primary);
 }
 
@@ -113,7 +113,7 @@
 .mode-card {
   background: var(--color-background-card);
   border: 2px solid var(--color-border-light);
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--radius-lg);
   padding: 2rem;
   text-align: center;
   cursor: pointer;
@@ -171,7 +171,7 @@
 .form-section {
   background: var(--color-background-card);
   border: 1px solid var(--color-border-light);
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--radius-lg);
   padding: 2rem;
   margin-bottom: 2rem;
 }
@@ -209,7 +209,7 @@
 .form-textarea {
   padding: 0.75rem;
   border: 1px solid var(--color-border-medium);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-sm);
   font-size: 1rem;
   transition: border-color var(--transition-fast);
   background: var(--color-background-input);
@@ -231,7 +231,7 @@
 .selected-country-info {
   background: var(--color-success-light);
   border: 1px solid var(--color-success);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-md);
   padding: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -290,7 +290,7 @@
 
 .upload-dropzone {
   border: 2px dashed var(--color-border-medium);
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--radius-lg);
   padding: 3rem;
   text-align: center;
   cursor: pointer;
@@ -339,7 +339,7 @@
 .preview-table-container {
   background: var(--color-background-card);
   border: 1px solid var(--color-border-light);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -367,7 +367,7 @@
 
 .status-badge {
   padding: 0.25rem 0.5rem;
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-weight: 500;
   text-transform: capitalize;
@@ -421,7 +421,7 @@
 .progress-item {
   background: var(--color-background-card);
   border: 1px solid var(--color-border-light);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-md);
   padding: 1rem;
 }
 
@@ -442,7 +442,7 @@
   font-weight: 500;
   text-transform: capitalize;
   padding: 0.25rem 0.5rem;
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-sm);
 }
 
 .progress-status.pending {
@@ -515,7 +515,7 @@
 .btn {
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-md);
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
@@ -595,7 +595,7 @@
 .result-container {
   background: var(--color-background-card);
   border: 1px solid var(--color-border-light);
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--radius-lg);
   padding: 2rem;
   margin-top: 2rem;
 }
@@ -635,7 +635,7 @@
 .content-area {
   background: var(--color-background-subtle);
   border: 1px solid var(--color-border-light);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-md);
   padding: 1.5rem;
   max-height: 500px;
   overflow-y: auto;
@@ -644,7 +644,7 @@
 .content-area pre {
   margin: 0;
   white-space: pre-wrap;
-  font-family: var(--font-family-mono);
+  font-family: var(--font-mono);
   font-size: 0.9rem;
   line-height: 1.5;
   color: var(--color-text-primary);
@@ -653,7 +653,7 @@
 /* Alerts */
 .alert {
   padding: 1rem;
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-md);
   margin: 1rem 0;
   font-weight: 500;
 }

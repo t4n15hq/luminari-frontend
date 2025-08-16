@@ -3777,17 +3777,48 @@ Return only the improved text, without any explanations or additional text.`
         throw new Error('OpenAI API key is not configured');
       }
 
-      // Simplified relevance check - only filter out completely off-topic questions
-      const simpleOffTopicKeywords = ['weather', 'recipe', 'sports', 'movie', 'politics'];
+      // Enhanced theme restriction - only allow medical/clinical/regulatory questions
+      const allowedThemes = [
+        // Core medical research themes
+        'clinical', 'trial', 'protocol', 'regulatory', 'medical', 'drug', 'medicine', 'treatment', 'therapy', 
+        'patient', 'disease', 'condition', 'diagnosis', 'symptom', 'adverse', 'safety', 'efficacy',
+        'pharmaceutical', 'biotech', 'fda', 'ema', 'approval', 'submission', 'dossier', 'documentation',
+        
+        // Regulatory terms
+        'ind', 'nda', 'bla', 'cta', 'maa', 'impd', 'gcp', 'ich', 'gmp', 'pmda', 'tga', 'hsa', 'anvisa',
+        'cofepris', 'anmat', 'invima', 'sahpra', 'roszdravnadzor', 'cdsco',
+        
+        // Study design terms  
+        'randomized', 'blinded', 'placebo', 'endpoint', 'biomarker', 'inclusion', 'exclusion', 
+        'population', 'enrollment', 'recruitment', 'statistical', 'power', 'sample size',
+        
+        // Document types
+        'cmc', 'nonclinical', 'toxicology', 'pharmacology', 'manufacturing', 'quality', 'labeling',
+        
+        // Medical specialties
+        'dermatology', 'oncology', 'cardiology', 'neurology', 'psychiatry', 'rheumatology', 'immunology',
+        'endocrinology', 'gastroenterology', 'pulmonology', 'nephrology', 'hematology', 'infectious'
+      ];
+      
       const questionLower = queryData.question.toLowerCase();
-      const isCompletelyOffTopic = simpleOffTopicKeywords.some(keyword => {
+      const isThemeRelevant = allowedThemes.some(theme => questionLower.includes(theme));
+      
+      // Also check for obvious off-topic keywords
+      const offTopicKeywords = [
+        'weather', 'recipe', 'cooking', 'sports', 'movie', 'film', 'politics', 'election', 'voting',
+        'music', 'song', 'concert', 'travel', 'vacation', 'restaurant', 'food', 'shopping', 'fashion',
+        'car', 'automobile', 'game', 'gaming', 'cryptocurrency', 'bitcoin', 'stock', 'investment',
+        'relationship', 'dating', 'marriage', 'school', 'homework', 'vacation', 'holiday'
+      ];
+      
+      const isOffTopic = offTopicKeywords.some(keyword => {
         const regex = new RegExp(`\\b${keyword}\\b`, 'i');
         return regex.test(questionLower);
       });
       
-      if (isCompletelyOffTopic) {
+      if (isOffTopic || !isThemeRelevant) {
         return {
-          answer: `CLINICAL ASSISTANT - OFF-TOPIC QUERY\n\nI'm LumiPath™, your specialized clinical protocol assistant. Your question appears to be outside my area of clinical and regulatory expertise.\n\nPlease ask a question related to clinical trials, protocols, or regulatory affairs, and I'll provide detailed, professional guidance.`
+          answer: `🏥 LUMINARI - CLINICAL RESEARCH ASSISTANT\n\nI'm your specialized assistant for medical research, clinical trials, and regulatory affairs. I can only help with questions related to:\n\n• Clinical trial protocols and study design\n• Regulatory submissions (IND, NDA, CTA, MAA, etc.)\n• Medical research and documentation\n• Drug development and approval processes\n• Healthcare and medical conditions\n• Pharmaceutical and biotechnology topics\n\nPlease ask a question within my expertise areas, and I'll provide detailed, professional guidance.`
         };
       }
   
@@ -3796,7 +3827,26 @@ Return only the improved text, without any explanations or additional text.`
         messages: [
           {
             role: "system",
-            content: `You are LumiPath™, an AI medical and clinical research assistant. You provide helpful, accurate information about medical topics, clinical protocols, regulatory affairs, and healthcare research. While you specialize in clinical trials and regulatory submissions, you can also answer general medical and health-related questions. Always provide evidence-based information and remind users to consult healthcare professionals for personal medical advice. Use ONLY plain text with clear paragraphing, indentation, and simple dashes or numbers for lists. NO MARKDOWN.`
+            content: `You are Luminari™, a specialized AI assistant for medical research, clinical trials, and regulatory affairs. You ONLY provide information about:
+
+ALLOWED TOPICS:
+• Clinical trial protocols and study design
+• Regulatory submissions (IND, NDA, BLA, CTA, MAA, etc.)
+• Drug development and pharmaceutical research
+• Medical conditions and diseases (for clinical context)
+• Healthcare research and documentation
+• Biotechnology and medical devices
+• Regulatory compliance and approval processes
+• Clinical data analysis and statistics
+• Medical writing and documentation
+
+STRICT RESTRICTIONS:
+• Do NOT answer questions about non-medical topics
+• Do NOT provide personal medical advice
+• Do NOT discuss topics unrelated to clinical research
+• If asked about non-medical topics, redirect to your specialized areas
+
+Always provide evidence-based information and remind users to consult healthcare professionals for personal medical advice. Use ONLY plain text with clear paragraphing, indentation, and simple dashes or numbers for lists. NO MARKDOWN.`
           },
           {
             role: "user",
@@ -4116,9 +4166,21 @@ generateTextImprovement: async (userPrompt) => {
       messages: [
         {
           role: "system",
-          content: `You are an expert medical writer and editor specializing in clinical documentation. Your task is to improve the selected text based on the user's request.
-          
-Provide the BEST single improvement that addresses the user's request. Focus on:
+          content: `You are Luminari™, an expert medical writer and editor specializing in clinical documentation and regulatory submissions. You ONLY improve text related to medical research, clinical trials, and regulatory affairs.
+
+ALLOWED IMPROVEMENTS:
+• Clinical protocols and study documentation
+• Regulatory submission documents
+• Medical research and pharmaceutical content
+• Healthcare and biotechnology documentation
+• Scientific and medical writing
+
+RESTRICTIONS:
+• REJECT requests for non-medical content improvement
+• ONLY work with clinical research and medical text
+• If given non-medical text, respond: "I can only improve medical and clinical research content."
+
+For allowed content, provide the BEST single improvement focusing on:
 - Grammar and clarity
 - Professional medical terminology
 - Logical flow and structure

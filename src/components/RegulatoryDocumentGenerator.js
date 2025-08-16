@@ -7,7 +7,11 @@ import apiService from '../services/api';
 import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 import jsPDF from 'jspdf';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 import DocumentViewer from './common/DocumentViewer';
+import AskLuminaPopup from './common/AskLuminaPopup';
+import FloatingButton from './common/FloatingButton';
+import RichTextEditor from './common/RichTextEditor';
 
 const RegulatoryDocumentGenerator = () => {
   // Basic Information
@@ -53,6 +57,33 @@ const RegulatoryDocumentGenerator = () => {
   const [activeTab, setActiveTab] = useState('cmc');
   const [selectedCountryData, setSelectedCountryData] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [showAskLumina, setShowAskLumina] = useState(false);
+  const [showPreviousDocuments, setShowPreviousDocuments] = useState(false);
+  const [previousDocuments, setPreviousDocuments] = useState([]);
+  const [loadingPrevious, setLoadingPrevious] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerDoc, setViewerDoc] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [documentsPerPage] = useState(5);
+  const [fetchError, setFetchError] = useState('');
+  
+  // Individual section editing state
+  const [sectionEdits, setSectionEdits] = useState({});
+  const [editingSectionId, setEditingSectionId] = useState(null);
+  const [aiEnabledSections, setAiEnabledSections] = useState(new Set());
+  
+  // Reference Document Panel State
+  const [showReferencePanel, setShowReferencePanel] = useState(false);
+  const [selectedReferenceDocument, setSelectedReferenceDocument] = useState(null);
+  const [referenceDocumentTOC, setReferenceDocumentTOC] = useState([]);
+  const [selectedReferenceSection, setSelectedReferenceSection] = useState(null);
+  const [selectedReferenceSectionContent, setSelectedReferenceSectionContent] = useState('');
+  
+  // Section Selection and Editing State
+  const [selectedDocumentSections, setSelectedDocumentSections] = useState(new Set());
+  const [editableSelectedContent, setEditableSelectedContent] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
   
   // Background processing
   const { startJob, getJob } = useBackgroundJobs('regulatory_document');
@@ -82,6 +113,20 @@ const RegulatoryDocumentGenerator = () => {
     'MMSE (Mini-Mental State Examination)',
     'WOMAC (Western Ontario and McMaster Universities Arthritis Index)',
     'Custom/Other'
+  ];
+
+  // Regulatory document sections for navigation
+  const regulatoryDocumentSections = [
+    { id: 'regulatory-section-1', title: '1. Chemistry, Manufacturing, and Controls (CMC)' },
+    { id: 'regulatory-section-2', title: '2. Nonclinical Pharmacology and Toxicology' },
+    { id: 'regulatory-section-3', title: '3. Clinical Pharmacology' },
+    { id: 'regulatory-section-4', title: '4. Clinical Study Reports' },
+    { id: 'regulatory-section-5', title: '5. Statistical Analysis' },
+    { id: 'regulatory-section-6', title: '6. Integrated Summary of Efficacy' },
+    { id: 'regulatory-section-7', title: '7. Integrated Summary of Safety' },
+    { id: 'regulatory-section-8', title: '8. Risk Assessment and Risk Management' },
+    { id: 'regulatory-section-9', title: '9. Labeling' },
+    { id: 'regulatory-section-10', title: '10. Regulatory Compliance' }
   ];
 
   // Load parameters from navigation state
@@ -117,6 +162,125 @@ const RegulatoryDocumentGenerator = () => {
   // Navigate back to map selection
   const handleBackToMap = () => {
     navigate('/regulatory-documents');
+  };
+
+  // Helper Functions for Document Management
+  const fetchPreviousDocuments = async () => {
+    if (!showPreviousDocuments && previousDocuments.length === 0) {
+      setLoadingPrevious(true);
+      try {
+        const docs = await fetchDocuments('REGULATORY_DOCUMENT');
+        setPreviousDocuments(docs || []);
+      } catch (error) {
+        console.error('Error fetching previous documents:', error);
+        setFetchError('Failed to load previous documents');
+      } finally {
+        setLoadingPrevious(false);
+      }
+    }
+    setShowPreviousDocuments(!showPreviousDocuments);
+  };
+
+  const handleDocumentView = (doc) => {
+    setViewerDoc(doc);
+    setViewerOpen(true);
+  };
+
+  const handleSelectReference = (doc) => {
+    setSelectedReferenceDocument(doc);
+    if (doc && doc.content) {
+      try {
+        const content = typeof doc.content === 'string' ? JSON.parse(doc.content) : doc.content;
+        setReferenceDocumentTOC(regulatoryDocumentSections);
+      } catch (error) {
+        console.error('Error parsing reference document:', error);
+        setReferenceDocumentTOC([]);
+      }
+    }
+  };
+
+  const handleReferenceClose = () => {
+    setSelectedReferenceDocument(null);
+    setReferenceDocumentTOC([]);
+    setSelectedReferenceSection(null);
+    setSelectedReferenceSectionContent('');
+    setShowReferencePanel(false);
+  };
+
+  const handleReferenceSectionClick = (section) => {
+    setSelectedReferenceSection(section);
+    if (selectedReferenceDocument && selectedReferenceDocument.content) {
+      try {
+        const content = typeof selectedReferenceDocument.content === 'string' 
+          ? JSON.parse(selectedReferenceDocument.content) 
+          : selectedReferenceDocument.content;
+        
+        const sectionContent = content[section.id] || `Content for ${section.title}`;
+        setSelectedReferenceSectionContent(sectionContent);
+      } catch (error) {
+        console.error('Error getting reference section content:', error);
+        setSelectedReferenceSectionContent(`Content for ${section.title}`);
+      }
+    }
+  };
+
+  const handleSectionEdit = (sectionId, content) => {
+    setSectionEdits(prev => ({
+      ...prev,
+      [sectionId]: content
+    }));
+  };
+
+  const toggleAIForSection = (sectionId) => {
+    setAiEnabledSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
+  };
+
+  const exportToWord = async () => {
+    try {
+      const allContent = Object.values(sectionEdits).join('\n\n---\n\n');
+      
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            new Paragraph({
+              text: 'Regulatory Document',
+              heading: HeadingLevel.TITLE,
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              text: `Generated on: ${new Date().toLocaleDateString()}`,
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              text: '\n' + allContent,
+            }),
+          ],
+        }],
+      });
+
+      const buffer = await Packer.toBuffer(doc);
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `regulatory-document-${new Date().toISOString().split('T')[0]}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting to Word:', error);
+      alert('Error exporting to Word: ' + error.message);
+    }
   };
   
   // Main form submit handler - UPDATED FOR BACKGROUND PROCESSING
@@ -239,6 +403,26 @@ const RegulatoryDocumentGenerator = () => {
                 clinical_section: clinicalSection,
                 document_content: content
               });
+
+              // Populate section edits for the main page display
+              const newSectionEdits = { ...sectionEdits };
+              newSectionEdits['regulatory-section-1'] = cmcSection;
+              newSectionEdits['regulatory-section-4'] = clinicalSection;
+              
+              // Distribute content to other sections if available
+              const sections = content.split(/(?=\d+\.\s|\n#{1,3}\s)/);
+              if (sections.length > 2) {
+                sections.forEach((section, index) => {
+                  if (section.trim() && index < regulatoryDocumentSections.length) {
+                    const sectionId = regulatoryDocumentSections[index].id;
+                    if (!newSectionEdits[sectionId]) {
+                      newSectionEdits[sectionId] = section.trim();
+                    }
+                  }
+                });
+              }
+              
+              setSectionEdits(newSectionEdits);
               // Save regulatory document to backend (with authentication)
               try {
                 await saveDocument({
@@ -264,6 +448,12 @@ const RegulatoryDocumentGenerator = () => {
             } else if (response.cmc_section && response.clinical_section) {
               // For document types that return separate CMC and clinical sections
               setResult(response);
+              
+              // Populate section edits for the main page display
+              const newSectionEdits = { ...sectionEdits };
+              newSectionEdits['regulatory-section-1'] = response.cmc_section;
+              newSectionEdits['regulatory-section-4'] = response.clinical_section;
+              setSectionEdits(newSectionEdits);
               // Save regulatory document to backend (with authentication)
               try {
                 await saveDocument({
@@ -418,50 +608,64 @@ const RegulatoryDocumentGenerator = () => {
     );
   };
 
-  const [showPreviousDocs, setShowPreviousDocs] = useState(false);
-  const [previousDocs, setPreviousDocs] = useState([]);
-  const [loadingPreviousDocs, setLoadingPreviousDocs] = useState(false);
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerDoc, setViewerDoc] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [docsPerPage] = useState(5);
-  const [fetchError, setFetchError] = useState('');
-
-  const handleShowPreviousDocs = async () => {
-    setShowPreviousDocs(!showPreviousDocs);
-    if (!showPreviousDocs && previousDocs.length === 0) {
-      setLoadingPreviousDocs(true);
-      setFetchError('');
-      try {
-        const docs = await fetchDocuments();
-        setPreviousDocs(docs.filter(doc => doc.type === 'REGULATORY'));
-      } catch (err) {
-        setPreviousDocs([]);
-        if (err.response?.status === 401) {
-          setFetchError('Please log in to view previous documents.');
-        } else {
-          setFetchError('Error fetching previous regulatory documents. Please try again later.');
-        }
-      } finally {
-        setLoadingPreviousDocs(false);
-      }
-    }
-  };
+  // Duplicate state variables removed - using the ones defined above
 
   return (
     <div className="regulatory-document-generator">
+      {/* AI Assistant Popup */}
+      <AskLuminaPopup 
+        isOpen={showAskLumina}
+        onClose={() => setShowAskLumina(false)}
+        context="regulatory document generation"
+      />
+      
+      {/* Floating AI Assistant Button */}
+      <FloatingButton
+        onClick={() => setShowAskLumina(true)}
+        icon="🤖"
+        tooltip="Ask Lumina AI for help"
+      />
+
+      {/* Document Viewer Modal */}
+      {viewerOpen && viewerDoc && (
+        <DocumentViewer
+          document={viewerDoc}
+          onClose={() => setViewerOpen(false)}
+        />
+      )}
+
       {/* Header with Back Button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
           <h2>Enhanced Regulatory Document Generator</h2>
           <p>Generate comprehensive regulatory documentation with detailed trial design parameters</p>
         </div>
-        <button onClick={handleShowPreviousDocs} className="btn btn-outline">
-          {showPreviousDocs ? 'Hide Previous Docs' : 'Previous Docs'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button 
+            onClick={() => setShowReferencePanel(!showReferencePanel)}
+            className="btn"
+            style={{
+              background: showReferencePanel ? '#ef4444' : '#10b981',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            {showReferencePanel ? '✕' : '📋'} 
+            {showReferencePanel ? 'Close Reference' : 'Open Reference Document'}
+          </button>
+          <button onClick={fetchPreviousDocuments} className="btn btn-outline">
+            {showPreviousDocuments ? 'Hide Previous Docs' : 'Previous Docs'}
+          </button>
+        </div>
       </div>
-      {showPreviousDocs && (
+      {showPreviousDocuments && (
         <div style={{ background: '#f7fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
           <h4 style={{ margin: 0, marginBottom: '0.5rem' }}>Previous Regulatory Documents</h4>
           <input
@@ -472,16 +676,16 @@ const RegulatoryDocumentGenerator = () => {
             onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             style={{ marginBottom: '0.75rem' }}
           />
-          {loadingPreviousDocs ? <p>Loading...</p> : fetchError ? <p style={{ color: 'red' }}>{fetchError}</p> : (
+          {loadingPrevious ? <p>Loading...</p> : fetchError ? <p style={{ color: 'red' }}>{fetchError}</p> : (
             (() => {
-              const filtered = previousDocs.filter(doc =>
+              const filtered = previousDocuments.filter(doc =>
                 doc.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 doc.disease?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 doc.country?.toLowerCase().includes(searchTerm.toLowerCase())
               );
-              const totalPages = Math.ceil(filtered.length / docsPerPage);
-              const startIdx = (currentPage - 1) * docsPerPage;
-              const paginated = filtered.slice(startIdx, startIdx + docsPerPage);
+              const totalPages = Math.ceil(filtered.length / documentsPerPage);
+              const startIdx = (currentPage - 1) * documentsPerPage;
+              const paginated = filtered.slice(startIdx, startIdx + documentsPerPage);
               return filtered.length === 0 ? <p>No previous regulatory documents found.</p> : (
                 <>
                   <ul style={{ maxHeight: '200px', overflowY: 'auto', margin: 0, padding: 0 }}>
@@ -564,7 +768,19 @@ const RegulatoryDocumentGenerator = () => {
         </div>
       )}
 
-      <div className="regulatory-form">
+      {/* Main Content Area with Reference Panel */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '20px',
+        flex: showReferencePanel ? '1' : '1',
+        minWidth: showReferencePanel ? '50%' : '100%'
+      }}>
+        {/* Left Panel - Main Form */}
+        <div style={{ 
+          flex: showReferencePanel ? '1' : '1',
+          minWidth: showReferencePanel ? '50%' : '100%'
+        }}>
+          <div className="regulatory-form">
         {/* Basic Information Section */}
         <div className="form-section">
           <h3>Basic Information</h3>
@@ -763,24 +979,66 @@ const RegulatoryDocumentGenerator = () => {
 
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="inclusionCriteria">Inclusion Criteria</label>
-              <textarea
-                id="inclusionCriteria"
-                value={inclusionCriteria}
-                onChange={(e) => setInclusionCriteria(e.target.value)}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label htmlFor="inclusionCriteria">Inclusion Criteria</label>
+                <button
+                  type="button"
+                  onClick={() => toggleAIForSection('inclusion-criteria')}
+                  style={{
+                    background: aiEnabledSections.has('inclusion-criteria') ? '#10b981' : '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '10px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {aiEnabledSections.has('inclusion-criteria') ? '🤖 AI ON' : '🤖 AI OFF'}
+                </button>
+              </div>
+              <RichTextEditor
+                value={sectionEdits['inclusion-criteria'] || inclusionCriteria}
+                onChange={(content) => {
+                  handleSectionEdit('inclusion-criteria', content);
+                  setInclusionCriteria(content);
+                }}
                 placeholder="e.g., Adults aged 18-75 years, Confirmed diagnosis of moderate-to-severe condition..."
-                rows="4"
+                minHeight="120px"
+                context="inclusion criteria for regulatory study"
+                aiEnabled={aiEnabledSections.has('inclusion-criteria')}
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="exclusionCriteria">Exclusion Criteria</label>
-              <textarea
-                id="exclusionCriteria"
-                value={exclusionCriteria}
-                onChange={(e) => setExclusionCriteria(e.target.value)}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label htmlFor="exclusionCriteria">Exclusion Criteria</label>
+                <button
+                  type="button"
+                  onClick={() => toggleAIForSection('exclusion-criteria')}
+                  style={{
+                    background: aiEnabledSections.has('exclusion-criteria') ? '#10b981' : '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '10px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {aiEnabledSections.has('exclusion-criteria') ? '🤖 AI ON' : '🤖 AI OFF'}
+                </button>
+              </div>
+              <RichTextEditor
+                value={sectionEdits['exclusion-criteria'] || exclusionCriteria}
+                onChange={(content) => {
+                  handleSectionEdit('exclusion-criteria', content);
+                  setExclusionCriteria(content);
+                }}
                 placeholder="e.g., Pregnancy, Active infection, Immunocompromised state..."
-                rows="4"
+                minHeight="120px"
+                context="exclusion criteria for regulatory study"
+                aiEnabled={aiEnabledSections.has('exclusion-criteria')}
               />
             </div>
           </div>
@@ -850,24 +1108,66 @@ const RegulatoryDocumentGenerator = () => {
           <h3>Endpoints & Outcomes</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="primaryEndpoints">Primary Endpoint(s)</label>
-              <textarea
-                id="primaryEndpoints"
-                value={primaryEndpoints}
-                onChange={(e) => setPrimaryEndpoints(e.target.value)}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label htmlFor="primaryEndpoints">Primary Endpoint(s)</label>
+                <button
+                  type="button"
+                  onClick={() => toggleAIForSection('primary-endpoints')}
+                  style={{
+                    background: aiEnabledSections.has('primary-endpoints') ? '#10b981' : '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '10px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {aiEnabledSections.has('primary-endpoints') ? '🤖 AI ON' : '🤖 AI OFF'}
+                </button>
+              </div>
+              <RichTextEditor
+                value={sectionEdits['primary-endpoints'] || primaryEndpoints}
+                onChange={(content) => {
+                  handleSectionEdit('primary-endpoints', content);
+                  setPrimaryEndpoints(content);
+                }}
                 placeholder="e.g., Proportion of patients achieving PASI 75 at Week 16"
-                rows="3"
+                minHeight="100px"
+                context="primary endpoints for regulatory study"
+                aiEnabled={aiEnabledSections.has('primary-endpoints')}
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="secondaryEndpoints">Secondary Endpoint(s)</label>
-              <textarea
-                id="secondaryEndpoints"
-                value={secondaryEndpoints}
-                onChange={(e) => setSecondaryEndpoints(e.target.value)}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label htmlFor="secondaryEndpoints">Secondary Endpoint(s)</label>
+                <button
+                  type="button"
+                  onClick={() => toggleAIForSection('secondary-endpoints')}
+                  style={{
+                    background: aiEnabledSections.has('secondary-endpoints') ? '#10b981' : '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '10px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {aiEnabledSections.has('secondary-endpoints') ? '🤖 AI ON' : '🤖 AI OFF'}
+                </button>
+              </div>
+              <RichTextEditor
+                value={sectionEdits['secondary-endpoints'] || secondaryEndpoints}
+                onChange={(content) => {
+                  handleSectionEdit('secondary-endpoints', content);
+                  setSecondaryEndpoints(content);
+                }}
                 placeholder="e.g., PASI 90 response, sPGA score, Quality of life measures"
-                rows="3"
+                minHeight="100px"
+                context="secondary endpoints for regulatory study"
+                aiEnabled={aiEnabledSections.has('secondary-endpoints')}
               />
             </div>
 
@@ -937,15 +1237,186 @@ const RegulatoryDocumentGenerator = () => {
             Reset Form
           </button>
         </div>
+
+        {/* Regulatory Document Sections - Similar to Protocol Generator */}
+        <div className="document-sections">
+          <div className="sections-header">
+            <h3>Regulatory Document Sections</h3>
+            <div className="section-actions">
+              <button 
+                onClick={exportToWord}
+                className="btn btn-outline"
+                disabled={!result && Object.keys(sectionEdits).length === 0}
+              >
+                📄 Export to Word
+              </button>
+            </div>
+          </div>
+
+          <div className="sections-grid">
+            {regulatoryDocumentSections.map(section => {
+              const sectionContent = sectionEdits[section.id] || '';
+              
+              return (
+                <div key={section.id} className="document-section">
+                  <div className="section-header">
+                    <h4>{section.title}</h4>
+                    <button
+                      onClick={() => toggleAIForSection(section.id)}
+                      style={{
+                        background: aiEnabledSections.has(section.id) ? '#10b981' : '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {aiEnabledSections.has(section.id) ? '🤖 AI ON' : '🤖 AI OFF'}
+                    </button>
+                  </div>
+                  
+                  <RichTextEditor
+                    value={sectionContent}
+                    onChange={(content) => handleSectionEdit(section.id, content)}
+                    placeholder={sectionContent ? `Edit ${section.title}...` : `Content for ${section.title} will appear here after you generate the regulatory document above...`}
+                    minHeight="200px"
+                    context={`regulatory document ${section.title.toLowerCase()}`}
+                    aiEnabled={aiEnabledSections.has(section.id)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {error && <div className="alert alert-error" aria-live="polite">{error}</div>}
+          {error && <div className="alert alert-error" aria-live="polite">{error}</div>}
 
-      {loading && <div className="loading-indicator">
-        <div className="loading-spinner"></div>
-        <p>Generating comprehensive regulatory documentation with enhanced trial parameters...</p>
-      </div>}
+          {loading && <div className="loading-indicator">
+            <div className="loading-spinner"></div>
+            <p>Generating comprehensive regulatory documentation with enhanced trial parameters...</p>
+          </div>}
+          </div>
+        </div>
 
+        {/* Right Panel - Reference Document */}
+        {showReferencePanel && (
+          <div style={{ 
+            flex: '1',
+            minWidth: '400px',
+            background: '#f8f9fa',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            padding: '20px',
+            maxHeight: '80vh',
+            overflowY: 'auto'
+          }}>
+            <h3 style={{ margin: '0 0 15px 0', color: '#2d3748' }}>Reference Document</h3>
+            
+            {!selectedReferenceDocument ? (
+              <div>
+                <p style={{ color: '#718096', marginBottom: '15px' }}>Select a document to use as reference:</p>
+                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  {previousDocuments.map(doc => (
+                    <div 
+                      key={doc.id} 
+                      style={{
+                        padding: '10px',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        marginBottom: '8px',
+                        cursor: 'pointer',
+                        backgroundColor: 'white'
+                      }}
+                      onClick={() => handleSelectReference(doc)}
+                    >
+                      <strong>{doc.title || 'Untitled Document'}</strong>
+                      <br />
+                      <small style={{ color: '#718096' }}>
+                        {doc.disease && `Disease: ${doc.disease}`}
+                        {doc.country && ` • Country: ${doc.country}`}
+                        {doc.created_at && ` • ${new Date(doc.created_at).toLocaleDateString()}`}
+                      </small>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h4 style={{ margin: 0, color: '#2d3748' }}>{selectedReferenceDocument.title || 'Reference Document'}</h4>
+                  <button 
+                    onClick={handleReferenceClose}
+                    style={{ 
+                      background: 'none', 
+                      border: 'none', 
+                      fontSize: '18px', 
+                      cursor: 'pointer', 
+                      color: '#718096' 
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                {/* Table of Contents */}
+                <div style={{ marginBottom: '20px' }}>
+                  <h5 style={{ margin: '0 0 10px 0', color: '#4a5568' }}>Sections:</h5>
+                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {referenceDocumentTOC.map(section => (
+                      <div 
+                        key={section.id}
+                        style={{
+                          padding: '8px 12px',
+                          cursor: 'pointer',
+                          borderRadius: '4px',
+                          marginBottom: '4px',
+                          backgroundColor: selectedReferenceSection?.id === section.id ? '#e6fffa' : 'white',
+                          border: selectedReferenceSection?.id === section.id ? '1px solid #38b2ac' : '1px solid #e2e8f0'
+                        }}
+                        onClick={() => handleReferenceSectionClick(section)}
+                      >
+                        <span style={{ fontSize: '0.9rem', color: '#2d3748' }}>{section.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Section Content */}
+                {selectedReferenceSection && (
+                  <div>
+                    <h5 style={{ margin: '0 0 10px 0', color: '#4a5568' }}>
+                      {selectedReferenceSection.title}
+                    </h5>
+                    <div style={{
+                      background: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '6px',
+                      padding: '15px',
+                      maxHeight: '300px',
+                      overflowY: 'auto',
+                      fontSize: '0.9rem',
+                      lineHeight: '1.5'
+                    }}>
+                      <pre style={{ 
+                        whiteSpace: 'pre-wrap', 
+                        margin: 0, 
+                        fontFamily: 'inherit',
+                        color: '#2d3748'
+                      }}>
+                        {selectedReferenceSectionContent}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+      {/* Result Section */}
       {result && (
         <div className="result-container" aria-live="polite">
           <div className="tabs">
@@ -966,17 +1437,59 @@ const RegulatoryDocumentGenerator = () => {
           <div className="module-content">
             {activeTab === 'cmc' ? (
               <>
-                <h3>Chemistry, Manufacturing, and Controls (CMC)</h3>
-                <div className="content-area">
-                  {renderContent(result.cmc_section)}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h3>Chemistry, Manufacturing, and Controls (CMC)</h3>
+                  <button
+                    onClick={() => toggleAIForSection('regulatory-section-1')}
+                    style={{
+                      background: aiEnabledSections.has('regulatory-section-1') ? '#10b981' : '#6b7280',
+                      color: 'white',
+                      border: 'none',
+                      padding: '6px 12px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {aiEnabledSections.has('regulatory-section-1') ? '🤖 AI ON' : '🤖 AI OFF'}
+                  </button>
                 </div>
+                <RichTextEditor
+                  value={sectionEdits['regulatory-section-1'] || result.cmc_section || ''}
+                  onChange={(content) => handleSectionEdit('regulatory-section-1', content)}
+                  placeholder="CMC section content will appear here..."
+                  minHeight="400px"
+                  context="regulatory CMC section"
+                  aiEnabled={aiEnabledSections.has('regulatory-section-1')}
+                />
               </>
             ) : (
               <>
-                <h3>Clinical Section</h3>
-                <div className="content-area">
-                  {renderContent(result.clinical_section)}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h3>Clinical Section</h3>
+                  <button
+                    onClick={() => toggleAIForSection('regulatory-section-4')}
+                    style={{
+                      background: aiEnabledSections.has('regulatory-section-4') ? '#10b981' : '#6b7280',
+                      color: 'white',
+                      border: 'none',
+                      padding: '6px 12px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {aiEnabledSections.has('regulatory-section-4') ? '🤖 AI ON' : '🤖 AI OFF'}
+                  </button>
                 </div>
+                <RichTextEditor
+                  value={sectionEdits['regulatory-section-4'] || result.clinical_section || ''}
+                  onChange={(content) => handleSectionEdit('regulatory-section-4', content)}
+                  placeholder="Clinical section content will appear here..."
+                  minHeight="400px"
+                  context="regulatory clinical section"
+                  aiEnabled={aiEnabledSections.has('regulatory-section-4')}
+                />
               </>
             )}
           </div>
@@ -985,8 +1498,8 @@ const RegulatoryDocumentGenerator = () => {
             <button
               onClick={() => {
                 const content = activeTab === 'cmc'
-                  ? result.cmc_section
-                  : result.clinical_section;
+                  ? (sectionEdits['regulatory-section-1'] || result.cmc_section)
+                  : (sectionEdits['regulatory-section-4'] || result.clinical_section);
                 navigator.clipboard.writeText(content);
                 alert('Current section copied!');
               }}
@@ -996,8 +1509,10 @@ const RegulatoryDocumentGenerator = () => {
             </button>
             <button
               onClick={() => {
+                const cmcContent = sectionEdits['regulatory-section-1'] || result.cmc_section || 'No CMC content available';
+                const clinicalContent = sectionEdits['regulatory-section-4'] || result.clinical_section || 'No clinical content available';
                 navigator.clipboard.writeText(
-                  `CMC SECTION:\n\n${result.cmc_section}\n\nCLINICAL SECTION:\n\n${result.clinical_section}`
+                  `CMC SECTION:\n\n${cmcContent}\n\nCLINICAL SECTION:\n\n${clinicalContent}`
                 );
                 alert('All sections copied!');
               }}
@@ -1006,9 +1521,22 @@ const RegulatoryDocumentGenerator = () => {
               Copy All
             </button>
             <button
+              onClick={exportToWord}
+              className="view-button"
+              style={{ 
+                background: '#10b981', 
+                color: 'white', 
+                border: 'none' 
+              }}
+            >
+              📄 Export to Word
+            </button>
+            <button
               onClick={() => {
                 try {
-                  const content = `CMC SECTION:\n\n${result.cmc_section || 'No CMC content available'}\n\nCLINICAL SECTION:\n\n${result.clinical_section || 'No clinical content available'}`;
+                  const cmcContent = sectionEdits['regulatory-section-1'] || result.cmc_section || 'No CMC content available';
+                  const clinicalContent = sectionEdits['regulatory-section-4'] || result.clinical_section || 'No clinical content available';
+                  const content = `CMC SECTION:\n\n${cmcContent}\n\nCLINICAL SECTION:\n\n${clinicalContent}`;
                   
                   // Check content size to prevent memory issues
                   if (content.length > 1000000) { // 1MB limit
