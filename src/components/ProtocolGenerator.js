@@ -3028,6 +3028,285 @@ const ProtocolGenerator = () => {
                   ))}
                 </ul>
               </div>
+
+              {/* Study Design Section Selection */}
+              <div style={{ 
+                marginTop: '2rem', 
+                padding: '1rem', 
+                border: '2px solid #3b82f6', 
+                borderRadius: '8px', 
+                backgroundColor: '#f0f9ff' 
+              }}>
+                <h4 style={{ margin: '0 0 1rem 0', color: '#1e40af' }}>
+                  Select Study Design Sections for Editing
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+                  {studyDesignSections.map(section => (
+                    <div key={section.id} style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '10px',
+                      marginBottom: '10px',
+                      padding: '8px',
+                      borderRadius: '6px',
+                      transition: 'background-color 0.2s'
+                    }}>
+                      <button
+                        onClick={() => handleStudyDesignSectionToggle(section.id)}
+                        style={{
+                          background: selectedStudyDesignSections.has(section.id) ? '#3b82f6' : '#f3f4f6',
+                          color: selectedStudyDesignSections.has(section.id) ? 'white' : '#374151',
+                          border: '2px solid #d1d5db',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          transition: 'all 0.2s ease'
+                        }}
+                        title={selectedStudyDesignSections.has(section.id) ? 'Remove from selection' : 'Add to selection'}
+                      >
+                        {selectedStudyDesignSections.has(section.id) ? '✓' : '+'}
+                      </button>
+                      <h4 
+                        id={section.id} 
+                        style={{ margin: 0, flex: 1 }}
+                      >
+                        {section.title}
+                      </h4>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Selected Study Design Sections Display */}
+              {(selectedStudyDesignSections.size > 0) && (
+                <div style={{ 
+                  marginTop: '2rem', 
+                  padding: '1rem', 
+                  border: '2px solid #3b82f6', 
+                  borderRadius: '8px', 
+                  backgroundColor: '#f0f9ff' 
+                }}>
+                  <h4 style={{ margin: '0 0 1rem 0', color: '#1e40af' }}>
+                    Individual Editable Study Design Sections ({selectedStudyDesignSections.size})
+                  </h4>
+                  
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '1rem',
+                    alignItems: 'flex-start'
+                  }}>
+                    {/* Editable Study Design Sections */}
+                    <div style={{ 
+                      flex: '1',
+                      minWidth: '100%'
+                    }}>
+                      {Array.from(selectedStudyDesignSections)
+                        .sort((a, b) => {
+                          // Handle cmc-section (should come first)
+                          if (a === 'cmc-section') return -1;
+                          if (b === 'cmc-section') return 1;
+                          
+                          // Handle clinical-section-X
+                          const aNum = parseInt(a.replace('clinical-section-', ''));
+                          const bNum = parseInt(b.replace('clinical-section-', ''));
+                          return aNum - bNum;
+                        })
+                        .map(sectionId => {
+                        const sectionNumber = sectionId === 'cmc-section' ? 'CMC' : sectionId.replace('clinical-section-', '');
+                        const sectionTitle = studyDesignSections.find(s => s.id === sectionId)?.title || `Study Design Section ${sectionNumber}`;
+                        const isEditingThis = editingSectionId === sectionId;
+                        const sectionContent = sectionEdits[sectionId] || '';
+                        
+                        return (
+                          <div key={sectionId} style={{ 
+                            marginBottom: '1.5rem', 
+                            padding: '1rem', 
+                            border: '1px solid #d1d5db', 
+                            borderRadius: '6px', 
+                            backgroundColor: '#ffffff' 
+                          }}>
+                            <div style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              marginBottom: '0.5rem' 
+                            }}>
+                              <h5 style={{ margin: 0, color: '#374151' }}>{sectionTitle}</h5>
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                {!isEditingThis ? (
+                                  <>
+                                    <button
+                                      onClick={() => startEditingSection(sectionId)}
+                                      style={{
+                                        background: '#10b981',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        padding: '4px 8px',
+                                        fontSize: '12px',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={() => generateSectionPDF(sectionId, sectionTitle, sectionContent)}
+                                      style={{
+                                        background: '#dc2626',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        padding: '4px 8px',
+                                        fontSize: '12px',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      PDF
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => saveSectionEdit(sectionId, sectionContent)}
+                                      style={{
+                                        background: '#3b82f6',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        padding: '4px 8px',
+                                        fontSize: '12px',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      onClick={cancelSectionEdit}
+                                      style={{
+                                        background: '#6b7280',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        padding: '4px 8px',
+                                        fontSize: '12px',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {isEditingThis ? (
+                              <RichTextEditor
+                                value={sectionContent}
+                                onChange={(content) => updateSectionContent(sectionId, content)}
+                                placeholder={`Edit ${sectionTitle} content here...`}
+                                style={{
+                                  width: '100%',
+                                  minHeight: '150px'
+                                }}
+                                aiEnabled={aiEnabledSections.has(sectionId)}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: '100%',
+                                  minHeight: '100px',
+                                  padding: '0.75rem',
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: '4px',
+                                  backgroundColor: '#f9fafb',
+                                  fontFamily: 'inherit',
+                                  fontSize: '14px',
+                                  lineHeight: '1.5',
+                                  overflowY: 'auto',
+                                  whiteSpace: 'pre-wrap'
+                                }}
+                                dangerouslySetInnerHTML={{ __html: sectionContent }}
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Download All Selected Study Design Sections */}
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+                    <button 
+                      onClick={() => {
+                        const allContent = Object.values(sectionEdits).join('\n\n---\n\n');
+                        downloadDocument(allContent, `All_Selected_Study_Design_Sections_${disease.replace(/\s+/g, '_')}.txt`);
+                      }}
+                      style={{
+                        background: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📄 Download Text
+                    </button>
+                    <button 
+                      onClick={generateSelectedSectionsWord}
+                      style={{
+                        background: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📝 Download Word Document
+                    </button>
+                    <button 
+                      onClick={generateSelectedSectionsPDF}
+                      style={{
+                        background: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📄 Download PDF Document
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const allContent = Object.values(sectionEdits).join('\n\n---\n\n');
+                        navigator.clipboard.writeText(allContent);
+                      }}
+                      style={{
+                        background: '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      📋 Copy All to Clipboard
+                    </button>
+                  </div>
+                </div>
+              )}
               
               <div id="cmc-section" className="study-design-section">
                 <h4 className="main-section-title">CMC SECTION</h4>
