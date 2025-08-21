@@ -3005,7 +3005,7 @@ const ProtocolGenerator = () => {
           {activeTab === 'studyDesign' && studyDesign && (
             <div className="document-content" id="studydesign-document">
               <div className="document-header">
-                <h3>Study Design (Main Document)</h3>
+                <h3>Enhanced Study Design</h3>
                 <div className="document-meta">
                   <span>Study ID: SD-{result ? result.protocol_id.substring(5) : Date.now()}</span>
                   <span>Version: 1.0</span>
@@ -3028,63 +3028,34 @@ const ProtocolGenerator = () => {
                   ))}
                 </ul>
               </div>
-
-              {/* Study Design Section Selection */}
-              <div style={{ 
-                marginTop: '2rem', 
-                padding: '1rem', 
-                border: '2px solid #3b82f6', 
-                borderRadius: '8px', 
-                backgroundColor: '#f0f9ff' 
-              }}>
-                <h4 style={{ margin: '0 0 1rem 0', color: '#1e40af' }}>
-                  Select Study Design Sections for Editing
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
-                  {studyDesignSections.map(section => (
-                    <div key={section.id} style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '10px',
-                      marginBottom: '10px',
-                      padding: '8px',
-                      borderRadius: '6px',
-                      transition: 'background-color 0.2s'
-                    }}>
-                      <button
-                        onClick={() => handleStudyDesignSectionToggle(section.id)}
-                        style={{
-                          background: selectedStudyDesignSections.has(section.id) ? '#3b82f6' : '#f3f4f6',
-                          color: selectedStudyDesignSections.has(section.id) ? 'white' : '#374151',
-                          border: '2px solid #d1d5db',
-                          borderRadius: '50%',
-                          width: '24px',
-                          height: '24px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          fontSize: '16px',
-                          fontWeight: 'bold',
-                          transition: 'all 0.2s ease'
-                        }}
-                        title={selectedStudyDesignSections.has(section.id) ? 'Remove from selection' : 'Add to selection'}
-                      >
-                        {selectedStudyDesignSections.has(section.id) ? '✓' : '+'}
-                      </button>
-                      <h4 
-                        id={section.id} 
-                        style={{ margin: 0, flex: 1 }}
-                      >
-                        {section.title}
-                      </h4>
-                    </div>
-                  ))}
+              
+              <div className="study-design-content">
+                <div id="cmc-section" className="study-design-section">
+                  <h4 className="main-section-title">CMC SECTION</h4>
+                  <div className="section-content">
+                    {studyDesign.cmc_section.split('\n').map((paragraph, idx) => (
+                      paragraph.trim() ? 
+                        paragraph.match(/^[A-Z\s]{5,}$/) ? 
+                          <h4 key={idx} className="section-title">{paragraph}</h4> :
+                        paragraph.match(/^[0-9]+\.[0-9]/) || paragraph.match(/^[A-Z][a-z]/) ?
+                          <h5 key={idx} className="subsection-title">{paragraph}</h5> :
+                        paragraph.match(/^[•\-*]/) ?
+                          <li key={idx} className="list-item">{paragraph.substring(1).trim()}</li> :
+                          <p key={idx}>{paragraph}</p>
+                      : <br key={idx} />
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="study-design-section clinical-section">
+                  <div className="section-content">
+                    {renderClinicalSections(studyDesign.clinical_section)}
+                  </div>
                 </div>
               </div>
-
-              {/* Selected Study Design Sections Display */}
-              {(selectedStudyDesignSections.size > 0) && (
+              
+              {/* Selected Sections Display - Enhanced like Protocol */}
+              {(selectedProtocolSections.size > 0 || selectedStudyDesignSections.size > 0) && (
                 <div style={{ 
                   marginTop: '2rem', 
                   padding: '1rem', 
@@ -3092,160 +3063,332 @@ const ProtocolGenerator = () => {
                   borderRadius: '8px', 
                   backgroundColor: '#f0f9ff' 
                 }}>
-                  <h4 style={{ margin: '0 0 1rem 0', color: '#1e40af' }}>
-                    Individual Editable Study Design Sections ({selectedStudyDesignSections.size})
-                  </h4>
+                  {/* Header with Reference Protocol Button */}
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    marginBottom: '1rem' 
+                  }}>
+                    <h4 style={{ margin: 0, color: '#1e40af' }}>
+                      Individual Editable Sections ({activeTab === 'protocol' ? selectedProtocolSections.size : selectedStudyDesignSections.size})
+                    </h4>
+                    <button
+                      onClick={() => setShowReferencePanel(!showReferencePanel)}
+                      style={{
+                        background: showReferencePanel ? '#ef4444' : '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      {showReferencePanel ? '✕' : '📋'} 
+                      {showReferencePanel ? 'Close Reference' : 'Open Reference Protocol'}
+                    </button>
+                  </div>
                   
+                  {/* Main Content Area with Side-by-Side Layout */}
                   <div style={{ 
                     display: 'flex', 
                     gap: '1rem',
                     alignItems: 'flex-start'
                   }}>
-                    {/* Editable Study Design Sections */}
+                    {/* Editable Sections */}
                     <div style={{ 
-                      flex: '1',
-                      minWidth: '100%'
+                      flex: showReferencePanel ? '1' : '1',
+                      minWidth: showReferencePanel ? '50%' : '100%'
                     }}>
-                      {Array.from(selectedStudyDesignSections)
-                        .sort((a, b) => {
-                          // Handle cmc-section (should come first)
-                          if (a === 'cmc-section') return -1;
-                          if (b === 'cmc-section') return 1;
+                      {activeTab === 'protocol' ? (
+                        Array.from(selectedProtocolSections)
+                          .sort((a, b) => {
+                            const aNum = parseInt(a.replace('protocol-section-', ''));
+                            const bNum = parseInt(b.replace('protocol-section-', ''));
+                            return aNum - bNum;
+                          })
+                          .map(sectionId => {
+                          const sectionNumber = sectionId.replace('protocol-section-', '');
+                          const sectionTitle = protocolSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
+                          const isEditingThis = editingSectionId === sectionId;
+                          const sectionContent = sectionEdits[sectionId] || '';
                           
-                          // Handle clinical-section-X
-                          const aNum = parseInt(a.replace('clinical-section-', ''));
-                          const bNum = parseInt(b.replace('clinical-section-', ''));
-                          return aNum - bNum;
-                        })
-                        .map(sectionId => {
-                        const sectionNumber = sectionId === 'cmc-section' ? 'CMC' : sectionId.replace('clinical-section-', '');
-                        const sectionTitle = studyDesignSections.find(s => s.id === sectionId)?.title || `Study Design Section ${sectionNumber}`;
-                        const isEditingThis = editingSectionId === sectionId;
-                        const sectionContent = sectionEdits[sectionId] || '';
-                        
-                        return (
-                          <div key={sectionId} style={{ 
-                            marginBottom: '1.5rem', 
-                            padding: '1rem', 
-                            border: '1px solid #d1d5db', 
-                            borderRadius: '6px', 
-                            backgroundColor: '#ffffff' 
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              justifyContent: 'space-between', 
-                              alignItems: 'center', 
-                              marginBottom: '0.5rem' 
+                          return (
+                            <div key={sectionId} style={{ 
+                              marginBottom: '1.5rem', 
+                              padding: '1rem', 
+                              border: '1px solid #d1d5db', 
+                              borderRadius: '6px', 
+                              backgroundColor: '#ffffff' 
                             }}>
-                              <h5 style={{ margin: 0, color: '#374151' }}>{sectionTitle}</h5>
-                              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                {!isEditingThis ? (
-                                  <>
-                                    <button
-                                      onClick={() => startEditingSection(sectionId)}
-                                      style={{
-                                        background: '#10b981',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        padding: '4px 8px',
-                                        fontSize: '12px',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      onClick={() => generateSectionPDF(sectionId, sectionTitle, sectionContent)}
-                                      style={{
-                                        background: '#dc2626',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        padding: '4px 8px',
-                                        fontSize: '12px',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      PDF
-                                    </button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button
-                                      onClick={() => saveSectionEdit(sectionId, sectionContent)}
-                                      style={{
-                                        background: '#3b82f6',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        padding: '4px 8px',
-                                        fontSize: '12px',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      Save
-                                    </button>
-                                    <button
-                                      onClick={cancelSectionEdit}
-                                      style={{
-                                        background: '#6b7280',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        padding: '4px 8px',
-                                        fontSize: '12px',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      Cancel
-                                    </button>
-                                  </>
-                                )}
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                marginBottom: '0.5rem' 
+                              }}>
+                                <h5 style={{ margin: 0, color: '#374151' }}>{sectionTitle}</h5>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                  {!isEditingThis ? (
+                                    <>
+                                      <button
+                                        onClick={() => startEditingSection(sectionId)}
+                                        style={{
+                                          background: '#10b981',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => generateSectionPDF(sectionId, sectionTitle, sectionContent)}
+                                        style={{
+                                          background: '#dc2626',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        PDF
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => saveSectionEdit(sectionId, sectionContent)}
+                                        style={{
+                                          background: '#3b82f6',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={cancelSectionEdit}
+                                        style={{
+                                          background: '#6b7280',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
                               </div>
+                              
+                              {isEditingThis ? (
+                                <RichTextEditor
+                                  value={sectionContent}
+                                  onChange={(content) => updateSectionContent(sectionId, content)}
+                                  placeholder={`Edit ${sectionTitle} content here...`}
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '150px'
+                                  }}
+                                  aiEnabled={aiEnabledSections.has(sectionId)}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '100px',
+                                    padding: '0.75rem',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '4px',
+                                    backgroundColor: '#f9fafb',
+                                    fontFamily: 'inherit',
+                                    fontSize: '14px',
+                                    lineHeight: '1.5',
+                                    overflowY: 'auto',
+                                    whiteSpace: 'pre-wrap'
+                                  }}
+                                  dangerouslySetInnerHTML={{ __html: sectionContent }}
+                                />
+                              )}
                             </div>
+                          );
+                        })
+                      ) : (
+                        Array.from(selectedStudyDesignSections)
+                          .sort((a, b) => {
+                            // Handle cmc-section (should come first)
+                            if (a === 'cmc-section') return -1;
+                            if (b === 'cmc-section') return 1;
                             
-                            {isEditingThis ? (
-                              <RichTextEditor
-                                value={sectionContent}
-                                onChange={(content) => updateSectionContent(sectionId, content)}
-                                placeholder={`Edit ${sectionTitle} content here...`}
-                                style={{
-                                  width: '100%',
-                                  minHeight: '150px'
-                                }}
-                                aiEnabled={aiEnabledSections.has(sectionId)}
-                              />
-                            ) : (
-                              <div
-                                style={{
-                                  width: '100%',
-                                  minHeight: '100px',
-                                  padding: '0.75rem',
-                                  border: '1px solid #e5e7eb',
-                                  borderRadius: '4px',
-                                  backgroundColor: '#f9fafb',
-                                  fontFamily: 'inherit',
-                                  fontSize: '14px',
-                                  lineHeight: '1.5',
-                                  overflowY: 'auto',
-                                  whiteSpace: 'pre-wrap'
-                                }}
-                                dangerouslySetInnerHTML={{ __html: sectionContent }}
-                              />
-                            )}
-                          </div>
-                        );
-                      })}
+                            // Handle clinical-section-X
+                            const aNum = parseInt(a.replace('clinical-section-', ''));
+                            const bNum = parseInt(b.replace('clinical-section-', ''));
+                            return aNum - bNum;
+                          })
+                          .map(sectionId => {
+                          const sectionNumber = sectionId === 'cmc-section' ? 'CMC' : sectionId.replace('clinical-section-', '');
+                          const sectionTitle = studyDesignSections.find(s => s.id === sectionId)?.title || `Study Design Section ${sectionNumber}`;
+                          const isEditingThis = editingSectionId === sectionId;
+                          const sectionContent = sectionEdits[sectionId] || '';
+                          
+                          return (
+                            <div key={sectionId} style={{ 
+                              marginBottom: '1.5rem', 
+                              padding: '1rem', 
+                              border: '1px solid #d1d5db', 
+                              borderRadius: '6px', 
+                              backgroundColor: '#ffffff' 
+                            }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                marginBottom: '0.5rem' 
+                              }}>
+                                <h5 style={{ margin: 0, color: '#374151' }}>{sectionTitle}</h5>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                  {!isEditingThis ? (
+                                    <>
+                                      <button
+                                        onClick={() => startEditingSection(sectionId)}
+                                        style={{
+                                          background: '#10b981',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => generateSectionPDF(sectionId, sectionTitle, sectionContent)}
+                                        style={{
+                                          background: '#dc2626',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        PDF
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => saveSectionEdit(sectionId, sectionContent)}
+                                        style={{
+                                          background: '#3b82f6',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={cancelSectionEdit}
+                                        style={{
+                                          background: '#6b7280',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {isEditingThis ? (
+                                <RichTextEditor
+                                  value={sectionContent}
+                                  onChange={(content) => updateSectionContent(sectionId, content)}
+                                  placeholder={`Edit ${sectionTitle} content here...`}
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '150px'
+                                  }}
+                                  aiEnabled={aiEnabledSections.has(sectionId)}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '100px',
+                                    padding: '0.75rem',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '4px',
+                                    backgroundColor: '#f9fafb',
+                                    fontFamily: 'inherit',
+                                    fontSize: '14px',
+                                    lineHeight: '1.5',
+                                    overflowY: 'auto',
+                                    whiteSpace: 'pre-wrap'
+                                  }}
+                                  dangerouslySetInnerHTML={{ __html: sectionContent }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
+                    
+                    {/* Reference Protocol Panel */}
+                    {showReferencePanel && (
+                      <div style={{ 
+                        width: '400px',
+                        background: '#ffffff',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        padding: '1rem'
+                      }}>
+                        <h5 style={{ margin: '0 0 1rem 0', color: '#374151' }}>Reference Protocol</h5>
+                        <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                          Select a reference protocol from the previous protocols list to view it here.
+                        </p>
+                      </div>
+                    )}
                   </div>
                   
-                  {/* Download All Selected Study Design Sections */}
+                  {/* Download All Selected Sections */}
                   <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>
                     <button 
                       onClick={() => {
                         const allContent = Object.values(sectionEdits).join('\n\n---\n\n');
-                        downloadDocument(allContent, `All_Selected_Study_Design_Sections_${disease.replace(/\s+/g, '_')}.txt`);
+                        downloadDocument(allContent, `All_Selected_Sections_${disease.replace(/\s+/g, '_')}.txt`);
                       }}
                       style={{
                         background: '#3b82f6',
@@ -3307,29 +3450,6 @@ const ProtocolGenerator = () => {
                   </div>
                 </div>
               )}
-              
-              <div id="cmc-section" className="study-design-section">
-                <h4 className="main-section-title">CMC SECTION</h4>
-                <div className="section-content">
-                  {studyDesign.cmc_section.split('\n').map((paragraph, idx) => (
-                    paragraph.trim() ? 
-                      paragraph.match(/^[A-Z\s]{5,}$/) ? 
-                        <h4 key={idx} className="section-title">{paragraph}</h4> :
-                      paragraph.match(/^[0-9]+\.[0-9]/) || paragraph.match(/^[A-Z][a-z]/) ?
-                        <h5 key={idx} className="subsection-title">{paragraph}</h5> :
-                      paragraph.match(/^[•\-*]/) ?
-                        <li key={idx} className="list-item">{paragraph.substring(1).trim()}</li> :
-                        <p key={idx}>{paragraph}</p>
-                    : <br key={idx} />
-                  ))}
-                </div>
-              </div>
-              
-              <div className="study-design-section clinical-section">
-                <div className="section-content">
-                  {renderClinicalSections(studyDesign.clinical_section)}
-                </div>
-              </div>
               
               <div className="action-buttons">
                 <button onClick={() => navigator.clipboard.writeText(
