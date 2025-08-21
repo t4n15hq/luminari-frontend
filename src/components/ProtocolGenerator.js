@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDropzone } from 'react-dropzone';
 import apiService from '../services/api';
 import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
@@ -92,6 +93,75 @@ const ProtocolGenerator = () => {
   const { startJob, getJob } = useBackgroundJobs('protocol');
   const [backgroundJobId, setBackgroundJobId] = useState(null);
 
+  // Dossier Type Selection and Document Upload State
+  const [selectedDossierType, setSelectedDossierType] = useState('');
+  const [uploadedDocuments, setUploadedDocuments] = useState([]);
+  const [validatingDocuments, setValidatingDocuments] = useState(new Set());
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+  const [showDocumentChecklist, setShowDocumentChecklist] = useState(false);
+
+  // Dossier types for protocol generation
+  const dossierTypes = [
+    { 
+      id: 'protocol_impd', 
+      name: 'Protocol for IMPD',
+      description: 'EU dossier containing quality, production, and control information',
+      color: '#4F46E5'
+    },
+    { 
+      id: 'protocol_ind', 
+      name: 'Protocol for IND',
+      description: 'US FDA submission for investigational new drug trials',
+      color: '#059669'
+    },
+    { 
+      id: 'protocol_ctd', 
+      name: 'Protocol for CTD',
+      description: 'Standardized format for quality, safety, and efficacy information',
+      color: '#DC2626'
+    },
+    { 
+      id: 'protocol_ectd', 
+      name: 'Protocol for eCTD',
+      description: 'Electronic version of CTD for digital submission',
+      color: '#7C3AED'
+    }
+  ];
+
+  // Document categories for protocol generation
+  const documentCategories = [
+    { id: 'protocol', name: 'Protocol Document', required: true, icon: '📄', maxFiles: 1 },
+    { id: 'investigator_brochure', name: "Investigator's Brochure (IB)", required: true, icon: '📖', maxFiles: 1 },
+    { id: 'quality_info', name: 'Quality Information', required: true, icon: '⚗️', maxFiles: 3 },
+    { id: 'nonclinical_data', name: 'Non-clinical Data', required: true, icon: '🧪', maxFiles: 5 },
+    { id: 'clinical_data', name: 'Clinical Data', required: true, icon: '🏥', maxFiles: 10 },
+    { id: 'application_form', name: 'Application Form', required: true, icon: '📝', maxFiles: 1 },
+    { id: 'other_documents', name: 'Other Documents', required: false, icon: '📎', maxFiles: 5 }
+  ];
+
+  // Dropzone configuration
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'text/plain': ['.txt']
+    },
+    onDrop: acceptedFiles => {
+      const newDocuments = acceptedFiles.map(file => ({
+        file,
+        name: file.name,
+        size: file.size,
+        category: '',
+        id: Date.now() + Math.random(),
+        validation: null
+      }));
+      setUploadedDocuments([...uploadedDocuments, ...newDocuments]);
+    }
+  });
+
   // Protocol sections for navigation
   const protocolSections = [
     { id: 'protocol-section-1', title: '1. Protocol Summary / Synopsis' },
@@ -143,7 +213,121 @@ const ProtocolGenerator = () => {
     'Custom/Other'
   ];
 
-  // Removed auto-population from localStorage
+  // Document handling functions
+
+  const removeDocument = (documentId) => {
+    setUploadedDocuments(docs => docs.filter(doc => doc.id !== documentId));
+  };
+
+  const getCategoryStatus = (categoryId) => {
+    const uploaded = uploadedDocuments.filter(doc => doc.category === categoryId).length;
+    const category = documentCategories.find(cat => cat.id === categoryId);
+    const required = category?.required;
+    const maxFiles = category?.maxFiles || 10;
+    
+    if (required && uploaded === 0) return 'missing';
+    if (uploaded >= maxFiles) return 'full';
+    if (uploaded > 0) return 'partial';
+    return 'empty';
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'missing': return '❌';
+      case 'full': return '✅';
+      case 'partial': return '🟡';
+      default: return '⚪';
+    }
+  };
+
+  // Function to handle checklist item click (green tick functionality)
+  const handleChecklistItemClick = (categoryId) => {
+    const status = getCategoryStatus(categoryId);
+    const uploadedCount = uploadedDocuments.filter(doc => doc.category === categoryId).length;
+    const category = documentCategories.find(cat => cat.id === categoryId);
+    
+    if (status === 'missing' || status === 'partial') {
+      // If category is missing or partial, show a message
+      alert(`${category.name} requires ${category.maxFiles} file(s). Currently uploaded: ${uploadedCount}/${category.maxFiles}`);
+    } else if (status === 'full') {
+      // If category is complete, show success message with animation
+      const checklistItem = document.querySelector(`[data-category="${categoryId}"]`);
+      if (checklistItem) {
+        checklistItem.style.animation = 'successPulse 0.6s ease-in-out';
+        setTimeout(() => {
+          checklistItem.style.animation = '';
+        }, 600);
+      }
+      alert(`✅ ${category.name} is complete with ${uploadedCount}/${category.maxFiles} files!`);
+    }
+  };
+
+  // Add success animation when documents are categorized
+  const handleCategoryChange = async (documentId, category) => {
+    const categoryCount = uploadedDocuments.filter(doc => doc.category === category).length;
+    const maxFiles = documentCategories.find(cat => cat.id === category)?.maxFiles || 10;
+    
+    if (categoryCount >= maxFiles) {
+      alert(`Maximum ${maxFiles} file(s) allowed for ${category}`);
+      return;
+    }
+    
+    // Update category
+    setUploadedDocuments(docs => 
+      docs.map(doc => 
+        doc.id === documentId ? { ...doc, category, validation: null } : doc
+      )
+    );
+
+    // Check if this completes the category and show success animation
+    setTimeout(() => {
+      const newStatus = getCategoryStatus(category);
+      if (newStatus === 'full') {
+        const checklistItem = document.querySelector(`[data-category="${category}"]`);
+        if (checklistItem) {
+          checklistItem.style.animation = 'successPulse 0.6s ease-in-out';
+          setTimeout(() => {
+            checklistItem.style.animation = '';
+          }, 600);
+        }
+      }
+    }, 100);
+  };
+
+  const isReadyToCompile = () => {
+    if (!selectedDossierType) return false;
+    
+    const requiredCategories = documentCategories
+      .filter(cat => cat.required)
+      .map(cat => cat.id);
+    
+    const uploadedCategories = uploadedDocuments
+      .map(doc => doc.category)
+      .filter(Boolean);
+    
+    return requiredCategories.every(req => uploadedCategories.includes(req));
+  };
+
+  const compileDossier = async () => {
+    setLoading(true);
+    
+    try {
+      const result = await apiService.compileDossier(selectedDossierType, uploadedDocuments);
+      
+      if (result.success) {
+        alert(result.message || `Dossier compiled successfully! Downloaded as: ${result.fileName}`);
+        setUploadedDocuments([]);
+        setSelectedDossierType('');
+        setShowDocumentUpload(false);
+        setShowDocumentChecklist(false);
+      }
+    } catch (error) {
+      console.error('Detailed error:', error);
+      alert(`Failed to compile dossier: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1374,6 +1558,15 @@ const ProtocolGenerator = () => {
 
   return (
     <div className="protocol-generator" style={{ position: 'relative' }}>
+      <style>
+        {`
+          @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4); }
+            100% { transform: scale(1.02); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+          }
+        `}
+      </style>
       {/* Ask Lumina Popup */}
       <AskLuminaPopup 
         isOpen={showAskLumina}
@@ -1569,6 +1762,254 @@ const ProtocolGenerator = () => {
       )}
       
       <form onSubmit={handleSubmit}>
+        {/* Dossier Type Selection */}
+        <div className="form-section">
+          <h3>Select Dossier Type</h3>
+          <p style={{ color: '#64748b', marginBottom: '1rem' }}>
+            Choose the type of dossier for which you want to generate a protocol
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+            {dossierTypes.map(type => (
+              <div 
+                key={type.id}
+                className={`dossier-type-card ${selectedDossierType === type.id ? 'selected' : ''}`}
+                onClick={() => setSelectedDossierType(type.id)}
+                style={{
+                  padding: '1.5rem',
+                  borderRadius: '12px',
+                  border: selectedDossierType === type.id ? `3px solid ${type.color}` : '2px solid #e2e8f0',
+                  backgroundColor: selectedDossierType === type.id ? `${type.color}10` : 'white',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: selectedDossierType === type.id ? `0 8px 25px ${type.color}20` : '0 2px 4px rgba(0,0,0,0.1)',
+                  transform: selectedDossierType === type.id ? 'translateY(-2px)' : 'none'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '1.5rem', marginRight: '0.75rem' }}>📋</span>
+                  <h3 style={{ 
+                    fontSize: '1.1rem', 
+                    fontWeight: '600', 
+                    margin: 0,
+                    color: selectedDossierType === type.id ? type.color : '#1e293b'
+                  }}>
+                    {type.name}
+                  </h3>
+                </div>
+                <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0 }}>
+                  {type.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Document Upload Section - Only show if dossier type is selected */}
+        {selectedDossierType && (
+          <div className="form-section">
+            <h3>📁 Upload Documents</h3>
+            <p style={{ color: '#64748b', marginBottom: '1rem' }}>
+              Upload the required documents for your selected dossier type
+            </p>
+            <div 
+              {...getRootProps()} 
+              className={`dropzone ${isDragActive ? 'active' : ''}`}
+              style={{
+                border: isDragActive ? '3px dashed #3b82f6' : '2px dashed #94a3b8',
+                borderRadius: '12px',
+                padding: '3rem 2rem',
+                textAlign: 'center',
+                backgroundColor: isDragActive ? '#eff6ff' : 'white',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                marginBottom: '2rem'
+              }}
+            >
+              <input {...getInputProps()} />
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+                {isDragActive ? '📂' : '📄'}
+              </div>
+              <p style={{ fontSize: '1.1rem', fontWeight: '500', marginBottom: '0.5rem', color: '#1e293b' }}>
+                {isDragActive
+                  ? 'Drop the files here...'
+                  : 'Drag and drop documents here, or click to select files'}
+              </p>
+              <small style={{ fontSize: '0.9rem', color: '#64748b' }}>
+                Accepted formats: PDF, DOC, DOCX, XLS, XLSX, TXT
+              </small>
+            </div>
+
+            {/* Document Categories Checklist */}
+            <div className="document-checklist" style={{ marginBottom: '2rem' }}>
+              <h4 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+                ✅ Required Documents Checklist
+              </h4>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                gap: '1rem'
+              }}>
+                {documentCategories.map(cat => {
+                  const status = getCategoryStatus(cat.id);
+                  const uploadedCount = uploadedDocuments.filter(doc => doc.category === cat.id).length;
+                  
+                  return (
+                    <div 
+                      key={cat.id} 
+                      data-category={cat.id}
+                      className={`checklist-item ${status}`} 
+                      onClick={() => handleChecklistItemClick(cat.id)}
+                      style={{
+                        padding: '1rem',
+                        borderRadius: '8px',
+                        backgroundColor: 'white',
+                        border: `2px solid ${status === 'missing' ? '#ef4444' : status === 'full' ? '#10b981' : '#e2e8f0'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        transform: status === 'full' ? 'scale(1.02)' : 'scale(1)',
+                        boxShadow: status === 'full' ? '0 4px 12px rgba(16, 185, 129, 0.2)' : '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (status === 'full') {
+                          e.target.style.transform = 'scale(1.05)';
+                          e.target.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.3)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (status === 'full') {
+                          e.target.style.transform = 'scale(1.02)';
+                          e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.2)';
+                        }
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span style={{ fontSize: '1.2rem', marginRight: '0.5rem' }}>{cat.icon}</span>
+                        <div>
+                          <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>
+                            {cat.name} {cat.required && <span style={{ color: '#ef4444' }}>*</span>}
+                          </span>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                            {uploadedCount}/{cat.maxFiles} files
+                          </div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '1.2rem' }}>{getStatusIcon(status)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Uploaded Documents List */}
+            {uploadedDocuments.length > 0 && (
+              <div className="uploaded-documents" style={{ marginBottom: '2rem' }}>
+                <h4 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
+                  📚 Uploaded Documents ({uploadedDocuments.length})
+                </h4>
+                <div className="documents-list" style={{ 
+                  backgroundColor: 'white', 
+                  borderRadius: '12px', 
+                  padding: '1rem',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  {uploadedDocuments.map(doc => (
+                    <div key={doc.id} className="document-item" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '1rem',
+                      borderBottom: '1px solid #f1f5f9',
+                      borderRadius: '8px'
+                    }}>
+                      <div className="document-info" style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.25rem' }}>
+                          <span className="document-name" style={{ fontWeight: '500', marginRight: '0.5rem' }}>
+                            {doc.name}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.5rem' }}>
+                          {(doc.size / 1024 / 1024).toFixed(2)} MB
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <select
+                          value={doc.category}
+                          onChange={(e) => handleCategoryChange(doc.id, e.target.value)}
+                          className="category-select"
+                          style={{
+                            padding: '0.5rem',
+                            borderRadius: '6px',
+                            border: '1px solid #d1d5db',
+                            minWidth: '180px'
+                          }}
+                        >
+                          <option value="">Select Category</option>
+                          {documentCategories.map(cat => (
+                            <option key={cat.id} value={cat.id}>
+                              {cat.icon} {cat.name} {cat.required && '*'}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => removeDocument(doc.id)}
+                          className="remove-button"
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: 'var(--color-error)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Compile Button */}
+            <div className="compile-section" style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <button
+                onClick={compileDossier}
+                disabled={!isReadyToCompile() || loading}
+                className="compile-button"
+                style={{
+                  padding: '1rem 3rem',
+                  fontSize: '1.1rem',
+                  fontWeight: '600',
+                  borderRadius: '12px',
+                  border: 'none',
+                  backgroundColor: isReadyToCompile() && !loading ? 'var(--color-success)' : 'var(--color-gray-400)',
+                  color: 'white',
+                  cursor: isReadyToCompile() && !loading ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.2s ease',
+                  boxShadow: isReadyToCompile() && !loading ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none'
+                }}
+              >
+                {loading ? 'Compiling Dossier...' : 'Compile Dossier'}
+              </button>
+              {!isReadyToCompile() && !loading && (
+                <p className="warning-message" style={{ 
+                  marginTop: '1rem', 
+                  color: '#ef4444', 
+                  fontSize: '0.9rem',
+                  fontWeight: '500'
+                }}>
+                  ⚠️ Please upload all required documents and assign categories before compiling
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Basic Information Section */}
         <div className="form-section">
           <h3>Basic Information</h3>
