@@ -95,10 +95,20 @@ const ProtocolGenerator = () => {
 
   // Dossier Type Selection and Document Upload State
   const [selectedDossierType, setSelectedDossierType] = useState('');
-  const [uploadedDocuments, setUploadedDocuments] = useState([]);
+  const [uploadedDocuments, setUploadedDocuments] = useState(() => {
+    // Load from localStorage on component mount
+    try {
+      const saved = localStorage.getItem('protocolGenerator_uploadedDocuments');
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error('Error loading uploaded documents from localStorage:', error);
+      return [];
+    }
+  });
   const [validatingDocuments, setValidatingDocuments] = useState(new Set());
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
   const [showDocumentChecklist, setShowDocumentChecklist] = useState(false);
+  const [uploadErrors, setUploadErrors] = useState([]);
 
   // Dossier types for protocol generation
   const dossierTypes = [
@@ -139,7 +149,7 @@ const ProtocolGenerator = () => {
     { id: 'other_documents', name: 'Other Documents', required: false, icon: '📎', maxFiles: 5 }
   ];
 
-  // Dropzone configuration
+  // Dropzone configuration with edge case handling
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       'application/pdf': ['.pdf'],
@@ -149,16 +159,55 @@ const ProtocolGenerator = () => {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'text/plain': ['.txt']
     },
-    onDrop: acceptedFiles => {
-      const newDocuments = acceptedFiles.map(file => ({
-        file,
-        name: file.name,
-        size: file.size,
-        category: '',
-        id: Date.now() + Math.random(),
-        validation: null
-      }));
-      setUploadedDocuments([...uploadedDocuments, ...newDocuments]);
+    maxSize: 50 * 1024 * 1024, // 50MB max file size
+    multiple: true,
+    onDrop: (acceptedFiles, rejectedFiles) => {
+      // Handle rejected files
+      if (rejectedFiles.length > 0) {
+        const errors = rejectedFiles.map(file => {
+          if (file.errors.some(e => e.code === 'file-too-large')) {
+            return `${file.file.name}: File too large (max 50MB)`;
+          }
+          if (file.errors.some(e => e.code === 'file-invalid-type')) {
+            return `${file.file.name}: Invalid file type`;
+          }
+          return `${file.file.name}: Upload failed`;
+        });
+        alert(`Upload errors:\n${errors.join('\n')}`);
+      }
+
+      // Handle accepted files with duplicate name checking
+      const existingNames = uploadedDocuments.map(doc => doc.name);
+      const newDocuments = acceptedFiles
+        .filter(file => {
+          if (existingNames.includes(file.name)) {
+            alert(`File "${file.name}" already exists. Please rename or remove the existing file.`);
+            return false;
+          }
+          return true;
+        })
+        .map(file => ({
+          file,
+          name: file.name,
+          size: file.size,
+          category: '',
+          id: Date.now() + Math.random(),
+          validation: null,
+          uploadTime: new Date().toISOString()
+        }));
+
+      if (newDocuments.length > 0) {
+        setUploadedDocuments(prev => {
+          const updated = [...prev, ...newDocuments];
+          // Save to localStorage
+          try {
+            localStorage.setItem('protocolGenerator_uploadedDocuments', JSON.stringify(updated));
+          } catch (error) {
+            console.error('Error saving uploaded documents to localStorage:', error);
+          }
+          return updated;
+        });
+      }
     }
   });
 
@@ -216,7 +265,27 @@ const ProtocolGenerator = () => {
   // Document handling functions
 
   const removeDocument = (documentId) => {
-    setUploadedDocuments(docs => docs.filter(doc => doc.id !== documentId));
+    setUploadedDocuments(docs => {
+      const updatedDocs = docs.filter(doc => doc.id !== documentId);
+      
+      // Clean up file object to free memory
+      const removedDoc = docs.find(doc => doc.id === documentId);
+      if (removedDoc && removedDoc.file) {
+        // Revoke object URL if it exists
+        if (removedDoc.file.preview) {
+          URL.revokeObjectURL(removedDoc.file.preview);
+        }
+      }
+      
+      // Save to localStorage
+      try {
+        localStorage.setItem('protocolGenerator_uploadedDocuments', JSON.stringify(updatedDocs));
+      } catch (error) {
+        console.error('Error saving uploaded documents to localStorage:', error);
+      }
+      
+      return updatedDocs;
+    });
   };
 
   const getCategoryStatus = (categoryId) => {
@@ -312,18 +381,52 @@ const ProtocolGenerator = () => {
     setLoading(true);
     
     try {
+      // Validate that all required documents are present
+      const requiredCategories = documentCategories
+        .filter(cat => cat.required)
+        .map(cat => cat.id);
+      
+      const uploadedCategories = uploadedDocuments
+        .map(doc => doc.category)
+        .filter(Boolean);
+      
+      const missingCategories = requiredCategories.filter(req => !uploadedCategories.includes(req));
+      
+      if (missingCategories.length > 0) {
+        const missingNames = missingCategories.map(id => 
+          documentCategories.find(cat => cat.id === id)?.name
+        ).filter(Boolean);
+        
+        alert(`Missing required documents: ${missingNames.join(', ')}`);
+        setLoading(false);
+        return;
+      }
+
       const result = await apiService.compileDossier(selectedDossierType, uploadedDocuments);
       
       if (result.success) {
         alert(result.message || `Dossier compiled successfully! Downloaded as: ${result.fileName}`);
+        
+        // Clear all uploaded documents and reset state
         setUploadedDocuments([]);
         setSelectedDossierType('');
         setShowDocumentUpload(false);
         setShowDocumentChecklist(false);
+        
+        // Clear localStorage backup
+        localStorage.removeItem('protocolGenerator_uploadedDocuments');
       }
     } catch (error) {
       console.error('Detailed error:', error);
-      alert(`Failed to compile dossier: ${error.message}`);
+      
+      // Provide more specific error messages
+      if (error.message.includes('network')) {
+        alert('Network error: Please check your internet connection and try again.');
+      } else if (error.message.includes('timeout')) {
+        alert('Request timeout: The operation took too long. Please try again.');
+      } else {
+        alert(`Failed to compile dossier: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -1814,6 +1917,15 @@ const ProtocolGenerator = () => {
             <div 
               {...getRootProps()} 
               className={`dropzone ${isDragActive ? 'active' : ''}`}
+              role="button"
+              tabIndex={0}
+              aria-label="Document upload area. Drag and drop files here or click to select files."
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.target.click();
+                }
+              }}
               style={{
                 border: isDragActive ? '3px dashed #3b82f6' : '2px dashed #94a3b8',
                 borderRadius: '12px',
