@@ -727,7 +727,7 @@ const ProtocolGenerator = () => {
       setLoading(false);
     }
   };
-  
+
   const generatePDF = async (documentId, filename) => {
     try {
       setLoading(true);
@@ -1271,9 +1271,9 @@ const ProtocolGenerator = () => {
             <h4 
               id={sectionId} 
               style={{ margin: 0, flex: 1 }}
-          >
-            {line}
-          </h4>
+            >
+              {line}
+            </h4>
           </div>
         );
       } else if (line.trim()) {
@@ -1333,6 +1333,134 @@ const ProtocolGenerator = () => {
       }
     });
     
+    return sectionsMarkup;
+  };
+
+  // Function to render Study Design section selection with "+" buttons
+  const renderStudyDesignSectionSelection = (studyDesignContent) => {
+    if (!studyDesignContent) {
+      return (
+        <p style={{ color: '#6b7280', fontSize: '14px' }}>
+          Generate a study design to see available sections with "+" buttons.
+        </p>
+      );
+    }
+
+    const sectionsMarkup = [];
+
+    // Handle CMC Section
+    if (studyDesignContent.cmc_section) {
+      const cmcLines = studyDesignContent.cmc_section.split('\n');
+      cmcLines.forEach((line, idx) => {
+        if (line.match(/^[A-Z\s]{5,}$/)) {
+          const sectionId = 'cmc-section';
+          const isSelected = selectedStudyDesignSections.has(sectionId);
+          
+          sectionsMarkup.push(
+            <div key={`cmc-${idx}`} style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px',
+              marginBottom: '10px',
+              padding: '8px',
+              borderRadius: '6px',
+              transition: 'background-color 0.2s'
+            }}>
+              <button
+                onClick={() => handleStudyDesignSectionToggle(sectionId)}
+                style={{
+                  background: isSelected ? '#3b82f6' : '#f3f4f6',
+                  color: isSelected ? 'white' : '#374151',
+                  border: '2px solid #d1d5db',
+                  borderRadius: '50%',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s ease'
+                }}
+                title={isSelected ? 'Remove from selection' : 'Add to selection'}
+              >
+                {isSelected ? '✓' : '+'}
+              </button>
+              <h4 
+                id={sectionId} 
+                style={{ margin: 0, flex: 1 }}
+              >
+                {line}
+              </h4>
+            </div>
+          );
+        }
+      });
+    }
+
+    // Handle Clinical Sections
+    if (studyDesignContent.clinical_section) {
+      const clinicalLines = studyDesignContent.clinical_section.split('\n');
+      clinicalLines.forEach((line, idx) => {
+        // Check if this is a main section header (starts with a number followed by period)
+        const sectionMatch = line.match(/^(\d+)\.\s+(.*)/i);
+        
+        if (sectionMatch && parseInt(sectionMatch[1]) >= 1 && parseInt(sectionMatch[1]) <= 20) {
+          const sectionId = `clinical-section-${sectionMatch[1]}`;
+          const isSelected = selectedStudyDesignSections.has(sectionId);
+          
+          sectionsMarkup.push(
+            <div key={`clinical-${idx}`} style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px',
+              marginBottom: '10px',
+              padding: '8px',
+              borderRadius: '6px',
+              transition: 'background-color 0.2s'
+            }}>
+              <button
+                onClick={() => handleStudyDesignSectionToggle(sectionId)}
+                style={{
+                  background: isSelected ? '#3b82f6' : '#f3f4f6',
+                  color: isSelected ? 'white' : '#374151',
+                  border: '2px solid #d1d5db',
+                  borderRadius: '50%',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s ease'
+                }}
+                title={isSelected ? 'Remove from selection' : 'Add to selection'}
+              >
+                {isSelected ? '✓' : '+'}
+              </button>
+              <h4 
+                id={sectionId} 
+                style={{ margin: 0, flex: 1 }}
+              >
+                {line}
+              </h4>
+            </div>
+          );
+        }
+      });
+    }
+
+    if (sectionsMarkup.length === 0) {
+      return (
+        <p style={{ color: '#6b7280', fontSize: '14px' }}>
+          No sections found in the generated study design content.
+        </p>
+      );
+    }
+
     return sectionsMarkup;
   };
 
@@ -2973,6 +3101,22 @@ const ProtocolGenerator = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Dynamic Study Design Section Selection from Content */}
+              {studyDesign && (
+                <div style={{ 
+                  marginTop: '1rem', 
+                  padding: '1rem', 
+                  border: '1px solid #d1d5db', 
+                  borderRadius: '6px', 
+                  backgroundColor: '#ffffff' 
+                }}>
+                  <h5 style={{ margin: '0 0 1rem 0', color: '#374151' }}>
+                    Available Study Design Sections from Generated Content
+                  </h5>
+                  {renderStudyDesignSectionSelection(studyDesign)}
+                </div>
+              )}
 
               {/* Individual Editable Study Design Sections */}
               {(selectedStudyDesignSections.size > 0) && (
