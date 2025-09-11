@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import CloseButton from './CloseButton';
 import openaiService from '../../services/openaiService';
 
 const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText, position }) => {
@@ -130,20 +131,7 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText, position }
             For medical & clinical content only
           </p>
         </div>
-        <button
-          onClick={onClose}
-          className="close-btn"
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '1.2rem',
-            cursor: 'pointer',
-            color: '#6b7280',
-            padding: '0'
-          }}
-        >
-          ×
-        </button>
+        <CloseButton onClick={onClose} variant="default" size={24} />
       </div>
 
       {/* Selected Text Display */}

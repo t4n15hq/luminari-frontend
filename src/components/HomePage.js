@@ -9,19 +9,19 @@ const HomePage = () => {
       icon: '',
       description: 'Generate comprehensive clinical protocols for various diseases and conditions',
       path: '/protocol',
-      color: '#ebf8ff',
+      color: '#f7f3fb',
       borderColor: 'var(--color-info)',
-      textColor: '#2b6cb0'
+      textColor: '#5a3280'
     },
     {
       id: 'regulatory',
       title: 'Regulatory Document Generator',
       icon: '',
-      description: 'Create regulatory documents for pharmaceutical development across global markets',
-      path: '/ind-modules',
-      color: '#f0fff4',
+      description: 'Create regulatory documents for pharmaceutical development across global markets (Single & Batch)',
+      path: '/unified-regulatory',
+      color: '#f7fdf0',
       borderColor: 'var(--color-success)',
-      textColor: '#276749'
+      textColor: '#6b8e23'
     },
     {
       id: 'diagnosis',
@@ -29,7 +29,7 @@ const HomePage = () => {
       icon: '',
       description: 'AI-powered tools for diagnosing conditions across multiple medical specialties',
       path: '/diagnosis',
-      color: '#ebf4ff',
+      color: '#f4f0f8',
       borderColor: 'var(--color-primary)',
       textColor: 'var(--color-primary-dark)'
     },
@@ -39,9 +39,9 @@ const HomePage = () => {
       icon: '',
       description: 'Get expert answers to complex questions about clinical trials and protocols',
       path: '/query',
-      color: '#faf5ff',
-      borderColor: '#9f7aea',
-      textColor: '#553c9a'
+      color: '#faf7fd',
+      borderColor: 'var(--color-primary-light)',
+      textColor: '#683D94'
     }
   ];
 

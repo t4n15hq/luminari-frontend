@@ -15,6 +15,7 @@ import QueryAssistant from './components/QueryAssistant';
 import SkinDiseaseDetector from './components/SkinDiseaseDetector';
 import LungCancerDetector from './components/LungCancerDetector';
 import DiseaseDiagnosis from './components/DiseaseDiagnosis';
+import Profile from './components/Profile';
 import BackgroundJobs from './components/common/BackgroundJobs'; // NEW IMPORT
 import SideNav from './components/common/SideNav'; // NEW IMPORT
 import ProtectedRoute from './components/ProtectedRoute';
@@ -89,6 +90,9 @@ const AppContent = () => {
                         <Route path="/diagnosis" element={<DiseaseDiagnosis />} />
                         <Route path="/diagnosis/dermatology" element={<SkinDiseaseDetector />} />
                         <Route path="/diagnosis/pulmonology" element={<LungCancerDetector />} />
+                        
+                        {/* Profile route */}
+                        <Route path="/profile" element={<Profile />} />
                         
                         {/* Legacy routes with redirects */}
                         <Route path="/skin-disease-detector" element={<Navigate to="/diagnosis/dermatology" replace />} />

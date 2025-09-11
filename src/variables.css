@@ -1,14 +1,14 @@
 /* src/variables.css - Unified Design System Variables */
 :root {
-  /* Primary colors - refined blue palette */
-  --color-primary: #2563eb;
-  --color-primary-light: #3b82f6;
-  --color-primary-dark: #1d4ed8;
+  /* Primary colors - Purple palette */
+  --color-primary: #683D94;
+  --color-primary-light: #A48BBF;
+  --color-primary-dark: #5a3280;
   
-  /* Secondary colors */
-  --color-secondary: #06b6d4;
-  --color-secondary-light: #22d3ee;
-  --color-secondary-dark: #0891b2;
+  /* Secondary colors - Green accent */
+  --color-secondary: #99CC33;
+  --color-secondary-light: #b3d966;
+  --color-secondary-dark: #85b82e;
   
   /* Gray scale - professional neutral colors */
   --color-gray-50: #f9fafb;
@@ -18,9 +18,9 @@
   --color-gray-400: #9ca3af;
   --color-gray-500: #6b7280;
   --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
+  --color-gray-700: #333333;
+  --color-gray-800: #2a2a2a;
+  --color-gray-900: #1a1a1a;
   
   /* Semantic colors */
   --color-text: var(--color-gray-900);
@@ -38,24 +38,24 @@
   --color-border-medium: var(--color-gray-300);
   
   /* Feedback colors */
-  --color-success: #10b981;
-  --color-success-light: #34d399;
-  --color-success-dark: #059669;
+  --color-success: #99CC33;
+  --color-success-light: #b3d966;
+  --color-success-dark: #85b82e;
   --color-warning: #f59e0b;
   --color-warning-light: #fbbf24;
   --color-warning-dark: #d97706;
   --color-error: #ef4444;
   --color-error-light: #f87171;
   --color-error-dark: #dc2626;
-  --color-info: #3b82f6;
-  --color-info-light: #60a5fa;
-  --color-info-dark: #1d4ed8;
+  --color-info: #683D94;
+  --color-info-light: #A48BBF;
+  --color-info-dark: #5a3280;
   
   /* Specialty colors */
-  --color-dermatology: #8b5cf6;
-  --color-neurology: #a855f7;
+  --color-dermatology: #A48BBF;
+  --color-neurology: #683D94;
   --color-cardiology: #ef4444;
-  --color-pulmonology: #10b981;
+  --color-pulmonology: #99CC33;
   --color-gastroenterology: #f59e0b;
   
   /* Spacing system */
@@ -92,9 +92,9 @@
   /* Legacy shadow variables */
   --shadow-medium: var(--shadow-md);
   
-  /* Typography - refined fonts */
-  --font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  /* Typography - Inter font family */
+  --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   --font-mono: 'SFMono-Regular', 'Monaco', 'Consolas', 'Courier New', monospace;
   
   /* Legacy font family variables for component compatibility */

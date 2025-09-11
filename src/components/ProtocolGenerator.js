@@ -20,7 +20,8 @@ const ProtocolGenerator = () => {
   const [mechanism, setMechanism] = useState('');
   const [clinicalInfo, setClinicalInfo] = useState('');
 
-  // Trial Design & Basics
+  // Study Type & Design
+  const [studyType, setStudyType] = useState('clinical'); // 'clinical' or 'preclinical'
   const [trialPhase, setTrialPhase] = useState('');
   const [trialType, setTrialType] = useState('');
   const [randomization, setRandomization] = useState('');
@@ -49,6 +50,17 @@ const ProtocolGenerator = () => {
   const [statisticalPower, setStatisticalPower] = useState('80');
   const [significanceLevel, setSignificanceLevel] = useState('0.05');
   const [studyDuration, setStudyDuration] = useState('');
+
+  // Preclinical-specific parameters
+  const [animalModel, setAnimalModel] = useState('');
+  const [animalStrain, setAnimalStrain] = useState('');
+  const [animalsPerGroup, setAnimalsPerGroup] = useState('');
+  const [studyObjective, setStudyObjective] = useState(''); // Safety, efficacy, toxicology, etc.
+  const [doseLevels, setDoseLevels] = useState('');
+  const [vehicleControl, setVehicleControl] = useState('');
+  const [tissueCollection, setTissueCollection] = useState('');
+  const [biomarkerAnalysis, setBiomarkerAnalysis] = useState('');
+  const [regulatoryGuideline, setRegulatoryGuideline] = useState(''); // GLP, ICH, etc.
 
   // UI State
   const [loading, setLoading] = useState(false);
@@ -122,8 +134,11 @@ const ProtocolGenerator = () => {
   ];
 
   // Dropdown options
+  const studyTypes = ['clinical', 'preclinical'];
   const trialPhases = ['Phase I', 'Phase II', 'Phase III', 'Phase IV'];
+  const preclinicalPhases = ['In vitro', 'In vivo - Acute', 'In vivo - Chronic', 'Toxicology', 'ADME', 'PK/PD'];
   const trialTypes = ['Interventional', 'Observational', 'Registry'];
+  const preclinicalTypes = ['Safety/Toxicology', 'Efficacy', 'Pharmacokinetics', 'Pharmacodynamics', 'ADME', 'Dose-finding'];
   const blindingOptions = ['Open-label', 'Single-blind', 'Double-blind'];
   const controlGroupTypes = ['Placebo', 'Standard of Care', 'None'];
   const genderOptions = ['All', 'Male', 'Female'];
@@ -143,6 +158,12 @@ const ProtocolGenerator = () => {
     'Custom/Other'
   ];
 
+  // Preclinical-specific options
+  const animalModels = ['Mouse', 'Rat', 'Rabbit', 'Non-human primate', 'Pig', 'Dog', 'Other'];
+  const animalStrains = ['C57BL/6', 'BALB/c', 'Sprague Dawley', 'Wistar', 'New Zealand White', 'Cynomolgus', 'Other'];
+  const studyObjectives = ['Safety Assessment', 'Efficacy Evaluation', 'Toxicology', 'Pharmacokinetics', 'Pharmacodynamics', 'ADME', 'Dose-Range Finding'];
+  const regulatoryGuidelines = ['GLP (Good Laboratory Practice)', 'ICH Guidelines', 'FDA Guidance', 'EMA Guidelines', 'OECD Guidelines', 'Other'];
+
   // Removed auto-population from localStorage
 
   const handleSubmit = async (e) => {
@@ -155,6 +176,9 @@ const ProtocolGenerator = () => {
       const formData = {
         disease_name: disease,
         additional_parameters: {
+          // Study Type
+          study_type: studyType,
+          
           // Basic information
           population: population || undefined,
           treatment_duration: treatment || undefined,
@@ -169,13 +193,24 @@ const ProtocolGenerator = () => {
           blinding: blinding || undefined,
           control_group_type: controlGroupType || undefined,
           
-          // Population & Eligibility
+          // Population & Eligibility (Clinical)
           sample_size: sampleSize || undefined,
           min_age: minAge || undefined,
           max_age: maxAge || undefined,
           gender: gender || undefined,
           inclusion_criteria: inclusionCriteria || undefined,
           exclusion_criteria: exclusionCriteria || undefined,
+          
+          // Preclinical-specific parameters
+          animal_model: animalModel || undefined,
+          animal_strain: animalStrain || undefined,
+          animals_per_group: animalsPerGroup || undefined,
+          study_objective: studyObjective || undefined,
+          dose_levels: doseLevels || undefined,
+          vehicle_control: vehicleControl || undefined,
+          tissue_collection: tissueCollection || undefined,
+          biomarker_analysis: biomarkerAnalysis || undefined,
+          regulatory_guideline: regulatoryGuideline || undefined,
           
           // Intervention & Drug Details
           route_of_administration: routeOfAdministration || undefined,
@@ -202,7 +237,7 @@ const ProtocolGenerator = () => {
       setLoading(true);
       
       // Monitor both jobs
-      const checkJobsStatus = () => {
+      const checkJobsStatus = async () => {
         const protocolJob = getJob(protocolJobId);
         const studyDesignJob = getJob(studyDesignJobId);
         
@@ -215,28 +250,47 @@ const ProtocolGenerator = () => {
             setStudyDesign(studyDesignJob.result);
             setShowGeneratedInfo(true);
 
-            // Save protocol to backend
+            // Save protocol to backend with error handling
             if (protocolJob.result) {
-              saveDocument({
-                type: 'PROTOCOL',
-                title: `Protocol for ${disease}`,
-                disease,
-                content: protocolJob.result.protocol,
-                protocolId: protocolJob.result.protocol_id,
-                // add more fields as needed
-              });
+              try {
+                await saveDocument({
+                  type: 'PROTOCOL',
+                  title: `Protocol for ${disease}`,
+                  disease,
+                  content: protocolJob.result.protocol,
+                  protocolId: protocolJob.result.protocol_id,
+                  // add more fields as needed
+                });
+                console.log('✅ Protocol saved successfully');
+              } catch (saveError) {
+                console.error('❌ Failed to save protocol:', saveError.message);
+                // Don't block the UI - protocol is still generated and viewable
+                // Could show a toast notification here if available
+                setError(`Protocol generated but could not be saved: ${saveError.message}`);
+              }
             }
-            // Save study design to backend
+            
+            // Save study design to backend with error handling
             if (studyDesignJob.result) {
-              saveDocument({
-                type: 'STUDY_DESIGN',
-                title: `Study Design for ${disease}`,
-                disease,
-                cmcSection: studyDesignJob.result.cmc_section,
-                clinicalSection: studyDesignJob.result.clinical_section,
-                content: `CMC SECTION:\n${studyDesignJob.result.cmc_section}\n\nCLINICAL SECTION:\n${studyDesignJob.result.clinical_section}`,
-                // add more fields as needed
-              });
+              try {
+                await saveDocument({
+                  type: 'STUDY_DESIGN',
+                  title: `Study Design for ${disease}`,
+                  disease,
+                  cmcSection: studyDesignJob.result.cmc_section,
+                  clinicalSection: studyDesignJob.result.clinical_section,
+                  content: `CMC SECTION:\n${studyDesignJob.result.cmc_section}\n\nCLINICAL SECTION:\n${studyDesignJob.result.clinical_section}`,
+                  // add more fields as needed
+                });
+                console.log('✅ Study design saved successfully');
+              } catch (saveError) {
+                console.error('❌ Failed to save study design:', saveError.message);
+                // Don't block the UI - study design is still generated and viewable
+                // Could show a toast notification here if available
+                if (!error) { // Only set error if not already set from protocol save
+                  setError(`Study design generated but could not be saved: ${saveError.message}`);
+                }
+              }
             }
             
             // Automatically scroll to results
@@ -1624,12 +1678,32 @@ const ProtocolGenerator = () => {
           </div>
         </div>
 
-        {/* Trial Design & Basics Section */}
+        {/* Study Type Selection */}
         <div className="form-section">
-          <h3>Trial Design & Basics</h3>
+          <h3>Study Type</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="trialPhase" className="form-label">Trial Phase</label>
+              <label htmlFor="studyType" className="form-label">Study Type <span className="required">*</span></label>
+              <select
+                id="studyType"
+                className="form-select"
+                value={studyType}
+                onChange={(e) => setStudyType(e.target.value)}
+                required
+              >
+                <option value="clinical">Clinical Study</option>
+                <option value="preclinical">Preclinical Study</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Trial Design & Basics Section */}
+        <div className="form-section">
+          <h3>{studyType === 'preclinical' ? 'Study Design & Basics' : 'Trial Design & Basics'}</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="trialPhase" className="form-label">{studyType === 'preclinical' ? 'Study Phase' : 'Trial Phase'}</label>
               <select
                 id="trialPhase"
                 className="form-select"
@@ -1637,21 +1711,21 @@ const ProtocolGenerator = () => {
                 onChange={(e) => setTrialPhase(e.target.value)}
               >
                 <option value="">Select Phase</option>
-                {trialPhases.map(phase => (
+                {(studyType === 'preclinical' ? preclinicalPhases : trialPhases).map(phase => (
                   <option key={phase} value={phase}>{phase}</option>
                 ))}
               </select>
             </div>
 
             <div className="form-group">
-              <label htmlFor="trialType">Trial Type</label>
+              <label htmlFor="trialType">{studyType === 'preclinical' ? 'Study Type' : 'Trial Type'}</label>
               <select
                 id="trialType"
                 value={trialType}
                 onChange={(e) => setTrialType(e.target.value)}
               >
                 <option value="">Select Type</option>
-                {trialTypes.map(type => (
+                {(studyType === 'preclinical' ? preclinicalTypes : trialTypes).map(type => (
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
@@ -1717,82 +1791,201 @@ const ProtocolGenerator = () => {
 
         {/* Population & Eligibility Section */}
         <div className="form-section">
-          <h3>Population & Eligibility</h3>
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="sampleSize">Target Sample Size</label>
-              <input
-                id="sampleSize"
-                type="number"
-                value={sampleSize}
-                onChange={(e) => setSampleSize(e.target.value)}
-                placeholder="e.g., 120"
-                min="1"
-              />
-            </div>
+          <h3>{studyType === 'preclinical' ? 'Animal Model & Study Design' : 'Population & Eligibility'}</h3>
+          {studyType === 'preclinical' ? (
+            // Preclinical Animal Model Fields
+            <>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="animalModel">Animal Model</label>
+                  <select
+                    id="animalModel"
+                    className="form-select"
+                    value={animalModel}
+                    onChange={(e) => setAnimalModel(e.target.value)}
+                  >
+                    <option value="">Select Animal Model</option>
+                    {animalModels.map(model => (
+                      <option key={model} value={model}>{model}</option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="form-group">
-              <label htmlFor="minAge">Minimum Age</label>
-              <input
-                id="minAge"
-                type="number"
-                value={minAge}
-                onChange={(e) => setMinAge(e.target.value)}
-                placeholder="e.g., 18"
-                min="0"
-              />
-            </div>
+                <div className="form-group">
+                  <label htmlFor="animalStrain">Animal Strain</label>
+                  <select
+                    id="animalStrain"
+                    className="form-select"
+                    value={animalStrain}
+                    onChange={(e) => setAnimalStrain(e.target.value)}
+                  >
+                    <option value="">Select Strain</option>
+                    {animalStrains.map(strain => (
+                      <option key={strain} value={strain}>{strain}</option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="form-group">
-              <label htmlFor="maxAge">Maximum Age</label>
-              <input
-                id="maxAge"
-                type="number"
-                value={maxAge}
-                onChange={(e) => setMaxAge(e.target.value)}
-                placeholder="e.g., 75"
-                min="0"
-              />
-            </div>
+                <div className="form-group">
+                  <label htmlFor="animalsPerGroup">Animals per Group</label>
+                  <input
+                    id="animalsPerGroup"
+                    type="number"
+                    value={animalsPerGroup}
+                    onChange={(e) => setAnimalsPerGroup(e.target.value)}
+                    placeholder="e.g., 8"
+                    min="1"
+                  />
+                </div>
 
-            <div className="form-group">
-              <label htmlFor="gender">Gender</label>
-              <select
-                id="gender"
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-              >
-                <option value="">Select Gender</option>
-                {genderOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+                <div className="form-group">
+                  <label htmlFor="studyObjective">Study Objective</label>
+                  <select
+                    id="studyObjective"
+                    className="form-select"
+                    value={studyObjective}
+                    onChange={(e) => setStudyObjective(e.target.value)}
+                  >
+                    <option value="">Select Objective</option>
+                    {studyObjectives.map(objective => (
+                      <option key={objective} value={objective}>{objective}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="inclusionCriteria">Inclusion Criteria</label>
-              <textarea
-                id="inclusionCriteria"
-                value={inclusionCriteria}
-                onChange={(e) => setInclusionCriteria(e.target.value)}
-                placeholder="e.g., Adults aged 18-75 years, Confirmed diagnosis of moderate-to-severe condition..."
-                rows="4"
-              />
-            </div>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="doseLevels">Dose Levels</label>
+                  <textarea
+                    id="doseLevels"
+                    value={doseLevels}
+                    onChange={(e) => setDoseLevels(e.target.value)}
+                    placeholder="e.g., Vehicle control, 10 mg/kg, 30 mg/kg, 100 mg/kg"
+                    rows="3"
+                  />
+                </div>
 
-            <div className="form-group">
-              <label htmlFor="exclusionCriteria">Exclusion Criteria</label>
-              <textarea
-                id="exclusionCriteria"
-                value={exclusionCriteria}
-                onChange={(e) => setExclusionCriteria(e.target.value)}
-                placeholder="e.g., Pregnancy, Active infection, Immunocompromised state..."
-                rows="4"
-              />
-            </div>
-          </div>
+                <div className="form-group">
+                  <label htmlFor="vehicleControl">Vehicle/Control</label>
+                  <input
+                    id="vehicleControl"
+                    type="text"
+                    value={vehicleControl}
+                    onChange={(e) => setVehicleControl(e.target.value)}
+                    placeholder="e.g., 0.5% CMC, PBS, Saline"
+                  />
+                </div>
+              </div>
+
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="tissueCollection">Tissue Collection & Timepoints</label>
+                  <textarea
+                    id="tissueCollection"
+                    value={tissueCollection}
+                    onChange={(e) => setTissueCollection(e.target.value)}
+                    placeholder="e.g., Blood samples at 1h, 4h, 24h; Tissue collection at study termination"
+                    rows="3"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="regulatoryGuideline">Regulatory Guideline</label>
+                  <select
+                    id="regulatoryGuideline"
+                    className="form-select"
+                    value={regulatoryGuideline}
+                    onChange={(e) => setRegulatoryGuideline(e.target.value)}
+                  >
+                    <option value="">Select Guideline</option>
+                    {regulatoryGuidelines.map(guideline => (
+                      <option key={guideline} value={guideline}>{guideline}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </>
+          ) : (
+            // Clinical Population Fields
+            <>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="sampleSize">Target Sample Size</label>
+                  <input
+                    id="sampleSize"
+                    type="number"
+                    value={sampleSize}
+                    onChange={(e) => setSampleSize(e.target.value)}
+                    placeholder="e.g., 120"
+                    min="1"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="minAge">Minimum Age</label>
+                  <input
+                    id="minAge"
+                    type="number"
+                    value={minAge}
+                    onChange={(e) => setMinAge(e.target.value)}
+                    placeholder="e.g., 18"
+                    min="0"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="maxAge">Maximum Age</label>
+                  <input
+                    id="maxAge"
+                    type="number"
+                    value={maxAge}
+                    onChange={(e) => setMaxAge(e.target.value)}
+                    placeholder="e.g., 75"
+                    min="0"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="gender">Gender</label>
+                  <select
+                    id="gender"
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                  >
+                    <option value="">Select Gender</option>
+                    {genderOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="inclusionCriteria">Inclusion Criteria</label>
+                  <textarea
+                    id="inclusionCriteria"
+                    value={inclusionCriteria}
+                    onChange={(e) => setInclusionCriteria(e.target.value)}
+                    placeholder="e.g., Adults aged 18-75 years, Confirmed diagnosis of moderate-to-severe condition..."
+                    rows="4"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="exclusionCriteria">Exclusion Criteria</label>
+                  <textarea
+                    id="exclusionCriteria"
+                    value={exclusionCriteria}
+                    onChange={(e) => setExclusionCriteria(e.target.value)}
+                    placeholder="e.g., Pregnancy, Active infection, Immunocompromised state..."
+                    rows="4"
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Intervention & Drug Details Section */}

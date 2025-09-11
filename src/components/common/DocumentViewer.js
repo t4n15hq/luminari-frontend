@@ -1,4 +1,5 @@
 import React from 'react';
+import CloseButton from './CloseButton';
 
 const DocumentViewer = ({ open, onClose, title, content, metadata }) => {
   if (!open) return null;
@@ -26,7 +27,13 @@ const DocumentViewer = ({ open, onClose, title, content, metadata }) => {
         overflow: 'auto',
         position: 'relative'
       }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, background: '#4299e1', color: 'white', border: 'none', borderRadius: '4px', padding: '4px 12px', cursor: 'pointer' }}>Close</button>
+        <CloseButton 
+          onClick={onClose} 
+          variant="default" 
+          size={32}
+          position="absolute"
+          style={{ top: '16px', right: '16px' }}
+        />
         <h2 style={{ marginTop: 0 }}>{title}</h2>
         {metadata && (
           <div style={{ marginBottom: '1rem', color: '#64748b', fontSize: '0.95em' }}>

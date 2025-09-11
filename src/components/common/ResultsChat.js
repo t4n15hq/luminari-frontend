@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import apiService from '../../services/api';
 import LoadingSpinner from './LoadingSpinner';
+import CloseButton from './CloseButton';
 
 const SendIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -166,7 +167,7 @@ const resultsCsv = useMemo(() => {
         <div className="results-chat-conversation-pane">
             <div className="results-chat-header">
               <h3>AI Data Analyst</h3>
-              <button onClick={onClose} className="close-btn" aria-label="Close chat">&times;</button>
+              <CloseButton onClick={onClose} variant="default" size={28} />
             </div>
             <div className="results-chat-messages" ref={chatContainerRef}>
               {messages.map((msg, index) => (

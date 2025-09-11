@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { CloseIcon, SearchIcon, ArrowRightIcon } from '../icons/MedicalIcons';
+import { SearchIcon, ArrowRightIcon } from '../icons/MedicalIcons';
+import CloseButton from './CloseButton';
 import openaiService from '../../services/openaiService';
 
 const AskLuminaPopup = ({ isOpen, onClose, contextData = null }) => {
@@ -150,29 +151,11 @@ const AskLuminaPopup = ({ isOpen, onClose, contextData = null }) => {
               </p>
             </div>
           </div>
-          <button
+          <CloseButton
             onClick={onClose}
-            style={{
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: 'white',
-              cursor: 'pointer',
-              padding: '0.5rem',
-              borderRadius: '0.5rem',
-              transition: 'background-color 0.2s ease',
-              fontSize: '20px',
-              lineHeight: '1',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '32px',
-              height: '32px'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-          >
-            <CloseIcon size={20} />
-          </button>
+            variant="light"
+            size={32}
+          />
         </div>
 
         {/* Context Info */}

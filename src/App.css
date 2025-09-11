@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #683D94;
   padding: var(--space-lg);
 }
 
@@ -172,7 +172,7 @@
   top: 0;
   width: 260px;
   height: 100vh;
-  background: linear-gradient(180deg, #1a1f36 0%, #2d3748 100%);
+  background: linear-gradient(180deg, #2a1f3d 0%, #3d2c52 100%);
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   display: flex;
@@ -183,7 +183,7 @@
 .side-nav-header {
   padding: var(--space-xl) var(--space-lg);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #683D94 0%, #5a3280 100%);
 }
 
 .side-nav-header .logo {
@@ -229,15 +229,15 @@
   left: 0;
   width: 0;
   height: 100%;
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.2) 0%, rgba(29, 78, 216, 0.1) 100%);
+  background: linear-gradient(90deg, rgba(104, 61, 148, 0.2) 0%, rgba(90, 50, 128, 0.1) 100%);
   transition: width 0.3s ease;
   z-index: -1;
 }
 
 .side-nav-links a:hover {
   color: white;
-  background: rgba(37, 99, 235, 0.1);
-  border-left-color: #3b82f6;
+  background: rgba(104, 61, 148, 0.1);
+  border-left-color: #A48BBF;
   transform: translateX(4px);
 }
 
@@ -247,8 +247,8 @@
 
 .side-nav-links a.active {
   color: white;
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.2) 0%, rgba(29, 78, 216, 0.1) 100%);
-  border-left-color: #60a5fa;
+  background: linear-gradient(90deg, rgba(104, 61, 148, 0.2) 0%, rgba(90, 50, 128, 0.1) 100%);
+  border-left-color: #A48BBF;
   font-weight: 600;
 }
 
@@ -1899,14 +1899,14 @@ textarea.is-valid {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #683D94;
   color: white;
   cursor: pointer;
   user-select: none;
 }
 
 .background-jobs-header:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  background: #5a3280;
 }
 
 .background-jobs-title {
@@ -2039,17 +2039,17 @@ textarea.is-valid {
 
 .background-job-progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  background: #683D94;
   transition: width 0.3s ease;
   border-radius: 3px;
 }
 
 .background-job-progress-bar.completed {
-  background: linear-gradient(90deg, #10b981, #059669);
+  background: #99CC33;
 }
 
 .background-job-progress-bar.error {
-  background: linear-gradient(90deg, #ef4444, #dc2626);
+  background: #ef4444;
 }
 
 .background-job-button {

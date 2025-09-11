@@ -25,6 +25,13 @@ const SkinDiseaseDetector = () => {
   const [skinColor, setSkinColor] = useState('');
   const [skinType, setSkinType] = useState('');
   const [conditionDescription, setConditionDescription] = useState('');
+  
+  // Enhanced multi-modal fields
+  const [medicalHistory, setMedicalHistory] = useState('');
+  const [familyHistory, setFamilyHistory] = useState('');
+  const [symptoms, setSymptoms] = useState([]);
+  const [currentMedications, setCurrentMedications] = useState('');
+  const [enhancedInsights, setEnhancedInsights] = useState('');
 
   // Batch processing states
   const [batchFiles, setBatchFiles] = useState([]);
@@ -97,6 +104,32 @@ const SkinDiseaseDetector = () => {
 
   const removeBatchFile = (id) => {
     setBatchFiles(prev => prev.filter(item => item.id !== id));
+  };
+
+  // Enhanced multi-modal helper functions
+  const toggleSymptom = (symptom) => {
+    setSymptoms(prev => 
+      prev.includes(symptom) 
+        ? prev.filter(s => s !== symptom)
+        : [...prev, symptom]
+    );
+  };
+
+  const clearAllData = () => {
+    setAge('');
+    setGender('');
+    setRace('');
+    setSkinColor('');
+    setSkinType('');
+    setConditionDescription('');
+    setMedicalHistory('');
+    setFamilyHistory('');
+    setSymptoms([]);
+    setCurrentMedications('');
+    setSelectedImage(null);
+    setPreviewImage(null);
+    setPrediction([]);
+    setEnhancedInsights('');
   };
 
   const processBatch = async () => {
@@ -209,6 +242,24 @@ const SkinDiseaseDetector = () => {
       return;
     }
 
+    // Enhanced context for better AI analysis
+    const enhancedContext = `
+    PATIENT PROFILE:
+    - Age: ${age}, Gender: ${gender}, Ethnicity: ${race}
+    - Skin: ${skinColor}, Type: ${skinType}
+    
+    CLINICAL PRESENTATION:
+    - Description: ${conditionDescription}
+    - Symptoms: ${symptoms.length > 0 ? symptoms.join(', ') : 'None reported'}
+    
+    MEDICAL HISTORY:
+    - Past Medical History: ${medicalHistory || 'Not provided'}
+    - Family History: ${familyHistory || 'Not provided'}
+    - Current Medications: ${currentMedications || 'None reported'}
+    
+    ANALYSIS REQUEST: Provide detailed dermatological assessment considering all patient factors.
+    `;
+
     const formData = new FormData();
     formData.append('file', selectedImage);
     formData.append('age', age);
@@ -216,7 +267,7 @@ const SkinDiseaseDetector = () => {
     formData.append('race', race);
     formData.append('skin_color', skinColor);
     formData.append('skin_type', skinType);
-    formData.append('condition_description', conditionDescription);
+    formData.append('condition_description', enhancedContext);
 
     setIsLoading(true);
 
@@ -235,13 +286,54 @@ const SkinDiseaseDetector = () => {
       
       setPrediction(preds);
 
-      // Removed localStorage data saving
+      // Generate enhanced insights based on multi-modal data
+      if (preds.length > 0 && (medicalHistory || familyHistory || symptoms.length > 0 || currentMedications)) {
+        const insights = await generateEnhancedInsights(preds);
+        setEnhancedInsights(insights);
+      } else {
+        setEnhancedInsights('');
+      }
 
     } catch (error) {
       // console.error('Prediction error:', error);
       setPrediction([{ label: 'An error occurred. Try again.', confidence: 0 }]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Enhanced AI insights based on multi-modal data
+  const generateEnhancedInsights = async (prediction) => {
+    if (!prediction || prediction.length === 0) return null;
+    
+    try {
+      const contextPrompt = `
+      Based on the dermatological analysis results, provide enhanced clinical insights:
+      
+      TOP PREDICTION: ${prediction[0].label} (${(prediction[0].confidence * 100).toFixed(1)}% confidence)
+      
+      PATIENT CONTEXT:
+      - Age: ${age}, Gender: ${gender}, Ethnicity: ${race}
+      - Skin Type: ${skinColor}, ${skinType}
+      - Symptoms: ${symptoms.join(', ') || 'None reported'}
+      - Medical History: ${medicalHistory || 'Not provided'}
+      - Family History: ${familyHistory || 'Not provided'}
+      - Current Medications: ${currentMedications || 'None'}
+      
+      Please provide:
+      1. Clinical significance of this finding for this patient profile
+      2. Risk factors present based on patient history
+      3. Recommended next steps specific to this case
+      4. Follow-up considerations
+      
+      Keep response concise and clinical.
+      `;
+      
+      const insights = await openaiService.queryAssistant({ question: contextPrompt });
+      return insights?.answer || insights;
+    } catch (error) {
+      console.warn('Failed to generate enhanced insights:', error);
+      return null;
     }
   };
 
@@ -569,11 +661,104 @@ const SkinDiseaseDetector = () => {
               </label>
               <textarea
                 className="form-textarea"
-                placeholder="Detailed description of the lesion/condition (e.g., duration, symptoms, changes over time, associated pain/itching, family history, previous treatments)"
-                rows={4}
+                placeholder="Detailed description of the lesion/condition (e.g., duration, symptoms, changes over time, associated pain/itching)"
+                rows={3}
                 value={conditionDescription}
                 onChange={(e) => setConditionDescription(e.target.value)}
               />
+            </div>
+
+            {/* Enhanced Multi-Modal Fields */}
+            <div style={{ marginTop: '20px' }}>
+              <h4 style={{ color: '#2d3748', marginBottom: '15px', fontSize: '1.1rem' }}>📋 Additional Clinical Information</h4>
+              
+              {/* Symptoms Checklist */}
+              <div style={{ marginBottom: '20px' }}>
+                <label className="form-label" style={{ marginBottom: '10px' }}>Current Symptoms</label>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+                  gap: '10px',
+                  padding: '15px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px',
+                  border: '1px solid #e9ecef'
+                }}>
+                  {['Itching', 'Burning', 'Pain', 'Redness', 'Swelling', 'Scaling', 'Crusting', 'Bleeding'].map(symptom => (
+                    <label key={symptom} style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={symptoms.includes(symptom)}
+                        onChange={() => toggleSymptom(symptom)}
+                        style={{ marginRight: '8px' }}
+                      />
+                      {symptom}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Medical History */}
+              <div style={{ marginBottom: '20px' }}>
+                <label className="form-label">Past Medical History</label>
+                <textarea
+                  className="form-textarea"
+                  placeholder="Previous skin conditions, allergies, surgeries, chronic diseases (e.g., diabetes, autoimmune conditions)"
+                  rows={2}
+                  value={medicalHistory}
+                  onChange={(e) => setMedicalHistory(e.target.value)}
+                />
+              </div>
+
+              {/* Family History */}
+              <div style={{ marginBottom: '20px' }}>
+                <label className="form-label">Family History</label>
+                <textarea
+                  className="form-textarea"
+                  placeholder="Family history of skin cancer, dermatological conditions, or genetic disorders"
+                  rows={2}
+                  value={familyHistory}
+                  onChange={(e) => setFamilyHistory(e.target.value)}
+                />
+              </div>
+
+              {/* Current Medications */}
+              <div style={{ marginBottom: '20px' }}>
+                <label className="form-label">Current Medications</label>
+                <textarea
+                  className="form-textarea"
+                  placeholder="List current medications, especially those affecting skin or immune system"
+                  rows={2}
+                  value={currentMedications}
+                  onChange={(e) => setCurrentMedications(e.target.value)}
+                />
+              </div>
+
+              {/* Clear Data Button */}
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                <button
+                  type="button"
+                  onClick={clearAllData}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '14px', padding: '8px 15px' }}
+                >
+                  🗑️ Clear All Data
+                </button>
+                <div style={{ 
+                  flex: 1, 
+                  fontSize: '12px', 
+                  color: '#6b7280', 
+                  display: 'flex', 
+                  alignItems: 'center' 
+                }}>
+                  💡 More clinical context = more accurate analysis
+                </div>
+              </div>
             </div>
 
             <button
@@ -705,6 +890,32 @@ const SkinDiseaseDetector = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Enhanced AI Insights */}
+                {enhancedInsights && (
+                  <div style={{ 
+                    backgroundColor: '#f0fdf4',
+                    border: '1px solid #86efac',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    marginBottom: '25px'
+                  }}>
+                    <h4 style={{ margin: '0 0 15px 0', color: '#166534', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🧠 AI-Enhanced Clinical Insights
+                      <span style={{ fontSize: '12px', fontWeight: 'normal', color: '#4b5563' }}>
+                        (Based on your additional clinical data)
+                      </span>
+                    </h4>
+                    <div style={{ 
+                      fontSize: '0.95rem', 
+                      lineHeight: '1.6', 
+                      color: '#166534',
+                      whiteSpace: 'pre-line'
+                    }}>
+                      {enhancedInsights}
+                    </div>
+                  </div>
+                )}
 
                 {/* Next Steps Section */}
                 <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>

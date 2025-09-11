@@ -22,18 +22,57 @@ export async function saveDocument(documentData) {
     throw new Error('Authentication required. Please log in to save documents.');
   }
   
-  const headers = { Authorization: `Bearer ${token}` };
+  // Check document size before sending (limit to 10MB JSON)
+  const documentSize = JSON.stringify(documentData).length;
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  
+  if (documentSize > maxSize) {
+    console.warn(`Document size (${Math.round(documentSize / 1024 / 1024 * 100) / 100}MB) exceeds limit. Truncating content...`);
+    
+    // Truncate content if too large
+    const truncatedData = { ...documentData };
+    if (truncatedData.content && typeof truncatedData.content === 'string') {
+      const maxContentLength = Math.floor(maxSize * 0.8); // Use 80% of limit for content
+      if (truncatedData.content.length > maxContentLength) {
+        truncatedData.content = truncatedData.content.substring(0, maxContentLength) + '\n\n[CONTENT TRUNCATED DUE TO SIZE LIMIT]';
+      }
+    }
+    documentData = truncatedData;
+  }
+  
+  const headers = { 
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  };
   
   try {
     const response = await axios.post(`${DOCUMENTS_API_URL}/documents`, documentData, {
-      headers
+      headers,
+      timeout: 30000, // 30 second timeout for large documents
+      maxContentLength: maxSize,
+      maxBodyLength: maxSize
     });
     return response.data;
   } catch (error) {
+    console.error('Document save error:', error.response?.data || error.message);
+    
     if (error.response?.status === 401) {
       console.error('Authentication failed. Token may be expired.');
       throw new Error('Session expired. Please log in again.');
+    } else if (error.response?.status === 403) {
+      console.error('Access forbidden. User may not have permission to save documents.');
+      throw new Error('Access denied. You may not have permission to save documents. Please check your account privileges.');
+    } else if (error.response?.status === 413) {
+      console.error('Document too large for server.');
+      throw new Error('Document is too large to save. Please try generating a shorter protocol or contact support.');
+    } else if (error.response?.status === 429) {
+      console.error('Rate limit exceeded.');
+      throw new Error('Too many requests. Please wait a moment before trying again.');
+    } else if (error.code === 'ECONNABORTED') {
+      console.error('Request timeout.');
+      throw new Error('Request timeout. The document may be too large or the server is slow. Please try again.');
     }
+    
     throw error;
   }
 }
@@ -101,16 +140,16 @@ const apiService = {
       // =============================================================================
       if (documentTypeName === "IND (Investigational New Drug)" || 
           (lowerDocName.includes("ind") && (!country || country.toLowerCase() === 'united states' || country.toLowerCase() === 'usa'))) {
-        return await openaiService.generateIndModule(data);
+        return await openaiService.generateSectionBasedDocument('ind', data);
       }
       
       if (documentTypeName === "NDA (New Drug Application)" || 
           (lowerDocName.includes("nda") && (!country || country.toLowerCase() === 'united states' || country.toLowerCase() === 'usa'))) {
-        return await openaiService.generateNDA(data);
+        return await openaiService.generateSectionBasedDocument('nda', data);
       }
       
       if (documentTypeName === "BLA (Biologics License Application)") {
-        return await openaiService.generateBLA(data);
+        return await openaiService.generateSectionBasedDocument('bla', data);
       }
 
       // =============================================================================
@@ -118,11 +157,11 @@ const apiService = {
       // =============================================================================
       if (documentTypeName === "Clinical Trial Application (Health Canada)" || 
           (lowerDocName.includes("cta") && country?.toLowerCase() === 'canada')) {
-        return await openaiService.generateCTA_CA(data);
+        return await openaiService.generateSectionBasedDocument('cta_ca', data);
       }
       
       if (documentTypeName === "New Drug Submission (NDS)") {
-        return await openaiService.generateNDS(data);
+        return await openaiService.generateSectionBasedDocument('nds', data);
       }
       
       if (documentTypeName === "Notice of Compliance (NOC)") {
@@ -145,15 +184,15 @@ const apiService = {
       // =============================================================================
       if (documentTypeName === "CTA (Clinical Trial Application)" || 
           (lowerDocName.includes("cta") && (country?.toLowerCase() === 'european union' || country?.toLowerCase() === 'eu'))) {
-        return await openaiService.generateCTA(data);
+        return await openaiService.generateSectionBasedDocument('cta', data);
       }
       
       if (documentTypeName === "MAA (Marketing Authorization Application)") {
-        return await openaiService.generateMAA(data);
+        return await openaiService.generateSectionBasedDocument('maa', data);
       }
       
       if (documentTypeName === "IMPD (Investigational Medicinal Product Dossier)") {
-        return await openaiService.generateIMPD(data);
+        return await openaiService.generateSectionBasedDocument('impd', data);
       }
 
       // =============================================================================
@@ -161,11 +200,11 @@ const apiService = {
       // =============================================================================
       if (documentTypeName === "Clinical Trial Authorisation (UK)" || 
           (lowerDocName.includes("cta") && country?.toLowerCase() === 'united kingdom')) {
-        return await openaiService.generateCTA_UK(data);
+        return await openaiService.generateSectionBasedDocument('cta_uk', data);
       }
       
       if (documentTypeName === "Marketing Authorisation (UK)") {
-        return await openaiService.generateMA_UK(data);
+        return await openaiService.generateSectionBasedDocument('ma_uk', data);
       }
       
       if (documentTypeName === "Voluntary Scheme for Branded Medicines Pricing") {
@@ -181,7 +220,7 @@ const apiService = {
       }
       
       if (documentTypeName === "Marketing Authorisation (Switzerland)") {
-        return await openaiService.generateMA_CH(data);
+        return await openaiService.generateSectionBasedDocument('ma_ch', data);
       }
 
       // =============================================================================
@@ -189,7 +228,7 @@ const apiService = {
       // =============================================================================
       if (documentTypeName === "Clinical Trial Permit (Roszdravnadzor)" || 
           (lowerDocName.includes("cta") && country?.toLowerCase() === 'russia')) {
-        return await openaiService.generateCTA_RU(data);
+        return await openaiService.generateSectionBasedDocument('cta_ru', data);
       }
       
       if (documentTypeName === "Registration Dossier (Russia)") {
@@ -208,7 +247,7 @@ const apiService = {
       }
       
       if (documentTypeName === "J-NDA (New Drug Application)") {
-        return await openaiService.generateJNDA(data);
+        return await openaiService.generateSectionBasedDocument('jnda', data);
       }
       
       if (documentTypeName === "PMDA Scientific Advice") {
@@ -220,12 +259,12 @@ const apiService = {
       // =============================================================================
       if (documentTypeName === "IND (China)" || 
           (lowerDocName.includes("ind") && country?.toLowerCase() === 'china')) {
-        return await openaiService.generateIND_CH(data);
+        return await openaiService.generateSectionBasedDocument('ind_ch', data);
       }
       
       if (documentTypeName === "NDA (China)" || 
           (lowerDocName.includes("nda") && country?.toLowerCase() === 'china')) {
-        return await openaiService.generateNDA_CH(data);
+        return await openaiService.generateSectionBasedDocument('nda_ch', data);
       }
       
       if (documentTypeName === "Drug Registration Certificate") {
@@ -237,12 +276,12 @@ const apiService = {
       // =============================================================================
       if (documentTypeName === "IND (Korea)" || 
           (lowerDocName.includes("ind") && country?.toLowerCase() === 'south korea')) {
-        return await openaiService.generateIND_KR(data);
+        return await openaiService.generateSectionBasedDocument('ind_kr', data);
       }
       
       if (documentTypeName === "NDA (Korea)" || 
           (lowerDocName.includes("nda") && country?.toLowerCase() === 'south korea')) {
-        return await openaiService.generateNDA_KR(data);
+        return await openaiService.generateSectionBasedDocument('nda_kr', data);
       }
       
       if (documentTypeName === "Korean GMP Certificate") {
@@ -257,7 +296,7 @@ const apiService = {
       }
       
       if (documentTypeName === "AUS (Australian Submission)") {
-        return await openaiService.generateAUS(data);
+        return await openaiService.generateSectionBasedDocument('aus', data);
       }
       
       if (documentTypeName === "TGA GMP Certificate") {
@@ -286,7 +325,7 @@ const apiService = {
       
       if (documentTypeName === "New Drug Application (India)" || 
           (lowerDocName.includes("nda") && country?.toLowerCase() === 'india')) {
-        return await openaiService.generateNDA_IN(data);
+        return await openaiService.generateSectionBasedDocument('nda_in', data);
       }
       
       if (documentTypeName === "Import License") {
@@ -387,47 +426,47 @@ const apiService = {
       // Generic IND routing
       if (lowerDocName.includes("ind")) {
         if (country?.toLowerCase() === 'china') {
-          return await openaiService.generateIND_CH(data);
+          return await openaiService.generateSectionBasedDocument('ind_ch', data);
         } else if (country?.toLowerCase() === 'south korea') {
-          return await openaiService.generateIND_KR(data);
+          return await openaiService.generateSectionBasedDocument('ind_kr', data);
         } else if (country?.toLowerCase() === 'taiwan') {
           return await openaiService.generateIND_TW(data);
         }
-        return await openaiService.generateIndModule(data); // Default to US IND structure
+        return await openaiService.generateSectionBasedDocument('ind', data); // Default to US IND structure
       }
       
       // Generic NDA routing
       if (lowerDocName.includes("nda")) {
         if (country?.toLowerCase() === 'china') {
-          return await openaiService.generateNDA_CH(data);
+          return await openaiService.generateSectionBasedDocument('nda_ch', data);
         } else if (country?.toLowerCase() === 'japan') {
-          return await openaiService.generateJNDA(data);
+          return await openaiService.generateSectionBasedDocument('jnda', data);
         } else if (country?.toLowerCase() === 'south korea') {
-          return await openaiService.generateNDA_KR(data);
+          return await openaiService.generateSectionBasedDocument('nda_kr', data);
         } else if (country?.toLowerCase() === 'taiwan') {
           return await openaiService.generateNDA_TW(data);
         } else if (country?.toLowerCase() === 'india') {
-          return await openaiService.generateNDA_IN(data);
+          return await openaiService.generateSectionBasedDocument('nda_in', data);
         }
-        return await openaiService.generateNDA(data); // Default to US NDA structure
+        return await openaiService.generateSectionBasedDocument('nda', data); // Default to US NDA structure
       }
       
       // Generic CTA routing
       if (lowerDocName.includes("cta") || lowerDocName.includes("clinical trial")) {
         if (country?.toLowerCase() === 'canada') {
-          return await openaiService.generateCTA_CA(data);
+          return await openaiService.generateSectionBasedDocument('cta_ca', data);
         } else if (country?.toLowerCase() === 'united kingdom' || country?.toLowerCase() === 'uk') {
-          return await openaiService.generateCTA_UK(data);
+          return await openaiService.generateSectionBasedDocument('cta_uk', data);
         } else if (country?.toLowerCase() === 'switzerland') {
           return await openaiService.generateCTA_CH(data);
         } else if (country?.toLowerCase() === 'russia') {
-          return await openaiService.generateCTA_RU(data);
+          return await openaiService.generateSectionBasedDocument('cta_ru', data);
         } else if (country?.toLowerCase() === 'singapore') {
           return await openaiService.generateCTA_SG(data);
         } else if (country?.toLowerCase() === 'india') {
           return await openaiService.generateCTA_IN(data);
         }
-        return await openaiService.generateCTA(data); // Default to EU CTA structure
+        return await openaiService.generateSectionBasedDocument('cta', data); // Default to EU CTA structure
       }
 
       // Generic CTN routing
@@ -442,11 +481,11 @@ const apiService = {
       // Generic MAA routing
       if (lowerDocName.includes("maa") || lowerDocName.includes("marketing authorization") || lowerDocName.includes("marketing authorisation")) {
         if (country?.toLowerCase() === 'united kingdom' || country?.toLowerCase() === 'uk') {
-          return await openaiService.generateMA_UK(data);
+          return await openaiService.generateSectionBasedDocument('ma_uk', data);
         } else if (country?.toLowerCase() === 'switzerland') {
-          return await openaiService.generateMA_CH(data);
+          return await openaiService.generateSectionBasedDocument('ma_ch', data);
         }
-        return await openaiService.generateMAA(data); // Default to EU MAA structure
+        return await openaiService.generateSectionBasedDocument('maa', data); // Default to EU MAA structure
       }
 
       // =============================================================================

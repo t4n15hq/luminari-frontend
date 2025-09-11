@@ -99,9 +99,89 @@ const DOCUMENT_REQUIREMENTS = {
   },
   impd: { 
     minWords: 7000, 
-    sections: 6,
+    sections: 7,
     config: 'COMPREHENSIVE',
     type: 'IMPD Document'
+  },
+  // Large country-specific documents that benefit from section-based generation
+  nds: { 
+    minWords: 8000, 
+    sections: 8,
+    config: 'REGULATORY',
+    type: 'Canadian NDS'
+  },
+  jnda: { 
+    minWords: 9000, 
+    sections: 8,
+    config: 'REGULATORY',
+    type: 'Japanese NDA'
+  },
+  nda_ch: { 
+    minWords: 8000, 
+    sections: 7,
+    config: 'REGULATORY',
+    type: 'Chinese NDA'
+  },
+  nda_kr: { 
+    minWords: 7000, 
+    sections: 6,
+    config: 'REGULATORY',
+    type: 'Korean NDA'
+  },
+  ma_uk: { 
+    minWords: 8000, 
+    sections: 7,
+    config: 'REGULATORY',
+    type: 'UK Marketing Authorization'
+  },
+  ma_ch: { 
+    minWords: 7000, 
+    sections: 6,
+    config: 'REGULATORY',
+    type: 'Swiss Marketing Authorization'
+  },
+  aus: { 
+    minWords: 7000, 
+    sections: 6,
+    config: 'REGULATORY',
+    type: 'Australian TGA Submission'
+  },
+  // Additional country-specific documents for section-based generation
+  cta_uk: { 
+    minWords: 7000, 
+    sections: 7,
+    config: 'REGULATORY',
+    type: 'UK Clinical Trial Authorization'
+  },
+  cta_ca: { 
+    minWords: 6000, 
+    sections: 6,
+    config: 'REGULATORY',
+    type: 'Canadian Clinical Trial Application'
+  },
+  cta_ru: { 
+    minWords: 6000, 
+    sections: 6,
+    config: 'REGULATORY',
+    type: 'Russian Clinical Trial Permit'
+  },
+  ind_ch: { 
+    minWords: 6000, 
+    sections: 6,
+    config: 'REGULATORY',
+    type: 'Chinese IND Application'
+  },
+  ind_kr: { 
+    minWords: 6000, 
+    sections: 6,
+    config: 'REGULATORY',
+    type: 'Korean IND Application'
+  },
+  nda_in: { 
+    minWords: 7000, 
+    sections: 7,
+    config: 'REGULATORY',
+    type: 'Indian NDA Application'
   }
 };
 
@@ -178,21 +258,98 @@ const createSystemPrompt = (expertise, docType, regulatoryFramework, detailedReq
   
   return `You are a ${expertise} with extensive experience in ${documentTypeDescription.toLowerCase()} preparation and regulatory submissions. You have knowledge of ${regulatoryFramework} requirements.
 
-Your task is to generate a comprehensive, regulatory-compliant ${documentTypeDescription.toUpperCase()} that meets professional standards for regulatory agencies.
+Your task is to generate a HIGH-QUALITY FOUNDATION PROTOCOL for a ${documentTypeDescription.toUpperCase()} that adheres to UNIVERSAL CLINICAL PROTOCOL GENERATION STANDARDS.
 
-CRITICAL ${regulatoryFramework.toUpperCase()} REQUIREMENTS:
+🔬 SCIENTIFIC INTEGRITY FRAMEWORK - MANDATORY:
 ${detailedRequirements}
 
-CONTENT REQUIREMENTS:
-- Generate a well-structured document with ${requirements?.sections || 6} main sections
-- Each section should contain relevant technical content with appropriate methodological details
-- Include regulatory and scientific justification for all recommendations
-- Provide specific parameters, timing, and acceptance criteria where applicable
-- Reference relevant regulatory guidance documents and industry standards
-- Use professional clinical research and regulatory terminology throughout
-- Maintain focus and avoid repetitive content
+🔬 UNIVERSAL SCIENTIFIC INTEGRITY REQUIREMENTS:
+- NEVER generate fictional biomarkers, scores, or metrics - use ONLY established, literature-supported measures
+- If proposing investigational elements, explicitly label as "[INVESTIGATIONAL - REQUIRES VALIDATION]"
+- Base ALL mechanisms of action on published biological pathways with appropriate citations
+- Include realistic data ranges derived from actual clinical experience, not arbitrary numbers
+- Distinguish clearly between hypothesis-generating observations and validated clinical evidence
+- Ground all therapeutic rationales in established pathophysiology
 
-DECISION TRANSPARENCY REQUIREMENT:
+📋 REGULATORY COMPLIANCE CORE - MANDATORY:
+- Use precise regulatory terminology (Phase I/II/III, not "pre-clinical" for human studies)
+- Include phase-appropriate primary endpoints (safety for Phase I, efficacy for Phase II/III)
+- Generate statistically justified sample sizes based on study objectives and power requirements
+- Include comprehensive safety monitoring frameworks with predefined stopping rules
+- Specify appropriate regulatory pathway (IND, IDE, etc.) with corresponding requirements
+- Address relevant FDA guidance documents for the therapeutic area
+
+🎯 STUDY DESIGN STANDARDS - MANDATORY:
+- Base inclusion/exclusion criteria on scientific rationale, not data mining correlations
+- Include standard eligibility requirements appropriate to indication and patient safety
+- Provide specific, implementable procedures (dose escalation, randomization, blinding)
+- Generate realistic timelines based on enrollment feasibility and endpoint assessment
+- Include appropriate control groups and statistical analysis plans
+- Specify meaningful clinical endpoints that align with regulatory expectations
+
+📊 DATA UTILIZATION PRINCIPLES - MANDATORY:
+- Frame retrospective analyses as "informing study design" not "proving efficacy"
+- Acknowledge limitations of historical data and observational studies
+- Include prospective validation plans for any derived hypotheses or biomarkers
+- Avoid claiming superiority based on uncontrolled comparisons
+- Distinguish between feasibility data and treatment validation
+- Include appropriate statistical caveats for exploratory analyses
+
+🏭 MANUFACTURING & QUALITY REQUIREMENTS - MANDATORY:
+- Generate realistic specifications based on therapeutic class standards
+- Include appropriate analytical methods and quality control procedures
+- Provide feasible stability and storage requirements
+- Remove placeholder information that could mislead (generic addresses, fictional facilities)
+- Include proper chain of custody and accountability procedures
+- Address container-closure system requirements appropriately
+
+📝 DOCUMENTATION EXCELLENCE - MANDATORY:
+- Replace boilerplate language with study-specific, meaningful content
+- Provide concrete, actionable procedures rather than general statements
+- Avoid excessive regulatory compliance claims without substance
+- Use professional scientific language without overstatement or marketing language
+- Include specific rather than generic safety and efficacy monitoring procedures
+- Ensure internal consistency across all document sections
+
+🎯 THERAPEUTIC AREA ADAPTABILITY - MANDATORY:
+- Include indication-specific standard of care considerations
+- Address relevant disease-specific biomarkers and endpoints
+- Incorporate appropriate patient reported outcome measures where relevant
+- Consider indication-specific regulatory requirements (orphan designation, etc.)
+- Include relevant pharmacovigilance considerations for the therapeutic class
+- Address population-specific safety considerations (pediatric, geriatric, etc.)
+
+✅ QUALITY ASSURANCE SYSTEM - MANDATORY:
+- Flag any assumptions or hypothetical elements clearly
+- Include review checkpoints for scientific accuracy verification
+- Provide clear documentation of data sources and evidence levels
+- Include validation requirements for any novel methodologies
+- Specify areas requiring subject matter expert review before finalization
+- Build in safeguards against propagation of erroneous information
+
+📋 OUTPUT SPECIFICATIONS - MANDATORY:
+- Generate protocols that serve as high-quality foundations requiring refinement, not reconstruction
+- Ensure all generated content is either evidence-based or clearly marked as provisional
+- Include appropriate caveats and limitations throughout
+- Provide modular structure allowing for client-specific customization
+- Maintain scientific credibility while allowing for rapid adaptation
+
+⚖️ ETHICAL CONSIDERATIONS - MANDATORY:
+- Prioritize patient safety in all design decisions
+- Include appropriate risk-benefit assessments
+- Address vulnerable populations appropriately
+- Include informed consent considerations relevant to study procedures
+- Consider health equity and diversity in recruitment strategies
+- Address potential conflicts of interest transparently
+
+🎯 CONTENT STRUCTURE REQUIREMENTS:
+- Generate a well-structured document with ${requirements?.sections || 6} main sections
+- Use professional clinical research and regulatory terminology
+- Reference relevant regulatory guidance documents and industry standards
+- Include regulatory justification using established precedents
+- Maintain scientific rigor while acknowledging limitations
+
+🔍 MANDATORY QUALITY CONTROLS:
 - For every major recommendation, include clear reasoning explaining:
   * Why this approach was chosen over alternatives
   * What regulatory precedents support this decision
@@ -213,13 +370,14 @@ QUALITY STANDARDS:
 - ALWAYS explain the reasoning behind your recommendations for transparency`;
 };
 
-// Create an Axios instance for OpenAI API
+// Create an Axios instance for OpenAI API with extended timeout
 const openaiApi = axios.create({
   baseURL: 'https://api.openai.com/v1/',
   headers: {
     'Authorization': `Bearer ${OPENAI_API_KEY}`,
     'Content-Type': 'application/json',
   },
+  timeout: 120000, // 2 minutes timeout for individual API calls
 });
 
 const openaiService = {
@@ -279,141 +437,1040 @@ const openaiService = {
   /**
    * Generate Protocol - Enhanced version with standardized approach
    */
+  /**
+   * Clinical Protocol Generation - Section-Based Generation  
+   */
   generateProtocol: async (diseaseData) => {
-    try {
-      // Validate requirements and get configuration
-      const requirements = validateDocumentRequirements(diseaseData, 'protocol');
-      const config = getConfigForDocumentType('protocol');
-      
-      // Format parameters for document
-      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'protocol');
-      
-      // Create standardized system prompt
-      const systemPrompt = createSystemPrompt(
-        'Senior Clinical Development Director and Principal Investigator',
-        'protocol',
-        'FDA/ICH/GCP',
-        `Generate a comprehensive FDA/ICH-compliant clinical trial protocol with ${requirements.sections} detailed sections.
-
-REQUIRED SECTIONS:
-1. PROTOCOL SUMMARY (800+ words) - Overview, objectives, design, population, endpoints
-2. BACKGROUND & RATIONALE (1000+ words) - Disease context, unmet need, drug rationale  
-3. OBJECTIVES & ENDPOINTS (700+ words) - Primary/secondary objectives and endpoints
-4. STUDY DESIGN (1200+ words) - Design rationale, randomization, blinding, procedures
-5. STUDY POPULATION (800+ words) - Inclusion/exclusion criteria with rationale
-6. TREATMENTS (600+ words) - Dosing, administration, concomitant medications
-7. ASSESSMENTS (1000+ words) - Visit schedule, procedures, safety monitoring
-8. STATISTICS (1200+ words) - Sample size, analysis methods, missing data
-9. SAFETY MONITORING (600+ words) - Safety oversight, adverse event reporting
-10. REGULATORY COMPLIANCE (400+ words) - GCP compliance, quality assurance
-
-REQUIREMENTS:
-- Reference FDA/ICH guidelines (E6(R2), E9(R1))
-- Include statistical parameters and regulatory justification
-- Use professional clinical research terminology
-- Ensure content suitable for regulatory submission`
-      );
-
-      const userPrompt = `Generate a comprehensive ${diseaseData.additional_parameters?.trial_phase || 'Phase 2'} clinical trial protocol for ${diseaseData.disease_name}.
-
-STUDY PARAMETERS:
-${formattedParams}
-
-Create ${requirements.sections} well-structured sections with detailed content. Include regulatory justification, statistical parameters, and technical specifications suitable for FDA submission.`;
-
-
-      const response = await openaiApi.post('chat/completions', {
-        model: config.model,
-        max_tokens: config.max_tokens,
-        temperature: config.temperature,
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: userPrompt
-          }
-        ]
-      });
-
-      return {
-        protocol_id: `prot-${Date.now()}`,
-        protocol: response.data.choices[0].message.content.trim()
-      };
-    } catch (error) {
-      console.error('Error in generateProtocol:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message,
-        config: error.config ? {
-          url: error.config.url,
-          method: error.config.method,
-          headers: error.config.headers
-        } : null
-      });
-      throw error;
-    }
+    return await openaiService.generateSectionBasedDocument('protocol', diseaseData);
   },
   
   // =============================================================================
   // UNITED STATES DOCUMENTS
   // =============================================================================
   
-  /**
-   * US IND (Investigational New Drug) - Default/Original
-   */
-  generateIndModule: async (diseaseData) => {
+  // Generic helper function to generate individual document sections
+  generateDocumentSection: async (docType, sectionNumber, diseaseData, previousSections = []) => {
+    const config = getConfigForDocumentType(docType);
+    const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, docType);
+    
+    // Define sections for different document types
+    const sectionDefinitions = {
+      ind: {
+        cmc: {
+          1: { 
+            title: "DRUG SUBSTANCE", 
+            content: "ONLY generate chemistry data: molecular structure, chemical name, molecular formula, molecular weight, synthesis pathway, route of synthesis, physicochemical properties (pH, solubility, polymorphs), specifications, analytical methods for identity/purity/potency, reference standards, impurity profiles, degradation products. Do NOT include clinical, manufacturing, or regulatory information.",
+            focus: "Chemical characterization only"
+          },
+          2: { 
+            title: "DRUG PRODUCT", 
+            content: "ONLY generate formulation data: formulation composition, excipient list and rationale, dosage form description, unit dose description, manufacturing process overview, in-process controls, finished product specifications, packaging and closure systems. Do NOT include clinical data or drug substance information.",
+            focus: "Formulation and product composition only"
+          },
+          3: { 
+            title: "MANUFACTURING INFORMATION", 
+            content: "ONLY generate manufacturing data: facility information and address, equipment specifications, process descriptions, critical process parameters, process controls, batch size, manufacturing scale, GMP compliance status, personnel qualifications. Do NOT include analytical methods or clinical information.",
+            focus: "Manufacturing process and facilities only"
+          },
+          4: { 
+            title: "CONTROLS OF DRUG SUBSTANCE AND DRUG PRODUCT", 
+            content: "ONLY generate analytical control data: analytical methods validation, test procedures, acceptance criteria, specifications justification, batch analysis data, quality control procedures, testing frequency, stability-indicating methods. Do NOT include manufacturing or clinical information.",
+            focus: "Analytical methods and quality control only"
+          },
+          5: { 
+            title: "STABILITY", 
+            content: "ONLY generate stability data: stability study protocols, storage conditions, time points, degradation pathways, shelf-life justification, container-closure system evaluation, photostability, stress testing results. Do NOT include manufacturing or clinical information.",
+            focus: "Stability studies and shelf-life only"
+          },
+          6: { 
+            title: "ENVIRONMENTAL ASSESSMENT", 
+            content: "ONLY generate environmental data: environmental impact evaluation, categorical exclusion justification under 21 CFR 25.31, environmental fate and transport, ecotoxicity data if required. Do NOT include clinical, manufacturing, or chemistry information.",
+            focus: "Environmental impact assessment only"
+          }
+        },
+        clinical: {
+          1: { 
+            title: "INTRODUCTION AND BACKGROUND", 
+            content: "ONLY generate background information: disease pathophysiology, epidemiology statistics, current treatment landscape, unmet medical need description, investigational product scientific rationale, mechanism of action hypothesis. Do NOT include study design, procedures, or manufacturing information.",
+            focus: "Disease background and rationale only"
+          },
+          2: { 
+            title: "STUDY DESIGN AND RATIONALE", 
+            content: "ONLY generate study design: study design justification, methodology description, randomization procedures, blinding techniques, visit schedules, study phases, study duration, treatment arms. Do NOT include population criteria, endpoints, or statistical analysis.",
+            focus: "Study design methodology only"
+          },
+          3: { 
+            title: "STUDY POPULATION", 
+            content: "ONLY generate population criteria: inclusion criteria with medical rationale, exclusion criteria with safety rationale, screening procedures, recruitment strategy, population demographics, sample size target. Do NOT include study procedures, endpoints, or statistical methods.",
+            focus: "Patient population and eligibility only"
+          },
+          4: { 
+            title: "TREATMENTS AND INTERVENTIONS", 
+            content: "ONLY generate treatment information: dosing rationale, dose selection justification, administration procedures, dose modifications/escalations, concomitant medications, compliance monitoring, drug accountability. Do NOT include endpoints, assessments, or statistical analysis.",
+            focus: "Dosing and treatment administration only"
+          },
+          5: { 
+            title: "EFFICACY ASSESSMENTS", 
+            content: "ONLY generate efficacy endpoints: primary endpoint definition and rationale, secondary endpoints, exploratory endpoints, measurement methodologies, timing of assessments, regulatory acceptability of endpoints. Do NOT include safety assessments or statistical analysis.",
+            focus: "Efficacy endpoints and measurements only"
+          },
+          6: { 
+            title: "SAFETY ASSESSMENTS", 
+            content: "ONLY generate safety monitoring: safety monitoring plan, adverse event classification and reporting, stopping rules, safety run-in procedures, pharmacovigilance procedures, safety committee structure. Do NOT include efficacy assessments or statistical analysis.",
+            focus: "Safety monitoring and adverse events only"
+          },
+          7: { 
+            title: "STATISTICAL CONSIDERATIONS", 
+            content: "ONLY generate statistical information: sample size calculations with power analysis, primary analysis methods, secondary analysis plans, handling of missing data, interim analysis procedures, multiplicity adjustments. Do NOT include study design or endpoints definition.",
+            focus: "Statistical methods and analysis only"
+          },
+          8: { 
+            title: "DATA MANAGEMENT AND QUALITY ASSURANCE", 
+            content: "ONLY generate data management: data collection systems, electronic data capture, data monitoring procedures, source data verification, quality control measures, audit procedures, database lock procedures. Do NOT include statistical analysis or study procedures.",
+            focus: "Data collection and quality systems only"
+          },
+          9: { 
+            title: "REGULATORY AND ETHICAL CONSIDERATIONS", 
+            content: "ONLY generate regulatory compliance: IRB/IEC requirements, informed consent procedures, regulatory reporting requirements (IND safety reports), patient protection measures, regulatory submissions timeline. Do NOT include study design or data management.",
+            focus: "Ethics and regulatory compliance only"
+          },
+          10: { 
+            title: "RISK MANAGEMENT AND MITIGATION", 
+            content: "ONLY generate risk assessment: comprehensive risk-benefit analysis, safety monitoring procedures, risk mitigation strategies, contingency plans, dose modification procedures, study stopping criteria. Do NOT include study design or statistical methods.",
+            focus: "Risk assessment and mitigation only"
+          }
+        }
+      },
+      nda: {
+        1: { 
+          title: "ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY", 
+          content: "ONLY generate FDA administrative data: NDA application number, regulatory pathway (505(b)(1) vs 505(b)(2)), FDA user fee status, proprietary/established names, dosage forms, routes of administration, applicant information, proposed indication statement, prescribing information highlights. Do NOT include quality, nonclinical, or clinical data.",
+          focus: "FDA administrative and labeling summary only"
+        },
+        2: { 
+          title: "OVERALL SUMMARY OF QUALITY", 
+          content: "ONLY generate CTD Module 2.3 quality data: drug substance synthesis and characterization, drug product formulation and development, manufacturing process summary, control strategy, analytical procedures summary, stability summary, container closure system. Do NOT include nonclinical or clinical information.",
+          focus: "Quality and manufacturing summary only"
+        },
+        3: { 
+          title: "NONCLINICAL OVERVIEW AND SUMMARY", 
+          content: "ONLY generate CTD Modules 2.4 & 2.6 nonclinical data: pharmacokinetics summary, pharmacodynamics, toxicology studies, carcinogenicity, genotoxicity, reproductive toxicity, safety pharmacology, integrated nonclinical risk assessment. Do NOT include clinical or quality data.",
+          focus: "Preclinical and animal studies only"
+        },
+        4: { 
+          title: "CLINICAL OVERVIEW AND SUMMARY", 
+          content: "ONLY generate CTD Modules 2.5 & 2.7 clinical data: clinical development strategy, study design rationale, efficacy summary across studies, safety analysis summary, benefit-risk assessment, comparison to approved products, regulatory precedents. Do NOT include nonclinical or quality information.",
+          focus: "Clinical development strategy and integrated analysis only"
+        },
+        5: { 
+          title: "KEY CLINICAL STUDY REPORT SUMMARIES", 
+          content: "ONLY generate pivotal study summaries: individual study methodologies, statistical analysis results, primary endpoint results, secondary endpoint results, safety results by study, subgroup analyses, study-specific conclusions. Do NOT include integrated analyses or quality data.",
+          focus: "Individual pivotal study results only"
+        }
+      },
+      bla: {
+        1: { 
+          title: "ADMINISTRATIVE INFORMATION AND PRODUCT INFORMATION", 
+          content: "ONLY generate BLA administrative data: BLA application number, regulatory pathway under PHS Act 351, FDA user fees, biological product name, license holder information, proposed indication, manufacturing sites, labeling highlights. Do NOT include manufacturing details, nonclinical, or clinical data.",
+          focus: "BLA administrative and product overview only"
+        },
+        2: { 
+          title: "PRODUCT AND MANUFACTURING INFORMATION", 
+          content: "ONLY generate biologics manufacturing data: biological product characterization, cell line information, manufacturing process description, facility qualifications, quality control testing, comparability assessments, adventitious agent testing, viral clearance. Do NOT include clinical or administrative information.",
+          focus: "Biologics manufacturing and characterization only"
+        },
+        3: { 
+          title: "NONCLINICAL STUDIES OVERVIEW", 
+          content: "ONLY generate biologics nonclinical data: pharmacology studies, toxicology in relevant species, immunotoxicology, reproductive toxicity, local tolerance studies, integrated nonclinical safety assessment specific to biologics. Do NOT include clinical data or manufacturing information.",
+          focus: "Biologics preclinical studies only"
+        },
+        4: { 
+          title: "CLINICAL OVERVIEW AND EFFICACY", 
+          content: "ONLY generate clinical efficacy data: clinical development program overview, dose selection rationale, efficacy analysis across studies, immunogenicity assessment, population-specific efficacy, comparison with standard of care. Do NOT include safety analysis or manufacturing information.",
+          focus: "Clinical efficacy and immunogenicity only"
+        },
+        5: { 
+          title: "SAFETY ANALYSIS AND RISK MANAGEMENT", 
+          content: "ONLY generate safety and risk data: comprehensive safety profile, adverse events analysis, immunogenicity-related safety, risk mitigation strategies, pharmacovigilance plan, post-market surveillance commitments specific to biologics. Do NOT include efficacy or manufacturing data.",
+          focus: "Safety analysis and risk management only"
+        }
+      },
+      protocol: {
+        1: { 
+          title: "BACKGROUND & RATIONALE", 
+          content: "Generate scientifically sound background using ESTABLISHED data: disease pathophysiology from published literature, epidemiology statistics with references, current standard-of-care treatments, unmet medical need with clear gaps, investigational product rationale using proven mechanisms of action. Use PLACEHOLDER markers like '[SPECIFIC PRODUCT NAME]' and '[TO BE DETERMINED FROM PHASE I DATA]'. Include modular sections for different therapeutic areas and patient populations.",
+          focus: "Evidence-based background with generic framework and clear placeholders"
+        },
+        2: { 
+          title: "OBJECTIVES & ENDPOINTS", 
+          content: "Generate PHASE-APPROPRIATE objectives and established endpoints: **PHASE I**: Primary safety endpoints (dose-limiting toxicity, maximum tolerated dose), secondary PK/PD endpoints with validated biomarkers. **PHASE II**: Primary efficacy endpoints (objective response rate, progression-free survival), secondary safety/biomarker endpoints. **PHASE III**: Primary confirmatory efficacy endpoints with regulatory precedent, secondary quality of life/safety endpoints. Use ONLY literature-supported endpoints with established cutoffs or clear placeholders '[CLINICALLY MEANINGFUL DIFFERENCE: TO BE DETERMINED BASED ON REGULATORY GUIDANCE]'. Include indication-specific standard endpoints and patient-reported outcome measures where appropriate.",
+          focus: "Phase-appropriate, evidence-based objectives with regulatory-aligned endpoints"
+        },
+        3: { 
+          title: "STUDY DESIGN", 
+          content: "Generate proven study design framework: standard randomized controlled design with established methodologies, realistic randomization schemes (block, stratified), appropriate blinding procedures. Include ASSUMPTIONS clearly marked: 'ASSUMPTION: [X-week treatment period based on similar studies]'. Provide modular design options for different phases and populations. Include standard visit schedules (screening, baseline, weeks 2, 4, 8, 12, 16, follow-up) with rationale from regulatory guidance.",
+          focus: "Evidence-based design methodology with clear assumptions and modular framework"
+        },
+        4: { 
+          title: "STUDY POPULATION", 
+          content: "Generate STANDARD eligibility criteria based on established precedents: inclusion criteria using validated diagnostic criteria (e.g., 'Disease severity score ≥ [TO BE DETERMINED based on regulatory precedent]'), evidence-based exclusion criteria for safety. Include modular criteria sets for different populations (adults/pediatric, treatment-naive/experienced). Mark assumptions: 'NOTE: Specific laboratory values require validation in target population'. Provide alternative recruitment strategies and standard screening procedures.",
+          focus: "Evidence-based population criteria with modular options and clear validation needs"
+        },
+        5: { 
+          title: "TREATMENTS", 
+          content: "Generate realistic dosing framework using established approaches: dose escalation schemes based on proven methodologies (3+3, BOIN), standard administration procedures, evidence-based concomitant medication restrictions. Use placeholders: '[STARTING DOSE: TO BE DETERMINED FROM PRECLINICAL DATA]', '[MAXIMUM TOLERATED DOSE: TO BE ESTABLISHED]'. Include modular dosing options for different routes of administration and patient populations. Reference similar approved products and dose rationale.",
+          focus: "Evidence-based treatment framework with clear dose rationale and modular options"
+        },
+        6: { 
+          title: "ASSESSMENTS", 
+          content: "Generate EVIDENCE-BASED assessment procedures using ONLY validated tools: established clinical scales (cite literature references), proven imaging modalities with regulatory precedent, standard laboratory panels based on therapeutic class. Include indication-specific patient-reported outcome measures where appropriate. Use realistic timing (baseline, weeks 4, 8, 12, 16) with scientific rationale. Mark all customization areas: '[DISEASE-SPECIFIC BIOMARKERS: SELECTION REQUIRES LITERATURE VALIDATION]'. Include modular assessment plans for different phases with alternative validated biomarker options.",
+          focus: "Evidence-based assessments with validated tools and modular framework"
+        },
+        7: { 
+          title: "STATISTICS", 
+          content: "Generate STATISTICALLY SOUND framework using established methodologies: sample size calculations with REALISTIC assumptions based on published data (power 80-90%, alpha 0.05), established analysis methods (ITT, per-protocol, as-treated), validated statistical tests appropriate for endpoints. Use evidence-based placeholders: '[EFFECT SIZE: TO BE DETERMINED FROM PHASE II DATA OR LITERATURE]', '[DROPOUT RATE: BASED ON SIMILAR INDICATION STUDIES - CITE REFERENCES]'. Include phase-appropriate statistical plans and alternative analysis strategies. Reference specific regulatory guidance documents for therapeutic area.",
+          focus: "Evidence-based statistical framework with clear assumptions and validation needs"
+        },
+        8: { 
+          title: "SAFETY MONITORING", 
+          content: "Generate COMPREHENSIVE safety monitoring using established procedures: proven adverse event classification systems (CTCAE v5.0), evidence-based stopping rules with statistical basis, realistic safety review committee structure (DSMB/DMC). Include established DLT criteria appropriate for therapeutic class with placeholders: '[DLT DEFINITION: TO BE REFINED BASED ON PRECLINICAL SAFETY DATA AND REGULATORY PRECEDENT]'. Provide phase-appropriate safety plans for different risk profiles, include real-time safety monitoring procedures. Reference specific FDA guidance documents for safety monitoring in therapeutic area.",
+          focus: "Evidence-based safety monitoring with established procedures and modular framework"
+        },
+        9: { 
+          title: "REGULATORY COMPLIANCE", 
+          content: "Generate COMPREHENSIVE regulatory framework using established requirements: GCP compliance based on ICH E6(R2) guidelines, proven informed consent procedures meeting 21 CFR 50 requirements, established IRB/IEC processes per ICH E6. Include realistic regulatory timelines based on FDA guidance: '[IND SUBMISSION: 30-DAY SAFETY REVIEW PERIOD]', '[IRB APPROVAL: 2-4 WEEKS POST-SUBMISSION]'. Provide jurisdiction-specific compliance plans (FDA, EMA, Health Canada) for different study phases. Reference current regulatory guidance documents and include notes on indication-specific regulatory requirements (orphan designation, breakthrough therapy, etc.).",
+          focus: "Evidence-based regulatory framework with established procedures and modular compliance"
+        },
+        10: { 
+          title: "DATA MANAGEMENT", 
+          content: "Generate proven data management framework using standard procedures: established EDC systems and data collection best practices, validated data monitoring procedures, realistic database specifications. Include placeholders: '[EDC SYSTEM: TO BE SELECTED BASED ON STUDY REQUIREMENTS]'. Provide modular plans for different study complexities and alternative data management approaches. Reference regulatory guidance on data integrity and include notes on system validation requirements.",
+          focus: "Evidence-based data management with standard procedures and modular framework"
+        }
+      },
+      cta: {
+        1: { 
+          title: "GENERAL INFORMATION", 
+          content: "ONLY generate EU CTA administrative data: EudraCT number, CTIS submission details, sponsor information, legal representative in EU, trial title, trial phase, regulatory framework under EU CTR. Do NOT include study design, IMP details, or investigator information.",
+          focus: "EU administrative and sponsor information only"
+        },
+        2: { 
+          title: "INVESTIGATIONAL MEDICINAL PRODUCT", 
+          content: "ONLY generate IMP information: IMP characterization, pharmaceutical form, manufacturing authorization holder, IMPD reference, GMP compliance, labeling details, supply and accountability. Do NOT include clinical protocol or administrative information.",
+          focus: "IMP characterization and regulatory status only"
+        },
+        3: { 
+          title: "CLINICAL TRIAL PROTOCOL", 
+          content: "ONLY generate protocol information: study design and rationale, objectives and endpoints, methodology, population criteria, treatment arms, visit schedule, assessments. Do NOT include investigator details or risk assessment.",
+          focus: "Protocol design and methodology only"
+        },
+        4: { 
+          title: "INVESTIGATOR AND SITE INFORMATION", 
+          content: "ONLY generate investigator/site data: principal investigator qualifications and CV, co-investigator details, site facilities description, site authorization status, trial staff qualifications. Do NOT include protocol details or risk information.",
+          focus: "Investigator and site qualifications only"
+        },
+        5: { 
+          title: "RISK ASSESSMENT", 
+          content: "ONLY generate risk analysis: risk categorization under EU CTR, risk-benefit assessment, safety considerations, known risks, risk mitigation measures, safety monitoring approach. Do NOT include protocol details or ethics information.",
+          focus: "Risk-benefit analysis and safety assessment only"
+        },
+        6: { 
+          title: "ETHICS AND REGULATORY", 
+          content: "ONLY generate ethics/regulatory compliance: ethics committee details, informed consent procedures, patient protection measures, data protection compliance (GDPR), vulnerable population considerations. Do NOT include risk assessment or scientific rationale.",
+          focus: "Ethics approval and patient protection only"
+        },
+        7: { 
+          title: "SUPPORTING DOCUMENTATION", 
+          content: "ONLY generate supporting scientific information: scientific advice received, literature review, precedent studies, regulatory guideline compliance, scientific rationale for trial conduct. Do NOT include administrative or protocol information.",
+          focus: "Scientific rationale and literature support only"
+        }
+      },
+      maa: {
+        1: { 
+          title: "ADMINISTRATIVE INFORMATION", 
+          content: "ONLY generate EMA administrative data: MAA application number, centralized/decentralized procedure, orphan designation status, applicant information, product name, ATC code, legal basis for application, regulatory milestones. Do NOT include quality, clinical, or nonclinical information.",
+          focus: "EMA administrative and regulatory pathway only"
+        },
+        2: { 
+          title: "QUALITY MODULE SUMMARY", 
+          content: "ONLY generate quality information: drug substance characterization, drug product development, manufacturing and controls, analytical procedures, specifications, stability data, pharmaceutical development rationale. Do NOT include nonclinical or clinical data.",
+          focus: "CTD Module 2.3 quality summary only"
+        },
+        3: { 
+          title: "NON-CLINICAL OVERVIEW", 
+          content: "ONLY generate nonclinical data: pharmacology overview, toxicology studies summary, ADME studies, safety pharmacology, environmental risk assessment, integrated nonclinical evaluation. Do NOT include clinical or quality information.",
+          focus: "CTD Modules 2.4 & 2.6 nonclinical overview only"
+        },
+        4: { 
+          title: "CLINICAL OVERVIEW", 
+          content: "ONLY generate clinical development overview: development strategy, study design rationale, clinical program overview, regulatory precedents, clinical pharmacology, dose selection rationale. Do NOT include detailed efficacy/safety results.",
+          focus: "CTD Module 2.5 clinical development strategy only"
+        },
+        5: { 
+          title: "EFFICACY AND SAFETY ANALYSIS", 
+          content: "ONLY generate clinical results: efficacy analysis across studies, safety analysis, benefit-risk assessment, European population-specific data, comparison with existing treatments, clinical conclusions. Do NOT include development strategy or quality information.",
+          focus: "CTD Module 2.7 clinical results and benefit-risk only"
+        },
+        6: { 
+          title: "RISK MANAGEMENT PLAN", 
+          content: "ONLY generate risk management information: safety specification, pharmacovigilance plan, risk minimization measures, additional monitoring, effectiveness indicators, post-authorization safety studies. Do NOT include clinical efficacy or quality data.",
+          focus: "EU RMP and pharmacovigilance only"
+        },
+        7: { 
+          title: "PEDIATRIC INVESTIGATION PLAN", 
+          content: "ONLY generate pediatric information: PIP compliance status, pediatric development strategy, age-appropriate formulations, pediatric study requirements, waivers or deferrals obtained. Do NOT include adult clinical data or quality information.",
+          focus: "EU pediatric requirements and PIP only"
+        },
+        8: { 
+          title: "PRODUCT INFORMATION", 
+          content: "ONLY generate labeling information: Summary of Product Characteristics (SmPC), Package Leaflet (PIL), labeling and packaging, contraindications, warnings, dosing recommendations, special populations. Do NOT include development or manufacturing information.",
+          focus: "EU product labeling and prescribing information only"
+        }
+      },
+      impd: {
+        1: { 
+          title: "INTRODUCTION AND REGULATORY FRAMEWORK", 
+          content: "ONLY generate IMPD administrative information: IMPD structure overview, EU regulatory framework for IMPs, IMPD-Q vs IMPD-S/E scope, version control, regulatory submission context under EU CTR. Do NOT include substance characterization or clinical information.",
+          focus: "IMPD structure and EU regulatory context only"
+        },
+        2: { 
+          title: "DRUG SUBSTANCE CHARACTERIZATION", 
+          content: "ONLY generate drug substance information: chemical name and structure, synthesis route, physicochemical properties, specifications, analytical methods for drug substance, impurities profile, reference standards. Do NOT include drug product or manufacturing information.",
+          focus: "Chemical characterization of active substance only"
+        },
+        3: { 
+          title: "DRUG PRODUCT FORMULATION", 
+          content: "ONLY generate drug product information: formulation composition, excipients and rationale, dosage form description, pharmaceutical development rationale, compatibility studies, container closure system. Do NOT include manufacturing processes or clinical information.",
+          focus: "Formulation development and drug product composition only"
+        },
+        4: { 
+          title: "MANUFACTURING AND CONTROLS", 
+          content: "ONLY generate manufacturing information: manufacturing sites and authorization, manufacturing process description, in-process controls, quality control testing, batch release procedures, GMP compliance status. Do NOT include formulation details or clinical information.",
+          focus: "Manufacturing processes and quality control only"
+        },
+        5: { 
+          title: "PLACEBO AND COMPARATORS", 
+          content: "ONLY generate placebo/comparator information: placebo composition and matching, comparator product details, supply chain and sourcing, labeling and blinding procedures, accountability procedures. Do NOT include active product manufacturing or clinical design.",
+          focus: "Placebo and comparator product details only"
+        },
+        6: { 
+          title: "NON-CLINICAL SAFETY SUMMARY", 
+          content: "ONLY generate IMPD-S nonclinical information: summary of pharmacology studies, toxicology studies relevant to clinical trial, safety margins, dose selection rationale from nonclinical data, integrated nonclinical assessment. Do NOT include clinical data or manufacturing information.",
+          focus: "IMPD-S nonclinical safety summary only"
+        },
+        7: { 
+          title: "CLINICAL DEVELOPMENT SUMMARY", 
+          content: "ONLY generate IMPD-E clinical information: previous clinical experience summary, dose selection rationale from clinical data, safety data from previous studies, clinical development plan context, trial-specific clinical rationale. Do NOT include nonclinical or quality information.",
+          focus: "IMPD-E clinical experience summary only"
+        }
+      },
+      nds: {
+        1: { 
+          title: "ADMINISTRATIVE INFORMATION", 
+          content: "ONLY generate Health Canada administrative data: NDS submission number, regulatory pathway, applicant information, product identification, submission type, user fees, regulatory timeline. Do NOT include quality, clinical, or nonclinical information.",
+          focus: "Health Canada administrative requirements only"
+        },
+        2: { 
+          title: "QUALITY OVERALL SUMMARY", 
+          content: "ONLY generate quality summary: drug substance characterization, drug product development, manufacturing summary, analytical procedures, stability, quality overall summary per Canadian requirements. Do NOT include nonclinical or clinical data.",
+          focus: "Canadian CTD Module 2.3 quality summary only"
+        },
+        3: { 
+          title: "NON-CLINICAL EVALUATION", 
+          content: "ONLY generate nonclinical data: pharmacology studies, toxicology evaluation, safety pharmacology, integrated nonclinical assessment, Canadian-specific nonclinical requirements. Do NOT include clinical or quality information.",
+          focus: "Canadian nonclinical evaluation only"
+        },
+        4: { 
+          title: "CLINICAL EVALUATION", 
+          content: "ONLY generate clinical evaluation: clinical efficacy analysis, safety evaluation, study design rationale, Canadian population data, clinical development program. Do NOT include benefit-risk assessment or quality information.",
+          focus: "Clinical studies evaluation only"
+        },
+        5: { 
+          title: "BENEFIT-RISK ASSESSMENT", 
+          content: "ONLY generate benefit-risk analysis: integrated benefit-risk assessment, Canadian population considerations, comparison to existing therapies, regulatory precedents, Health Canada-specific benefit-risk evaluation. Do NOT include clinical study details.",
+          focus: "Integrated benefit-risk assessment only"
+        },
+        6: { 
+          title: "RISK MANAGEMENT", 
+          content: "ONLY generate risk management: risk mitigation strategies, pharmacovigilance plan, post-market commitments, additional monitoring, risk minimization measures per Health Canada requirements. Do NOT include clinical efficacy data.",
+          focus: "Risk management and pharmacovigilance only"
+        },
+        7: { 
+          title: "PRODUCT MONOGRAPH", 
+          content: "ONLY generate Canadian labeling: Product Monograph content, indications and clinical use, contraindications, warnings and precautions, dosage and administration, Canadian-specific prescribing information. Do NOT include development or manufacturing information.",
+          focus: "Canadian Product Monograph only"
+        },
+        8: { 
+          title: "REGULATORY COMPLIANCE", 
+          content: "ONLY generate regulatory compliance: Health Canada guideline compliance, regulatory strategy, post-market obligations, manufacturing compliance, Canadian regulatory framework adherence. Do NOT include clinical or quality details.",
+          focus: "Health Canada regulatory compliance only"
+        }
+      },
+      jnda: {
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "PMDA submission overview, regulatory pathway, and Japanese regulatory framework" },
+        2: { title: "QUALITY MODULE", content: "Drug substance and product characterization, manufacturing controls, and Japanese specifications" },
+        3: { title: "NON-CLINICAL STUDIES", content: "Pharmacology, toxicology, Japanese-specific studies, and integrated safety assessment" },
+        4: { title: "CLINICAL STUDIES OVERVIEW", content: "Clinical development strategy, Japanese population data, and global study integration" },
+        5: { title: "EFFICACY ANALYSIS", content: "Primary and secondary endpoint analysis, Japanese subgroup data, and regulatory endpoints" },
+        6: { title: "SAFETY EVALUATION", content: "Safety profile analysis, Japanese population considerations, and risk characterization" },
+        7: { title: "BENEFIT-RISK ASSESSMENT", content: "Japanese benefit-risk analysis, population-specific considerations, and regulatory precedents" },
+        8: { title: "POST-MARKETING REQUIREMENTS", content: "Japanese post-marketing studies, surveillance plan, and regulatory commitments" }
+      },
+      nda_ch: {
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "NMPA submission details, regulatory pathway, and Chinese regulatory compliance" },
+        2: { title: "QUALITY ASSESSMENT", content: "Drug substance and product quality, manufacturing information, and Chinese specifications" },
+        3: { title: "NON-CLINICAL EVALUATION", content: "Pharmacology, toxicology studies, Chinese population considerations, and safety assessment" },
+        4: { title: "CLINICAL DEVELOPMENT", content: "Clinical study design, Chinese population data, and regulatory compliance" },
+        5: { title: "EFFICACY AND SAFETY", content: "Clinical efficacy analysis, safety profile, and Chinese population-specific data" },
+        6: { title: "BENEFIT-RISK ANALYSIS", content: "Chinese benefit-risk assessment, population considerations, and regulatory strategy" },
+        7: { title: "REGULATORY STRATEGY", content: "NMPA requirements, submission strategy, and post-approval commitments" }
+      },
+      nda_kr: {
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "K-FDA submission overview, regulatory pathway, and Korean regulatory framework" },
+        2: { title: "QUALITY EVALUATION", content: "Drug substance and product quality, manufacturing controls, and Korean specifications" },
+        3: { title: "NON-CLINICAL ASSESSMENT", content: "Pharmacology, toxicology studies, and Korean population safety considerations" },
+        4: { title: "CLINICAL EVALUATION", content: "Clinical studies, Korean population data, and efficacy assessment" },
+        5: { title: "SAFETY ANALYSIS", content: "Safety profile, Korean population-specific considerations, and risk evaluation" },
+        6: { title: "REGULATORY COMPLIANCE", content: "K-FDA requirements, submission strategy, and post-marketing obligations" }
+      },
+      ma_uk: {
+        1: { 
+          title: "ADMINISTRATIVE INFORMATION", 
+          content: "ONLY generate MHRA submission administrative details: application type, submission pathway, regulatory framework, MHRA reference numbers, Brexit regulatory changes, application fees, submission timeline, and UK-specific administrative requirements. Do NOT include clinical or quality information.",
+          focus: "MHRA administrative requirements only"
+        },
+        2: { 
+          title: "QUALITY ASSESSMENT", 
+          content: "ONLY generate Chemistry, Manufacturing and Controls (CMC) information: drug substance characterization, chemical structure, synthesis, manufacturing process, UK GMP compliance, analytical methods, specifications, stability data, impurities, packaging. Do NOT include clinical or administrative information.",
+          focus: "CMC and manufacturing quality only"
+        },
+        3: { 
+          title: "NON-CLINICAL EVALUATION", 
+          content: "ONLY generate preclinical data: animal studies, pharmacology, toxicology, ADME studies, safety pharmacology, genotoxicity, carcinogenicity, reproductive toxicity. Do NOT include clinical data or quality information.",
+          focus: "Animal studies and preclinical safety only"
+        },
+        4: { 
+          title: "CLINICAL DEVELOPMENT", 
+          content: "ONLY generate clinical trial information: study designs, clinical protocols, trial populations, UK clinical sites, investigator qualifications, trial conduct, GCP compliance. Do NOT include efficacy/safety results.",
+          focus: "Clinical trial design and conduct only"
+        },
+        5: { 
+          title: "BENEFIT-RISK ANALYSIS", 
+          content: "ONLY generate efficacy and safety analysis: clinical trial results, efficacy endpoints, safety profile, adverse events, UK population-specific data, benefit-risk assessment, comparison with existing treatments.",
+          focus: "Clinical results and benefit-risk only"
+        },
+        6: { 
+          title: "RISK MANAGEMENT", 
+          content: "ONLY generate risk management information: risk minimization measures, pharmacovigilance plan, REMS if applicable, post-marketing surveillance, safety monitoring, risk communication strategies.",
+          focus: "Risk management and pharmacovigilance only"
+        },
+        7: { 
+          title: "PRODUCT INFORMATION", 
+          content: "ONLY generate labeling information: Summary of Product Characteristics (SmPC), Patient Information Leaflet (PIL), prescribing information, indications, contraindications, dosing, warnings and precautions.",
+          focus: "Product labeling and prescribing information only"
+        }
+      },
+      ma_ch: {
+        1: { 
+          title: "ADMINISTRATIVE INFORMATION", 
+          content: "ONLY generate Swissmedic administrative data: application number, submission pathway, applicant information, Swiss regulatory framework, product identification, submission timeline. Do NOT include quality, clinical, or nonclinical information.",
+          focus: "Swissmedic administrative requirements only"
+        },
+        2: { 
+          title: "QUALITY EVALUATION", 
+          content: "ONLY generate Swiss quality assessment: drug substance quality, manufacturing evaluation, Swiss GMP requirements, analytical procedures, specifications, quality compliance with Swiss standards. Do NOT include clinical or nonclinical data.",
+          focus: "Swiss quality and manufacturing assessment only"
+        },
+        3: { 
+          title: "NON-CLINICAL ASSESSMENT", 
+          content: "ONLY generate Swiss nonclinical evaluation: pharmacology assessment, toxicology evaluation, Swiss-specific safety requirements, nonclinical data assessment per Swissmedic guidelines. Do NOT include clinical or quality information.",
+          focus: "Swiss nonclinical safety assessment only"
+        },
+        4: { 
+          title: "CLINICAL EVALUATION", 
+          content: "ONLY generate Swiss clinical assessment: clinical studies evaluation, Swiss population considerations, efficacy analysis, clinical data assessment per Swissmedic requirements. Do NOT include benefit-risk analysis.",
+          focus: "Swiss clinical studies evaluation only"
+        },
+        5: { 
+          title: "BENEFIT-RISK ANALYSIS", 
+          content: "ONLY generate Swiss benefit-risk assessment: integrated benefit-risk evaluation, Swiss population-specific considerations, Swissmedic regulatory precedents, Swiss market context. Do NOT include detailed clinical study results.",
+          focus: "Swiss benefit-risk assessment only"
+        },
+        6: { 
+          title: "REGULATORY COMPLIANCE", 
+          content: "ONLY generate Swissmedic compliance: Swiss regulatory requirements, Swissmedic guideline compliance, post-market obligations, Swiss submission strategy, regulatory framework adherence. Do NOT include clinical or quality details.",
+          focus: "Swissmedic regulatory compliance only"
+        }
+      },
+      aus: {
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "TGA submission details, Australian regulatory pathway, and administrative compliance" },
+        2: { title: "QUALITY ASSESSMENT", content: "Drug substance and product quality, Australian manufacturing standards, and TGA specifications" },
+        3: { title: "NON-CLINICAL EVALUATION", content: "Pharmacology, toxicology studies, and Australian safety requirements" },
+        4: { title: "CLINICAL DEVELOPMENT", content: "Clinical studies, Australian population data, and TGA regulatory compliance" },
+        5: { title: "BENEFIT-RISK ANALYSIS", content: "Australian benefit-risk assessment, population considerations, and TGA precedents" },
+        6: { title: "REGULATORY STRATEGY", content: "TGA requirements, submission strategy, and post-approval commitments" }
+      },
+      cta_uk: {
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate MHRA CTA administrative details: application type, MHRA reference numbers, sponsor information, protocol overview, UK regulatory framework post-Brexit. Do NOT include clinical or quality information." },
+        2: { title: "STUDY DESIGN", content: "ONLY generate clinical study design: objectives, methodology, endpoints, randomization, blinding, statistical plan. Do NOT include manufacturing or administrative details." },
+        3: { title: "INVESTIGATIONAL MEDICINAL PRODUCT", content: "ONLY generate IMP information: drug substance details, formulation, manufacturing, quality control, UK GMP compliance. Do NOT include clinical design or safety data." },
+        4: { title: "SAFETY INFORMATION", content: "ONLY generate safety data: nonclinical safety summary, clinical safety experience, investigator brochure summary, risk assessment. Do NOT include efficacy or quality information." },
+        5: { title: "ETHICS AND PARTICIPANT PROTECTION", content: "ONLY generate ethics information: Research Ethics Committee approval, informed consent, participant insurance, data protection (UK GDPR compliance). Do NOT include study design or IMP details." },
+        6: { title: "TRIAL MANAGEMENT", content: "ONLY generate trial management: site information, investigator qualifications, monitoring plan, pharmacovigilance system. Do NOT include study design or regulatory details." },
+        7: { title: "UK REGULATORY COMPLIANCE", content: "ONLY generate UK regulatory compliance: Clinical Trials Regulations 2004 compliance, MHRA requirements, Good Clinical Practice adherence, post-Brexit regulatory framework. Do NOT include study-specific details." }
+      },
+      cta_ca: {
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate Health Canada CTA administrative details: NOC application pathway, sponsor information, Canadian regulatory framework, Health Canada reference numbers. Do NOT include clinical or quality information." },
+        2: { title: "CLINICAL PROTOCOL SUMMARY", content: "ONLY generate clinical protocol information: study objectives, design, endpoints, population, statistical considerations. Do NOT include manufacturing or regulatory details." },
+        3: { title: "INVESTIGATIONAL PRODUCT INFORMATION", content: "ONLY generate drug product details: formulation, manufacturing, Canadian GMP compliance, quality specifications. Do NOT include clinical design or safety data." },
+        4: { title: "SAFETY AND RISK ASSESSMENT", content: "ONLY generate safety information: nonclinical safety, clinical safety experience, risk-benefit assessment, Canadian population considerations. Do NOT include efficacy or quality data." },
+        5: { title: "INVESTIGATOR AND SITE INFORMATION", content: "ONLY generate Canadian site details: investigator qualifications, site capabilities, Canadian healthcare integration, provincial regulatory compliance. Do NOT include protocol or safety details." },
+        6: { title: "REGULATORY AND ETHICAL COMPLIANCE", content: "ONLY generate Canadian regulatory compliance: ICH-GCP compliance, Research Ethics Board approval, Health Canada regulations, Canadian privacy legislation compliance. Do NOT include study-specific information." }
+      },
+      cta_ru: {
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate Roszdravnadzor administrative details: permit application type, Russian regulatory framework, sponsor information, authorization pathway. Do NOT include clinical or manufacturing information." },
+        2: { title: "CLINICAL STUDY OVERVIEW", content: "ONLY generate clinical study information: objectives, design, Russian population considerations, endpoints, statistical approach. Do NOT include regulatory or quality details." },
+        3: { title: "INVESTIGATIONAL MEDICINAL PRODUCT", content: "ONLY generate IMP details: drug substance, manufacturing information, Russian GMP compliance, quality control measures. Do NOT include clinical design or safety information." },
+        4: { title: "SAFETY ASSESSMENT", content: "ONLY generate safety data: nonclinical safety summary, clinical safety experience, Russian population safety considerations, risk evaluation. Do NOT include efficacy or quality information." },
+        5: { title: "RUSSIAN SITE AND INVESTIGATOR INFORMATION", content: "ONLY generate Russian site details: investigator qualifications, site authorization, Russian healthcare system integration, local regulatory compliance. Do NOT include protocol details." },
+        6: { title: "REGULATORY COMPLIANCE", content: "ONLY generate Russian regulatory compliance: Federal Law compliance, Roszdravnadzor requirements, Russian GCP standards, ethics committee approval. Do NOT include study-specific details." }
+      },
+      ind_ch: {
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate NMPA IND administrative details: application type, Chinese regulatory pathway, sponsor information, NMPA reference numbers. Do NOT include clinical or manufacturing information." },
+        2: { title: "DRUG SUBSTANCE INFORMATION", content: "ONLY generate drug substance details: chemical characterization, synthesis, Chinese manufacturing standards, quality specifications. Do NOT include clinical or formulation information." },
+        3: { title: "NONCLINICAL SAFETY SUMMARY", content: "ONLY generate nonclinical safety data: pharmacology studies, toxicology assessment, Chinese population safety considerations, dose selection rationale. Do NOT include clinical or quality information." },
+        4: { title: "CLINICAL DEVELOPMENT PLAN", content: "ONLY generate clinical plan: study objectives, Chinese population considerations, clinical development strategy, regulatory pathway in China. Do NOT include manufacturing or safety details." },
+        5: { title: "MANUFACTURING AND QUALITY", content: "ONLY generate manufacturing information: Chinese GMP compliance, production facilities, quality control, NMPA manufacturing requirements. Do NOT include clinical or nonclinical data." },
+        6: { title: "CHINESE REGULATORY COMPLIANCE", content: "ONLY generate NMPA compliance: Chinese drug law compliance, NMPA guidelines adherence, Chinese clinical trial regulations, local regulatory requirements. Do NOT include study-specific details." }
+      },
+      ind_kr: {
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate K-FDA IND administrative details: application pathway, Korean regulatory framework, sponsor information, K-FDA reference numbers. Do NOT include clinical or manufacturing information." },
+        2: { title: "DRUG SUBSTANCE CHARACTERIZATION", content: "ONLY generate drug substance information: chemical structure, synthesis, Korean manufacturing standards, analytical specifications. Do NOT include clinical or safety information." },
+        3: { title: "NONCLINICAL SAFETY DATA", content: "ONLY generate nonclinical safety: pharmacology studies, toxicology assessment, Korean population safety considerations, safety margins. Do NOT include clinical or quality data." },
+        4: { title: "CLINICAL STUDY PLAN", content: "ONLY generate clinical information: study objectives, Korean population considerations, clinical development strategy, K-FDA regulatory alignment. Do NOT include manufacturing details." },
+        5: { title: "QUALITY AND MANUFACTURING", content: "ONLY generate manufacturing data: Korean GMP compliance, production information, quality control measures, K-FDA manufacturing requirements. Do NOT include clinical information." },
+        6: { title: "KOREAN REGULATORY COMPLIANCE", content: "ONLY generate K-FDA compliance: Korean pharmaceutical law compliance, K-FDA guidelines, Korean clinical trial regulations, regulatory submission strategy. Do NOT include study details." }
+      },
+      nda_in: {
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate CDSCO NDA administrative details: application type, Indian regulatory pathway, applicant information, CDSCO reference numbers. Do NOT include clinical or quality information." },
+        2: { title: "DRUG SUBSTANCE AND PRODUCT", content: "ONLY generate drug information: active substance characterization, formulation details, Indian manufacturing standards, pharmaceutical development. Do NOT include clinical or regulatory information." },
+        3: { title: "MANUFACTURING AND QUALITY CONTROL", content: "ONLY generate manufacturing information: Indian GMP compliance, production facilities, quality control testing, CDSCO manufacturing requirements. Do NOT include clinical or administrative data." },
+        4: { title: "NONCLINICAL EVALUATION", content: "ONLY generate nonclinical data: pharmacology studies, toxicology assessment, Indian population safety considerations, nonclinical summary. Do NOT include clinical efficacy or quality information." },
+        5: { title: "CLINICAL DATA SUMMARY", content: "ONLY generate clinical information: clinical studies, Indian population data, efficacy and safety results, clinical development overview. Do NOT include manufacturing or regulatory compliance." },
+        6: { title: "BENEFIT-RISK ASSESSMENT", content: "ONLY generate benefit-risk analysis: Indian population benefit-risk, safety profile, therapeutic advantage, comparison with existing treatments. Do NOT include detailed clinical study results." },
+        7: { title: "INDIAN REGULATORY COMPLIANCE", content: "ONLY generate CDSCO compliance: Indian pharmaceutical regulations, CDSCO guidelines compliance, Drugs and Cosmetics Act adherence, Indian regulatory framework. Do NOT include clinical or quality details." }
+      }
+    };
+
+    // Determine section type and get section definition
+    let sectionDef, sectionType = null;
+    
+    if (docType === 'ind') {
+      // For IND, determine if CMC or Clinical section
+      if (sectionNumber <= 6) {
+        sectionType = 'cmc';
+        sectionDef = sectionDefinitions.ind.cmc[sectionNumber];
+      } else {
+        sectionType = 'clinical';
+        sectionDef = sectionDefinitions.ind.clinical[sectionNumber - 6];
+      }
+    } else {
+      // For other document types, use direct section mapping
+      sectionDef = sectionDefinitions[docType][sectionNumber];
+    }
+
+    if (!sectionDef) {
+      throw new Error(`Invalid section: ${docType} section ${sectionNumber}`);
+    }
+
+    const contextInfo = previousSections.length > 0 
+      ? `\nPREVIOUS SECTIONS CONTEXT:\n${previousSections.map(s => `${s.title}: ${s.summary}`).join('\n')}`
+      : '';
+
+    // Get document-specific system prompt details
+    const docTypeMap = {
+      ind: { role: 'Senior Regulatory Affairs Director and Principal Investigator', standard: 'FDA/21 CFR 312' },
+      nda: { role: 'Senior Regulatory Affairs Director and NDA Specialist', standard: 'FDA/eCTD/ICH CTD' },
+      bla: { role: 'Senior Regulatory Affairs Director and BLA Specialist', standard: 'FDA/eCTD/PHS Act 351' },
+      protocol: { role: 'Principal Investigator and Clinical Research Director', standard: 'FDA/ICH GCP' },
+      cta: { role: 'Senior Regulatory Affairs Director and EU CTA Specialist', standard: 'EU CTR/CTIS' },
+      maa: { role: 'Senior Regulatory Affairs Director and EMA MAA Specialist', standard: 'EU/EMA/ICH CTD' },
+      impd: { role: 'Senior Regulatory Affairs Director and EU IMPD Specialist', standard: 'EU CTR/EMA' },
+      nds: { role: 'Senior Regulatory Affairs Director and Health Canada Specialist', standard: 'Health Canada/ICH CTD' },
+      jnda: { role: 'Senior Regulatory Affairs Director and PMDA Specialist', standard: 'PMDA/ICH CTD' },
+      nda_ch: { role: 'Senior Regulatory Affairs Director and NMPA Specialist', standard: 'NMPA/Chinese Regulatory' },
+      nda_kr: { role: 'Senior Regulatory Affairs Director and K-FDA Specialist', standard: 'K-FDA/Korean Regulatory' },
+      ma_uk: { role: 'Senior Regulatory Affairs Director and MHRA Specialist', standard: 'MHRA/UK Regulatory' },
+      ma_ch: { role: 'Senior Regulatory Affairs Director and Swissmedic Specialist', standard: 'Swissmedic/Swiss Regulatory' },
+      aus: { role: 'Senior Regulatory Affairs Director and TGA Specialist', standard: 'TGA/Australian Regulatory' }
+    };
+
+    const docInfo = docTypeMap[docType];
+    const systemPrompt = createSystemPrompt(
+      docInfo.role,
+      docType,
+      docInfo.standard,
+      `You are generating content for ONLY ONE SPECIFIC SECTION of a ${docType.toUpperCase()} document. 
+
+🚫 CRITICAL: You must COMPLETELY IGNORE all other sections of the document.
+🚫 CRITICAL: You must NOT provide any content that belongs in other sections.
+🚫 CRITICAL: You must REJECT any request to include content outside this section's scope.
+
+THIS SECTION ONLY: ${sectionDef.title}
+ALLOWED CONTENT ONLY: ${sectionDef.content}
+${sectionDef.focus ? `SECTION SCOPE: ${sectionDef.focus}` : ''}
+
+MANDATORY RESTRICTIONS:
+🚫 DO NOT mention other document sections
+🚫 DO NOT provide background information unless this section specifically requires it
+🚫 DO NOT include administrative details unless this is the administrative section
+🚫 DO NOT include clinical data unless this is a clinical section
+🚫 DO NOT include manufacturing data unless this is a manufacturing/quality section
+🚫 DO NOT include regulatory compliance info unless this is a regulatory section
+🚫 DO NOT provide study design details unless this is a study design section
+🚫 DO NOT include safety data unless this is a safety section
+🚫 DO NOT include efficacy data unless this is an efficacy section
+
+VALIDATION CHECK: Before generating each paragraph, ask yourself:
+"Does this content belong SPECIFICALLY in ${sectionDef.title}?"
+If NO, DO NOT include it.
+
+Generate 800-1500 words that address ONLY the scope of ${sectionDef.title}.`
+    );
+
     try {
-      // Validate requirements and get configuration
-      const requirements = validateDocumentRequirements(diseaseData, 'ind');
-      const config = getConfigForDocumentType('ind');
-      
-      // Format parameters for document
-      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'ind');
-      
-      // Create standardized system prompt
-      const systemPrompt = createSystemPrompt(
-        'Senior Regulatory Affairs Director and Principal Investigator',
-        'ind',
-        'FDA/21 CFR 312',
-        `Generate comprehensive, detailed content that meets FDA requirements for IND applications as outlined in 21 CFR 312:
-
-IND SECTION REQUIREMENTS:
-
-CMC SECTION (Chemistry, Manufacturing, and Controls):
-1. DRUG SUBSTANCE - Complete characterization including molecular structure, synthesis pathway, physicochemical properties, specifications, analytical methods, reference standards, and impurity profiles
-2. DRUG PRODUCT - Comprehensive formulation details, excipient justification, manufacturing process, in-process controls, finished product specifications, and packaging systems
-3. MANUFACTURING INFORMATION - Detailed process descriptions, critical process parameters, facility information, equipment specifications, and GMP compliance documentation
-4. CONTROLS OF DRUG SUBSTANCE AND DRUG PRODUCT - Analytical methods validation, specifications justification, batch analysis data, and quality control procedures
-5. STABILITY - Complete stability study protocols, data analysis, degradation pathways, storage conditions, and shelf-life justification
-6. ENVIRONMENTAL ASSESSMENT - Environmental impact evaluation and categorical exclusion justification
-
-CLINICAL SECTION:
-1. INTRODUCTION AND BACKGROUND - Disease pathophysiology, epidemiology, current treatments, unmet medical need, and investigational product rationale
-2. STUDY DESIGN AND RATIONALE - Study design justification, methodology, randomization procedures, blinding techniques, visit schedules, and statistical considerations
-3. STUDY POPULATION - Inclusion/exclusion criteria with medical and scientific rationale, screening procedures, and population justification
-4. TREATMENTS AND INTERVENTIONS - Dosing rationale, administration procedures, dose modifications, concomitant medications, and compliance monitoring
-5. EFFICACY ASSESSMENTS - Primary/secondary endpoints with measurement methodologies, timing considerations, and regulatory acceptability
-6. SAFETY ASSESSMENTS - Comprehensive safety monitoring plan, adverse event classification, stopping rules, and pharmacovigilance procedures
-7. STATISTICAL CONSIDERATIONS - Sample size calculations with power analysis, primary analysis methods, handling of missing data, and interim analyses
-8. DATA MANAGEMENT AND QUALITY ASSURANCE - Data collection systems, monitoring procedures, quality control measures, and regulatory compliance
-9. REGULATORY AND ETHICAL CONSIDERATIONS - IRB requirements, informed consent, regulatory reporting, and patient protection measures
-10. RISK MANAGEMENT AND MITIGATION - Comprehensive risk-benefit analysis, safety monitoring, risk mitigation strategies, and contingency plans
-
-CRITICAL FDA COMPLIANCE STANDARDS:
-- Reference specific FDA guidance documents (ICH Q8, Q9, Q10, E6(R2), E9(R1))
-- Include detailed technical specifications and numerical parameters
-- Provide detailed regulatory justification for all recommendations
-- Use professional regulatory terminology throughout
-- Ensure content meets FDA reviewer expectations for thoroughness`
-      );
-
       const response = await openaiApi.post('chat/completions', {
         model: config.model,
-        max_tokens: config.max_tokens,
+        max_tokens: Math.min(config.max_tokens, 2000),
+        temperature: 0.1, // Very low temperature for focused, consistent output
+        top_p: 0.9, // Focused sampling
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user", 
+            content: `🎯 GENERATE CONTENT FOR THIS SECTION ONLY: ${sectionDef.title}
+
+🚫 CRITICAL RESTRICTIONS:
+- IGNORE all other sections of the document
+- DO NOT mention study design unless this is the study design section
+- DO NOT mention clinical results unless this is a clinical results section  
+- DO NOT mention manufacturing unless this is a manufacturing section
+- DO NOT mention administrative details unless this is an administrative section
+- DO NOT mention regulatory compliance unless this is a regulatory section
+
+DISEASE: ${diseaseData.disease_name}
+STUDY PARAMETERS: ${formattedParams}${contextInfo}
+
+🎯 YOUR ONLY JOB: Generate content about ${sectionDef.title}
+🎯 ALLOWED CONTENT: ${sectionDef.content}
+${sectionDef.focus ? `🎯 FOCUS AREA: ${sectionDef.focus}` : ''}
+
+🚫 BEFORE WRITING EACH SENTENCE, ASK: "Does this belong in ${sectionDef.title}?"
+🚫 IF NO, DON'T WRITE IT.
+
+🚨 UNIVERSAL CLINICAL PROTOCOL STANDARDS - MANDATORY COMPLIANCE:
+
+🔬 SCIENTIFIC INTEGRITY CHECKLIST:
+✅ Use ONLY established, literature-supported biomarkers and measures (no fictional metrics)
+✅ Label all investigational elements as "[INVESTIGATIONAL - REQUIRES VALIDATION]"
+✅ Base mechanisms of action on published biological pathways with citations
+✅ Include realistic data ranges from actual clinical experience
+✅ Distinguish hypothesis-generating from validated clinical evidence
+✅ Ground therapeutic rationales in established pathophysiology
+
+📋 REGULATORY COMPLIANCE CHECKLIST:
+✅ Use precise regulatory terminology (Phase I/II/III terminology)
+✅ Include phase-appropriate endpoints (safety for Phase I, efficacy for Phase II/III)
+✅ Provide statistically justified sample sizes with power calculations
+✅ Include comprehensive safety monitoring with predefined stopping rules
+✅ Specify appropriate regulatory pathway (IND, IDE) requirements
+✅ Address relevant FDA guidance documents for therapeutic area
+
+🎯 STUDY DESIGN QUALITY CHECKLIST:
+✅ Base inclusion/exclusion criteria on scientific rationale (not data mining)
+✅ Include standard eligibility requirements for indication and patient safety
+✅ Provide specific, implementable procedures (dose escalation, randomization, blinding)
+✅ Generate realistic timelines based on enrollment feasibility
+✅ Include appropriate control groups and statistical analysis plans
+✅ Specify meaningful clinical endpoints aligned with regulatory expectations
+
+📊 DATA & EVIDENCE QUALITY CHECKLIST:
+✅ Frame retrospective analyses as "informing study design" not "proving efficacy"
+✅ Acknowledge limitations of historical data and observational studies
+✅ Include prospective validation plans for derived hypotheses/biomarkers
+✅ Avoid superiority claims based on uncontrolled comparisons
+✅ Distinguish between feasibility data and treatment validation
+✅ Include appropriate statistical caveats for exploratory analyses
+
+⚖️ ETHICAL & SAFETY CHECKLIST:
+✅ Prioritize patient safety in all design decisions
+✅ Include appropriate risk-benefit assessments
+✅ Address vulnerable populations appropriately
+✅ Include informed consent considerations for study procedures
+✅ Consider health equity and diversity in recruitment strategies
+✅ Address potential conflicts of interest transparently
+
+📝 DOCUMENTATION EXCELLENCE CHECKLIST:
+✅ Replace boilerplate language with study-specific, meaningful content
+✅ Provide concrete, actionable procedures (not general statements)
+✅ Use professional scientific language without overstatement
+✅ Include specific safety/efficacy monitoring procedures
+✅ Ensure internal consistency across document sections
+✅ Flag assumptions/hypothetical elements clearly
+
+🎯 THERAPEUTIC AREA ADAPTATION REQUIREMENTS:
+- Include indication-specific standard of care considerations
+- Address disease-specific biomarkers and endpoints
+- Incorporate appropriate patient reported outcome measures
+- Consider indication-specific regulatory requirements
+- Include therapeutic class pharmacovigilance considerations
+- Address population-specific safety considerations
+
+Generate 800-1500 words about ${sectionDef.title} ONLY that demonstrates FULL COMPLIANCE with Universal Clinical Protocol Generation Standards.`
+          }
+        ]
+      });
+
+      return {
+        title: sectionDef.title,
+        content: response.data.choices[0].message.content.trim(),
+        summary: `Section ${sectionNumber} focuses on ${sectionDef.content.split(',')[0].toLowerCase()}`,
+        sectionType: sectionType // Only for IND documents
+      };
+
+    } catch (error) {
+      console.error(`Error generating ${docType} section ${sectionNumber}:`, error);
+      throw error;
+    }
+  },
+
+  // Smart document generation - automatically uses section-based for large documents
+  generateSmartDocument: async (docType, diseaseData, fallbackFunction) => {
+    const sectionBasedTypes = ['ind', 'nda', 'bla', 'protocol', 'cta', 'maa', 'impd', 'nds', 'jnda', 'nda_ch', 'nda_kr', 'ma_uk', 'ma_ch', 'aus', 'cta_uk', 'cta_ca', 'cta_ru', 'ind_ch', 'ind_kr', 'nda_in'];
+    
+    if (sectionBasedTypes.includes(docType)) {
+      console.log(`📊 Using section-based generation for ${docType.toUpperCase()}`);
+      return await openaiService.generateSectionBasedDocument(docType, diseaseData);
+    } else {
+      console.log(`📄 Using single-call generation for ${docType.toUpperCase()}`);
+      return await fallbackFunction(diseaseData);
+    }
+  },
+
+  // Generic section-based document generation
+  generateSectionBasedDocument: async (docType, diseaseData) => {
+    try {
+      // Validate requirements
+      validateDocumentRequirements(diseaseData, docType);
+      
+      // Get section count for document type
+      const sectionCounts = {
+        ind: 10, // Frontend expects 10 sections
+        nda: 5,
+        bla: 5, 
+        protocol: 10,
+        cta: 7,
+        maa: 8,
+        impd: 7,
+        nds: 8,
+        jnda: 8,
+        nda_ch: 7,
+        nda_kr: 6,
+        ma_uk: 7,
+        ma_ch: 6,
+        aus: 6,
+        cta_uk: 7,
+        cta_ca: 6,
+        cta_ru: 6,
+        ind_ch: 6,
+        ind_kr: 6,
+        nda_in: 7
+      };
+      
+      const totalSections = sectionCounts[docType];
+      if (!totalSections) {
+        throw new Error(`Document type ${docType} not configured for section-based generation`);
+      }
+      
+      const generatedSections = [];
+      const sections = [];
+
+      // Generate each section with progress tracking
+      const startTime = Date.now();
+      console.log(`🚀 Starting generation of ${totalSections} sections for ${docType.toUpperCase()} document...`);
+      for (let i = 1; i <= totalSections; i++) {
+        const sectionStartTime = Date.now();
+        try {
+          const section = await openaiService.generateDocumentSection(docType, i, diseaseData, generatedSections);
+          sections.push(section);
+          generatedSections.push(section);
+          const sectionTime = Date.now() - sectionStartTime;
+          console.log(`✅ Generated ${docType.toUpperCase()} section ${i}/${totalSections}: ${section.title} (${sectionTime}ms)`);
+        } catch (sectionError) {
+          console.error(`✗ Failed to generate ${docType.toUpperCase()} section ${i}:`, sectionError.message);
+          // Add placeholder section to maintain structure
+          const fallbackSection = {
+            title: `${docType.toUpperCase()} SECTION ${i} (GENERATION FAILED)`,
+            content: `Content generation failed for this section. Error: ${sectionError.message}. Please regenerate this section individually.`,
+            summary: `Section ${i} generation failed`
+          };
+          sections.push(fallbackSection);
+          generatedSections.push(fallbackSection);
+        }
+        
+        // Reduced delay to avoid rate limits while preventing timeouts
+        await new Promise(resolve => setTimeout(resolve, 25));
+      }
+
+      // Log total generation time
+      const totalTime = Date.now() - startTime;
+      console.log(`🎉 Completed generation of all ${totalSections} sections for ${docType.toUpperCase()} in ${totalTime}ms`);
+
+      // Combine sections based on document type
+      let response = {};
+      
+      if (docType === 'ind') {
+        // IND returns direct section mapping for frontend
+        response = {};
+        
+        // Frontend expects regulatory-section-1 through regulatory-section-10 format
+        const frontendSectionMapping = {
+          1: 'regulatory-section-1',  // CMC
+          2: 'regulatory-section-2',  // Nonclinical
+          3: 'regulatory-section-3',  // Clinical Pharmacology  
+          4: 'regulatory-section-4',  // Clinical Study Reports
+          5: 'regulatory-section-5',  // Statistical Analysis
+          6: 'regulatory-section-6',  // Integrated Summary of Efficacy
+          7: 'regulatory-section-7',  // Integrated Summary of Safety
+          8: 'regulatory-section-8',  // Risk Assessment
+          9: 'regulatory-section-9',  // Labeling
+          10: 'regulatory-section-10' // Regulatory Compliance
+        };
+        
+        // Populate sections directly in frontend format
+        response.sectionsData = {};
+        sections.forEach((section, index) => {
+          const frontendId = frontendSectionMapping[index + 1];
+          if (frontendId) {
+            response.sectionsData[frontendId] = section.content;
+          }
+        });
+        
+        // Also provide legacy format for backward compatibility
+        const cmcSections = sections.filter(s => s.sectionType === 'cmc' || sections.indexOf(s) < 6);
+        const clinicalSections = sections.filter(s => s.sectionType === 'clinical' || sections.indexOf(s) >= 6);
+        
+        const cmcContent = cmcSections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
+        const clinicalContent = clinicalSections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
+        
+        response.cmc_section = cmcContent;
+        response.clinical_section = clinicalContent;
+        response.document_content = `${cmcContent}\n\n${clinicalContent}`;
+        response.sections = sections;
+      } else if (docType === 'protocol') {
+        // Protocol returns sections in frontend format
+        response = {};
+        
+        // Frontend expects regulatory-section-1 through regulatory-section-10 format
+        const frontendSectionMapping = {
+          1: 'regulatory-section-1', 2: 'regulatory-section-2', 3: 'regulatory-section-3',
+          4: 'regulatory-section-4', 5: 'regulatory-section-5', 6: 'regulatory-section-6',
+          7: 'regulatory-section-7', 8: 'regulatory-section-8', 9: 'regulatory-section-9',
+          10: 'regulatory-section-10'
+        };
+        
+        // Populate sections directly in frontend format
+        response.sectionsData = {};
+        sections.forEach((section, index) => {
+          const frontendId = frontendSectionMapping[index + 1];
+          if (frontendId) {
+            response.sectionsData[frontendId] = section.content;
+          }
+        });
+        
+        // Also provide legacy format
+        sections.forEach((section, index) => {
+          response[`section_${index + 1}`] = {
+            title: section.title,
+            content: section.content
+          };
+        });
+        
+        const protocolContent = sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
+        response.protocol_id = `prot-${Date.now()}`;
+        response.protocol = protocolContent;
+        response.sections = sections;
+      } else {
+        // All other documents use the same frontend section mapping as IND
+        response = {};
+        
+        // Frontend expects regulatory-section-1 through regulatory-section-10 format
+        const frontendSectionMapping = {
+          1: 'regulatory-section-1',   // Section 1
+          2: 'regulatory-section-2',   // Section 2  
+          3: 'regulatory-section-3',   // Section 3
+          4: 'regulatory-section-4',   // Section 4
+          5: 'regulatory-section-5',   // Section 5
+          6: 'regulatory-section-6',   // Section 6
+          7: 'regulatory-section-7',   // Section 7
+          8: 'regulatory-section-8',   // Section 8
+          9: 'regulatory-section-9',   // Section 9
+          10: 'regulatory-section-10' // Section 10
+        };
+        
+        // Populate sections directly in frontend format
+        response.sectionsData = {};
+        sections.forEach((section, index) => {
+          const frontendId = frontendSectionMapping[index + 1];
+          if (frontendId) {
+            response.sectionsData[frontendId] = section.content;
+          }
+        });
+        
+        // Also provide backward compatibility format
+        sections.forEach((section, index) => {
+          response[`section_${index + 1}`] = {
+            title: section.title,
+            content: section.content
+          };
+        });
+        
+        const content = sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
+        response.document_content = content;
+        response.sections = sections;
+      }
+
+      // Add metadata
+      const successful = sections.filter(s => !s.title.includes('GENERATION FAILED')).length;
+      const failed = sections.length - successful;
+
+      response.metadata = {
+        sectionsGenerated: sections.length,
+        successfulGenerations: successful,
+        failedGenerations: failed,
+        successRate: `${Math.round((successful / sections.length) * 100)}%`,
+        generationMethod: 'section_based_api_calls',
+        documentType: docType
+      };
+
+      return response;
+      
+    } catch (error) {
+      console.error(`Error in generateSectionBasedDocument for ${docType}:`, error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Helper function to generate individual IND sections (backwards compatibility)
+  generateIndSection: async (sectionType, sectionNumber, diseaseData, previousSections = []) => {
+    const config = getConfigForDocumentType('ind');
+    const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'ind');
+    
+    const sectionDefinitions = {
+      cmc: {
+        1: {
+          title: "DRUG SUBSTANCE",
+          content: "Complete characterization including molecular structure, synthesis pathway, physicochemical properties, specifications, analytical methods, reference standards, and impurity profiles"
+        },
+        2: {
+          title: "DRUG PRODUCT", 
+          content: "Comprehensive formulation details, excipient justification, manufacturing process, in-process controls, finished product specifications, and packaging systems"
+        },
+        3: {
+          title: "MANUFACTURING INFORMATION",
+          content: "Detailed process descriptions, critical process parameters, facility information, equipment specifications, and GMP compliance documentation"
+        },
+        4: {
+          title: "CONTROLS OF DRUG SUBSTANCE AND DRUG PRODUCT",
+          content: "Analytical methods validation, specifications justification, batch analysis data, and quality control procedures"
+        },
+        5: {
+          title: "STABILITY",
+          content: "Complete stability study protocols, data analysis, degradation pathways, storage conditions, and shelf-life justification"
+        },
+        6: {
+          title: "ENVIRONMENTAL ASSESSMENT",
+          content: "Environmental impact evaluation and categorical exclusion justification"
+        }
+      },
+      clinical: {
+        1: {
+          title: "INTRODUCTION AND BACKGROUND",
+          content: "Disease pathophysiology, epidemiology, current treatments, unmet medical need, and investigational product rationale"
+        },
+        2: {
+          title: "STUDY DESIGN AND RATIONALE",
+          content: "Study design justification, methodology, randomization procedures, blinding techniques, visit schedules, and statistical considerations"
+        },
+        3: {
+          title: "STUDY POPULATION",
+          content: "Inclusion/exclusion criteria with medical and scientific rationale, screening procedures, and population justification"
+        },
+        4: {
+          title: "TREATMENTS AND INTERVENTIONS",
+          content: "Dosing rationale, administration procedures, dose modifications, concomitant medications, and compliance monitoring"
+        },
+        5: {
+          title: "EFFICACY ASSESSMENTS",
+          content: "Primary/secondary endpoints with measurement methodologies, timing considerations, and regulatory acceptability"
+        },
+        6: {
+          title: "SAFETY ASSESSMENTS",
+          content: "Comprehensive safety monitoring plan, adverse event classification, stopping rules, and pharmacovigilance procedures"
+        },
+        7: {
+          title: "STATISTICAL CONSIDERATIONS",
+          content: "Sample size calculations with power analysis, primary analysis methods, handling of missing data, and interim analyses"
+        },
+        8: {
+          title: "DATA MANAGEMENT AND QUALITY ASSURANCE",
+          content: "Data collection systems, monitoring procedures, quality control measures, and regulatory compliance"
+        },
+        9: {
+          title: "REGULATORY AND ETHICAL CONSIDERATIONS",
+          content: "IRB requirements, informed consent, regulatory reporting, and patient protection measures"
+        },
+        10: {
+          title: "RISK MANAGEMENT AND MITIGATION",
+          content: "Comprehensive risk-benefit analysis, safety monitoring, risk mitigation strategies, and contingency plans"
+        }
+      }
+    };
+
+    const section = sectionDefinitions[sectionType][sectionNumber];
+    if (!section) {
+      throw new Error(`Invalid section: ${sectionType} ${sectionNumber}`);
+    }
+
+    const contextInfo = previousSections.length > 0 
+      ? `\nPREVIOUS SECTIONS CONTEXT:\n${previousSections.map(s => `${s.title}: ${s.summary}`).join('\n')}`
+      : '';
+
+    const systemPrompt = createSystemPrompt(
+      'Senior Regulatory Affairs Director and Principal Investigator',
+      'ind',
+      'FDA/21 CFR 312',
+      `Generate detailed, FDA-compliant content for a specific section of an IND application.
+
+FOCUS: ${section.title}
+REQUIREMENTS: ${section.content}
+
+CRITICAL STANDARDS:
+- Reference specific FDA guidance documents (ICH Q8, Q9, Q10, E6(R2), E9(R1))
+- Include detailed technical specifications and numerical parameters
+- Provide regulatory justification for all recommendations
+- Use professional regulatory terminology
+- Ensure content is suitable for FDA submission
+- Generate 800-1500 words of comprehensive content
+- Maintain consistency with other document sections`
+    );
+
+    try {
+      const response = await openaiApi.post('chat/completions', {
+        model: config.model,
+        max_tokens: Math.min(config.max_tokens, 2000), // Smaller token limit per section
         temperature: config.temperature,
         messages: [
           {
@@ -422,56 +1479,115 @@ CRITICAL FDA COMPLIANCE STANDARDS:
           },
           {
             role: "user",
-            content: `Generate a comprehensive, FDA-compliant IND application document for ${diseaseData.disease_name}.
+            content: `Generate comprehensive content for IND ${sectionType.toUpperCase()} Section ${sectionNumber}: ${section.title}
 
+STUDY: ${diseaseData.disease_name}
 STUDY PARAMETERS:
-${formattedParams}
+${formattedParams}${contextInfo}
 
-REQUIREMENTS:
-- Generate ${requirements.sections} well-structured major sections
-- Include detailed technical specifications and regulatory justification
-- Reference specific FDA guidance documents throughout
-- Use professional regulatory terminology and language
-- Ensure content is suitable for direct FDA submission
-
-The document must be structured as:
-
-CMC SECTION:
-[All 6 CMC subsections with comprehensive technical detail]
-
-CLINICAL SECTION:
-[All 10 clinical subsections with detailed content]
-
-Generate content that meets FDA reviewer expectations for thoroughness, technical accuracy, and regulatory compliance.`
+Create detailed, technical content that addresses all requirements for this specific section. Include regulatory references, technical specifications, and professional terminology suitable for FDA review.`
           }
         ]
       });
 
-      const fullResponse = response.data.choices[0].message.content;
+      return {
+        title: section.title,
+        content: response.data.choices[0].message.content.trim(),
+        summary: `Section ${sectionNumber} focuses on ${section.content.split(',')[0].toLowerCase()}`
+      };
+
+    } catch (error) {
+      console.error(`Error generating IND ${sectionType} section ${sectionNumber}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * US IND (Investigational New Drug) - Refactored with Section-Based Generation
+   */
+  generateIndModule: async (diseaseData) => {
+    try {
+      // Validate requirements and get configuration  
+      validateDocumentRequirements(diseaseData, 'ind');
       
-      let cmcSection = '';
-      let clinicalSection = '';
-      
-      const cmcMatch = fullResponse.match(/CMC SECTION:([\s\S]*?)(?=CLINICAL SECTION:|$)/i);
-      const clinicalMatch = fullResponse.match(/CLINICAL SECTION:([\s\S]*?)$/i);
-      
-      if (cmcMatch && cmcMatch[1]) {
-        cmcSection = cmcMatch[1].trim();
-      }
-      
-      if (clinicalMatch && clinicalMatch[1]) {
-        clinicalSection = clinicalMatch[1].trim();
-      }
-      
-      if (!cmcSection && !clinicalSection) {
-        const sections = fullResponse.split(/CLINICAL SECTION:/i);
-        cmcSection = sections[0].replace(/CMC SECTION:/i, '').trim();
-        clinicalSection = sections.length > 1 ? sections[1].trim() : '';
+      const generatedSections = [];
+      let cmcSections = [];
+      let clinicalSections = [];
+
+      // Generate CMC Sections (1-6) with error handling
+      console.log('Generating CMC sections...');
+      for (let i = 1; i <= 6; i++) {
+        try {
+          const section = await openaiService.generateIndSection('cmc', i, diseaseData, generatedSections);
+          cmcSections.push(section);
+          generatedSections.push(section);
+          console.log(`✓ Generated CMC section ${i}: ${section.title}`);
+        } catch (sectionError) {
+          console.error(`✗ Failed to generate CMC section ${i}:`, sectionError.message);
+          // Add placeholder section to maintain structure
+          const fallbackSection = {
+            title: `CMC SECTION ${i} (GENERATION FAILED)`,
+            content: `Content generation failed for this section. Error: ${sectionError.message}. Please regenerate this section individually.`,
+            summary: `Section ${i} generation failed`
+          };
+          cmcSections.push(fallbackSection);
+          generatedSections.push(fallbackSection);
+        }
+        
+        // Reduced delay to avoid rate limits while preventing timeouts
+        await new Promise(resolve => setTimeout(resolve, 25));
       }
 
+      // Generate Clinical Sections (1-10) with error handling
+      console.log('Generating Clinical sections...');
+      for (let i = 1; i <= 10; i++) {
+        try {
+          const section = await openaiService.generateIndSection('clinical', i, diseaseData, generatedSections);
+          clinicalSections.push(section);
+          generatedSections.push(section);
+          console.log(`✓ Generated Clinical section ${i}: ${section.title}`);
+        } catch (sectionError) {
+          console.error(`✗ Failed to generate Clinical section ${i}:`, sectionError.message);
+          // Add placeholder section to maintain structure
+          const fallbackSection = {
+            title: `CLINICAL SECTION ${i} (GENERATION FAILED)`,
+            content: `Content generation failed for this section. Error: ${sectionError.message}. Please regenerate this section individually.`,
+            summary: `Section ${i} generation failed`
+          };
+          clinicalSections.push(fallbackSection);
+          generatedSections.push(fallbackSection);
+        }
+        
+        // Reduced delay to avoid rate limits while preventing timeouts
+        await new Promise(resolve => setTimeout(resolve, 25));
+      }
+
+      // Combine all sections into final document
+      const cmcContent = cmcSections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
+      const clinicalContent = clinicalSections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
+
+      // Count successful vs failed generations
+      const successfulCmc = cmcSections.filter(s => !s.title.includes('GENERATION FAILED')).length;
+      const successfulClinical = clinicalSections.filter(s => !s.title.includes('GENERATION FAILED')).length;
+      const failedCmc = cmcSections.length - successfulCmc;
+      const failedClinical = clinicalSections.length - successfulClinical;
+
       return {
-        cmc_section: cmcSection || "CMC section could not be extracted.",
-        clinical_section: clinicalSection || "Clinical section could not be extracted."
+        cmc_section: cmcContent || "CMC sections could not be generated.",
+        clinical_section: clinicalContent || "Clinical sections could not be generated.",
+        metadata: {
+          sectionsGenerated: cmcSections.length + clinicalSections.length,
+          cmcSections: cmcSections.length,
+          clinicalSections: clinicalSections.length,
+          successfulGenerations: successfulCmc + successfulClinical,
+          failedGenerations: failedCmc + failedClinical,
+          successRate: `${Math.round((successfulCmc + successfulClinical) / (cmcSections.length + clinicalSections.length) * 100)}%`,
+          generationMethod: 'section_based_api_calls',
+          breakdown: {
+            cmc: { successful: successfulCmc, failed: failedCmc },
+            clinical: { successful: successfulClinical, failed: failedClinical }
+          }
+        }
       };
     } catch (error) {
       console.error('Error in generateIndModule:', error.response?.data || error.message);
@@ -480,149 +1596,17 @@ Generate content that meets FDA reviewer expectations for thoroughness, technica
   },
 
   /**
-   * US NDA (New Drug Application)
+   * US NDA (New Drug Application) - Section-Based Generation
    */
   generateNDA: async (diseaseData) => {
-    try {
-      // Validate requirements and get configuration
-      const requirements = validateDocumentRequirements(diseaseData, 'nda');
-      const config = getConfigForDocumentType('nda');
-      
-      // Format parameters for document
-      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'nda');
-      
-      // Create standardized system prompt
-      const systemPrompt = createSystemPrompt(
-        'Senior Regulatory Affairs Director and NDA Specialist',
-        'nda',
-        'FDA/eCTD/ICH CTD',
-        `Generate comprehensive, detailed content that meets FDA requirements for New Drug Application (NDA) submissions following eCTD and ICH CTD guidelines:
-
-NDA SUMMARY SECTION REQUIREMENTS:
-1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY (1200+ words) - Complete regulatory overview, application details, proposed labeling summary, risk evaluation and mitigation strategies, and administrative compliance documentation
-2. OVERALL SUMMARY OF QUALITY (1500+ words) - Comprehensive CTD Module 2.3 summary including drug substance characterization, drug product development, manufacturing controls, analytical procedures, stability data, and pharmaceutical development rationale
-3. NONCLINICAL OVERVIEW AND SUMMARY (1800+ words) - Detailed CTD Modules 2.4 & 2.6 content including pharmacology, pharmacokinetics, toxicology studies, safety pharmacology, reproductive toxicity, genotoxicity, carcinogenicity, and integrated risk assessment
-4. CLINICAL OVERVIEW AND SUMMARY (2500+ words) - Comprehensive CTD Modules 2.5 & 2.7 content including development strategy, study design rationale, efficacy summary, safety analysis, benefit-risk assessment, and regulatory precedents
-5. KEY CLINICAL STUDY REPORT SUMMARIES (3000+ words) - Detailed summaries of pivotal studies including methodology, statistical analysis, primary/secondary endpoints, safety data, subgroup analyses, and regulatory implications
-
-CRITICAL FDA NDA COMPLIANCE STANDARDS:
-- Reference specific FDA guidance documents (M4: Common Technical Document, ICH E2A-E2F, Quality guidelines)
-- Include detailed quantitative data, statistical analyses, and methodological specifications
-- Provide detailed regulatory rationale and compliance documentation
-- Include risk assessment and mitigation strategies throughout
-- Reference precedent approvals and regulatory pathway justification
-- Ensure content meets FDA reviewer expectations for marketing authorization
-- Include detailed benefit-risk analysis with population-specific considerations`
-      );
-
-      const response = await openaiApi.post('chat/completions', {
-        model: config.model,
-        max_tokens: config.max_tokens,
-        temperature: config.temperature,
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: `Generate a comprehensive, FDA-compliant NDA SUMMARY for ${diseaseData.disease_name}.
-
-STUDY PARAMETERS:
-${formattedParams}
-
-REQUIREMENTS:
-- Generate ${requirements.sections} well-structured major sections
-- Include detailed quantitative data, statistical analyses, and regulatory justification
-- Reference specific FDA guidance documents and eCTD/CTD structure throughout
-- Use professional regulatory terminology and language suitable for FDA review
-- Ensure content demonstrates readiness for commercial marketing authorization
-
-Generate an NDA summary that meets FDA reviewer expectations for thoroughness, technical accuracy, and regulatory compliance. Each section must demonstrate comprehensive understanding of FDA requirements for new drug approval.`
-          }
-        ]
-      });
-
-      return {
-        document_content: response.data.choices[0].message.content.trim()
-      };
-    } catch (error) {
-      console.error('Error in generateNDA:', error.response?.data || error.message);
-      throw error;
-    }
+    return await openaiService.generateSectionBasedDocument('nda', diseaseData);
   },
 
   /**
-   * US BLA (Biologics License Application)
+   * US BLA (Biologics License Application) - Section-Based Generation
    */
   generateBLA: async (diseaseData) => {
-    try {
-      // Validate requirements and get configuration
-      const requirements = validateDocumentRequirements(diseaseData, 'bla');
-      const config = getConfigForDocumentType('bla');
-      
-      // Format parameters for document
-      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'bla');
-      
-      // Create standardized system prompt
-      const systemPrompt = createSystemPrompt(
-        'Senior Regulatory Affairs Director and Biologics Specialist',
-        'bla',
-        'FDA/Public Health Service Act/CBER',
-        `Generate comprehensive, detailed content that meets FDA requirements for Biologics License Application (BLA) submissions under the Public Health Service Act:
-
-BLA SUMMARY SECTION REQUIREMENTS:
-1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY (1200+ words) - Complete regulatory overview, biologic product details, proposed labeling summary, Risk Evaluation and Mitigation Strategies (REMS), and biologics-specific administrative compliance documentation
-2. OVERALL SUMMARY OF QUALITY - BIOLOGICS FOCUS (2000+ words) - Comprehensive biologics quality summary including biologic characterization, manufacturing process controls, cell line development, purification processes, analytical methods validation, stability studies, and adventitious agent testing
-3. NONCLINICAL OVERVIEW AND SUMMARY (1800+ words) - Detailed biologics-specific nonclinical data including pharmacology, pharmacokinetics, toxicology studies, safety pharmacology, immunotoxicology, reproductive toxicity, and integrated biologics risk assessment
-4. CLINICAL OVERVIEW AND SUMMARY (2500+ words) - Comprehensive clinical development summary including immunogenicity assessment, clinical pharmacology, efficacy analysis, safety evaluation, benefit-risk assessment for biologics, and population-specific considerations
-5. KEY CLINICAL STUDY REPORT SUMMARIES (2500+ words) - Detailed summaries of pivotal biologics studies including immunogenicity monitoring, bioanalytical methods, clinical endpoints, safety analysis, and regulatory implications for biologics approval
-
-CRITICAL FDA BLA BIOLOGICS-SPECIFIC COMPLIANCE STANDARDS:
-- Address biologics-specific manufacturing considerations (cell line characterization, process validation, scale-up)
-- Include detailed biologic characterization (structure, purity, potency, heterogeneity)
-- Document adventitious agent safety and viral clearance studies
-- Provide detailed immunogenicity assessment and clinical impact analysis
-- Reference specific FDA biologics guidance documents (ICH Q5A-Q5E, FDA biologics guidances)
-- Include comparability assessments for any manufacturing changes
-- Address Public Health Service Act Section 351 requirements
-- Demonstrate biologics-specific risk-benefit considerations`
-      );
-
-      const response = await openaiApi.post('chat/completions', {
-        model: config.model,
-        max_tokens: config.max_tokens,
-        temperature: config.temperature,
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: `Generate a comprehensive, FDA-compliant BLA SUMMARY for a biologic treatment for ${diseaseData.disease_name}.
-
-STUDY PARAMETERS:
-${formattedParams}
-
-REQUIREMENTS:
-- Generate ${requirements.sections} well-structured major sections
-- Include detailed biologics-specific technical specifications and regulatory justification
-- Reference specific FDA biologics guidance documents and CBER requirements throughout
-- Address all biologics-specific considerations (manufacturing, characterization, immunogenicity)
-- Use professional regulatory terminology suitable for FDA biologics review
-- Ensure content demonstrates readiness for biologics marketing authorization
-
-Generate a BLA summary that meets FDA reviewer expectations for biologics thoroughness, technical accuracy, and regulatory compliance. Each section must demonstrate comprehensive understanding of FDA requirements for biologic product approval.`
-          }
-        ]
-      });
-
-      return { document_content: response.data.choices[0].message.content.trim() };
-    } catch (error) {
-      console.error('Error in generateBLA:', error.response?.data || error.message);
-      throw error;
-    }
+    return await openaiService.generateSectionBasedDocument('bla', diseaseData);
   },
 
   // =============================================================================
@@ -830,212 +1814,28 @@ Generate a BLA summary that meets FDA reviewer expectations for biologics thorou
   /**
    * EU CTA (Clinical Trial Application) - ENHANCED
    */
+  /**
+   * EU CTA (Clinical Trial Application) - Section-Based Generation
+   */
   generateCTA: async (diseaseData) => {
-    try {
-      // Validate requirements and get configuration
-      const requirements = validateDocumentRequirements(diseaseData, 'cta');
-      const config = getConfigForDocumentType('cta');
-      
-      // Format parameters for document
-      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'cta');
-      
-      // Create standardized system prompt
-      const systemPrompt = createSystemPrompt(
-        'Senior European Regulatory Affairs Director and CTIS Specialist',
-        'cta',
-        'EU CTR/CTIS/EMA',
-        `You MUST generate EXTREMELY DETAILED, detailed content that meets EU Clinical Trials Regulation (CTR) requirements for Clinical Trial Applications via CTIS:
-
-EU CTA SECTION REQUIREMENTS (Minimum ${requirements.minWords} words total):
-1. COVER LETTER AND APPLICATION FORM HIGHLIGHTS (800+ words) - Complete regulatory overview, trial classification, risk categorization, Member State assessment, CTIS reference numbers, and EU CTR compliance documentation
-2. PROTOCOL SUMMARY (1500+ words) - Comprehensive protocol overview including study design rationale, primary/secondary endpoints, statistical methodology, risk-benefit assessment, and regulatory precedents within EU framework
-3. INVESTIGATOR'S BROCHURE (IB) SUMMARY (1200+ words) - Detailed IMP characterization, pharmacology summary, nonclinical safety data, clinical experience, dose rationale, and safety profile analysis
-4. GMP COMPLIANCE AND IMPD SUMMARY (2000+ words) - Investigational Medicinal Product Dossier including quality data, manufacturing controls, analytical procedures, stability data, and GMP compliance documentation
-5. AUXILIARY MEDICINAL PRODUCTS AND MANUFACTURING AUTHORIZATIONS (1000+ words) - Complete auxiliary products justification, manufacturing site details, import/export authorizations, and supply chain documentation
-6. SCIENTIFIC ADVICE AND PIP CONSIDERATIONS (1500+ words) - EMA scientific advice summary, Paediatric Investigation Plan compliance, orphan designation details, and regulatory strategy alignment
-7. REGULATORY COMPLIANCE AND RISK ASSESSMENT (1000+ words) - Comprehensive EU CTR compliance analysis, risk categorization justification, data protection measures, and Member State specific considerations
-
-CRITICAL EU CTR/CTIS COMPLIANCE STANDARDS:
-- Reference specific EU CTR provisions (Articles 13-19, Annex I requirements)
-- Include detailed CTIS submission requirements and technical specifications
-- Address Member State specific regulatory considerations
-- Reference EMA guidelines and ICH harmonized standards applicable in EU
-- Include EXTREMELY DETAILED risk assessment per EU CTR risk categorization
-- Demonstrate GDPR compliance for clinical trial data protection
-- Address EU pharmaceutical legislation (Directive 2001/83/EC) where applicable`
-      );
-
-      const response = await openaiApi.post('chat/completions', {
-        model: config.model,
-        max_tokens: config.max_tokens,
-        temperature: config.temperature,
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: `Generate EXTREMELY DETAILED EU Clinical Trial Application (CTA) documentation for a clinical trial investigating ${diseaseData.disease_name}.
-
-STUDY PARAMETERS:
-${formattedParams}
-
-MANDATORY REQUIREMENTS:
-- Generate exactly ${requirements.sections} major sections with EXTREMELY DETAILED content
-- Total document must exceed ${requirements.minWords} words
-- Each section must meet the specified minimum word counts listed above
-- Include detailed EU CTR-specific technical specifications and regulatory justification
-- Reference specific EU CTR provisions, EMA guidelines, and CTIS requirements throughout
-- Address all EU-specific regulatory considerations including Member State assessments
-- Use professional regulatory terminology suitable for CTIS submission and EMA review
-- Ensure content demonstrates readiness for EU clinical trial authorization
-
-Generate a CTA that exceeds EMA and Member State reviewer expectations for thoroughness, technical accuracy, and EU CTR compliance. Each section must demonstrate EXTREMELY DETAILED understanding of European clinical trial regulatory requirements.`
-          }
-        ]
-      });
-
-      return {
-        document_content: response.data.choices[0].message.content.trim()
-      };
-    } catch (error) {
-      console.error('Error in generateCTA:', error.response?.data || error.message);
-      throw error;
-    }
+    return await openaiService.generateSectionBasedDocument('cta', diseaseData);
   },
   
   /**
    * EU MAA (Marketing Authorization Application) - ENHANCED
    */
+  /**
+   * EU MAA (Marketing Authorization Application) - Section-Based Generation
+   */
   generateMAA: async (diseaseData) => {
-    try {
-      // Validate requirements and get configuration
-      const requirements = validateDocumentRequirements(diseaseData, 'maa');
-      const config = getConfigForDocumentType('maa');
-      
-      // Format parameters for document
-      const formattedParams = formatParametersForDocument(diseaseData.additional_parameters, 'maa');
-      
-      // Create standardized system prompt
-      const systemPrompt = createSystemPrompt(
-        'Senior European Regulatory Affairs Director and EMA MAA Specialist',
-        'maa',
-        'EMA/EU CTD/ICH',
-        `You MUST generate EXTREMELY DETAILED, detailed content that meets EMA requirements for Marketing Authorization Application (MAA) submissions following EU CTD guidelines:
-
-EU MAA SUMMARY SECTION REQUIREMENTS (Minimum ${requirements.minWords} words total):
-1. ADMINISTRATIVE INFORMATION AND PRESCRIBING INFORMATION SUMMARY (1200+ words) - Complete regulatory overview, SmPC highlights, centralized procedure details, EMA scientific advice history, risk management plans, and EU-specific administrative compliance documentation
-2. QUALITY OVERALL SUMMARY (QOS - CTD Module 2.3) (2000+ words) - Comprehensive pharmaceutical quality summary including drug substance/product development, manufacturing strategy, analytical procedures, specifications, stability data, and quality risk management
-3. NON-CLINICAL OVERVIEW AND WRITTEN SUMMARIES (1800+ words) - Detailed CTD Modules 2.4 & 2.6 content including pharmacology, pharmacokinetics, toxicology studies, safety pharmacology, environmental risk assessment, and integrated non-clinical risk-benefit analysis
-4. CLINICAL OVERVIEW AND SUMMARY OF CLINICAL EFFICACY & SAFETY (2500+ words) - Comprehensive CTD Modules 2.5 & 2.7 content including clinical development strategy, efficacy analysis, safety evaluation, benefit-risk assessment, population-specific data, and EU regulatory precedents
-5. PIVOTAL CLINICAL STUDY REPORT SUMMARIES (1500+ words) - Detailed summaries of key pivotal studies including methodology, statistical analysis, regulatory endpoints, European population considerations, and marketing authorization implications
-
-CRITICAL EMA MAA COMPLIANCE STANDARDS:
-- Reference specific EMA guidelines and CHMP opinions relevant to therapeutic area
-- Include detailed EU-specific regulatory considerations and precedents
-- Address centralized procedure requirements and CHMP assessment criteria
-- Reference EU pharmaceutical legislation (Directive 2001/83/EC, Regulation 726/2004)
-- Include EXTREMELY DETAILED benefit-risk analysis suitable for CHMP evaluation
-- Address pharmacovigilance and risk management requirements (EU RMP)
-- Demonstrate compliance with EU pediatric and orphan regulations where applicable
-- Include post-authorization commitments and regulatory strategy`
-      );
-
-      const response = await openaiApi.post('chat/completions', {
-        model: config.model,
-        max_tokens: config.max_tokens,
-        temperature: config.temperature,
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: `Generate a EXTREMELY DETAILED EU Marketing Authorization Application (MAA) summary for the treatment of ${diseaseData.disease_name}.
-
-STUDY PARAMETERS:
-${formattedParams}
-
-MANDATORY REQUIREMENTS:
-- Generate exactly ${requirements.sections} major sections with EXTREMELY DETAILED content
-- Total document must exceed ${requirements.minWords} words
-- Each section must meet the specified minimum word counts listed above
-- Include detailed EU-specific technical specifications and regulatory justification
-- Reference specific EMA guidelines, CHMP opinions, and EU CTD requirements throughout
-- Address all EMA-specific regulatory considerations including centralized procedure requirements
-- Use professional regulatory terminology suitable for EMA review and CHMP assessment
-- Ensure content demonstrates readiness for EU marketing authorization
-
-Generate an MAA summary that exceeds EMA and CHMP reviewer expectations for thoroughness, technical accuracy, and EU regulatory compliance. Each section must demonstrate EXTREMELY DETAILED understanding of European marketing authorization requirements.`
-          }
-        ]
-      });
-
-      return {
-        document_content: response.data.choices[0].message.content.trim()
-      };
-    } catch (error) {
-      console.error('Error in generateMAA:', error.response?.data || error.message);
-      throw error;
-    }
+    return await openaiService.generateSectionBasedDocument('maa', diseaseData);
   },
 
   /**
-   * EU IMPD (Investigational Medicinal Product Dossier) - ENHANCED
+   * EU IMPD (Investigational Medicinal Product Dossier) - Section-Based Generation
    */
   generateIMPD: async (diseaseData) => {
-    try {
-      const response = await openaiApi.post(
-        'chat/completions',
-        {
-          model: "gpt-4o", // UPGRADED
-          messages: [
-            {
-              role: "system",
-              content: `You are a regulatory expert specializing in the preparation of Investigational Medicinal Product Dossiers (IMPDs) for European clinical trial submissions.
-              Your task is to generate a well-structured IMPD, focusing on Quality (IMPD-Q) and relevant summaries for Safety/Efficacy (IMPD-S/E).
-
-              CRITICAL REQUIREMENTS FOR EXTREMELY DETAILED OUTPUT:
-              - Generate comprehensive, well-structured EU IMPD regulatory content
-              - Each section must contain extensive detail with specific quality data, methodologies, and regulatory compliance analysis
-              - Include detailed subsections with analytical data, manufacturing protocols, and regulatory justification
-              - Provide complete regulatory rationale and quality justification according to EU standards
-              - Reference specific EU guidelines, EMA requirements, and ICH quality standards extensively
-
-              STRUCTURE FOR IMPD (EXTREMELY DETAILED):
-              1. INTRODUCTION - Complete IMPD overview and regulatory framework
-              2. DRUG SUBSTANCE (S) - Comprehensive chemical and analytical characterization
-              3. DRUG PRODUCT (P) - Detailed formulation, manufacturing, and quality control
-              4. PLACEBO (if applicable) - Complete placebo characterization and controls
-              5. APPENDICES - Detailed supporting documentation and analytical methods
-              6. NON-CLINICAL SUMMARY (IMPD-S) - Comprehensive preclinical package
-              7. CLINICAL SUMMARY (IMPD-E) - Detailed clinical data summary
-              
-              Use plain text formatting only - NO MARKDOWN.`
-            },
-            {
-              role: "user",
-              content: `Generate an Investigational Medicinal Product Dossier (IMPD) for a clinical trial concerning ${diseaseData.disease_name}.
-              
-              ${Object.entries(diseaseData.additional_parameters || {}).map(([key, value]) => 
-                value ? `- ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${value}` : ''
-              ).filter(Boolean).join('\n')}
-
-              Generate an EXTREMELY DETAILED IMPD-Q section with specific details for manufacturing, controls, specifications, and stability with EXTREMELY DETAILED regulatory analysis and extensive documentation.`
-            }
-          ],
-          ...OPENAI_CONFIG.COMPREHENSIVE // INCREASED
-        }
-      );
-      return {
-        document_content: response.data.choices[0].message.content.trim()
-      };
-    } catch (error) {
-      console.error('Error in generateIMPD:', error.response?.data || error.message);
-      throw error;
-    }
+    return await openaiService.generateSectionBasedDocument('impd', diseaseData);
   },
 
   // =============================================================================

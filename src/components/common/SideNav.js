@@ -25,11 +25,11 @@ const SideNav = () => {
       <ul className="side-nav-links">
         <li><NavLink to="/" end><HomeIcon size={20} /><span>Home</span></NavLink></li>
         <li><NavLink to="/protocol"><FlaskIcon size={20} /><span>Protocol & Study Design Generator</span></NavLink></li>
-        <li><NavLink to="/diagnosis"><StethoscopeIcon size={20} /><span>Disease Diagnosis</span></NavLink></li>
-        <li><NavLink to="/unified-regulatory"><FileTextIcon size={20} /><span>Regulatory Documents</span></NavLink></li>
+        <li><NavLink to="/unified-regulatory"><FileTextIcon size={20} /><span>Regulatory Document Generator</span></NavLink></li>
+        <li><NavLink to="/diagnosis"><StethoscopeIcon size={20} /><span>Disease Screening</span></NavLink></li>
+        <li><NavLink to="/query"><SearchIcon size={20} /><span>Ask Lumina™</span></NavLink></li>
         <li><NavLink to="/enhanced-analysis"><LayersIcon size={20} /><span>Enhanced Medical Analysis</span></NavLink></li>
         <li><NavLink to="/clinical-dossier"><FolderIcon size={20} /><span>Clinical Dossier Compiler</span></NavLink></li>
-        <li><NavLink to="/query"><SearchIcon size={20} /><span>Query Assistant</span></NavLink></li>
       </ul>
       <div className="side-nav-footer">
         <NavLink to="/profile"><UserIcon size={20} /><span>Profile</span></NavLink>

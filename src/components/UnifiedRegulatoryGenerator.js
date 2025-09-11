@@ -13,6 +13,7 @@ import JSZip from 'jszip';
 import AskLuminaPopup from './common/AskLuminaPopup';
 import FloatingButton from './common/FloatingButton';
 import RichTextEditor from './common/RichTextEditor';
+import countryIntelligenceService from '../services/countryIntelligenceService';
 import './UnifiedRegulatoryGenerator.css';
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -366,6 +367,10 @@ const UnifiedRegulatoryGenerator = () => {
   const [sectionEdits, setSectionEdits] = useState({});
   const [aiEnabledSections, setAiEnabledSections] = useState(new Set());
   
+  // Country Intelligence State
+  const [countryRecommendations, setCountryRecommendations] = useState({});
+  const [intelligenceLoading, setIntelligenceLoading] = useState(false);
+  
   // Interactive Map State
   const [showMap, setShowMap] = useState(false);
   
@@ -399,19 +404,265 @@ const UnifiedRegulatoryGenerator = () => {
   const controlOptions = ['Placebo', 'Active Comparator', 'Historical Control', 'No Control'];
   const measurementTools = ['PASI', 'EASI', 'sPGA', 'DLQI', 'HAM-D', 'MADRS', 'ACR20/50/70', 'DAS28', 'CDAI'];
 
-  // Regulatory document sections for navigation
-  const regulatoryDocumentSections = [
-    { id: 'regulatory-section-1', title: '1. Chemistry, Manufacturing, and Controls (CMC)' },
-    { id: 'regulatory-section-2', title: '2. Nonclinical Pharmacology and Toxicology' },
-    { id: 'regulatory-section-3', title: '3. Clinical Pharmacology' },
-    { id: 'regulatory-section-4', title: '4. Clinical Study Reports' },
-    { id: 'regulatory-section-5', title: '5. Statistical Analysis' },
-    { id: 'regulatory-section-6', title: '6. Integrated Summary of Efficacy' },
-    { id: 'regulatory-section-7', title: '7. Integrated Summary of Safety' },
-    { id: 'regulatory-section-8', title: '8. Risk Assessment and Risk Management' },
-    { id: 'regulatory-section-9', title: '9. Labeling' },
-    { id: 'regulatory-section-10', title: '10. Regulatory Compliance' }
-  ];
+  // Country and Document-Specific Section Structures
+  const getSectionsForDocument = (documentType, country) => {
+    const docType = documentType?.toLowerCase() || '';
+    const countryCode = country?.toLowerCase() || '';
+    
+    // US Documents
+    if (docType.includes('ind') && (countryCode === 'united states' || countryCode === 'usa' || !country)) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Chemistry, Manufacturing, and Controls (CMC)' },
+        { id: 'regulatory-section-2', title: '2. Nonclinical Pharmacology and Toxicology' },
+        { id: 'regulatory-section-3', title: '3. Clinical Pharmacology' },
+        { id: 'regulatory-section-4', title: '4. Clinical Study Reports' },
+        { id: 'regulatory-section-5', title: '5. Statistical Analysis' },
+        { id: 'regulatory-section-6', title: '6. Integrated Summary of Efficacy' },
+        { id: 'regulatory-section-7', title: '7. Integrated Summary of Safety' },
+        { id: 'regulatory-section-8', title: '8. Risk Assessment and Risk Management' },
+        { id: 'regulatory-section-9', title: '9. Labeling' },
+        { id: 'regulatory-section-10', title: '10. Regulatory Compliance' }
+      ];
+    }
+    
+    if (docType.includes('nda') && (countryCode === 'united states' || countryCode === 'usa' || !country)) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Quality Information' },
+        { id: 'regulatory-section-3', title: '3. Nonclinical Information' },
+        { id: 'regulatory-section-4', title: '4. Clinical Information' },
+        { id: 'regulatory-section-5', title: '5. Regulatory Compliance' }
+      ];
+    }
+    
+    if (docType.includes('bla') && (countryCode === 'united states' || countryCode === 'usa' || !country)) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Product Characterization' },
+        { id: 'regulatory-section-3', title: '3. Nonclinical Assessment' },
+        { id: 'regulatory-section-4', title: '4. Clinical Information' },
+        { id: 'regulatory-section-5', title: '5. Regulatory Compliance' }
+      ];
+    }
+    
+    if (docType.includes('protocol')) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Study Overview and Objectives' },
+        { id: 'regulatory-section-2', title: '2. Study Design and Methodology' },
+        { id: 'regulatory-section-3', title: '3. Study Population' },
+        { id: 'regulatory-section-4', title: '4. Treatment and Interventions' },
+        { id: 'regulatory-section-5', title: '5. Assessments and Procedures' },
+        { id: 'regulatory-section-6', title: '6. Statistical Analysis Plan' },
+        { id: 'regulatory-section-7', title: '7. Safety Monitoring' },
+        { id: 'regulatory-section-8', title: '8. Data Management' },
+        { id: 'regulatory-section-9', title: '9. Quality Assurance' },
+        { id: 'regulatory-section-10', title: '10. Regulatory and Ethical Considerations' }
+      ];
+    }
+    
+    // UK Documents
+    if (docType.includes('marketing authorisation') || (docType.includes('ma') && countryCode === 'united kingdom')) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Quality Assessment' },
+        { id: 'regulatory-section-3', title: '3. Non-Clinical Evaluation' },
+        { id: 'regulatory-section-4', title: '4. Clinical Development' },
+        { id: 'regulatory-section-5', title: '5. Benefit-Risk Analysis' },
+        { id: 'regulatory-section-6', title: '6. Risk Management' },
+        { id: 'regulatory-section-7', title: '7. Product Information' }
+      ];
+    }
+    
+    if (docType.includes('clinical trial authorisation') || (docType.includes('cta') && countryCode === 'united kingdom')) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Study Design' },
+        { id: 'regulatory-section-3', title: '3. Investigational Medicinal Product' },
+        { id: 'regulatory-section-4', title: '4. Safety Information' },
+        { id: 'regulatory-section-5', title: '5. Ethics and Participant Protection' },
+        { id: 'regulatory-section-6', title: '6. Trial Management' },
+        { id: 'regulatory-section-7', title: '7. UK Regulatory Compliance' }
+      ];
+    }
+    
+    // EU Documents
+    if (docType.includes('maa') || (countryCode === 'european union' || countryCode === 'eu')) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Quality Module (M3)' },
+        { id: 'regulatory-section-3', title: '3. Nonclinical Module (M4)' },
+        { id: 'regulatory-section-4', title: '4. Clinical Overview (M5.2)' },
+        { id: 'regulatory-section-5', title: '5. Clinical Summary (M5.3)' },
+        { id: 'regulatory-section-6', title: '6. Risk Management Plan' },
+        { id: 'regulatory-section-7', title: '7. Pediatric Investigation Plan' },
+        { id: 'regulatory-section-8', title: '8. Product Information' }
+      ];
+    }
+    
+    if (docType.includes('impd')) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Introduction and Regulatory Framework' },
+        { id: 'regulatory-section-2', title: '2. Drug Substance Characterization' },
+        { id: 'regulatory-section-3', title: '3. Drug Product Formulation' },
+        { id: 'regulatory-section-4', title: '4. Manufacturing and Controls' },
+        { id: 'regulatory-section-5', title: '5. Placebo and Comparators' },
+        { id: 'regulatory-section-6', title: '6. Non-Clinical Safety Summary' },
+        { id: 'regulatory-section-7', title: '7. Clinical Rationale' }
+      ];
+    }
+    
+    // Canadian Documents
+    if (docType.includes('nds') || (countryCode === 'canada' && docType.includes('nda'))) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Quality (Chemistry and Manufacturing)' },
+        { id: 'regulatory-section-3', title: '3. Non-Clinical Evaluation' },
+        { id: 'regulatory-section-4', title: '4. Clinical Evaluation' },
+        { id: 'regulatory-section-5', title: '5. Clinical Trial Information' },
+        { id: 'regulatory-section-6', title: '6. Risk Management' },
+        { id: 'regulatory-section-7', title: '7. Product Monograph' },
+        { id: 'regulatory-section-8', title: '8. Health Canada Regulatory Compliance' }
+      ];
+    }
+    
+    if (docType.includes('clinical trial application') && countryCode === 'canada') {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Clinical Protocol Summary' },
+        { id: 'regulatory-section-3', title: '3. Investigational Product Information' },
+        { id: 'regulatory-section-4', title: '4. Safety and Risk Assessment' },
+        { id: 'regulatory-section-5', title: '5. Investigator and Site Information' },
+        { id: 'regulatory-section-6', title: '6. Regulatory and Ethical Compliance' }
+      ];
+    }
+    
+    // Japanese Documents
+    if (docType.includes('j-nda') || docType.includes('jnda') || (countryCode === 'japan' && docType.includes('nda'))) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Quality and Manufacturing' },
+        { id: 'regulatory-section-3', title: '3. Non-Clinical Safety Assessment' },
+        { id: 'regulatory-section-4', title: '4. Clinical Data Package' },
+        { id: 'regulatory-section-5', title: '5. Japanese Population Data' },
+        { id: 'regulatory-section-6', title: '6. Benefit-Risk Assessment' },
+        { id: 'regulatory-section-7', title: '7. Post-Marketing Surveillance Plan' },
+        { id: 'regulatory-section-8', title: '8. PMDA Regulatory Compliance' }
+      ];
+    }
+    
+    // Chinese Documents
+    if ((docType.includes('nda') && countryCode === 'china') || docType.includes('china')) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Quality Research Data' },
+        { id: 'regulatory-section-3', title: '3. Non-Clinical Research Data' },
+        { id: 'regulatory-section-4', title: '4. Clinical Trial Data' },
+        { id: 'regulatory-section-5', title: '5. Chinese Population Analysis' },
+        { id: 'regulatory-section-6', title: '6. Benefit-Risk Evaluation' },
+        { id: 'regulatory-section-7', title: '7. NMPA Regulatory Compliance' }
+      ];
+    }
+    
+    if (docType.includes('ind') && countryCode === 'china') {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Drug Substance Information' },
+        { id: 'regulatory-section-3', title: '3. Nonclinical Safety Summary' },
+        { id: 'regulatory-section-4', title: '4. Clinical Development Plan' },
+        { id: 'regulatory-section-5', title: '5. Manufacturing and Quality' },
+        { id: 'regulatory-section-6', title: '6. Chinese Regulatory Compliance' }
+      ];
+    }
+    
+    // Korean Documents
+    if ((docType.includes('nda') && countryCode === 'south korea') || (countryCode === 'south korea' && docType.includes('korea'))) {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Quality Information' },
+        { id: 'regulatory-section-3', title: '3. Non-Clinical Assessment' },
+        { id: 'regulatory-section-4', title: '4. Clinical Evaluation' },
+        { id: 'regulatory-section-5', title: '5. Safety Analysis' },
+        { id: 'regulatory-section-6', title: '6. K-FDA Regulatory Compliance' }
+      ];
+    }
+    
+    if (docType.includes('ind') && countryCode === 'south korea') {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Drug Substance Characterization' },
+        { id: 'regulatory-section-3', title: '3. Nonclinical Safety Data' },
+        { id: 'regulatory-section-4', title: '4. Clinical Study Plan' },
+        { id: 'regulatory-section-5', title: '5. Quality and Manufacturing' },
+        { id: 'regulatory-section-6', title: '6. Korean Regulatory Compliance' }
+      ];
+    }
+    
+    // Swiss Documents
+    if (docType.includes('marketing authorisation') && countryCode === 'switzerland') {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Quality Evaluation' },
+        { id: 'regulatory-section-3', title: '3. Non-Clinical Assessment' },
+        { id: 'regulatory-section-4', title: '4. Clinical Evaluation' },
+        { id: 'regulatory-section-5', title: '5. Benefit-Risk Analysis' },
+        { id: 'regulatory-section-6', title: '6. Swissmedic Regulatory Compliance' }
+      ];
+    }
+    
+    // Australian Documents
+    if (docType.includes('aus') || countryCode === 'australia') {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Quality Assessment' },
+        { id: 'regulatory-section-3', title: '3. Non-Clinical Evaluation' },
+        { id: 'regulatory-section-4', title: '4. Clinical Development' },
+        { id: 'regulatory-section-5', title: '5. Benefit-Risk Analysis' },
+        { id: 'regulatory-section-6', title: '6. TGA Regulatory Strategy' }
+      ];
+    }
+    
+    // Indian Documents
+    if (docType.includes('nda') && countryCode === 'india') {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Drug Substance and Product' },
+        { id: 'regulatory-section-3', title: '3. Manufacturing and Quality Control' },
+        { id: 'regulatory-section-4', title: '4. Nonclinical Evaluation' },
+        { id: 'regulatory-section-5', title: '5. Clinical Data Summary' },
+        { id: 'regulatory-section-6', title: '6. Benefit-Risk Assessment' },
+        { id: 'regulatory-section-7', title: '7. CDSCO Regulatory Compliance' }
+      ];
+    }
+    
+    // Russian Documents
+    if (docType.includes('clinical trial permit') && countryCode === 'russia') {
+      return [
+        { id: 'regulatory-section-1', title: '1. Administrative Information' },
+        { id: 'regulatory-section-2', title: '2. Clinical Study Overview' },
+        { id: 'regulatory-section-3', title: '3. Investigational Medicinal Product' },
+        { id: 'regulatory-section-4', title: '4. Safety Assessment' },
+        { id: 'regulatory-section-5', title: '5. Russian Site and Investigator Information' },
+        { id: 'regulatory-section-6', title: '6. Roszdravnadzor Regulatory Compliance' }
+      ];
+    }
+    
+    // Default fallback (US IND structure)
+    return [
+      { id: 'regulatory-section-1', title: '1. Chemistry, Manufacturing, and Controls (CMC)' },
+      { id: 'regulatory-section-2', title: '2. Nonclinical Pharmacology and Toxicology' },
+      { id: 'regulatory-section-3', title: '3. Clinical Pharmacology' },
+      { id: 'regulatory-section-4', title: '4. Clinical Study Reports' },
+      { id: 'regulatory-section-5', title: '5. Statistical Analysis' },
+      { id: 'regulatory-section-6', title: '6. Integrated Summary of Efficacy' },
+      { id: 'regulatory-section-7', title: '7. Integrated Summary of Safety' },
+      { id: 'regulatory-section-8', title: '8. Risk Assessment and Risk Management' },
+      { id: 'regulatory-section-9', title: '9. Labeling' },
+      { id: 'regulatory-section-10', title: '10. Regulatory Compliance' }
+    ];
+  };
+
+  // Get sections based on current selection
+  const regulatoryDocumentSections = getSectionsForDocument(documentType, country);
 
   // Smart Content Distribution Function
   const distributeContentToSections = (fullContent) => {
@@ -424,59 +675,85 @@ const UnifiedRegulatoryGenerator = () => {
     const contentParts = fullContent.split(/\n\s*\n+/).filter(part => part.trim().length > 50);
     console.log('Content parts found:', contentParts.length);
     
-    // Keywords for each regulatory section
-    const sectionKeywords = {
-      'regulatory-section-1': [ // CMC
-        'chemistry', 'manufacturing', 'controls', 'cmc', 'drug substance', 'drug product', 
-        'formulation', 'quality', 'specifications', 'stability', 'container', 'closure',
-        'analytical methods', 'impurities', 'batch', 'process', 'raw materials'
-      ],
-      'regulatory-section-2': [ // Nonclinical Pharmacology and Toxicology
-        'nonclinical', 'toxicology', 'pharmacology', 'animal', 'preclinical', 'toxicity',
-        'carcinogenicity', 'genotoxicity', 'reproductive', 'safety pharmacology',
-        'toxicokinetics', 'acute', 'chronic', 'dose', 'species', 'in vivo', 'in vitro'
-      ],
-      'regulatory-section-3': [ // Clinical Pharmacology
-        'clinical pharmacology', 'pharmacokinetics', 'pharmacodynamics', 'pk', 'pd',
-        'absorption', 'distribution', 'metabolism', 'excretion', 'adme', 'bioavailability',
-        'bioequivalence', 'drug interaction', 'population pk', 'exposure', 'clearance'
-      ],
-      'regulatory-section-4': [ // Clinical Study Reports
-        'clinical study', 'trial', 'patient', 'subject', 'efficacy', 'endpoint', 'primary',
-        'secondary', 'inclusion', 'exclusion', 'randomized', 'controlled', 'phase',
-        'study design', 'protocol', 'adverse events', 'demographics', 'results'
-      ],
-      'regulatory-section-5': [ // Statistical Analysis
-        'statistical', 'analysis', 'statistics', 'power', 'sample size', 'significance',
-        'confidence interval', 'p-value', 'hypothesis', 'test', 'regression', 'anova',
-        'chi-square', 'survival', 'kaplan-meier', 'intention to treat', 'per protocol'
-      ],
-      'regulatory-section-6': [ // Integrated Summary of Efficacy
-        'efficacy', 'effectiveness', 'response', 'outcome', 'benefit', 'improvement',
-        'clinical response', 'remission', 'cure', 'success rate', 'therapeutic effect',
-        'treatment response', 'clinical benefit', 'functional improvement'
-      ],
-      'regulatory-section-7': [ // Integrated Summary of Safety
-        'safety', 'adverse', 'side effect', 'tolerability', 'toxicity', 'death',
-        'serious adverse event', 'discontinuation', 'laboratory abnormalities',
-        'vital signs', 'ecg', 'risk', 'contraindication', 'warning', 'precaution'
-      ],
-      'regulatory-section-8': [ // Risk Assessment and Risk Management
-        'risk', 'benefit', 'management', 'mitigation', 'rems', 'monitoring',
-        'risk minimization', 'safety concern', 'identified risk', 'potential risk',
-        'risk evaluation', 'pharmacovigilance', 'signal detection'
-      ],
-      'regulatory-section-9': [ // Labeling
-        'labeling', 'label', 'indication', 'dosage', 'administration', 'contraindication',
-        'warning', 'precaution', 'adverse reaction', 'drug interaction', 'use in specific populations',
-        'overdosage', 'description', 'clinical pharmacology', 'how supplied'
-      ],
-      'regulatory-section-10': [ // Regulatory Compliance
-        'regulatory', 'compliance', 'guideline', 'regulation', 'ich', 'fda', 'ema',
-        'gcp', 'gmp', 'glp', 'quality system', 'inspection', 'audit', 'deviation',
-        'corrective action', 'regulatory pathway', 'submission', 'approval'
-      ]
+    // Dynamic Keywords based on current sections
+    const generateSectionKeywords = (sections) => {
+      const keywords = {};
+      sections.forEach(section => {
+        const title = section.title.toLowerCase();
+        const sectionId = section.id;
+        
+        // Generate keywords based on section title
+        if (title.includes('chemistry') || title.includes('manufacturing') || title.includes('cmc') || title.includes('quality')) {
+          keywords[sectionId] = [
+            'chemistry', 'manufacturing', 'controls', 'cmc', 'drug substance', 'drug product', 
+            'formulation', 'quality', 'specifications', 'stability', 'container', 'closure',
+            'analytical methods', 'impurities', 'batch', 'process', 'raw materials'
+          ];
+        } else if (title.includes('nonclinical') || title.includes('non-clinical') || title.includes('toxicology')) {
+          keywords[sectionId] = [
+            'nonclinical', 'non-clinical', 'toxicology', 'pharmacology', 'animal', 'preclinical', 'toxicity',
+            'carcinogenicity', 'genotoxicity', 'reproductive', 'safety pharmacology',
+            'toxicokinetics', 'acute', 'chronic', 'dose', 'species', 'in vivo', 'in vitro'
+          ];
+        } else if (title.includes('clinical pharmacology')) {
+          keywords[sectionId] = [
+            'clinical pharmacology', 'pharmacokinetics', 'pharmacodynamics', 'pk', 'pd',
+            'absorption', 'distribution', 'metabolism', 'excretion', 'adme', 'bioavailability',
+            'bioequivalence', 'drug interaction', 'population pk', 'exposure', 'clearance'
+          ];
+        } else if (title.includes('clinical') && (title.includes('study') || title.includes('trial') || title.includes('development'))) {
+          keywords[sectionId] = [
+            'clinical study', 'trial', 'patient', 'subject', 'efficacy', 'endpoint', 'primary',
+            'secondary', 'inclusion', 'exclusion', 'randomized', 'controlled', 'phase',
+            'study design', 'protocol', 'adverse events', 'demographics', 'results'
+          ];
+        } else if (title.includes('statistical') || title.includes('analysis')) {
+          keywords[sectionId] = [
+            'statistical', 'analysis', 'statistics', 'power', 'sample size', 'significance',
+            'confidence interval', 'p-value', 'hypothesis', 'test', 'regression', 'anova',
+            'chi-square', 'survival', 'kaplan-meier', 'intention to treat', 'per protocol'
+          ];
+        } else if (title.includes('efficacy') || title.includes('effectiveness') || title.includes('benefit')) {
+          keywords[sectionId] = [
+            'efficacy', 'effectiveness', 'response', 'outcome', 'benefit', 'improvement',
+            'clinical response', 'remission', 'cure', 'success rate', 'therapeutic effect',
+            'treatment response', 'clinical benefit', 'functional improvement'
+          ];
+        } else if (title.includes('safety') || title.includes('adverse') || title.includes('tolerability')) {
+          keywords[sectionId] = [
+            'safety', 'adverse', 'side effect', 'tolerability', 'toxicity', 'death',
+            'serious adverse event', 'discontinuation', 'laboratory abnormalities',
+            'vital signs', 'ecg', 'risk', 'contraindication', 'warning', 'precaution'
+          ];
+        } else if (title.includes('risk') && title.includes('management')) {
+          keywords[sectionId] = [
+            'risk', 'benefit', 'management', 'mitigation', 'rems', 'monitoring',
+            'risk minimization', 'safety concern', 'identified risk', 'potential risk',
+            'risk evaluation', 'pharmacovigilance', 'signal detection'
+          ];
+        } else if (title.includes('labeling') || title.includes('product information')) {
+          keywords[sectionId] = [
+            'labeling', 'label', 'indication', 'dosage', 'administration', 'contraindication',
+            'warning', 'precaution', 'adverse reaction', 'drug interaction', 'use in specific populations',
+            'overdosage', 'description', 'clinical pharmacology', 'how supplied'
+          ];
+        } else if (title.includes('regulatory') || title.includes('compliance') || title.includes('administrative')) {
+          keywords[sectionId] = [
+            'regulatory', 'compliance', 'guideline', 'regulation', 'ich', 'fda', 'ema', 'mhra', 'nmpa',
+            'gcp', 'gmp', 'glp', 'quality system', 'inspection', 'audit', 'deviation',
+            'corrective action', 'regulatory pathway', 'submission', 'approval', 'administrative'
+          ];
+        } else {
+          // Default general keywords for unmatched sections
+          keywords[sectionId] = [
+            'clinical', 'study', 'data', 'analysis', 'evaluation', 'assessment', 'information'
+          ];
+        }
+      });
+      return keywords;
     };
+    
+    const sectionKeywords = generateSectionKeywords(regulatoryDocumentSections);
     
     // Score each content part against each section
     contentParts.forEach(content => {
@@ -618,6 +895,50 @@ const UnifiedRegulatoryGenerator = () => {
       }
     }
   }, [location.state]);
+
+  // Country Intelligence Analysis
+  const analyzeCountryRecommendations = async (regionKey) => {
+    if (!regionKey || intelligenceLoading) return;
+    
+    const availableCountries = getCountriesForRegion(regionKey);
+    if (availableCountries.length === 0) return;
+
+    setIntelligenceLoading(true);
+    
+    try {
+      const studyParams = {
+        disease: disease?.trim(),
+        trialPhase,
+        targetSampleSize,
+        documentType
+      };
+
+      const recommendations = await countryIntelligenceService.analyzeCountryRecommendations(
+        studyParams, 
+        availableCountries
+      );
+      
+      setCountryRecommendations(recommendations);
+    } catch (error) {
+      console.warn('Country intelligence analysis failed:', error);
+      // Don't break existing functionality - just skip recommendations
+      setCountryRecommendations({});
+    } finally {
+      setIntelligenceLoading(false);
+    }
+  };
+
+  // Trigger analysis when region or study parameters change
+  useEffect(() => {
+    if (selectedDropdownRegion && (disease || trialPhase || documentType)) {
+      // Debounce analysis to avoid too many API calls
+      const timeoutId = setTimeout(() => {
+        analyzeCountryRecommendations(selectedDropdownRegion);
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [selectedDropdownRegion, disease, trialPhase, documentType, targetSampleSize]);
 
   // CSV Template Headers - Complete field set matching single form
   const csvTemplate = [
@@ -1155,15 +1476,27 @@ const UnifiedRegulatoryGenerator = () => {
               clinicalSection = content.substring(midPoint).trim();
             }
             
-            setResult({
+            const responseObj = {
               cmc_section: cmcSection,
               clinical_section: clinicalSection,
               document_content: content
-            });
+            };
+            setResult(responseObj);
 
-            // Use smart content distribution to populate sections appropriately
-            const smartSectionEdits = distributeContentToSections(content);
-            setSectionEdits(smartSectionEdits);
+            // Check if backend provided pre-sectioned data, otherwise use distribution
+            if (responseObj.sectionsData) {
+              console.log('🎯 Using pre-sectioned data from backend');
+              const newSectionEdits = { ...sectionEdits };
+              Object.entries(responseObj.sectionsData).forEach(([sectionId, content]) => {
+                newSectionEdits[sectionId] = content;
+              });
+              setSectionEdits(newSectionEdits);
+            } else {
+              // Use smart content distribution to populate sections appropriately
+              console.log('📊 Using smart content distribution (fallback)');
+              const smartSectionEdits = distributeContentToSections(content);
+              setSectionEdits(smartSectionEdits);
+            }
 
             // Auto-scroll to editable sections
             setTimeout(() => {
@@ -1201,11 +1534,22 @@ const UnifiedRegulatoryGenerator = () => {
             // Set result regardless of structure
             setResult(response);
             
-            // Use smart content distribution for this response format too
-            const fullContent = response.document_content || 
-                               `${response.cmc_section || ''}\n\n${response.clinical_section || ''}`;
-            const smartSectionEdits = distributeContentToSections(fullContent.trim());
-            setSectionEdits(smartSectionEdits);
+            // Check if backend provided pre-sectioned data
+            if (response.sectionsData) {
+              console.log('🎯 Using pre-sectioned data from backend');
+              const newSectionEdits = { ...sectionEdits };
+              Object.entries(response.sectionsData).forEach(([sectionId, content]) => {
+                newSectionEdits[sectionId] = content;
+              });
+              setSectionEdits(newSectionEdits);
+            } else {
+              // Fallback to smart content distribution
+              console.log('📊 Using smart content distribution (fallback)');
+              const fullContent = response.document_content || 
+                                 `${response.cmc_section || ''}\n\n${response.clinical_section || ''}`;
+              const smartSectionEdits = distributeContentToSections(fullContent.trim());
+              setSectionEdits(smartSectionEdits);
+            }
             
             // Auto-scroll to editable sections
             setTimeout(() => {
@@ -1817,45 +2161,68 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
 
               {selectedDropdownRegion && (
                 <div className="form-group">
-                  <label className="form-label">Country</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.5rem' }}>
+                    <label className="form-label" style={{ margin: 0 }}>Country</label>
+                    {intelligenceLoading && (
+                      <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                        🔍 Analyzing recommendations...
+                      </span>
+                    )}
+                  </div>
                   <select
                     className="form-select"
                     value={country}
                     onChange={(e) => handleDropdownCountryChange(e.target.value)}
+                    style={{ marginBottom: '10px' }}
                   >
                     <option value="">Select Country</option>
-                    {getCountriesForRegion(selectedDropdownRegion).map(country => (
-                      <option key={country.id} value={country.name}>
-                        {country.name}
-                      </option>
-                    ))}
+                    {getCountriesForRegion(selectedDropdownRegion)
+                      .sort((a, b) => {
+                        // Sort by recommendation score if available
+                        const scoreA = countryRecommendations[a.name]?.score || 0.5;
+                        const scoreB = countryRecommendations[b.name]?.score || 0.5;
+                        return scoreB - scoreA;
+                      })
+                      .map(country => {
+                        const rec = countryRecommendations[country.name];
+                        const icon = rec ? countryIntelligenceService.getPriorityIcon(rec.priority) : '';
+                        return (
+                          <option key={country.id} value={country.name}>
+                            {icon} {country.name} {rec?.score ? `(${(rec.score * 100).toFixed(0)}%)` : ''}
+                          </option>
+                        );
+                      })}
                   </select>
+                  
                 </div>
               )}
 
               {selectedCountryData && (
-                <div className="form-group">
-                  <label className="form-label">Document Type</label>
-                  <select
-                    className="form-select"
-                    value={documentType}
-                    onChange={(e) => setDocumentType(e.target.value)}
-                  >
-                    <option value="">Select Document Type</option>
-                    {selectedCountryData.availableDocuments.map(doc => (
-                      <option key={doc.id} value={doc.name}>
-                        {doc.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Document Type</label>
+                    <select
+                      className="form-select"
+                      value={documentType}
+                      onChange={(e) => setDocumentType(e.target.value)}
+                    >
+                      <option value="">Select Document Type</option>
+                      {selectedCountryData.availableDocuments.map(doc => (
+                        <option key={doc.id} value={doc.name}>
+                          {doc.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                </>
               )}
             </div>
           </div>
 
           {/* Basic Information */}
           <div className="form-section">
-            <h3>📋 Basic Information</h3>
+            <h3>Basic Information</h3>
             <div className="form-grid">
               <div className="form-group">
                 <label className="form-label">Disease/Condition <span className="required">*</span></label>
@@ -1895,7 +2262,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
 
           {/* Trial Characteristics */}
           <div className="form-section">
-            <h3>🔬 Trial Characteristics</h3>
+            <h3>Trial Characteristics</h3>
             <div className="form-grid">
               <div className="form-group">
                 <label className="form-label">Trial Phase</label>
@@ -2091,7 +2458,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
 
           {/* Endpoints & Outcomes */}
           <div className="form-section">
-            <h3>🎯 Endpoints & Outcomes</h3>
+            <h3>Endpoints & Outcomes</h3>
             <div className="form-grid">
               <div className="form-group">
                 <label className="form-label">Primary Endpoint(s)</label>
@@ -2133,7 +2500,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
 
           {/* Statistical Considerations */}
           <div className="form-section">
-            <h3>📊 Statistical Considerations</h3>
+            <h3>Statistical Considerations</h3>
             <div className="form-grid">
               <div className="form-group">
                 <label className="form-label">Statistical Power (%)</label>
@@ -2247,11 +2614,11 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
       {mode === 'batch' && (
         <div className="batch-mode">
           <div className="form-section">
-            <h3>📊 Batch Regulatory Document Processing</h3>
+            <h3>Batch Regulatory Document Processing</h3>
             
             {/* CSV Upload */}
             <div className="csv-upload-section">
-              <h4>📄 Upload Pipeline Data</h4>
+              <h4>Upload Pipeline Data</h4>
               <div className="csv-guidance" style={{ 
                 background: '#f8f9fa', 
                 padding: '15px', 
@@ -2259,7 +2626,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                 marginBottom: '15px',
                 border: '1px solid #dee2e6'
               }}>
-                <strong>📋 Country & Document Guidelines:</strong>
+                <strong>Country & Document Guidelines:</strong>
                 <ul style={{ marginTop: '8px', marginBottom: '0' }}>
                   <li>Use exact country names from the template (e.g., "United States", "European Union", "Japan")</li>
                   <li>Use exact document type names (e.g., "IND (Investigational New Drug)", "CTA (Clinical Trial Application)")</li>
@@ -2355,7 +2722,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
             {/* CSV Preview */}
             {showCsvPreview && csvPreview.length > 0 && (
               <div className="csv-preview-section">
-                <h4>📋 Pipeline Preview ({csvData.length} studies)</h4>
+                <h4>Pipeline Preview ({csvData.length} studies)</h4>
                 <div className="preview-table-container">
                   <table className="preview-table">
                     <thead>
@@ -2424,7 +2791,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
             {/* Batch Results */}
             {batchResults.length > 0 && (
               <div className="batch-results-section">
-                <h4>📋 Generation Results</h4>
+                <h4>Generation Results</h4>
                 <div className="results-summary">
                   <span className="success-count">
                     ✅ {batchResults.filter(r => r.status === 'success').length} Successful
