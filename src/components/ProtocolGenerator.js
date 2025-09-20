@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import apiService from '../services/api';
 import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
+import { useAuth } from '../contexts/AuthContext'; // NEW IMPORT for global state
+import { useDropzone } from 'react-dropzone'; // NEW IMPORT for document upload
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 import DocumentViewer from './common/DocumentViewer';
@@ -12,44 +14,283 @@ import RichTextEditor from './common/RichTextEditor';
 const ProtocolGenerator = () => {
   const [showAskLumina, setShowAskLumina] = useState(false);
   
-  // Basic Information
-  const [disease, setDisease] = useState('');
-  const [population, setPopulation] = useState('');
-  const [treatment, setTreatment] = useState('');
-  const [drugClass, setDrugClass] = useState('');
-  const [mechanism, setMechanism] = useState('');
-  const [clinicalInfo, setClinicalInfo] = useState('');
+  // Get global state from AuthContext
+  const { 
+    globalProtocolResult, 
+    globalStudyDesign, 
+    globalProtocolFormData,
+    setGlobalProtocolResult, 
+    setGlobalStudyDesign, 
+    setGlobalProtocolFormData,
+    saveGlobalProtocolState 
+  } = useAuth();
+  
+  // Active section state for navigation
+  const [activeFormSection, setActiveFormSection] = useState('basicInfo');
 
-  // Study Type & Design
-  const [studyType, setStudyType] = useState('clinical'); // 'clinical' or 'preclinical'
-  const [trialPhase, setTrialPhase] = useState('');
-  const [trialType, setTrialType] = useState('');
-  const [randomization, setRandomization] = useState('');
-  const [blinding, setBlinding] = useState('');
-  const [controlGroupType, setControlGroupType] = useState('');
 
-  // Population & Eligibility
-  const [sampleSize, setSampleSize] = useState('');
-  const [minAge, setMinAge] = useState('');
-  const [maxAge, setMaxAge] = useState('');
-  const [gender, setGender] = useState('');
-  const [inclusionCriteria, setInclusionCriteria] = useState('');
-  const [exclusionCriteria, setExclusionCriteria] = useState('');
+  const ProgressBar = () => {
+    const completion = getSectionCompletion();
+    
+    return (
+      <div style={{
+        marginBottom: '2rem',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '1.5rem',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem'
+        }}>
+          <h3 style={{
+            fontSize: '1.25rem',
+            fontWeight: '600',
+            margin: 0,
+            color: '#1e293b'
+          }}>
+            📊 Form Progress
+          </h3>
+          <div style={{
+            fontSize: '1rem',
+            fontWeight: '600',
+            color: completion.requiredPercentage === 100 ? '#10b981' : '#3b82f6'
+          }}>
+            {completion.completedCount}/{completion.totalSections} sections completed
+          </div>
+        </div>
 
-  // Intervention & Drug Details
-  const [routeOfAdministration, setRouteOfAdministration] = useState('');
-  const [dosingFrequency, setDosingFrequency] = useState('');
-  const [comparatorDrug, setComparatorDrug] = useState('');
+        {/* Overall Progress Bar */}
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.5rem'
+          }}>
+            <span style={{ fontSize: '0.9rem', color: '#64748b' }}>Overall Progress</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>
+              {completion.percentage}%
+            </span>
+          </div>
+          <div style={{
+            width: '100%',
+            height: '8px',
+            backgroundColor: '#e2e8f0',
+            borderRadius: '4px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: `${completion.percentage}%`,
+              height: '100%',
+              backgroundColor: completion.percentage === 100 ? '#10b981' : '#3b82f6',
+              transition: 'width 0.3s ease, background-color 0.3s ease'
+            }} />
+          </div>
+        </div>
 
-  // Endpoints & Outcome Measures
-  const [primaryEndpoints, setPrimaryEndpoints] = useState('');
-  const [secondaryEndpoints, setSecondaryEndpoints] = useState('');
-  const [outcomeMeasurementTool, setOutcomeMeasurementTool] = useState('');
+        {/* Required Fields Progress Bar */}
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.5rem'
+          }}>
+            <span style={{ fontSize: '0.9rem', color: '#64748b' }}>Required Fields</span>
+            <span style={{ 
+              fontSize: '0.9rem', 
+              fontWeight: '600', 
+              color: completion.requiredPercentage === 100 ? '#10b981' : '#ef4444'
+            }}>
+              {completion.requiredCompletedCount}/{completion.requiredCount} completed
+            </span>
+          </div>
+          <div style={{
+            width: '100%',
+            height: '8px',
+            backgroundColor: '#fef2f2',
+            borderRadius: '4px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: `${completion.requiredPercentage}%`,
+              height: '100%',
+              backgroundColor: completion.requiredPercentage === 100 ? '#10b981' : '#ef4444',
+              transition: 'width 0.3s ease, background-color 0.3s ease'
+            }} />
+          </div>
+        </div>
 
-  // Statistics & Duration
-  const [statisticalPower, setStatisticalPower] = useState('80');
-  const [significanceLevel, setSignificanceLevel] = useState('0.05');
-  const [studyDuration, setStudyDuration] = useState('');
+        {/* Section Status */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '0.5rem'
+        }}>
+                 {completion.sections.map(section => (
+                   <div
+                     key={section.key}
+                     onClick={() => {
+                       // Set the active section for navigation
+                       setActiveFormSection(section.key);
+                     }}
+                     style={{
+                       display: 'flex',
+                       alignItems: 'center',
+                       gap: '0.5rem',
+                       padding: '0.5rem',
+                       borderRadius: '6px',
+                       backgroundColor: activeFormSection === section.key ? '#eff6ff' : (section.isCompleted() ? '#f0fdf4' : '#f8fafc'),
+                       border: `1px solid ${activeFormSection === section.key ? '#3b82f6' : (section.isCompleted() ? '#10b981' : '#e2e8f0')}`,
+                       cursor: 'pointer',
+                       transition: 'all 0.2s ease',
+                       transform: activeFormSection === section.key ? 'translateY(-1px)' : 'none',
+                       boxShadow: activeFormSection === section.key ? '0 2px 4px rgba(59, 130, 246, 0.2)' : 'none'
+                     }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = section.isCompleted() ? '#ecfdf5' : '#f1f5f9';
+                e.target.style.border = `1px solid ${section.isCompleted() ? '#059669' : '#cbd5e1'}`;
+                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = section.isCompleted() ? '#f0fdf4' : '#f8fafc';
+                e.target.style.border = `1px solid ${section.isCompleted() ? '#10b981' : '#e2e8f0'}`;
+                e.target.style.transform = 'none';
+                e.target.style.boxShadow = 'none';
+              }}
+            >
+              <span style={{
+                fontSize: '1rem',
+                color: section.isCompleted() ? '#10b981' : '#64748b'
+              }}>
+                {section.isCompleted() ? '✅' : '⭕'}
+              </span>
+              <span style={{
+                fontSize: '0.85rem',
+                color: section.isCompleted() ? '#059669' : '#64748b',
+                fontWeight: section.isCompleted() ? '500' : '400'
+              }}>
+                {section.title}
+                {section.isRequired && <span style={{ color: '#ef4444' }}>*</span>}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Form section component for navigation
+  const FormSection = ({ title, sectionKey, children, isRequired = false }) => {
+    const completion = getSectionCompletion();
+    const isCompleted = completion.sections.find(s => s.key === sectionKey)?.isCompleted() || false;
+    const isActive = activeFormSection === sectionKey;
+
+    if (!isActive) return null;
+
+    return (
+      <div style={{
+        marginBottom: '1.5rem',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        border: `2px solid ${isCompleted ? '#10b981' : '#e2e8f0'}`,
+        overflow: 'hidden',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{
+          padding: '1rem 1.5rem',
+          backgroundColor: '#f8fafc',
+          borderBottom: '1px solid #e2e8f0'
+        }}>
+          <h3 style={{
+            fontSize: '1.25rem',
+            fontWeight: '600',
+            margin: 0,
+            color: '#1e293b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span style={{ color: isCompleted ? '#10b981' : '#64748b' }}>
+              {isCompleted ? '✅' : '⭕'}
+            </span>
+            {title}
+            {isRequired && <span style={{ color: '#ef4444' }}>*</span>}
+          </h3>
+        </div>
+
+        <div style={{ padding: '1.5rem' }}>
+          {children}
+        </div>
+      </div>
+    );
+  };
+  
+  // Use global form data and create setters that update global state
+  const {
+    disease,
+    population,
+    treatment,
+    drugClass,
+    mechanism,
+    clinicalInfo,
+    studyType,
+    trialPhase,
+    trialType,
+    randomization,
+    blinding,
+    controlGroupType,
+    sampleSize,
+    minAge,
+    maxAge,
+    gender,
+    inclusionCriteria,
+    exclusionCriteria,
+    routeOfAdministration,
+    dosingFrequency,
+    comparatorDrug,
+    primaryEndpoints,
+    secondaryEndpoints,
+    outcomeMeasurementTool,
+    statisticalPower,
+    significanceLevel,
+    studyDuration
+  } = globalProtocolFormData;
+
+  // Create setters that update global state
+  const setDisease = (value) => setGlobalProtocolFormData(prev => ({ ...prev, disease: value }));
+  const setPopulation = (value) => setGlobalProtocolFormData(prev => ({ ...prev, population: value }));
+  const setTreatment = (value) => setGlobalProtocolFormData(prev => ({ ...prev, treatment: value }));
+  const setDrugClass = (value) => setGlobalProtocolFormData(prev => ({ ...prev, drugClass: value }));
+  const setMechanism = (value) => setGlobalProtocolFormData(prev => ({ ...prev, mechanism: value }));
+  const setClinicalInfo = (value) => setGlobalProtocolFormData(prev => ({ ...prev, clinicalInfo: value }));
+  const setStudyType = (value) => setGlobalProtocolFormData(prev => ({ ...prev, studyType: value }));
+  const setTrialPhase = (value) => setGlobalProtocolFormData(prev => ({ ...prev, trialPhase: value }));
+  const setTrialType = (value) => setGlobalProtocolFormData(prev => ({ ...prev, trialType: value }));
+  const setRandomization = (value) => setGlobalProtocolFormData(prev => ({ ...prev, randomization: value }));
+  const setBlinding = (value) => setGlobalProtocolFormData(prev => ({ ...prev, blinding: value }));
+  const setControlGroupType = (value) => setGlobalProtocolFormData(prev => ({ ...prev, controlGroupType: value }));
+  const setSampleSize = (value) => setGlobalProtocolFormData(prev => ({ ...prev, sampleSize: value }));
+  const setMinAge = (value) => setGlobalProtocolFormData(prev => ({ ...prev, minAge: value }));
+  const setMaxAge = (value) => setGlobalProtocolFormData(prev => ({ ...prev, maxAge: value }));
+  const setGender = (value) => setGlobalProtocolFormData(prev => ({ ...prev, gender: value }));
+  const setInclusionCriteria = (value) => setGlobalProtocolFormData(prev => ({ ...prev, inclusionCriteria: value }));
+  const setExclusionCriteria = (value) => setGlobalProtocolFormData(prev => ({ ...prev, exclusionCriteria: value }));
+  const setRouteOfAdministration = (value) => setGlobalProtocolFormData(prev => ({ ...prev, routeOfAdministration: value }));
+  const setDosingFrequency = (value) => setGlobalProtocolFormData(prev => ({ ...prev, dosingFrequency: value }));
+  const setComparatorDrug = (value) => setGlobalProtocolFormData(prev => ({ ...prev, comparatorDrug: value }));
+  const setPrimaryEndpoints = (value) => setGlobalProtocolFormData(prev => ({ ...prev, primaryEndpoints: value }));
+  const setSecondaryEndpoints = (value) => setGlobalProtocolFormData(prev => ({ ...prev, secondaryEndpoints: value }));
+  const setOutcomeMeasurementTool = (value) => setGlobalProtocolFormData(prev => ({ ...prev, outcomeMeasurementTool: value }));
+  const setStatisticalPower = (value) => setGlobalProtocolFormData(prev => ({ ...prev, statisticalPower: value }));
+  const setSignificanceLevel = (value) => setGlobalProtocolFormData(prev => ({ ...prev, significanceLevel: value }));
+  const setStudyDuration = (value) => setGlobalProtocolFormData(prev => ({ ...prev, studyDuration: value }));
 
   // Preclinical-specific parameters
   const [animalModel, setAnimalModel] = useState('');
@@ -64,13 +305,39 @@ const ProtocolGenerator = () => {
 
   // UI State
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [studyDesign, setStudyDesign] = useState(null);
+  // Use global result and studyDesign state
+  const result = globalProtocolResult;
+  const studyDesign = globalStudyDesign;
+  
+  // Create setters that update global state
+  const setResult = (value) => {
+    setGlobalProtocolResult(value);
+    // Save to localStorage immediately
+    if (value) {
+      saveGlobalProtocolState(value, globalStudyDesign, globalProtocolFormData);
+    }
+  };
+  
+  const setStudyDesign = (value) => {
+    setGlobalStudyDesign(value);
+    // Save to localStorage immediately
+    if (value) {
+      saveGlobalProtocolState(globalProtocolResult, value, globalProtocolFormData);
+    }
+  };
   const [activeTab, setActiveTab] = useState('protocol');
   const [error, setError] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   const [showGeneratedInfo, setShowGeneratedInfo] = useState(false);
   const [showPreviousProtocols, setShowPreviousProtocols] = useState(false);
+  
+  // Compiler section state
+  const [selectedCountry, setSelectedCountry] = useState('');
+  const [activeSection, setActiveSection] = useState('protocol'); // 'protocol' or 'compiler'
+  
+  // Document upload state
+  const [uploadedDocuments, setUploadedDocuments] = useState([]);
+  const [compilerLoading, setCompilerLoading] = useState(false);
   const [previousProtocols, setPreviousProtocols] = useState([]);
   const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -104,6 +371,416 @@ const ProtocolGenerator = () => {
   const { startJob, getJob } = useBackgroundJobs('protocol');
   const [backgroundJobId, setBackgroundJobId] = useState(null);
 
+  // Country-specific regulatory requirements for compiler section
+  const countryRegulatoryData = {
+    'US': {
+      name: 'United States',
+      regulator: 'FDA',
+      submissionRoute: 'IND',
+      documents: ['Protocol', 'IB', 'ICF', 'FDA Forms 1571/1572', 'CMC', 'Preclinical Data', 'IRB Approval', 'Financial Disclosures', 'Insurance'],
+      documentCategories: [
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
+        { id: 'icf', name: 'Informed Consent Form', required: true, icon: '📝', maxFiles: 1 },
+        { id: 'fda_forms', name: 'FDA Forms 1571/1572', required: true, icon: '📋', maxFiles: 2 },
+        { id: 'cmc', name: 'CMC (Chemistry, Manufacturing, Controls)', required: true, icon: '⚗️', maxFiles: 3 },
+        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '🧪', maxFiles: 5 },
+        { id: 'irb', name: 'IRB Approval', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'financial', name: 'Financial Disclosures', required: true, icon: '💰', maxFiles: 1 },
+        { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 }
+      ]
+    },
+    'US-BLA': {
+      name: 'United States (BLA)',
+      regulator: 'FDA',
+      submissionRoute: 'BLA (Biologics License Application)',
+      documents: ['BLA Form 356h', 'Clinical Protocol', 'IB', 'ICF', 'CMC/Biologics License Application', 'Preclinical Data', 'Clinical Study Reports', 'IRB Approval', 'Financial Disclosures', 'Insurance', 'Environmental Assessment', 'Labeling'],
+      documentCategories: [
+        { id: 'bla_form', name: 'BLA Form 356h', required: true, icon: '📋', maxFiles: 1 },
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
+        { id: 'icf', name: 'Informed Consent Form', required: true, icon: '📝', maxFiles: 1 },
+        { id: 'cmc_bla', name: 'CMC/Biologics License Application', required: true, icon: '🧬', maxFiles: 5 },
+        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '🧪', maxFiles: 8 },
+        { id: 'clinical_reports', name: 'Clinical Study Reports', required: true, icon: '📊', maxFiles: 10 },
+        { id: 'irb', name: 'IRB Approval', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'financial', name: 'Financial Disclosures', required: true, icon: '💰', maxFiles: 1 },
+        { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
+        { id: 'environmental', name: 'Environmental Assessment', required: true, icon: '🌱', maxFiles: 1 },
+        { id: 'labeling', name: 'Labeling', required: true, icon: '🏷️', maxFiles: 1 }
+      ]
+    },
+    'EU': {
+      name: 'European Union',
+      regulator: 'EMA/NCAS',
+      submissionRoute: 'IMPD/CTA (CTD/eCTD)',
+      documents: ['Protocol', 'IB', 'ICF (translated)', 'IMPD Modules (Quality/Nonclinical/Clinical)', 'GMP', 'EC Opinion', 'Insurance'],
+      documentCategories: [
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
+        { id: 'icf', name: 'ICF (translated)', required: true, icon: '🌐', maxFiles: 1 },
+        { id: 'impd_quality', name: 'IMPD Quality Module', required: true, icon: '⚗️', maxFiles: 3 },
+        { id: 'impd_nonclinical', name: 'IMPD Non-clinical Module', required: true, icon: '🧪', maxFiles: 5 },
+        { id: 'impd_clinical', name: 'IMPD Clinical Module', required: true, icon: '🏥', maxFiles: 3 },
+        { id: 'gmp', name: 'GMP Certificate', required: true, icon: '📜', maxFiles: 1 },
+        { id: 'ec_opinion', name: 'EC Opinion', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 }
+      ]
+    },
+    'JP': {
+      name: 'Japan',
+      regulator: 'PMDA/MHI',
+      submissionRoute: 'CTN',
+      documents: ['Protocol', 'IB', 'ICF (Japanese)', 'CTA Form', 'Preclinical', 'CMC', 'IRB Approval', 'HGRAC (if applicable)'],
+      documentCategories: [
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
+        { id: 'icf', name: 'ICF (Japanese)', required: true, icon: '🇯🇵', maxFiles: 1 },
+        { id: 'cta_form', name: 'CTA Form', required: true, icon: '📋', maxFiles: 1 },
+        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '🧪', maxFiles: 5 },
+        { id: 'cmc', name: 'CMC Data', required: true, icon: '⚗️', maxFiles: 3 },
+        { id: 'irb', name: 'IRB Approval', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'hgrac', name: 'HGRAC (if applicable)', required: false, icon: '🏛️', maxFiles: 1 }
+      ]
+    },
+    'CN': {
+      name: 'China',
+      regulator: 'NMPA',
+      submissionRoute: 'IND',
+      documents: ['Protocol', 'IB', 'ICF (Mandarin)', 'CTA Form', 'Preclinical', 'CMC', 'IRB Approval', 'HGRAC (if applicable)'],
+      documentCategories: [
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
+        { id: 'icf', name: 'ICF (Mandarin)', required: true, icon: '🇨🇳', maxFiles: 1 },
+        { id: 'cta_form', name: 'CTA Form', required: true, icon: '📋', maxFiles: 1 },
+        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '🧪', maxFiles: 5 },
+        { id: 'cmc', name: 'CMC Data', required: true, icon: '⚗️', maxFiles: 3 },
+        { id: 'irb', name: 'IRB Approval', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'hgrac', name: 'HGRAC (if applicable)', required: false, icon: '🏛️', maxFiles: 1 }
+      ]
+    },
+    'IN': {
+      name: 'India',
+      regulator: 'CDSCO',
+      submissionRoute: 'CTA/IND',
+      documents: ['Protocol', 'IB', 'ICF (English + Local)', 'Form 44', 'Schedule Y', 'EC Approval', 'Insurance', 'PI CV'],
+      documentCategories: [
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
+        { id: 'icf', name: 'ICF (English + Local)', required: true, icon: '🌐', maxFiles: 2 },
+        { id: 'form_44', name: 'Form 44', required: true, icon: '📋', maxFiles: 1 },
+        { id: 'schedule_y', name: 'Schedule Y', required: true, icon: '📑', maxFiles: 1 },
+        { id: 'ec_approval', name: 'EC Approval', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
+        { id: 'pi_cv', name: 'Principal Investigator CV', required: true, icon: '👨‍⚕️', maxFiles: 1 }
+      ]
+    },
+    'RU': {
+      name: 'Russia',
+      regulator: 'Roszdravnadzor',
+      submissionRoute: 'Clinical Trial Application (CTA)',
+      documents: ['Protocol (Russian)', 'IB (Russian)', 'ICF (Russian)', 'CTA Form', 'Preclinical Data (Russian)', 'CMC (Russian)', 'EC Opinion (Russian)', 'Insurance', 'GMP Certificate', 'Pharmacovigilance Plan'],
+      documentCategories: [
+        { id: 'protocol', name: 'Clinical Protocol (Russian)', required: true, icon: '🇷🇺', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure (Russian)", required: true, icon: '📖', maxFiles: 1 },
+        { id: 'icf', name: 'ICF (Russian)', required: true, icon: '📝', maxFiles: 1 },
+        { id: 'cta_form', name: 'CTA Application Form', required: true, icon: '📋', maxFiles: 1 },
+        { id: 'preclinical', name: 'Preclinical Data (Russian)', required: true, icon: '🧪', maxFiles: 5 },
+        { id: 'cmc', name: 'CMC Data (Russian)', required: true, icon: '⚗️', maxFiles: 3 },
+        { id: 'ec_opinion', name: 'EC Opinion (Russian)', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
+        { id: 'gmp', name: 'GMP Certificate', required: true, icon: '📜', maxFiles: 1 },
+        { id: 'pharmacovigilance', name: 'Pharmacovigilance Plan', required: true, icon: '🔍', maxFiles: 1 }
+      ]
+    },
+    'CA': {
+      name: 'Canada',
+      regulator: 'Health Canada',
+      submissionRoute: 'CTA (CTD/eCTD)',
+      documents: ['Protocol', 'IB', 'ICF (English/French)', 'CTA Form', 'Preclinical', 'CMC', 'REB Approval', 'Insurance']
+    },
+    'GB': {
+      name: 'United Kingdom',
+      regulator: 'MHRA',
+      submissionRoute: 'CTA (CTD/eCTD)',
+      documents: ['Protocol', 'IB', 'ICF', 'CTA Form', 'Preclinical', 'CMC', 'REC Approval', 'Insurance']
+    },
+    'CH': {
+      name: 'Switzerland',
+      regulator: 'Swissmedic',
+      submissionRoute: 'CTA (CTD/eCTD)',
+      documents: ['Protocol', 'IB', 'ICF (German/French/Italian)', 'CTA Form', 'Preclinical', 'CMC', 'EC Approval', 'Insurance']
+    },
+    'AU': {
+      name: 'Australia',
+      regulator: 'TGA',
+      submissionRoute: 'CTN',
+      documents: ['Protocol', 'IB', 'ICF', 'CTN Form', 'Preclinical', 'CMC', 'HREC Approval', 'Insurance']
+    },
+    'BR': {
+      name: 'Brazil',
+      regulator: 'ANVISA',
+      submissionRoute: 'CTA (research protocol author)',
+      documents: ['Protocol', 'IB', 'ICF (Portuguese)', 'CTA Form', 'Preclinical', 'CMC', 'CEP Approval', 'Insurance']
+    },
+    'MX': {
+      name: 'Mexico',
+      regulator: 'COFEPRIS',
+      submissionRoute: 'CTA',
+      documents: ['Clinical Study Protocol', "Investigator's Brochure (IB)", 'Informed Consent Form (ICF)', 'Ethics/IRB Approval', 'COFEPRIS Application (CTA)', 'Insurance/C']
+    },
+    'ZA': {
+      name: 'South Africa',
+      regulator: 'SAHPRA',
+      submissionRoute: 'SAHPRA Clinical Trial Application',
+      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'EC/REC Approval', 'SAHPRA Forms', 'Import of IMP (if unregistered)', 'Safety Reporting Plan', 'Insurance']
+    },
+    'KE': {
+      name: 'Kenya',
+      regulator: 'PPB',
+      submissionRoute: 'PPB Clinical Trial Application',
+      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'EC Approval', 'PPB Application', 'Investigator CVs', 'Insurance']
+    },
+    'NG': {
+      name: 'Nigeria',
+      regulator: 'NAFDAC',
+      submissionRoute: 'NAFDAC Clinical Trial Application',
+      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'EC Approval', 'NAFDAC CTA Forms & Fees', 'GCP Certificates', 'Insurance']
+    },
+    'IL': {
+      name: 'Israel',
+      regulator: 'Ministry of Health',
+      submissionRoute: 'MoH Clinical Trials Dept approval',
+      documents: ['Clinical Study Protocol', "Investigator's Brochure", 'IMPD/Quality Info (if applicable)', 'ICF', 'EC/IRB Approval', 'MoH Application Forms']
+    },
+    'SG': {
+      name: 'Singapore',
+      regulator: 'HSA',
+      submissionRoute: 'CTA/CTN/CTC (risk-based) + IRE',
+      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'IRB Approval', 'CTA/CTN/CTC Application', 'IMP/CMC Info', 'Safety Reporting Plan']
+    },
+    'MY': {
+      name: 'Malaysia',
+      regulator: 'NPRA',
+      submissionRoute: 'CTIL/CTX (for unregistered IMP)',
+      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'EC Approval', 'CTIL/CTX Application', 'IMP/CMC Info', 'Insurance']
+    },
+    'PH': {
+      name: 'Philippines',
+      regulator: 'FDA (CDRR)',
+      submissionRoute: 'FDA Authorization (per Circular)',
+      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'ERC Approval', 'FDA Application', 'IMP Import Permit', 'Safety Reporting Plan']
+    },
+    'ID': {
+      name: 'Indonesia',
+      regulator: 'BPOM',
+      submissionRoute: 'BPOM approval (per BPOM 8/)',
+      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'IRB Approval', 'BPOM Application', 'IMP/CMC Info', 'Trial Registration (INA-CRR)']
+    }
+  };
+
+  // Default document categories for countries without specific requirements
+  const defaultDocumentCategories = [
+    { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
+    { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
+    { id: 'icf', name: 'Informed Consent Form', required: true, icon: '📝', maxFiles: 1 },
+    { id: 'quality', name: 'Quality Information', required: true, icon: '⚗️', maxFiles: 3 },
+    { id: 'nonclinical', name: 'Non-clinical Data', required: true, icon: '🧪', maxFiles: 5 },
+    { id: 'clinical', name: 'Clinical Data', required: true, icon: '🏥', maxFiles: 10 },
+    { id: 'application', name: 'Application Form', required: true, icon: '📋', maxFiles: 1 },
+    { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
+    { id: 'other', name: 'Other Documents', required: false, icon: '📎', maxFiles: 5 }
+  ];
+
+  // Get document categories for selected country
+  const getDocumentCategories = () => {
+    if (!selectedCountry) {
+      return [];
+    }
+    
+    // Return country-specific categories if available, otherwise use default
+    return countryRegulatoryData[selectedCountry]?.documentCategories || defaultDocumentCategories;
+  };
+
+  // Document upload functionality
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'text/plain': ['.txt']
+    },
+    onDrop: acceptedFiles => {
+      const newDocuments = acceptedFiles.map(file => ({
+        file,
+        name: file.name,
+        size: file.size,
+        category: '',
+        id: Date.now() + Math.random(),
+        uploadedAt: new Date().toISOString()
+      }));
+      setUploadedDocuments([...uploadedDocuments, ...newDocuments]);
+    }
+  });
+
+  const handleCategoryChange = (documentId, category) => {
+    const documentCategories = getDocumentCategories();
+    const categoryCount = uploadedDocuments.filter(doc => doc.category === category).length;
+    const maxFiles = documentCategories.find(cat => cat.id === category)?.maxFiles || 10;
+    
+    if (categoryCount >= maxFiles) {
+      alert(`Maximum ${maxFiles} file(s) allowed for ${category}`);
+      return;
+    }
+    
+    setUploadedDocuments(docs => 
+      docs.map(doc => 
+        doc.id === documentId ? { ...doc, category } : doc
+      )
+    );
+  };
+
+  const removeDocument = (documentId) => {
+    setUploadedDocuments(docs => docs.filter(doc => doc.id !== documentId));
+  };
+
+  const getCategoryStatus = (categoryId) => {
+    const documentCategories = getDocumentCategories();
+    const uploaded = uploadedDocuments.filter(doc => doc.category === categoryId).length;
+    const category = documentCategories.find(cat => cat.id === categoryId);
+    const required = category?.required;
+    
+    if (required && uploaded === 0) return 'missing';
+    if (uploaded >= category?.maxFiles) return 'full';
+    if (uploaded > 0) return 'partial';
+    return 'empty';
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'missing': return '❌';
+      case 'full': return '✅';
+      case 'partial': return '🟡';
+      default: return '⚪';
+    }
+  };
+
+  const isReadyToCompile = () => {
+    if (!selectedCountry) return false;
+    
+    const documentCategories = getDocumentCategories();
+    const requiredCategories = documentCategories
+      .filter(cat => cat.required)
+      .map(cat => cat.id);
+    
+    const uploadedCategories = uploadedDocuments
+      .map(doc => doc.category)
+      .filter(Boolean);
+    
+    return requiredCategories.every(req => uploadedCategories.includes(req));
+  };
+
+  const compileCountryDossier = async () => {
+    setCompilerLoading(true);
+    
+    try {
+      console.log(`Compiling dossier for ${countryRegulatoryData[selectedCountry].name}`);
+      console.log('Uploaded documents:', uploadedDocuments);
+      
+      // Here you would implement the actual compilation logic
+      // For now, just simulate the process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      alert(`Dossier compiled successfully for ${countryRegulatoryData[selectedCountry].name}!`);
+    } catch (error) {
+      console.error('Compilation error:', error);
+      alert(`Failed to compile dossier: ${error.message}`);
+    } finally {
+      setCompilerLoading(false);
+    }
+  };
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    if (globalProtocolFormData) {
+      saveGlobalProtocolState(globalProtocolResult, globalStudyDesign, globalProtocolFormData);
+    }
+  }, [globalProtocolFormData]);
+
+  // Function to calculate section completion
+  const getSectionCompletion = () => {
+    const sections = [
+      {
+        key: 'basicInfo',
+        title: 'Basic Information',
+        isCompleted: () => disease.trim() !== '',
+        isRequired: true
+      },
+      {
+        key: 'studyType',
+        title: 'Study Type',
+        isCompleted: () => studyType.trim() !== '',
+        isRequired: true
+      },
+      {
+        key: 'trialDesign',
+        title: studyType === 'preclinical' ? 'Study Design & Basics' : 'Trial Design & Basics',
+        isCompleted: () => trialPhase.trim() !== '' || trialType.trim() !== '' || randomization.trim() !== '' || blinding.trim() !== '',
+        isRequired: false
+      },
+      {
+        key: 'population',
+        title: studyType === 'preclinical' ? 'Animal Model & Study Design' : 'Population & Eligibility',
+        isCompleted: () => sampleSize.trim() !== '' || minAge.trim() !== '' || maxAge.trim() !== '' || inclusionCriteria.trim() !== '',
+        isRequired: false
+      },
+      {
+        key: 'intervention',
+        title: 'Intervention & Drug Details',
+        isCompleted: () => routeOfAdministration.trim() !== '' || dosingFrequency.trim() !== '' || comparatorDrug.trim() !== '',
+        isRequired: false
+      },
+      {
+        key: 'endpoints',
+        title: 'Endpoints & Outcome Measures',
+        isCompleted: () => primaryEndpoints.trim() !== '' || secondaryEndpoints.trim() !== '' || outcomeMeasurementTool.trim() !== '',
+        isRequired: false
+      },
+      {
+        key: 'statistics',
+        title: 'Statistical Considerations',
+        isCompleted: () => statisticalPower.trim() !== '' || studyDuration.trim() !== '',
+        isRequired: false
+      },
+      {
+        key: 'additionalInfo',
+        title: 'Additional Information',
+        isCompleted: () => clinicalInfo.trim() !== '',
+        isRequired: false
+      }
+    ];
+
+    const completedSections = sections.filter(section => section.isCompleted());
+    const requiredSections = sections.filter(section => section.isRequired && section.isCompleted());
+    const totalSections = sections.length;
+    const completedCount = completedSections.length;
+    const requiredCount = sections.filter(section => section.isRequired).length;
+    const requiredCompletedCount = requiredSections.length;
+
+    return {
+      sections,
+      completedSections,
+      totalSections,
+      completedCount,
+      requiredCount,
+      requiredCompletedCount,
+      percentage: Math.round((completedCount / totalSections) * 100),
+      requiredPercentage: Math.round((requiredCompletedCount / requiredCount) * 100)
+    };
+  };
+
   // Protocol sections for navigation
   const protocolSections = [
     { id: 'protocol-section-1', title: '1. Protocol Summary / Synopsis' },
@@ -118,20 +795,73 @@ const ProtocolGenerator = () => {
     { id: 'protocol-section-10', title: '10. References & Appendices' }
   ];
 
-  // Study design sections for navigation
-  const studyDesignSections = [
-    { id: 'cmc-section', title: 'CMC Section' },
-    { id: 'clinical-section-1', title: '1. Intro / Background' },
-    { id: 'clinical-section-2', title: '2. Objectives / Hypotheses / Endpoints' },
-    { id: 'clinical-section-3', title: '3. Study Design & Sample Size' },
-    { id: 'clinical-section-4', title: '4. Populations & Baseline' },
-    { id: 'clinical-section-5', title: '5. Statistical Methods & Data Handling' },
-    { id: 'clinical-section-6', title: '6. Efficacy Analysis' },
-    { id: 'clinical-section-7', title: '7. Safety Analysis' },
-    { id: 'clinical-section-8', title: '8. Pharmacokinetic / Exploratory' },
-    { id: 'clinical-section-9', title: '9. Interim & Other Special Analyses' },
-    { id: 'clinical-section-10', title: '10. References & Appendices' }
-  ];
+  // Function to dynamically extract section titles from content
+  const getDynamicStudyDesignSections = () => {
+    const sections = [
+      { id: 'cmc-section', title: 'CMC Section' }
+    ];
+    
+    if (studyDesign?.clinical_section) {
+      const lines = studyDesign.clinical_section.split('\n');
+      const foundSections = new Map(); // Use Map to avoid duplicates
+      
+      const sectionPatterns = [
+        /^(\d+)\.\s+(.*)/i,                    // "1. Section Title"
+        /^(\d+)\s+(.*)/i,                      // "1 Section Title"
+      ];
+      
+      lines.forEach(line => {
+        for (const pattern of sectionPatterns) {
+          const match = line.match(pattern);
+          if (match && parseInt(match[1]) >= 1 && parseInt(match[1]) <= 20) {
+            const sectionNumber = parseInt(match[1]);
+            const sectionTitle = match[2] ? match[2].trim() : line.trim();
+            
+            // Only add if we haven't seen this section number before
+            if (!foundSections.has(sectionNumber)) {
+              foundSections.set(sectionNumber, {
+                id: `clinical-section-${sectionNumber}`,
+                title: `${sectionNumber}. ${sectionTitle}`
+              });
+            }
+            break;
+          }
+        }
+      });
+      
+      // Convert Map to array and sort by section number
+      const sortedSections = Array.from(foundSections.values())
+        .sort((a, b) => {
+          const aNum = parseInt(a.id.replace('clinical-section-', ''));
+          const bNum = parseInt(b.id.replace('clinical-section-', ''));
+          return aNum - bNum;
+        });
+      
+      sections.push(...sortedSections);
+    }
+    
+    // Fallback to predefined sections if no dynamic sections found
+    if (sections.length === 1) {
+      const fallbackSections = [
+        { id: 'clinical-section-1', title: '1. Intro / Background' },
+        { id: 'clinical-section-2', title: '2. Objectives / Hypotheses / Endpoints' },
+        { id: 'clinical-section-3', title: '3. Study Design & Sample Size' },
+        { id: 'clinical-section-4', title: '4. Populations & Baseline' },
+        { id: 'clinical-section-5', title: '5. Statistical Methods & Data Handling' },
+        { id: 'clinical-section-6', title: '6. Efficacy Analysis' },
+        { id: 'clinical-section-7', title: '7. Safety Analysis' },
+        { id: 'clinical-section-8', title: '8. Pharmacokinetic / Exploratory' },
+        { id: 'clinical-section-9', title: '9. Interim & Other Special Analyses' },
+        { id: 'clinical-section-10', title: '10. References & Appendices' }
+      ];
+      sections.push(...fallbackSections);
+    }
+    
+    return sections;
+  };
+
+  // Study design sections for navigation (now dynamic)
+  const studyDesignSections = getDynamicStudyDesignSections();
 
   // Dropdown options
   const studyTypes = ['clinical', 'preclinical'];
@@ -502,10 +1232,10 @@ const ProtocolGenerator = () => {
       let title = '';
       
       if (documentId === 'protocol') {
-        content = result.protocol;
+        content = result?.protocol || '';
         title = `Enhanced Protocol for ${disease}`;
       } else if (documentId === 'studyDesign') {
-        content = `CMC SECTION:\n${studyDesign.cmc_section}\n\nCLINICAL SECTION:\n${studyDesign.clinical_section}`;
+        content = `CMC SECTION:\n${studyDesign?.cmc_section || ''}\n\nCLINICAL SECTION:\n${studyDesign?.clinical_section || ''}`;
         title = `Study Design for ${disease}`;
       }
       
@@ -529,7 +1259,7 @@ const ProtocolGenerator = () => {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, margin + 10, { align: 'center' });
-        doc.text(`Document ID: ${result.protocol_id}`, pageWidth / 2, margin + 17, { align: 'center' });
+        doc.text(`Document ID: ${result?.protocol_id || 'N/A'}`, pageWidth / 2, margin + 17, { align: 'center' });
         
         let currentY = margin + 30;
         let currentPage = 1;
@@ -749,7 +1479,7 @@ const ProtocolGenerator = () => {
     try {
       setLoading(true);
       
-      if (!result || !result.protocol) {
+      if (!result || !result?.protocol) {
         setError('No protocol content available');
         return;
       }
@@ -804,7 +1534,7 @@ const ProtocolGenerator = () => {
             new Paragraph({
               children: [
                 new TextRun({
-                  text: result.protocol.replace(/<[^>]*>/g, ''), // Remove HTML tags
+                  text: (result?.protocol || '').replace(/<[^>]*>/g, ''), // Remove HTML tags
                   size: 24,
                   spacing: {
                     line: 360 // 1.5 line spacing
@@ -851,7 +1581,7 @@ const ProtocolGenerator = () => {
         return;
       }
       
-      const fullContent = `CMC SECTION:\n${studyDesign.cmc_section}\n\nCLINICAL SECTION:\n${studyDesign.clinical_section}`;
+      const fullContent = `CMC SECTION:\n${studyDesign?.cmc_section || ''}\n\nCLINICAL SECTION:\n${studyDesign?.clinical_section || ''}`;
       
       // Create Word document
       const doc = new Document({
@@ -1069,18 +1799,68 @@ const ProtocolGenerator = () => {
     const sectionsMarkup = [];
     
     lines.forEach((line, idx) => {
-      // Check if this is a main section header (starts with a number followed by period)
-      const sectionMatch = line.match(/^(\d+)\.\s+(.*)/i);
+      // Check if this is a main section header with multiple patterns
+      const sectionPatterns = [
+        /^(\d+)\.\s+(.*)/i,                    // "1. Section Title"
+        /^(\d+)\s+(.*)/i,                      // "1 Section Title"
+      ];
       
-      if (sectionMatch && parseInt(sectionMatch[1]) >= 1 && parseInt(sectionMatch[1]) <= 10) {
+      let sectionMatch = null;
+      let sectionNumber = null;
+      
+      for (const pattern of sectionPatterns) {
+        const match = line.match(pattern);
+        if (match && parseInt(match[1]) >= 1 && parseInt(match[1]) <= 20) {
+          sectionMatch = match;
+          sectionNumber = parseInt(match[1]);
+          break;
+        }
+      }
+      
+      if (sectionMatch && sectionNumber) {
+        const sectionId = `clinical-section-${sectionNumber}`;
+        const isSelected = selectedStudyDesignSections.has(sectionId);
+        
         sectionsMarkup.push(
-          <h4 
-            key={`clinical-section-${idx}`} 
-            id={`clinical-section-${sectionMatch[1]}`} 
-            className="section-title"
-          >
-            {line}
-          </h4>
+          <div key={`clinical-section-${idx}`} style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '1rem', 
+            marginBottom: '1rem',
+            padding: '0.5rem',
+            backgroundColor: '#f8fafc',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0'
+          }}>
+            <button
+              onClick={() => handleStudyDesignSectionToggle(sectionId)}
+              style={{
+                background: isSelected ? '#3b82f6' : '#f3f4f6',
+                color: isSelected ? 'white' : '#374151',
+                border: '2px solid #d1d5db',
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease'
+              }}
+              title={isSelected ? 'Remove from selection' : 'Add to selection'}
+            >
+              {isSelected ? '✓' : '+'}
+            </button>
+            <h4 
+              id={sectionId} 
+              className="section-title"
+              style={{ margin: 0, flex: 1 }}
+            >
+              {line}
+            </h4>
+          </div>
         );
       } else if (line.trim()) {
         // For other text content
@@ -1270,32 +2050,70 @@ const ProtocolGenerator = () => {
     }
     
     const lines = content.clinical_section ? content.clinical_section.split('\n') : [];
-    const sectionNumber = sectionId.replace('clinical-section-', '');
-    let inSection = false;
-    let sectionContent = [];
+    const sectionNumber = parseInt(sectionId.replace('clinical-section-', ''));
     
+    // Find all section boundaries first
+    const sectionBoundaries = [];
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const sectionMatch = line.match(/^(\d+)\.\s+(.*)/i);
+      const line = lines[i].trim();
+      const sectionPatterns = [
+        /^(\d+)\.\s+(.*)/i,                    // "1. Section Title"
+        /^(\d+)\s+(.*)/i,                      // "1 Section Title"
+      ];
       
-      if (sectionMatch && parseInt(sectionMatch[1]) === parseInt(sectionNumber)) {
-        inSection = true;
-        // Format the main section header with HTML
-        sectionContent.push(`<h3 style="color: #1e40af; margin-bottom: 1rem; font-size: 1.25rem;">${line}</h3>`);
-      } else if (inSection && sectionMatch && parseInt(sectionMatch[1]) > parseInt(sectionNumber)) {
-        break;
-      } else if (inSection) {
-        // Check for subsections (like 2.1, 2.2, etc.)
-        const subsectionMatch = line.match(/^(\d+)\.(\d+)\s+(.*)/i);
-        if (subsectionMatch) {
-          sectionContent.push(`<h4 style="color: #374151; margin: 1rem 0 0.5rem 0; font-size: 1.1rem;">${line}</h4>`);
-        } else if (line.trim()) {
-          // Regular paragraph content
-          sectionContent.push(`<p style="margin: 0.5rem 0; line-height: 1.6;">${line}</p>`);
-        } else {
-          // Empty line
-          sectionContent.push('<br>');
+      for (const pattern of sectionPatterns) {
+        const match = line.match(pattern);
+        if (match && parseInt(match[1]) >= 1 && parseInt(match[1]) <= 20) {
+          sectionBoundaries.push({
+            lineNumber: i,
+            sectionNumber: parseInt(match[1]),
+            title: match[2] || line,
+            fullLine: line
+          });
+          break;
         }
+      }
+    }
+    
+    // Find the current section and next section boundaries
+    const currentSection = sectionBoundaries.find(s => s.sectionNumber === sectionNumber);
+    const nextSection = sectionBoundaries.find(s => s.sectionNumber === sectionNumber + 1);
+    
+    if (!currentSection) {
+      // Section not found, return placeholder
+      const sectionTitle = studyDesignSections.find(s => s.id === sectionId)?.title || `Section ${sectionNumber}`;
+      return `<h3 style="color: #1e40af; margin-bottom: 1rem; font-size: 1.25rem;">${sectionTitle}</h3>
+              <p style="margin: 0.5rem 0; line-height: 1.6; color: #6b7280; font-style: italic;">Content for this section will be available after Study Design generation.</p>`;
+    }
+    
+    // Extract content between current section and next section
+    const startLine = currentSection.lineNumber;
+    const endLine = nextSection ? nextSection.lineNumber : lines.length;
+    
+    const sectionContent = [];
+    
+    // Add the section header
+    sectionContent.push(`<h3 style="color: #1e40af; margin-bottom: 1rem; font-size: 1.25rem;">${currentSection.fullLine}</h3>`);
+    
+    // Extract content lines
+    for (let i = startLine + 1; i < endLine; i++) {
+      const line = lines[i].trim();
+      
+      if (!line) {
+        // Empty line
+        sectionContent.push('<br>');
+      } else if (line.match(/^(\d+)\.(\d+)\s+(.*)/i)) {
+        // Subsection (like 2.1, 2.2, etc.)
+        sectionContent.push(`<h4 style="color: #374151; margin: 1rem 0 0.5rem 0; font-size: 1.1rem;">${line}</h4>`);
+      } else if (line.match(/^[A-Z\s]{5,}$/) && !line.match(/^(\d+)/)) {
+        // All caps heading (not numbered)
+        sectionContent.push(`<h4 style="color: #1e40af; margin: 1rem 0 0.5rem 0; font-size: 1.1rem;">${line}</h4>`);
+      } else if (line.match(/^(\d+)/) && !line.match(/^(\d+)\./)) {
+        // Numbered item but not a section header
+        sectionContent.push(`<p style="margin: 0.5rem 0; line-height: 1.6; padding-left: 1rem;"><strong>${line}</strong></p>`);
+      } else {
+        // Regular paragraph content
+        sectionContent.push(`<p style="margin: 0.5rem 0; line-height: 1.6;">${line}</p>`);
       }
     }
     
@@ -1428,6 +2246,44 @@ const ProtocolGenerator = () => {
 
   return (
     <div className="protocol-generator" style={{ position: 'relative' }}>
+      {/* Add CSS for active/inactive tab states */}
+      <style>{`
+        .document-content.active-tab {
+          display: block !important;
+          opacity: 1;
+          visibility: visible;
+          transition: opacity 0.3s ease, visibility 0.3s ease;
+          height: auto;
+          overflow: visible;
+        }
+        
+        .document-content.inactive-tab {
+          display: block !important;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.3s ease, visibility 0.3s ease;
+          height: 0;
+          overflow: hidden;
+          margin: 0;
+          padding: 0;
+        }
+        
+        .tab-btn.active {
+          background-color: #3b82f6 !important;
+          color: white !important;
+          border-color: #3b82f6 !important;
+        }
+        
+        .tab-btn {
+          transition: all 0.2s ease;
+        }
+        
+        .tab-btn:hover {
+          background-color: #f1f5f9;
+          border-color: #cbd5e1;
+        }
+      `}</style>
+      
       {/* Ask Lumina Popup */}
       <AskLuminaPopup 
         isOpen={showAskLumina}
@@ -1443,17 +2299,63 @@ const ProtocolGenerator = () => {
         variant="primary"
       />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h2>Clinical Study Protocol Generator</h2>
-          <p>Generate a complete clinical study protocol with enhanced trial design parameters</p>
-          
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div>
+            <h2>Clinical Study Protocol Generator</h2>
+            <p>Generate a complete clinical study protocol with enhanced trial design parameters</p>
+          </div>
+          <button onClick={handleShowPreviousProtocols} className="btn btn-outline">
+            {showPreviousProtocols ? 'Hide Previous Protocols' : 'Previous Protocols'}
+          </button>
         </div>
-        <button onClick={handleShowPreviousProtocols} className="btn btn-outline">
-          {showPreviousProtocols ? 'Hide Previous Protocols' : 'Previous Protocols'}
-        </button>
+        
+        {/* Section Tabs */}
+        <div style={{ 
+          display: 'flex', 
+          borderBottom: '2px solid #e2e8f0',
+          marginBottom: '1.5rem'
+        }}>
+          <button
+            onClick={() => setActiveSection('protocol')}
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: activeSection === 'protocol' ? '#3b82f6' : 'transparent',
+              color: activeSection === 'protocol' ? 'white' : '#64748b',
+              border: 'none',
+              borderBottom: activeSection === 'protocol' ? '3px solid #3b82f6' : '3px solid transparent',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: '600',
+              borderRadius: '8px 8px 0 0',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            📋 Protocol Generator
+          </button>
+          <button
+            onClick={() => setActiveSection('compiler')}
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: activeSection === 'compiler' ? '#3b82f6' : 'transparent',
+              color: activeSection === 'compiler' ? 'white' : '#64748b',
+              border: 'none',
+              borderBottom: activeSection === 'compiler' ? '3px solid #3b82f6' : '3px solid transparent',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: '600',
+              borderRadius: '8px 8px 0 0',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            🏛️ Country Compiler
+          </button>
+        </div>
       </div>
-      {showPreviousProtocols && (
+      {/* Protocol Generator Section */}
+      {activeSection === 'protocol' && (
+        <>
+          {showPreviousProtocols && (
         <div style={{ background: '#f7fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
           <h4 style={{ margin: 0, marginBottom: '0.5rem' }}>Previous Documents</h4>
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem' }}>
@@ -1623,9 +2525,11 @@ const ProtocolGenerator = () => {
       )}
       
       <form onSubmit={handleSubmit}>
+        {/* Progress Bar */}
+        <ProgressBar />
+        
         {/* Basic Information Section */}
-        <div className="form-section">
-          <h3>Basic Information</h3>
+        <FormSection title="Basic Information" sectionKey="basicInfo" isRequired>
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="disease" className="form-label">Disease/Condition <span className="required">*</span></label>
@@ -1676,11 +2580,10 @@ const ProtocolGenerator = () => {
               />
             </div>
           </div>
-        </div>
+        </FormSection>
 
         {/* Study Type Selection */}
-        <div className="form-section">
-          <h3>Study Type</h3>
+        <FormSection title="Study Type" sectionKey="studyType" isRequired>
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="studyType" className="form-label">Study Type <span className="required">*</span></label>
@@ -1696,11 +2599,10 @@ const ProtocolGenerator = () => {
               </select>
             </div>
           </div>
-        </div>
+        </FormSection>
 
         {/* Trial Design & Basics Section */}
-        <div className="form-section">
-          <h3>{studyType === 'preclinical' ? 'Study Design & Basics' : 'Trial Design & Basics'}</h3>
+        <FormSection title={studyType === 'preclinical' ? 'Study Design & Basics' : 'Trial Design & Basics'} sectionKey="trialDesign">
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="trialPhase" className="form-label">{studyType === 'preclinical' ? 'Study Phase' : 'Trial Phase'}</label>
@@ -1787,11 +2689,10 @@ const ProtocolGenerator = () => {
               </select>
             </div>
           </div>
-        </div>
+        </FormSection>
 
         {/* Population & Eligibility Section */}
-        <div className="form-section">
-          <h3>{studyType === 'preclinical' ? 'Animal Model & Study Design' : 'Population & Eligibility'}</h3>
+        <FormSection title={studyType === 'preclinical' ? 'Animal Model & Study Design' : 'Population & Eligibility'} sectionKey="population">
           {studyType === 'preclinical' ? (
             // Preclinical Animal Model Fields
             <>
@@ -1986,11 +2887,10 @@ const ProtocolGenerator = () => {
               </div>
             </>
           )}
-        </div>
+        </FormSection>
 
         {/* Intervention & Drug Details Section */}
-        <div className="form-section">
-          <h3>Intervention & Drug Details</h3>
+        <FormSection title="Intervention & Drug Details" sectionKey="intervention">
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="routeOfAdministration">Route of Administration</label>
@@ -2042,11 +2942,10 @@ const ProtocolGenerator = () => {
               />
             </div>
           </div>
-        </div>
+        </FormSection>
 
         {/* Endpoints & Outcome Measures Section */}
-        <div className="form-section">
-          <h3>Endpoints & Outcome Measures</h3>
+        <FormSection title="Endpoints & Outcome Measures" sectionKey="endpoints">
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="primaryEndpoints">Primary Endpoint(s)</label>
@@ -2084,11 +2983,10 @@ const ProtocolGenerator = () => {
               </select>
             </div>
           </div>
-        </div>
+        </FormSection>
 
         {/* Statistics & Duration Section */}
-        <div className="form-section">
-          <h3>Statistical Considerations</h3>
+        <FormSection title="Statistical Considerations" sectionKey="statistics">
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="statisticalPower">Statistical Power (%)</label>
@@ -2128,10 +3026,11 @@ const ProtocolGenerator = () => {
               />
             </div>
           </div>
-        </div>
+        </FormSection>
 
         {/* Clinical Study Information */}
-        <div className="form-group full-width">
+        <FormSection title="Additional Information" sectionKey="additionalInfo">
+          <div className="form-group full-width">
           <label htmlFor="clinicalInfo">Additional Clinical Study Information</label>
           <textarea
             id="clinicalInfo"
@@ -2141,7 +3040,8 @@ const ProtocolGenerator = () => {
             rows="4"
             className="clinical-info-textarea"
           />
-        </div>
+          </div>
+        </FormSection>
 
         <div className="form-actions">
           <button 
@@ -2170,8 +3070,7 @@ const ProtocolGenerator = () => {
         </div>
       )}
       
-      {(result || studyDesign) && (
-        <div className="result-container" id="results-section">
+      <div className="result-container" id="results-section" style={{ display: (result || studyDesign) ? 'block' : 'none' }}>
           <div className="document-tabs">
             <button 
               className={`tab-btn ${activeTab === 'protocol' ? 'active' : ''}`}
@@ -2187,12 +3086,11 @@ const ProtocolGenerator = () => {
             </button>
           </div>
           
-          {activeTab === 'protocol' && result && (
-            <div className="document-content" id="protocol-document">
+          <div className={`document-content ${activeTab === 'protocol' ? 'active-tab' : 'inactive-tab'}`} id="protocol-document" style={{ display: result ? 'block' : 'none' }}>
               <div className="document-header">
                 <h3>Enhanced Protocol</h3>
                 <div className="document-meta">
-                  <span>Protocol ID: {result.protocol_id}</span>
+                  <span>Protocol ID: {result?.protocol_id || 'N/A'}</span>
                   <span>Version: 1.0</span>
                   <span>Date: {new Date().toLocaleDateString()}</span>
                 </div>
@@ -2215,7 +3113,7 @@ const ProtocolGenerator = () => {
               </div>
               
               <div className="protocol-content">
-                {renderProtocolSections(result.protocol)}
+                {result?.protocol ? renderProtocolSections(result.protocol) : <p>No protocol content available</p>}
               </div>
               
               {/* Selected Sections Display */}
@@ -2644,13 +3542,13 @@ const ProtocolGenerator = () => {
               )}
               
               <div className="action-buttons">
-                <button onClick={() => navigator.clipboard.writeText(result.protocol)}>
+                <button onClick={() => navigator.clipboard.writeText(result?.protocol || '')}>
                   <i className="icon-copy"></i> Copy to Clipboard
                 </button>
-                <button onClick={() => downloadDocument(result.protocol, `Enhanced_Protocol_${disease.replace(/\s+/g, '_')}_${result.protocol_id}.txt`)}>
+                <button onClick={() => downloadDocument(result?.protocol || '', `Enhanced_Protocol_${disease.replace(/\s+/g, '_')}_${result?.protocol_id || 'unknown'}.txt`)}>
                   <i className="icon-download"></i> Download Text
                 </button>
-                <button onClick={() => generatePDF('protocol', `Enhanced_Protocol_${disease.replace(/\s+/g, '_')}_${result.protocol_id}`)}>
+                <button onClick={() => generatePDF('protocol', `Enhanced_Protocol_${disease.replace(/\s+/g, '_')}_${result?.protocol_id || 'unknown'}`)}>
                   <i className="icon-pdf"></i> Download PDF
                 </button>
                 <button onClick={() => generateFullProtocolWord()}>
@@ -2659,19 +3557,17 @@ const ProtocolGenerator = () => {
                 <button onClick={() => window.print()}>
                   <i className="icon-print"></i> Print
                 </button>
-                <button className="btn-secondary" onClick={() => window.open(`mailto:?subject=Enhanced Protocol for ${disease}&body=${encodeURIComponent(result.protocol)}`)}>
+                <button className="btn-secondary" onClick={() => window.open(`mailto:?subject=Enhanced Protocol for ${disease}&body=${encodeURIComponent(result?.protocol || '')}`)}>
                   <i className="icon-email"></i> Email
                 </button>
               </div>
               
               <div className="protocol-info">
-                Document Generated: {new Date().toLocaleString()} | Protocol ID: {result.protocol_id}
+                Document Generated: {new Date().toLocaleString()} | Protocol ID: {result?.protocol_id || 'N/A'}
               </div>
             </div>
-          )}
           
-          {activeTab === 'studyDesign' && studyDesign && (
-            <div className="document-content" id="studydesign-document">
+          <div className={`document-content ${activeTab === 'studyDesign' ? 'active-tab' : 'inactive-tab'}`} id="studydesign-document" style={{ display: studyDesign ? 'block' : 'none' }}>
               <div className="document-header">
                 <h3>Study Design (Main Document)</h3>
                 <div className="document-meta">
@@ -2698,9 +3594,41 @@ const ProtocolGenerator = () => {
               </div>
               
               <div id="cmc-section" className="study-design-section">
-                <h4 className="main-section-title">CMC SECTION</h4>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  marginBottom: '1rem',
+                  padding: '0.5rem',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  <button
+                    onClick={() => handleStudyDesignSectionToggle('cmc-section')}
+                    style={{
+                      background: selectedStudyDesignSections.has('cmc-section') ? '#3b82f6' : '#f3f4f6',
+                      color: selectedStudyDesignSections.has('cmc-section') ? 'white' : '#374151',
+                      border: '2px solid #d1d5db',
+                      borderRadius: '50%',
+                      width: '24px',
+                      height: '24px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.2s ease'
+                    }}
+                    title={selectedStudyDesignSections.has('cmc-section') ? 'Remove from selection' : 'Add to selection'}
+                  >
+                    {selectedStudyDesignSections.has('cmc-section') ? '✓' : '+'}
+                  </button>
+                  <h4 className="main-section-title" style={{ margin: 0, flex: 1 }}>CMC SECTION</h4>
+                </div>
                 <div className="section-content">
-                  {studyDesign.cmc_section.split('\n').map((paragraph, idx) => (
+                  {studyDesign?.cmc_section ? studyDesign.cmc_section.split('\n').map((paragraph, idx) => (
                     paragraph.trim() ? 
                       paragraph.match(/^[A-Z\s]{5,}$/) ? 
                         <h4 key={idx} className="section-title">{paragraph}</h4> :
@@ -2710,24 +3638,298 @@ const ProtocolGenerator = () => {
                         <li key={idx} className="list-item">{paragraph.substring(1).trim()}</li> :
                         <p key={idx}>{paragraph}</p>
                     : <br key={idx} />
-                  ))}
+                  )) : <p>No CMC section content available</p>}
                 </div>
               </div>
               
               <div className="study-design-section clinical-section">
                 <div className="section-content">
-                  {renderClinicalSections(studyDesign.clinical_section)}
+                  {studyDesign?.clinical_section ? renderClinicalSections(studyDesign.clinical_section) : <p>No clinical section content available</p>}
                 </div>
               </div>
               
+              {/* Selected Sections Display for Study Design */}
+              {selectedStudyDesignSections.size > 0 && (
+                <div style={{ 
+                  marginTop: '2rem', 
+                  padding: '1rem', 
+                  border: '2px solid #3b82f6', 
+                  borderRadius: '8px', 
+                  backgroundColor: '#f0f9ff' 
+                }}>
+                  {/* Header with Reference Protocol Button */}
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    marginBottom: '1rem' 
+                  }}>
+                    <h4 style={{ margin: 0, color: '#1e40af' }}>
+                      Individual Editable Sections ({selectedStudyDesignSections.size})
+                    </h4>
+                    <button
+                      onClick={() => setShowReferencePanel(!showReferencePanel)}
+                      style={{
+                        background: showReferencePanel ? '#ef4444' : '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        fontSize: '14px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {showReferencePanel ? 'Hide Reference' : 'Show Reference'}
+                    </button>
+                  </div>
+                  
+                  {/* Main Content Area */}
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '1rem',
+                    minWidth: showReferencePanel ? '50%' : '100%'
+                  }}>
+                    {/* Selected Sections List */}
+                    <div style={{ 
+                      flex: 1,
+                      minWidth: showReferencePanel ? '50%' : '100%'
+                    }}>
+                      {Array.from(selectedStudyDesignSections)
+                        .sort((a, b) => {
+                          // Handle cmc-section (should come first)
+                          if (a === 'cmc-section') return -1;
+                          if (b === 'cmc-section') return 1;
+                          
+                          // Sort clinical sections by number
+                          const aNum = parseInt(a.replace('clinical-section-', ''));
+                          const bNum = parseInt(b.replace('clinical-section-', ''));
+                          return aNum - bNum;
+                        })
+                        .map(sectionId => {
+                          const sectionNumber = sectionId === 'cmc-section' ? 'CMC' : sectionId.replace('clinical-section-', '');
+                          const sectionTitle = studyDesignSections.find(s => s.id === sectionId)?.title || `Study Design Section ${sectionNumber}`;
+                          const isEditingThis = editingSectionId === sectionId;
+                          const sectionContent = sectionEdits[sectionId] || '';
+                          
+                          return (
+                            <div key={sectionId} style={{ 
+                              marginBottom: '1.5rem', 
+                              padding: '1rem', 
+                              backgroundColor: 'white', 
+                              borderRadius: '8px', 
+                              border: '1px solid #e2e8f0',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            }}>
+                              {/* Section Header */}
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                marginBottom: '0.5rem' 
+                              }}>
+                                <h5 style={{ margin: 0, color: '#374151' }}>{sectionTitle}</h5>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                  {!isEditingThis ? (
+                                    <>
+                                      <button
+                                        onClick={() => startEditingSection(sectionId)}
+                                        style={{
+                                          background: '#10b981',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          const newSet = new Set(aiEnabledSections);
+                                          if (newSet.has(sectionId)) {
+                                            newSet.delete(sectionId);
+                                          } else {
+                                            newSet.add(sectionId);
+                                          }
+                                          setAiEnabledSections(newSet);
+                                        }}
+                                        style={{
+                                          background: aiEnabledSections.has(sectionId) ? '#3b82f6' : '#6b7280',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        AI {aiEnabledSections.has(sectionId) ? 'ON' : 'OFF'}
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => saveSectionEdit(sectionId, sectionContent)}
+                                        style={{
+                                          background: '#10b981',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={cancelSectionEdit}
+                                        style={{
+                                          background: '#ef4444',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '4px',
+                                          padding: '4px 8px',
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {isEditingThis ? (
+                                <RichTextEditor
+                                  value={sectionContent}
+                                  onChange={(content) => updateSectionContent(sectionId, content)}
+                                  placeholder={`Edit ${sectionTitle} content here...`}
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '150px'
+                                  }}
+                                  aiEnabled={aiEnabledSections.has(sectionId)}
+                                  onAIGenerate={(prompt) => {
+                                    // Handle AI generation for this section
+                                    console.log(`AI generation for ${sectionId}:`, prompt);
+                                  }}
+                                />
+                              ) : (
+                                <div style={{ 
+                                  padding: '0.75rem', 
+                                  backgroundColor: '#f9fafb', 
+                                  borderRadius: '4px',
+                                  border: '1px solid #e5e7eb',
+                                  minHeight: '100px',
+                                  fontSize: '14px',
+                                  lineHeight: '1.5',
+                                  color: '#374151'
+                                }}
+                                dangerouslySetInnerHTML={{ __html: sectionContent || 'No content available for this section.' }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                    
+                    {/* Reference Panel */}
+                    {showReferencePanel && (
+                      <div style={{ 
+                        width: '50%', 
+                        padding: '1rem', 
+                        backgroundColor: '#f8fafc', 
+                        borderRadius: '8px', 
+                        border: '1px solid #e2e8f0',
+                        maxHeight: '600px',
+                        overflowY: 'auto'
+                      }}>
+                        <h5 style={{ margin: '0 0 1rem 0', color: '#374151' }}>Reference Protocols</h5>
+                        {previousProtocols.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {previousProtocols.map((protocol, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handleReferenceProtocolSelect(protocol)}
+                                style={{
+                                  padding: '0.5rem',
+                                  backgroundColor: selectedReferenceProtocol === protocol ? '#3b82f6' : 'white',
+                                  color: selectedReferenceProtocol === protocol ? 'white' : '#374151',
+                                  border: '1px solid #d1d5db',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  textAlign: 'left'
+                                }}
+                              >
+                                {protocol.title || `Protocol ${idx + 1}`}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>
+                            No previous protocols available for reference.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Export Options */}
+                  <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+                    <h5 style={{ margin: '0 0 1rem 0', color: '#1e40af' }}>Export Selected Sections</h5>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+                      <button 
+                        onClick={() => {
+                          const allContent = Object.values(sectionEdits).join('\n\n---\n\n');
+                          downloadDocument(allContent, `All_Selected_Study_Design_Sections_${disease.replace(/\s+/g, '_')}.txt`);
+                        }}
+                        style={{
+                          background: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 16px',
+                          fontSize: '14px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        📄 Download All as Text
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const allContent = Object.values(sectionEdits).join('\n\n---\n\n');
+                          navigator.clipboard.writeText(allContent);
+                        }}
+                        style={{
+                          background: '#10b981',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 16px',
+                          fontSize: '14px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        📋 Copy All to Clipboard
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="action-buttons">
                 <button onClick={() => navigator.clipboard.writeText(
-                  `CMC SECTION:\n${studyDesign.cmc_section}\n\nCLINICAL SECTION:\n${studyDesign.clinical_section}`
+                  `CMC SECTION:\n${studyDesign?.cmc_section || ''}\n\nCLINICAL SECTION:\n${studyDesign?.clinical_section || ''}`
                 )}>
                   <i className="icon-copy"></i> Copy to Clipboard
                 </button>
                 <button onClick={() => downloadDocument(
-                  `CMC SECTION:\n${studyDesign.cmc_section}\n\nCLINICAL SECTION:\n${studyDesign.clinical_section}`,
+                  `CMC SECTION:\n${studyDesign?.cmc_section || ''}\n\nCLINICAL SECTION:\n${studyDesign?.clinical_section || ''}`,
                   `Enhanced_Study_Design_${disease.replace(/\s+/g, '_')}.txt`
                 )}>
                   <i className="icon-download"></i> Download Text
@@ -2741,7 +3943,7 @@ const ProtocolGenerator = () => {
                 <button onClick={() => window.print()}>
                   <i className="icon-print"></i> Print
                 </button>
-                <button className="btn-secondary" onClick={() => window.open(`mailto:?subject=Enhanced Study Design for ${disease}&body=${encodeURIComponent(`CMC SECTION:\n${studyDesign.cmc_section}\n\nCLINICAL SECTION:\n${studyDesign.clinical_section}`)}`)}>
+                <button className="btn-secondary" onClick={() => window.open(`mailto:?subject=Enhanced Study Design for ${disease}&body=${encodeURIComponent(`CMC SECTION:\n${studyDesign?.cmc_section || ''}\n\nCLINICAL SECTION:\n${studyDesign?.clinical_section || ''}`)}`)}>
                   <i className="icon-email"></i> Email
                 </button>
               </div>
@@ -2751,9 +3953,364 @@ const ProtocolGenerator = () => {
                 <p>Document Generated: {new Date().toLocaleString()} | Study ID: SD-{result ? result.protocol_id.substring(5) : Date.now()}</p>
               </div>
             </div>
-          )}
         </div>
+        </>
       )}
+
+          {/* Country Compiler Section */}
+          {activeSection === 'compiler' && (
+            <div style={{
+              display: 'flex',
+              gap: '2rem',
+              minHeight: '600px'
+            }}>
+              {/* Main Compiler Content */}
+              <div style={{ width: '100%' }}>
+            <div style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '2rem',
+              border: '1px solid #e2e8f0',
+              marginBottom: '2rem'
+            }}>
+              <h3 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: '600', 
+                marginBottom: '1rem', 
+                color: '#1e293b' 
+              }}>
+                🌍 Select Target Country/Region
+              </h3>
+              <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
+                Choose the country/region for which you want to compile regulatory documents and requirements.
+              </p>
+              
+              <select
+                value={selectedCountry}
+                onChange={(e) => setSelectedCountry(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  border: '1px solid #d1d5db',
+                  fontSize: '1rem',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">Select a country/region...</option>
+                {Object.entries(countryRegulatoryData).map(([code, data]) => (
+                  <option key={code} value={code}>
+                    {data.name} ({data.regulator})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedCountry && (
+              <>
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  borderRadius: '12px', 
+                  padding: '2rem',
+                  border: '1px solid #e2e8f0',
+                  marginBottom: '2rem'
+                }}>
+                  <h3 style={{ 
+                    fontSize: '1.5rem', 
+                    fontWeight: '600', 
+                    marginBottom: '1rem', 
+                    color: '#1e293b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    📋 {countryRegulatoryData[selectedCountry].name} Requirements
+                  </h3>
+                
+                    <div style={{
+                      backgroundColor: '#f8fafc',
+                      borderRadius: '8px',
+                      padding: '1.5rem',
+                      border: '1px solid #e2e8f0',
+                      marginBottom: '2rem'
+                    }}>
+                      <h4 style={{ 
+                        fontSize: '1.1rem', 
+                        fontWeight: '600', 
+                        marginBottom: '0.75rem', 
+                        color: '#1e293b' 
+                      }}>
+                        Regulatory Information
+                      </h4>
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <strong>Regulator:</strong> {countryRegulatoryData[selectedCountry].regulator}
+                      </div>
+                      <div>
+                        <strong>Submission Route:</strong> {countryRegulatoryData[selectedCountry].submissionRoute}
+                      </div>
+                    </div>
+
+                <div style={{
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '8px',
+                  padding: '1.5rem',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  <h4 style={{ 
+                    fontSize: '1.1rem', 
+                    fontWeight: '600', 
+                    marginBottom: '1rem', 
+                    color: '#1e293b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    📋 Required Documents
+                  </h4>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+                    gap: '0.75rem' 
+                  }}>
+                    {countryRegulatoryData[selectedCountry].documents.map((doc, index) => (
+                      <div key={index} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '0.75rem',
+                        backgroundColor: 'white',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0'
+                      }}>
+                        <span style={{
+                          fontSize: '1rem',
+                          color: '#10b981',
+                          marginRight: '0.75rem',
+                          fontWeight: '500'
+                        }}>
+                          ✓
+                        </span>
+                        <span style={{
+                          fontSize: '0.9rem',
+                          color: '#374151'
+                        }}>
+                          {doc}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                </div>
+
+                {/* Document Upload Section */}
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  borderRadius: '12px', 
+                  padding: '2rem',
+                  border: '1px solid #e2e8f0',
+                  marginBottom: '2rem'
+                }}>
+                  <h3 style={{ 
+                    fontSize: '1.5rem', 
+                    fontWeight: '600', 
+                    marginBottom: '1rem', 
+                    color: '#1e293b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    📁 Upload Documents
+                  </h3>
+                  
+                  <div 
+                    {...getRootProps()} 
+                    className={`dropzone ${isDragActive ? 'active' : ''}`}
+                    style={{
+                      border: isDragActive ? '3px dashed #3b82f6' : '2px dashed #94a3b8',
+                      borderRadius: '12px',
+                      padding: '3rem 2rem',
+                      textAlign: 'center',
+                      backgroundColor: isDragActive ? '#eff6ff' : 'white',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      marginBottom: '2rem'
+                    }}
+                  >
+                    <input {...getInputProps()} />
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+                      {isDragActive ? '📂' : '📄'}
+                    </div>
+                    <p style={{ fontSize: '1.1rem', fontWeight: '500', marginBottom: '0.5rem', color: '#1e293b' }}>
+                      {isDragActive
+                        ? 'Drop the files here...'
+                        : 'Drag and drop documents here, or click to select files'}
+                    </p>
+                    <small style={{ fontSize: '0.9rem', color: '#64748b' }}>
+                      Accepted formats: PDF, DOC, DOCX, XLS, XLSX, TXT
+                    </small>
+                  </div>
+
+                  {/* Required Documents Checklist */}
+                  <div>
+                    <h4 style={{ 
+                      fontSize: '1.25rem', 
+                      fontWeight: '600', 
+                      marginBottom: '1rem', 
+                      color: '#1e293b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      ✅ Required Documents Checklist
+                    </h4>
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                      gap: '1rem'
+                    }}>
+                      {getDocumentCategories().map(cat => {
+                        const status = getCategoryStatus(cat.id);
+                        const uploadedCount = uploadedDocuments.filter(doc => doc.category === cat.id).length;
+                        
+                        return (
+                          <div key={cat.id} className={`checklist-item ${status}`} style={{
+                            padding: '1rem',
+                            borderRadius: '8px',
+                            backgroundColor: 'white',
+                            border: `2px solid ${status === 'missing' ? '#ef4444' : status === 'full' ? '#10b981' : '#e2e8f0'}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              <span style={{ fontSize: '1.2rem', marginRight: '0.5rem' }}>{cat.icon}</span>
+                              <div>
+                                <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>
+                                  {cat.name} {cat.required && <span style={{ color: '#ef4444' }}>*</span>}
+                                </span>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                  {uploadedCount}/{cat.maxFiles} files
+                                </div>
+                              </div>
+                            </div>
+                            <span style={{ fontSize: '1.2rem' }}>{getStatusIcon(status)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Uploaded Documents List */}
+                  {uploadedDocuments.length > 0 && (
+                    <div style={{ marginTop: '2rem' }}>
+                      <h4 style={{ 
+                        fontSize: '1.1rem', 
+                        fontWeight: '600', 
+                        marginBottom: '1rem', 
+                        color: '#1e293b' 
+                      }}>
+                        📚 Uploaded Documents ({uploadedDocuments.length})
+                      </h4>
+                      <div style={{ 
+                        backgroundColor: '#f8fafc', 
+                        borderRadius: '12px', 
+                        padding: '1rem',
+                        border: '1px solid #e2e8f0'
+                      }}>
+                        {uploadedDocuments.map(doc => (
+                          <div key={doc.id} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '1rem',
+                            borderBottom: '1px solid #f1f5f9',
+                            borderRadius: '8px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+                              <span style={{ fontSize: '1.2rem', marginRight: '0.75rem' }}>
+                                {doc.name.includes('.pdf') ? '📄' : doc.name.includes('.doc') ? '📝' : '📁'}
+                              </span>
+                              <div style={{ flexGrow: 1 }}>
+                                <p style={{ fontWeight: '500', margin: 0, fontSize: '0.9rem', color: '#1e293b' }}>{doc.name}</p>
+                                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
+                                  {(doc.size / 1024).toFixed(2)} KB | Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <select
+                                value={doc.category || ''}
+                                onChange={(e) => handleCategoryChange(doc.id, e.target.value)}
+                                style={{
+                                  padding: '0.4rem 0.6rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid #d1d5db',
+                                  fontSize: '0.8rem',
+                                  backgroundColor: 'white'
+                                }}
+                              >
+                                <option value="">Assign Category</option>
+                                {getDocumentCategories().map(cat => (
+                                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                              </select>
+                              <button
+                                onClick={() => removeDocument(doc.id)}
+                                style={{
+                                  padding: '0.5rem 1rem',
+                                  backgroundColor: '#ef4444',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  fontSize: '0.8rem'
+                                }}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Compile Button */}
+                  <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+                    <button
+                      onClick={compileCountryDossier}
+                      disabled={!isReadyToCompile() || compilerLoading}
+                      style={{
+                        padding: '1rem 3rem',
+                        fontSize: '1.1rem',
+                        fontWeight: '600',
+                        borderRadius: '12px',
+                        border: 'none',
+                        backgroundColor: isReadyToCompile() && !compilerLoading ? '#10b981' : '#9ca3af',
+                        color: 'white',
+                        cursor: isReadyToCompile() && !compilerLoading ? 'pointer' : 'not-allowed',
+                        transition: 'all 0.2s ease',
+                        boxShadow: isReadyToCompile() && !compilerLoading ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none'
+                      }}
+                    >
+                      {compilerLoading ? '⏳ Compiling Dossier...' : `🚀 Compile Dossier for ${countryRegulatoryData[selectedCountry].name}`}
+                    </button>
+                    {!isReadyToCompile() && !compilerLoading && (
+                      <p style={{ 
+                        marginTop: '1rem', 
+                        color: '#ef4444', 
+                        fontSize: '0.9rem',
+                        fontWeight: '500'
+                      }}>
+                        ⚠️ Please upload all required documents and assign categories before compiling
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+              </div>
+            </div>
+          )}
     </div>
   );
 };
