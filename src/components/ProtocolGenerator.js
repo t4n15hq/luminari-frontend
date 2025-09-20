@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import apiService from '../services/api';
 import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
@@ -24,6 +24,33 @@ const ProtocolGenerator = () => {
     setGlobalProtocolFormData,
     saveGlobalProtocolState 
   } = useAuth();
+
+  // Debounced update function to prevent excessive re-renders
+  const debouncedUpdate = useCallback((updateFn) => {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        updateFn(...args);
+      }, 300); // 300ms delay
+    };
+  }, []);
+
+  // Local state for immediate UI updates
+  const [localFormData, setLocalFormData] = useState({});
+
+  // Optimized form setters with debouncing and immediate local updates
+  const createOptimizedSetter = useCallback((field) => {
+    return (value) => {
+      // Immediate local update for smooth typing
+      setLocalFormData(prev => ({ ...prev, [field]: value }));
+      
+      // Debounced global update
+      debouncedUpdate((val) => {
+        setGlobalProtocolFormData(prev => ({ ...prev, [field]: val }));
+      })(value);
+    };
+  }, [debouncedUpdate, setGlobalProtocolFormData]);
   
   // Active section state for navigation
   const [activeFormSection, setActiveFormSection] = useState('basicInfo');
@@ -263,34 +290,34 @@ const ProtocolGenerator = () => {
     studyDuration
   } = globalProtocolFormData;
 
-  // Create setters that update global state
-  const setDisease = (value) => setGlobalProtocolFormData(prev => ({ ...prev, disease: value }));
-  const setPopulation = (value) => setGlobalProtocolFormData(prev => ({ ...prev, population: value }));
-  const setTreatment = (value) => setGlobalProtocolFormData(prev => ({ ...prev, treatment: value }));
-  const setDrugClass = (value) => setGlobalProtocolFormData(prev => ({ ...prev, drugClass: value }));
-  const setMechanism = (value) => setGlobalProtocolFormData(prev => ({ ...prev, mechanism: value }));
-  const setClinicalInfo = (value) => setGlobalProtocolFormData(prev => ({ ...prev, clinicalInfo: value }));
-  const setStudyType = (value) => setGlobalProtocolFormData(prev => ({ ...prev, studyType: value }));
-  const setTrialPhase = (value) => setGlobalProtocolFormData(prev => ({ ...prev, trialPhase: value }));
-  const setTrialType = (value) => setGlobalProtocolFormData(prev => ({ ...prev, trialType: value }));
-  const setRandomization = (value) => setGlobalProtocolFormData(prev => ({ ...prev, randomization: value }));
-  const setBlinding = (value) => setGlobalProtocolFormData(prev => ({ ...prev, blinding: value }));
-  const setControlGroupType = (value) => setGlobalProtocolFormData(prev => ({ ...prev, controlGroupType: value }));
-  const setSampleSize = (value) => setGlobalProtocolFormData(prev => ({ ...prev, sampleSize: value }));
-  const setMinAge = (value) => setGlobalProtocolFormData(prev => ({ ...prev, minAge: value }));
-  const setMaxAge = (value) => setGlobalProtocolFormData(prev => ({ ...prev, maxAge: value }));
-  const setGender = (value) => setGlobalProtocolFormData(prev => ({ ...prev, gender: value }));
-  const setInclusionCriteria = (value) => setGlobalProtocolFormData(prev => ({ ...prev, inclusionCriteria: value }));
-  const setExclusionCriteria = (value) => setGlobalProtocolFormData(prev => ({ ...prev, exclusionCriteria: value }));
-  const setRouteOfAdministration = (value) => setGlobalProtocolFormData(prev => ({ ...prev, routeOfAdministration: value }));
-  const setDosingFrequency = (value) => setGlobalProtocolFormData(prev => ({ ...prev, dosingFrequency: value }));
-  const setComparatorDrug = (value) => setGlobalProtocolFormData(prev => ({ ...prev, comparatorDrug: value }));
-  const setPrimaryEndpoints = (value) => setGlobalProtocolFormData(prev => ({ ...prev, primaryEndpoints: value }));
-  const setSecondaryEndpoints = (value) => setGlobalProtocolFormData(prev => ({ ...prev, secondaryEndpoints: value }));
-  const setOutcomeMeasurementTool = (value) => setGlobalProtocolFormData(prev => ({ ...prev, outcomeMeasurementTool: value }));
-  const setStatisticalPower = (value) => setGlobalProtocolFormData(prev => ({ ...prev, statisticalPower: value }));
-  const setSignificanceLevel = (value) => setGlobalProtocolFormData(prev => ({ ...prev, significanceLevel: value }));
-  const setStudyDuration = (value) => setGlobalProtocolFormData(prev => ({ ...prev, studyDuration: value }));
+  // Create optimized setters that update global state with debouncing
+  const setDisease = createOptimizedSetter('disease');
+  const setPopulation = createOptimizedSetter('population');
+  const setTreatment = createOptimizedSetter('treatment');
+  const setDrugClass = createOptimizedSetter('drugClass');
+  const setMechanism = createOptimizedSetter('mechanism');
+  const setClinicalInfo = createOptimizedSetter('clinicalInfo');
+  const setStudyType = createOptimizedSetter('studyType');
+  const setTrialPhase = createOptimizedSetter('trialPhase');
+  const setTrialType = createOptimizedSetter('trialType');
+  const setRandomization = createOptimizedSetter('randomization');
+  const setBlinding = createOptimizedSetter('blinding');
+  const setControlGroupType = createOptimizedSetter('controlGroupType');
+  const setSampleSize = createOptimizedSetter('sampleSize');
+  const setMinAge = createOptimizedSetter('minAge');
+  const setMaxAge = createOptimizedSetter('maxAge');
+  const setGender = createOptimizedSetter('gender');
+  const setInclusionCriteria = createOptimizedSetter('inclusionCriteria');
+  const setExclusionCriteria = createOptimizedSetter('exclusionCriteria');
+  const setRouteOfAdministration = createOptimizedSetter('routeOfAdministration');
+  const setDosingFrequency = createOptimizedSetter('dosingFrequency');
+  const setComparatorDrug = createOptimizedSetter('comparatorDrug');
+  const setPrimaryEndpoints = createOptimizedSetter('primaryEndpoints');
+  const setSecondaryEndpoints = createOptimizedSetter('secondaryEndpoints');
+  const setOutcomeMeasurementTool = createOptimizedSetter('outcomeMeasurementTool');
+  const setStatisticalPower = createOptimizedSetter('statisticalPower');
+  const setSignificanceLevel = createOptimizedSetter('significanceLevel');
+  const setStudyDuration = createOptimizedSetter('studyDuration');
 
   // Preclinical-specific parameters
   const [animalModel, setAnimalModel] = useState('');
@@ -709,8 +736,14 @@ const ProtocolGenerator = () => {
     }
   }, [globalProtocolFormData]);
 
-  // Function to calculate section completion
-  const getSectionCompletion = () => {
+  // Sync local state with global state on mount
+  useEffect(() => {
+    setLocalFormData(globalProtocolFormData || {});
+  }, []); // Only run on mount
+
+  // Function to calculate section completion (memoized for performance)
+  const getSectionCompletion = useMemo(() => {
+    const calculateCompletion = () => {
     const sections = [
       {
         key: 'basicInfo',
@@ -769,17 +802,20 @@ const ProtocolGenerator = () => {
     const requiredCount = sections.filter(section => section.isRequired).length;
     const requiredCompletedCount = requiredSections.length;
 
-    return {
-      sections,
-      completedSections,
-      totalSections,
-      completedCount,
-      requiredCount,
-      requiredCompletedCount,
-      percentage: Math.round((completedCount / totalSections) * 100),
-      requiredPercentage: Math.round((requiredCompletedCount / requiredCount) * 100)
+      return {
+        sections,
+        completedSections,
+        totalSections,
+        completedCount,
+        requiredCount,
+        requiredCompletedCount,
+        percentage: Math.round((completedCount / totalSections) * 100),
+        requiredPercentage: Math.round((requiredCompletedCount / requiredCount) * 100)
+      };
     };
-  };
+    
+    return calculateCompletion;
+  }, [disease, studyType, trialPhase, trialType, randomization, blinding, sampleSize, minAge, maxAge, inclusionCriteria, routeOfAdministration, dosingFrequency, comparatorDrug, primaryEndpoints, secondaryEndpoints, outcomeMeasurementTool, statisticalPower, studyDuration, clinicalInfo]);
 
   // Protocol sections for navigation
   const protocolSections = [
@@ -2537,7 +2573,7 @@ const ProtocolGenerator = () => {
                 id="disease"
                 type="text"
                 className="form-input"
-                value={disease}
+                value={localFormData.disease !== undefined ? localFormData.disease : disease}
                 onChange={(e) => setDisease(e.target.value)}
                 placeholder="e.g., Psoriasis, Eczema, Atopic Dermatitis"
                 required
