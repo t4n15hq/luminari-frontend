@@ -9,7 +9,6 @@ const ClinicalDossierCompiler = () => {
   const [validatingDocuments, setValidatingDocuments] = useState(new Set());
   const [primaryIndication, setPrimaryIndication] = useState('');
   const [showValidationSummary, setShowValidationSummary] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState('');
 
   const dossierTypes = [
     { 
@@ -43,132 +42,14 @@ const ClinicalDossierCompiler = () => {
   ];
 
   const documentCategories = [
-    { id: 'protocol', name: 'Protocol', required: true, icon: '📄', maxFiles: 1 },                                                                              
-    { id: 'ib', name: "Investigator's Brochure (IB)", required: true, icon: '📖', maxFiles: 1 },                                                                
-    { id: 'quality', name: 'Quality Information', required: true, icon: '⚗️', maxFiles: 3 },                                                                     
-    { id: 'nonclinical', name: 'Non-clinical Data', required: true, icon: '🧪', maxFiles: 5 },                                                                  
-    { id: 'clinical', name: 'Clinical Data', required: true, icon: '🏥', maxFiles: 10 },                                                                        
-    { id: 'application', name: 'Application Form', required: true, icon: '📝', maxFiles: 1 },                                                                   
-    { id: 'other', name: 'Other Documents', required: false, icon: '📎', maxFiles: 5 }                                                                          
+    { id: 'protocol', name: 'Protocol', required: true, icon: '📄', maxFiles: 1 },
+    { id: 'ib', name: "Investigator's Brochure (IB)", required: true, icon: '📖', maxFiles: 1 },
+    { id: 'quality', name: 'Quality Information', required: true, icon: '⚗️', maxFiles: 3 },
+    { id: 'nonclinical', name: 'Non-clinical Data', required: true, icon: '🧪', maxFiles: 5 },
+    { id: 'clinical', name: 'Clinical Data', required: true, icon: '🏥', maxFiles: 10 },
+    { id: 'application', name: 'Application Form', required: true, icon: '📝', maxFiles: 1 },
+    { id: 'other', name: 'Other Documents', required: false, icon: '📎', maxFiles: 5 }
   ];
-
-  // Country-specific regulatory requirements
-  const countryRegulatoryData = {
-    'US': {
-      name: 'United States',
-      regulator: 'FDA',
-      submissionRoute: 'IND',
-      documents: ['Protocol', 'IB', 'ICF', 'FDA Forms 1571/1572', 'CMC', 'Preclinical Data', 'IRB Approval', 'Financial Disclosures', 'Insurance']
-    },
-    'EU': {
-      name: 'European Union',
-      regulator: 'EMA/NCAS',
-      submissionRoute: 'IMPD/CTA (CTD/eCTD)',
-      documents: ['Protocol', 'IB', 'ICF (translated)', 'IMPD Modules (Quality/Nonclinical/Clinical)', 'GMP', 'EC Opinion', 'Insurance']
-    },
-    'JP': {
-      name: 'Japan',
-      regulator: 'PMDA/MHI',
-      submissionRoute: 'CTN',
-      documents: ['Protocol', 'IB', 'ICF (Japanese)', 'CTA Form', 'Preclinical', 'CMC', 'IRB Approval', 'HGRAC (if applicable)']
-    },
-    'CN': {
-      name: 'China',
-      regulator: 'NMPA',
-      submissionRoute: 'IND',
-      documents: ['Protocol', 'IB', 'ICF (Mandarin)', 'CTA Form', 'Preclinical', 'CMC', 'IRB Approval', 'HGRAC (if applicable)']
-    },
-    'IN': {
-      name: 'India',
-      regulator: 'CDSCO',
-      submissionRoute: 'CTA/IND',
-      documents: ['Protocol', 'IB', 'ICF (English + Local)', 'Form 44', 'Schedule Y', 'EC Approval', 'Insurance', 'PI CV']
-    },
-    'CA': {
-      name: 'Canada',
-      regulator: 'Health Canada',
-      submissionRoute: 'CTA (CTD/eCTD)',
-      documents: ['Protocol', 'IB', 'ICF (English/French)', 'CTA Form', 'Preclinical', 'CMC', 'REB Approval', 'Insurance']
-    },
-    'GB': {
-      name: 'United Kingdom',
-      regulator: 'MHRA',
-      submissionRoute: 'CTA (CTD/eCTD)',
-      documents: ['Protocol', 'IB', 'ICF', 'CTA Form', 'Preclinical', 'CMC', 'REC Approval', 'Insurance']
-    },
-    'CH': {
-      name: 'Switzerland',
-      regulator: 'Swissmedic',
-      submissionRoute: 'CTA (CTD/eCTD)',
-      documents: ['Protocol', 'IB', 'ICF (German/French/Italian)', 'CTA Form', 'Preclinical', 'CMC', 'EC Approval', 'Insurance']
-    },
-    'AU': {
-      name: 'Australia',
-      regulator: 'TGA',
-      submissionRoute: 'CTN',
-      documents: ['Protocol', 'IB', 'ICF', 'CTN Form', 'Preclinical', 'CMC', 'HREC Approval', 'Insurance']
-    },
-    'BR': {
-      name: 'Brazil',
-      regulator: 'ANVISA',
-      submissionRoute: 'CTA (research protocol author)',
-      documents: ['Protocol', 'IB', 'ICF (Portuguese)', 'CTA Form', 'Preclinical', 'CMC', 'CEP Approval', 'Insurance']
-    },
-    'MX': {
-      name: 'Mexico',
-      regulator: 'COFEPRIS',
-      submissionRoute: 'CTA',
-      documents: ['Clinical Study Protocol', "Investigator's Brochure (IB)", 'Informed Consent Form (ICF)', 'Ethics/IRB Approval', 'COFEPRIS Application (CTA)', 'Insurance/C']
-    },
-    'ZA': {
-      name: 'South Africa',
-      regulator: 'SAHPRA',
-      submissionRoute: 'SAHPRA Clinical Trial Application',
-      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'EC/REC Approval', 'SAHPRA Forms', 'Import of IMP (if unregistered)', 'Safety Reporting Plan', 'Insurance']
-    },
-    'KE': {
-      name: 'Kenya',
-      regulator: 'PPB',
-      submissionRoute: 'PPB Clinical Trial Application',
-      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'EC Approval', 'PPB Application', 'Investigator CVs', 'Insurance']
-    },
-    'NG': {
-      name: 'Nigeria',
-      regulator: 'NAFDAC',
-      submissionRoute: 'NAFDAC Clinical Trial Application',
-      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'EC Approval', 'NAFDAC CTA Forms & Fees', 'GCP Certificates', 'Insurance']
-    },
-    'IL': {
-      name: 'Israel',
-      regulator: 'Ministry of Health',
-      submissionRoute: 'MoH Clinical Trials Dept approval',
-      documents: ['Clinical Study Protocol', "Investigator's Brochure", 'IMPD/Quality Info (if applicable)', 'ICF', 'EC/IRB Approval', 'MoH Application Forms']
-    },
-    'SG': {
-      name: 'Singapore',
-      regulator: 'HSA',
-      submissionRoute: 'CTA/CTN/CTC (risk-based) + IRE',
-      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'IRB Approval', 'CTA/CTN/CTC Application', 'IMP/CMC Info', 'Safety Reporting Plan']
-    },
-    'MY': {
-      name: 'Malaysia',
-      regulator: 'NPRA',
-      submissionRoute: 'CTIL/CTX (for unregistered IMP)',
-      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'EC Approval', 'CTIL/CTX Application', 'IMP/CMC Info', 'Insurance']
-    },
-    'PH': {
-      name: 'Philippines',
-      regulator: 'FDA (CDRR)',
-      submissionRoute: 'FDA Authorization (per Circular)',
-      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'ERC Approval', 'FDA Application', 'IMP Import Permit', 'Safety Reporting Plan']
-    },
-    'ID': {
-      name: 'Indonesia',
-      regulator: 'BPOM',
-      submissionRoute: 'BPOM approval (per BPOM 8/)',
-      documents: ['Clinical Study Protocol', 'IB', 'ICF', 'IRB Approval', 'BPOM Application', 'IMP/CMC Info', 'Trial Registration (INA-CRR)']
-    }
-  };
 
   // Extract text from file for validation
   const extractTextFromFile = async (file) => {
@@ -424,9 +305,7 @@ const ClinicalDossierCompiler = () => {
   const summary = getValidationSummary();
 
   return (
-    <div className="clinical-dossier-compiler" style={{ display: 'flex', gap: '2rem', maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
-      {/* Main Content Area */}
-      <div style={{ flex: 1, maxWidth: '800px' }}>
+    <div className="clinical-dossier-compiler" style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
       <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b' }}>
         Clinical Dossier Compiler
       </h1>
@@ -435,15 +314,15 @@ const ClinicalDossierCompiler = () => {
       </p>
 
       {/* Primary Indication Input */}
-      <div style={{ marginBottom: '2rem', backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>                    
-        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>                                                         
+      <div style={{ marginBottom: '2rem', backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
           Primary Indication
         </h2>
         <input
           type="text"
           value={primaryIndication}
           onChange={(e) => setPrimaryIndication(e.target.value)}
-          placeholder="Enter the primary disease/condition (e.g., Type 2 Diabetes, Alzheimer's Disease)"                                                        
+          placeholder="Enter the primary disease/condition (e.g., Type 2 Diabetes, Alzheimer's Disease)"
           style={{
             width: '100%',
             padding: '0.75rem',
@@ -452,37 +331,8 @@ const ClinicalDossierCompiler = () => {
             fontSize: '1rem'
           }}
         />
-        <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.5rem' }}>                                                                               
-          This helps validate that uploaded documents are relevant to your clinical indication                                                                  
-        </p>
-      </div>
-
-      {/* Country Selection */}
-      <div style={{ marginBottom: '2rem', backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>                    
-        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>                                                         
-          Target Country/Region
-        </h2>
-        <select
-          value={selectedCountry}
-          onChange={(e) => setSelectedCountry(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '0.75rem',
-            borderRadius: '8px',
-            border: '1px solid #d1d5db',
-            fontSize: '1rem',
-            backgroundColor: 'white'
-          }}
-        >
-          <option value="">Select a country/region...</option>
-          {Object.entries(countryRegulatoryData).map(([code, data]) => (
-            <option key={code} value={code}>
-              {data.name} ({data.regulator})
-            </option>
-          ))}
-        </select>
-        <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.5rem' }}>                                                                               
-          Select the target country/region for regulatory submission                                                                  
+        <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.5rem' }}>
+          This helps validate that uploaded documents are relevant to your clinical indication
         </p>
       </div>
 
@@ -810,152 +660,6 @@ const ClinicalDossierCompiler = () => {
           </div>
         </>
       )}
-      </div>
-
-      {/* Country-Specific Compiler Sidebar */}
-      <div style={{ 
-        width: '350px', 
-        backgroundColor: '#f8fafc', 
-        borderRadius: '12px', 
-        padding: '1.5rem',
-        border: '1px solid #e2e8f0',
-        height: 'fit-content',
-        position: 'sticky',
-        top: '2rem'
-      }}>
-        <h3 style={{ 
-          fontSize: '1.25rem', 
-          fontWeight: '600', 
-          marginBottom: '1rem', 
-          color: '#1e293b',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem'
-        }}>
-          🏛️ Country Compiler
-        </h3>
-
-        {selectedCountry ? (
-          <div>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '1rem',
-              border: '1px solid #e2e8f0',
-              marginBottom: '1rem'
-            }}>
-              <h4 style={{ 
-                fontSize: '1rem', 
-                fontWeight: '600', 
-                marginBottom: '0.5rem', 
-                color: '#1e293b' 
-              }}>
-                {countryRegulatoryData[selectedCountry].name}
-              </h4>
-              <p style={{ 
-                fontSize: '0.9rem', 
-                color: '#64748b', 
-                marginBottom: '0.5rem' 
-              }}>
-                <strong>Regulator:</strong> {countryRegulatoryData[selectedCountry].regulator}
-              </p>
-              <p style={{ 
-                fontSize: '0.9rem', 
-                color: '#64748b', 
-                marginBottom: '0' 
-              }}>
-                <strong>Submission Route:</strong> {countryRegulatoryData[selectedCountry].submissionRoute}
-              </p>
-            </div>
-
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '1rem',
-              border: '1px solid #e2e8f0'
-            }}>
-              <h4 style={{ 
-                fontSize: '1rem', 
-                fontWeight: '600', 
-                marginBottom: '0.75rem', 
-                color: '#1e293b',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                📋 Required Documents
-              </h4>
-              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                {countryRegulatoryData[selectedCountry].documents.map((doc, index) => (
-                  <div key={index} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0.5rem 0',
-                    borderBottom: index < countryRegulatoryData[selectedCountry].documents.length - 1 ? '1px solid #f1f5f9' : 'none'
-                  }}>
-                    <span style={{
-                      fontSize: '0.8rem',
-                      color: '#10b981',
-                      marginRight: '0.5rem',
-                      fontWeight: '500'
-                    }}>
-                      ✓
-                    </span>
-                    <span style={{
-                      fontSize: '0.85rem',
-                      color: '#374151'
-                    }}>
-                      {doc}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ marginTop: '1rem' }}>
-              <button
-                onClick={() => {
-                  // Generate country-specific dossier
-                  console.log(`Compiling dossier for ${countryRegulatoryData[selectedCountry].name}`);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
-              >
-                🚀 Compile for {countryRegulatoryData[selectedCountry].name}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '2rem 1rem',
-            border: '1px solid #e2e8f0',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🌍</div>
-            <p style={{ 
-              fontSize: '0.9rem', 
-              color: '#64748b', 
-              margin: 0 
-            }}>
-              Select a country/region to view specific regulatory requirements and compile a targeted dossier.
-            </p>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
