@@ -10,7 +10,8 @@ import {
   SearchIcon,
   UserIcon,
   SettingsIcon,
-  FlaskIcon
+  FlaskIcon,
+  BarChartIcon
 } from '../icons/MedicalIcons';
 
 
@@ -29,6 +30,7 @@ const SideNav = () => {
         <li><NavLink to="/diagnosis"><StethoscopeIcon size={20} /><span>Disease Screening</span></NavLink></li>
         <li><NavLink to="/query"><SearchIcon size={20} /><span>Ask Lumina™</span></NavLink></li>
         <li><NavLink to="/enhanced-analysis"><LayersIcon size={20} /><span>Enhanced Medical Analysis</span></NavLink></li>
+        <li><NavLink to="/excel-analysis"><BarChartIcon size={20} /><span>Excel Biomarker Analysis</span></NavLink></li>
         <li><NavLink to="/clinical-dossier"><FolderIcon size={20} /><span>Clinical Dossier Compiler</span></NavLink></li>
       </ul>
       <div className="side-nav-footer">

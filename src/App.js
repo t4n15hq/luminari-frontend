@@ -1,7 +1,7 @@
 // src/App.js - Updated routing to include batch functionality
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
 import HomePage from './components/HomePage';
 import ProtocolGenerator from './components/ProtocolGenerator';
@@ -10,6 +10,7 @@ import RegulatoryDocumentGenerator from './components/RegulatoryDocumentGenerato
 import BatchRegulatoryGenerator from './components/BatchRegulatoryGenerator'; // NEW IMPORT
 import UnifiedRegulatoryGenerator from './components/UnifiedRegulatoryGenerator'; // TEST COMPONENT
 import EnhancedMedicalAnalysis from './components/EnhancedMedicalAnalysis'; // TIER 1 ENHANCEMENTS
+import ExcelAnalysis from './components/ExcelAnalysis'; // EXCEL BIOMARKER ANALYSIS
 import ClinicalDossierCompiler from './components/ClinicalDossierCompiler';
 import QueryAssistant from './components/QueryAssistant';
 import SkinDiseaseDetector from './components/SkinDiseaseDetector';
@@ -37,7 +38,7 @@ const SideNavigation = () => {
 };
 
 const AppContent = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -82,6 +83,7 @@ const AppContent = () => {
                         
                         {/* TIER 1 ENHANCED FEATURES */}
                         <Route path="/enhanced-analysis" element={<EnhancedMedicalAnalysis />} />  {/* NEW: CLAUDE API ENHANCEMENTS */}
+                        <Route path="/excel-analysis" element={<ExcelAnalysis />} />  {/* NEW: EXCEL BIOMARKER ANALYSIS */}
                         
                         <Route path="/clinical-dossier" element={<ClinicalDossierCompiler />} />
                         <Route path="/query" element={<QueryAssistant />} />
