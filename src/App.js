@@ -66,9 +66,9 @@ const AppContent = () => {
                       <p className="tagline">AI-driven clinical tools platform</p>
                     </div>
                   </header>
-                  <main>
-                    <div className="container">
-                      <Routes>
+      <main>
+        <div className="container">
+          <Routes>
                         {/* Home Page as default landing page */}
                         <Route path="/" element={<HomePage />} />
                         
