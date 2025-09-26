@@ -80,7 +80,7 @@ const ProtocolGenerator = () => {
             margin: 0,
             color: '#1e293b'
           }}>
-            📊 Form Progress
+            Form Progress
           </h3>
           <div style={{
             fontSize: '1rem',
@@ -196,7 +196,7 @@ const ProtocolGenerator = () => {
                 fontSize: '1rem',
                 color: section.isCompleted() ? '#10b981' : '#64748b'
               }}>
-                {section.isCompleted() ? '✅' : '⭕'}
+                {section.isCompleted() ? '[Complete]' : '[Incomplete]'}
               </span>
               <span style={{
                 fontSize: '0.85rem',
@@ -245,7 +245,7 @@ const ProtocolGenerator = () => {
             gap: '0.5rem'
           }}>
             <span style={{ color: isCompleted ? '#10b981' : '#64748b' }}>
-              {isCompleted ? '✅' : '⭕'}
+              {isCompleted ? '[Complete]' : '[Incomplete]'}
             </span>
             {title}
             {isRequired && <span style={{ color: '#ef4444' }}>*</span>}
@@ -406,13 +406,13 @@ const ProtocolGenerator = () => {
       submissionRoute: 'IND',
       documents: ['Protocol', 'IB', 'ICF', 'FDA Forms 1571/1572', 'CMC', 'Preclinical Data', 'IRB Approval', 'Financial Disclosures', 'Insurance'],
       documentCategories: [
-        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
-        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
-        { id: 'icf', name: 'Informed Consent Form', required: true, icon: '📝', maxFiles: 1 },
-        { id: 'fda_forms', name: 'FDA Forms 1571/1572', required: true, icon: '📋', maxFiles: 2 },
-        { id: 'cmc', name: 'CMC (Chemistry, Manufacturing, Controls)', required: true, icon: '⚗️', maxFiles: 3 },
-        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '🧪', maxFiles: 5 },
-        { id: 'irb', name: 'IRB Approval', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
+        { id: 'icf', name: 'Informed Consent Form', required: true, icon: '', maxFiles: 1 },
+        { id: 'fda_forms', name: 'FDA Forms 1571/1572', required: true, icon: '', maxFiles: 2 },
+        { id: 'cmc', name: 'CMC (Chemistry, Manufacturing, Controls)', required: true, icon: '', maxFiles: 3 },
+        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '', maxFiles: 5 },
+        { id: 'irb', name: 'IRB Approval', required: true, icon: '', maxFiles: 1 },
         { id: 'financial', name: 'Financial Disclosures', required: true, icon: '💰', maxFiles: 1 },
         { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 }
       ]
@@ -423,14 +423,14 @@ const ProtocolGenerator = () => {
       submissionRoute: 'BLA (Biologics License Application)',
       documents: ['BLA Form 356h', 'Clinical Protocol', 'IB', 'ICF', 'CMC/Biologics License Application', 'Preclinical Data', 'Clinical Study Reports', 'IRB Approval', 'Financial Disclosures', 'Insurance', 'Environmental Assessment', 'Labeling'],
       documentCategories: [
-        { id: 'bla_form', name: 'BLA Form 356h', required: true, icon: '📋', maxFiles: 1 },
-        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
-        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
-        { id: 'icf', name: 'Informed Consent Form', required: true, icon: '📝', maxFiles: 1 },
+        { id: 'bla_form', name: 'BLA Form 356h', required: true, icon: '', maxFiles: 1 },
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
+        { id: 'icf', name: 'Informed Consent Form', required: true, icon: '', maxFiles: 1 },
         { id: 'cmc_bla', name: 'CMC/Biologics License Application', required: true, icon: '🧬', maxFiles: 5 },
-        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '🧪', maxFiles: 8 },
-        { id: 'clinical_reports', name: 'Clinical Study Reports', required: true, icon: '📊', maxFiles: 10 },
-        { id: 'irb', name: 'IRB Approval', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '', maxFiles: 8 },
+        { id: 'clinical_reports', name: 'Clinical Study Reports', required: true, icon: '', maxFiles: 10 },
+        { id: 'irb', name: 'IRB Approval', required: true, icon: '', maxFiles: 1 },
         { id: 'financial', name: 'Financial Disclosures', required: true, icon: '💰', maxFiles: 1 },
         { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
         { id: 'environmental', name: 'Environmental Assessment', required: true, icon: '🌱', maxFiles: 1 },
@@ -443,14 +443,14 @@ const ProtocolGenerator = () => {
       submissionRoute: 'IMPD/CTA (CTD/eCTD)',
       documents: ['Protocol', 'IB', 'ICF (translated)', 'IMPD Modules (Quality/Nonclinical/Clinical)', 'GMP', 'EC Opinion', 'Insurance'],
       documentCategories: [
-        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
-        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
         { id: 'icf', name: 'ICF (translated)', required: true, icon: '🌐', maxFiles: 1 },
-        { id: 'impd_quality', name: 'IMPD Quality Module', required: true, icon: '⚗️', maxFiles: 3 },
-        { id: 'impd_nonclinical', name: 'IMPD Non-clinical Module', required: true, icon: '🧪', maxFiles: 5 },
+        { id: 'impd_quality', name: 'IMPD Quality Module', required: true, icon: '', maxFiles: 3 },
+        { id: 'impd_nonclinical', name: 'IMPD Non-clinical Module', required: true, icon: '', maxFiles: 5 },
         { id: 'impd_clinical', name: 'IMPD Clinical Module', required: true, icon: '🏥', maxFiles: 3 },
         { id: 'gmp', name: 'GMP Certificate', required: true, icon: '📜', maxFiles: 1 },
-        { id: 'ec_opinion', name: 'EC Opinion', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'ec_opinion', name: 'EC Opinion', required: true, icon: '', maxFiles: 1 },
         { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 }
       ]
     },
@@ -460,13 +460,13 @@ const ProtocolGenerator = () => {
       submissionRoute: 'CTN',
       documents: ['Protocol', 'IB', 'ICF (Japanese)', 'CTA Form', 'Preclinical', 'CMC', 'IRB Approval', 'HGRAC (if applicable)'],
       documentCategories: [
-        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
-        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
         { id: 'icf', name: 'ICF (Japanese)', required: true, icon: '🇯🇵', maxFiles: 1 },
-        { id: 'cta_form', name: 'CTA Form', required: true, icon: '📋', maxFiles: 1 },
-        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '🧪', maxFiles: 5 },
-        { id: 'cmc', name: 'CMC Data', required: true, icon: '⚗️', maxFiles: 3 },
-        { id: 'irb', name: 'IRB Approval', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'cta_form', name: 'CTA Form', required: true, icon: '', maxFiles: 1 },
+        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '', maxFiles: 5 },
+        { id: 'cmc', name: 'CMC Data', required: true, icon: '', maxFiles: 3 },
+        { id: 'irb', name: 'IRB Approval', required: true, icon: '', maxFiles: 1 },
         { id: 'hgrac', name: 'HGRAC (if applicable)', required: false, icon: '🏛️', maxFiles: 1 }
       ]
     },
@@ -476,13 +476,13 @@ const ProtocolGenerator = () => {
       submissionRoute: 'IND',
       documents: ['Protocol', 'IB', 'ICF (Mandarin)', 'CTA Form', 'Preclinical', 'CMC', 'IRB Approval', 'HGRAC (if applicable)'],
       documentCategories: [
-        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
-        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
         { id: 'icf', name: 'ICF (Mandarin)', required: true, icon: '🇨🇳', maxFiles: 1 },
-        { id: 'cta_form', name: 'CTA Form', required: true, icon: '📋', maxFiles: 1 },
-        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '🧪', maxFiles: 5 },
-        { id: 'cmc', name: 'CMC Data', required: true, icon: '⚗️', maxFiles: 3 },
-        { id: 'irb', name: 'IRB Approval', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'cta_form', name: 'CTA Form', required: true, icon: '', maxFiles: 1 },
+        { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '', maxFiles: 5 },
+        { id: 'cmc', name: 'CMC Data', required: true, icon: '', maxFiles: 3 },
+        { id: 'irb', name: 'IRB Approval', required: true, icon: '', maxFiles: 1 },
         { id: 'hgrac', name: 'HGRAC (if applicable)', required: false, icon: '🏛️', maxFiles: 1 }
       ]
     },
@@ -492,12 +492,12 @@ const ProtocolGenerator = () => {
       submissionRoute: 'CTA/IND',
       documents: ['Protocol', 'IB', 'ICF (English + Local)', 'Form 44', 'Schedule Y', 'EC Approval', 'Insurance', 'PI CV'],
       documentCategories: [
-        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
-        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
+        { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
         { id: 'icf', name: 'ICF (English + Local)', required: true, icon: '🌐', maxFiles: 2 },
-        { id: 'form_44', name: 'Form 44', required: true, icon: '📋', maxFiles: 1 },
+        { id: 'form_44', name: 'Form 44', required: true, icon: '', maxFiles: 1 },
         { id: 'schedule_y', name: 'Schedule Y', required: true, icon: '📑', maxFiles: 1 },
-        { id: 'ec_approval', name: 'EC Approval', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'ec_approval', name: 'EC Approval', required: true, icon: '', maxFiles: 1 },
         { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
         { id: 'pi_cv', name: 'Principal Investigator CV', required: true, icon: '👨‍⚕️', maxFiles: 1 }
       ]
@@ -509,12 +509,12 @@ const ProtocolGenerator = () => {
       documents: ['Protocol (Russian)', 'IB (Russian)', 'ICF (Russian)', 'CTA Form', 'Preclinical Data (Russian)', 'CMC (Russian)', 'EC Opinion (Russian)', 'Insurance', 'GMP Certificate', 'Pharmacovigilance Plan'],
       documentCategories: [
         { id: 'protocol', name: 'Clinical Protocol (Russian)', required: true, icon: '🇷🇺', maxFiles: 1 },
-        { id: 'ib', name: "Investigator's Brochure (Russian)", required: true, icon: '📖', maxFiles: 1 },
-        { id: 'icf', name: 'ICF (Russian)', required: true, icon: '📝', maxFiles: 1 },
-        { id: 'cta_form', name: 'CTA Application Form', required: true, icon: '📋', maxFiles: 1 },
-        { id: 'preclinical', name: 'Preclinical Data (Russian)', required: true, icon: '🧪', maxFiles: 5 },
-        { id: 'cmc', name: 'CMC Data (Russian)', required: true, icon: '⚗️', maxFiles: 3 },
-        { id: 'ec_opinion', name: 'EC Opinion (Russian)', required: true, icon: '✅', maxFiles: 1 },
+        { id: 'ib', name: "Investigator's Brochure (Russian)", required: true, icon: '', maxFiles: 1 },
+        { id: 'icf', name: 'ICF (Russian)', required: true, icon: '', maxFiles: 1 },
+        { id: 'cta_form', name: 'CTA Application Form', required: true, icon: '', maxFiles: 1 },
+        { id: 'preclinical', name: 'Preclinical Data (Russian)', required: true, icon: '', maxFiles: 5 },
+        { id: 'cmc', name: 'CMC Data (Russian)', required: true, icon: '', maxFiles: 3 },
+        { id: 'ec_opinion', name: 'EC Opinion (Russian)', required: true, icon: '', maxFiles: 1 },
         { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
         { id: 'gmp', name: 'GMP Certificate', required: true, icon: '📜', maxFiles: 1 },
         { id: 'pharmacovigilance', name: 'Pharmacovigilance Plan', required: true, icon: '🔍', maxFiles: 1 }
@@ -608,13 +608,13 @@ const ProtocolGenerator = () => {
 
   // Default document categories for countries without specific requirements
   const defaultDocumentCategories = [
-    { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '📄', maxFiles: 1 },
-    { id: 'ib', name: "Investigator's Brochure", required: true, icon: '📖', maxFiles: 1 },
-    { id: 'icf', name: 'Informed Consent Form', required: true, icon: '📝', maxFiles: 1 },
-    { id: 'quality', name: 'Quality Information', required: true, icon: '⚗️', maxFiles: 3 },
-    { id: 'nonclinical', name: 'Non-clinical Data', required: true, icon: '🧪', maxFiles: 5 },
+    { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
+    { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
+    { id: 'icf', name: 'Informed Consent Form', required: true, icon: '', maxFiles: 1 },
+    { id: 'quality', name: 'Quality Information', required: true, icon: '', maxFiles: 3 },
+    { id: 'nonclinical', name: 'Non-clinical Data', required: true, icon: '', maxFiles: 5 },
     { id: 'clinical', name: 'Clinical Data', required: true, icon: '🏥', maxFiles: 10 },
-    { id: 'application', name: 'Application Form', required: true, icon: '📋', maxFiles: 1 },
+    { id: 'application', name: 'Application Form', required: true, icon: '', maxFiles: 1 },
     { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
     { id: 'other', name: 'Other Documents', required: false, icon: '📎', maxFiles: 5 }
   ];

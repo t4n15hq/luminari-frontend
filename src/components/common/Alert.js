@@ -19,7 +19,7 @@ const Alert = ({
 }) => {
   // Icon mapping for different alert types
   const iconMap = {
-    success: '✓',
+    success: '',
     error: '✕',
     info: 'ℹ',
     warning: '⚠'

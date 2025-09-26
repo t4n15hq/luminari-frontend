@@ -37,7 +37,7 @@ const AskLuminaPopup = ({ isOpen, onClose, contextData = null }) => {
       const restrictionMessage = {
         id: Date.now() + 1,
         type: 'ai',
-        content: '🏥 I can only help with medical research, clinical trials, and regulatory affairs. Please ask a question related to healthcare, drug development, clinical protocols, or medical documentation.',
+        content: 'I can only help with medical research, clinical trials, and regulatory affairs. Please ask a question related to healthcare, drug development, clinical protocols, or medical documentation.',
         timestamp: new Date()
       };
       
@@ -203,7 +203,7 @@ const AskLuminaPopup = ({ isOpen, onClose, contextData = null }) => {
                   color: '#0369a1',
                   fontWeight: '500'
                 }}>
-                  ⚠️ I only answer questions about medical research, clinical trials, and regulatory affairs.
+                  I only answer questions about medical research, clinical trials, and regulatory affairs.
                 </p>
               </div>
             </div>

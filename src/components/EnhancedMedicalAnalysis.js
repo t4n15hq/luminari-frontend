@@ -176,7 +176,7 @@ Patient is a 45-year-old male with a 3-month history of progressive dyspnea and 
               </div>
               <div className="confidence-explanation">
                 <small style={{ color: '#6b7280', fontStyle: 'italic', fontSize: '0.8rem' }}>
-                  💡 Confidence Score: Indicates how certain the AI is about the accuracy of the extracted information (higher = more reliable)
+                  Confidence Score: Indicates how certain the AI is about the accuracy of the extracted information (higher = more reliable)
                 </small>
               </div>
               <div className="result-content">
@@ -264,7 +264,7 @@ Example:
               </div>
               <div className="confidence-explanation">
                 <small style={{ color: '#6b7280', fontStyle: 'italic', fontSize: '0.8rem' }}>
-                  💡 Confidence Score: Shows how reliable the AI considers its pattern analysis findings (higher = stronger patterns detected)
+                  Confidence Score: Shows how reliable the AI considers its pattern analysis findings (higher = stronger patterns detected)
                 </small>
               </div>
               <div className="result-content">
@@ -347,7 +347,7 @@ Example:
               </div>
               <div className="confidence-explanation">
                 <small style={{ color: '#6b7280', fontStyle: 'italic', fontSize: '0.8rem' }}>
-                  💡 Confidence Score: Reflects how certain the AI is about its decision and reasoning (higher = more confident in recommendation)
+                  Confidence Score: Reflects how certain the AI is about its decision and reasoning (higher = more confident in recommendation)
                 </small>
               </div>
               

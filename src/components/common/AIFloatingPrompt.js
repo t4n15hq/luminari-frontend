@@ -46,7 +46,7 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText, position }
     
     // Only block if it's obviously off-topic AND not an editing command
     if (isObviouslyOffTopic && !isEditingCommand && !isMedicalContext) {
-      alert('🏥 This AI assistant only helps with medical research and clinical documentation. Please provide text related to clinical trials, regulatory submissions, or medical research.');
+      alert('This AI assistant only helps with medical research and clinical documentation. Please provide text related to clinical trials, regulatory submissions, or medical research.');
       return;
     }
 
@@ -125,7 +125,7 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText, position }
       }}>
         <div>
           <h4 style={{ margin: 0, color: '#1e40af', fontSize: '1rem' }}>
-            🤖 AI Text Assistant
+            AI Text Assistant
           </h4>
           <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: '#6b7280' }}>
             For medical & clinical content only
@@ -237,7 +237,7 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText, position }
             transition: 'all 0.2s'
           }}
         >
-          {isProcessing ? '🤖 Processing...' : '✨ Apply AI Improvement'}
+          {isProcessing ? 'Processing...' : 'Apply AI Improvement'}
         </button>
       </form>
 
@@ -249,7 +249,7 @@ const AIFloatingPrompt = ({ onApplySuggestion, onClose, selectedText, position }
           color: '#6b7280', 
           fontSize: '0.875rem' 
         }}>
-          🤖 AI is improving your text...
+          AI is improving your text...
         </div>
       )}
     </div>

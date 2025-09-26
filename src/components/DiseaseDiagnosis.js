@@ -42,7 +42,7 @@ const DiseaseDiagnosis = () => {
       id: 'oncology', 
       name: 'Oncology', 
       isActive: false, 
-      icon: '🔬', 
+      icon: '', 
       description: 'Cancer detection and treatment response monitoring',
       color: '#E64980',
       features: ['Coming soon'],

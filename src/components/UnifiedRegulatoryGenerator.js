@@ -776,7 +776,7 @@ const UnifiedRegulatoryGenerator = () => {
       
       // Only assign if we have a reasonable confidence (score > 2)
       if (bestSection && bestScore > 2) {
-        console.log(`✅ Matched content to ${bestSection} (score: ${bestScore})`);
+        console.log(`Matched content to ${bestSection} (score: ${bestScore})`);
         if (newSectionEdits[bestSection]) {
           // Append to existing content with separator
           newSectionEdits[bestSection] += '\n\n' + content.trim();
@@ -799,7 +799,7 @@ const UnifiedRegulatoryGenerator = () => {
       }
     });
     
-    console.log('📋 Final section distribution:');
+    console.log('Final section distribution:');
     Object.entries(newSectionEdits).forEach(([sectionId, content]) => {
       if (content) {
         const sectionTitle = regulatoryDocumentSections.find(s => s.id === sectionId)?.title || sectionId;
@@ -1485,7 +1485,7 @@ const UnifiedRegulatoryGenerator = () => {
 
             // Check if backend provided pre-sectioned data, otherwise use distribution
             if (responseObj.sectionsData) {
-              console.log('🎯 Using pre-sectioned data from backend');
+              console.log('Using pre-sectioned data from backend');
               const newSectionEdits = { ...sectionEdits };
               Object.entries(responseObj.sectionsData).forEach(([sectionId, content]) => {
                 newSectionEdits[sectionId] = content;
@@ -1493,7 +1493,7 @@ const UnifiedRegulatoryGenerator = () => {
               setSectionEdits(newSectionEdits);
             } else {
               // Use smart content distribution to populate sections appropriately
-              console.log('📊 Using smart content distribution (fallback)');
+              console.log('Using smart content distribution (fallback)');
               const smartSectionEdits = distributeContentToSections(content);
               setSectionEdits(smartSectionEdits);
             }
@@ -1536,7 +1536,7 @@ const UnifiedRegulatoryGenerator = () => {
             
             // Check if backend provided pre-sectioned data
             if (response.sectionsData) {
-              console.log('🎯 Using pre-sectioned data from backend');
+              console.log('Using pre-sectioned data from backend');
               const newSectionEdits = { ...sectionEdits };
               Object.entries(response.sectionsData).forEach(([sectionId, content]) => {
                 newSectionEdits[sectionId] = content;
@@ -1544,7 +1544,7 @@ const UnifiedRegulatoryGenerator = () => {
               setSectionEdits(newSectionEdits);
             } else {
               // Fallback to smart content distribution
-              console.log('📊 Using smart content distribution (fallback)');
+              console.log('Using smart content distribution (fallback)');
               const fullContent = response.document_content || 
                                  `${response.cmc_section || ''}\n\n${response.clinical_section || ''}`;
               const smartSectionEdits = distributeContentToSections(fullContent.trim());
@@ -1844,7 +1844,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
       {/* Floating AI Assistant Button */}
       <FloatingButton
         onClick={() => setShowAskLumina(true)}
-        icon="🤖"
+        icon=""
         tooltip="Ask Lumina AI for help"
       />
 
@@ -1856,7 +1856,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
         </div>
         <div className="header-actions">
           <button onClick={() => setShowMap(!showMap)} className="btn btn-outline">
-            🌍 {showMap ? 'Hide Map' : 'Select Country'}
+            {showMap ? 'Hide Map' : 'Select Country'}
           </button>
           <button onClick={handleShowPreviousDocs} className="btn btn-outline">
             {showPreviousDocs ? 'Hide Previous' : 'Previous Docs'}
@@ -2092,7 +2092,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
             className={`mode-card ${mode === 'single' ? 'active' : ''}`}
             onClick={() => setMode('single')}
           >
-            <div className="mode-icon">📄</div>
+            <div className="mode-icon"></div>
             <h4>Single Document</h4>
             <p>Generate one regulatory submission</p>
           </div>
@@ -2100,7 +2100,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
             className={`mode-card ${mode === 'batch' ? 'active' : ''}`}
             onClick={() => setMode('batch')}
           >
-            <div className="mode-icon">📊</div>
+            <div className="mode-icon"></div>
             <h4>Batch Processing</h4>
             <p>Multiple regulatory documents</p>
           </div>
@@ -2112,7 +2112,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
         <div className="single-mode">
           {/* Regulatory Submission Section - Moved to Top */}
           <div className="form-section">
-            <h3>🌍 Regulatory Submission</h3>
+            <h3>Regulatory Submission</h3>
             {selectedCountryData && (
               <div className="selected-country-info">
                 <h4>📍 Selected: {selectedCountryData.country} ({selectedCountryData.region})</h4>
@@ -2324,7 +2324,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
 
           {/* Population Details */}
           <div className="form-section">
-            <h3>👥 Population Details</h3>
+            <h3>Population Details</h3>
             <div className="form-grid">
               <div className="form-group">
                 <label className="form-label">Minimum Age</label>
@@ -2538,7 +2538,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
               disabled={loading || !disease}
               className={`btn btn-primary btn-lg ${loading ? 'btn-loading' : ''}`}
             >
-              {loading ? 'Generating...' : '🚀 Generate Regulatory Document'}
+              {loading ? 'Generating...' : 'Generate Regulatory Document'}
             </button>
             <button onClick={resetForm} className="btn btn-secondary">
               Reset Form
@@ -2556,7 +2556,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
           }}>
             <div className="sections-header">
               <h3 style={{ color: '#065f46', fontSize: '1.5rem', marginBottom: '1rem' }}>
-                ✅ Document Generated! Edit Sections Below:
+                Document Generated! Edit Sections Below:
               </h3>
               <div className="section-actions">
                 <button 
@@ -2564,7 +2564,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                   className="btn btn-outline"
                   disabled={Object.keys(sectionEdits).length === 0}
                 >
-                  📄 Export to Word
+                  Export to Word
                 </button>
               </div>
             </div>

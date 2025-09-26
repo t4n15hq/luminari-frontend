@@ -670,7 +670,7 @@ const SkinDiseaseDetector = () => {
 
             {/* Enhanced Multi-Modal Fields */}
             <div style={{ marginTop: '20px' }}>
-              <h4 style={{ color: '#2d3748', marginBottom: '15px', fontSize: '1.1rem' }}>📋 Additional Clinical Information</h4>
+              <h4 style={{ color: '#2d3748', marginBottom: '15px', fontSize: '1.1rem' }}>Additional Clinical Information</h4>
               
               {/* Symptoms Checklist */}
               <div style={{ marginBottom: '20px' }}>
@@ -756,7 +756,7 @@ const SkinDiseaseDetector = () => {
                   display: 'flex', 
                   alignItems: 'center' 
                 }}>
-                  💡 More clinical context = more accurate analysis
+                  Note: More clinical context = more accurate analysis
                 </div>
               </div>
             </div>

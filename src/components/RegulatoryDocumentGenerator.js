@@ -622,7 +622,7 @@ const RegulatoryDocumentGenerator = () => {
       {/* Floating AI Assistant Button */}
       <FloatingButton
         onClick={() => setShowAskLumina(true)}
-        icon="🤖"
+        icon=""
         tooltip="Ask Lumina AI for help"
       />
 
@@ -657,7 +657,7 @@ const RegulatoryDocumentGenerator = () => {
               gap: '6px'
             }}
           >
-            {showReferencePanel ? '✕' : '📋'} 
+            {showReferencePanel ? 'Close' : 'Reference'} 
             {showReferencePanel ? 'Close Reference' : 'Open Reference Document'}
           </button>
           <button onClick={fetchPreviousDocuments} className="btn btn-outline">
@@ -994,7 +994,7 @@ const RegulatoryDocumentGenerator = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  {aiEnabledSections.has('inclusion-criteria') ? '🤖 AI ON' : '🤖 AI OFF'}
+                  {aiEnabledSections.has('inclusion-criteria') ? 'AI ON' : 'AI OFF'}
                 </button>
               </div>
               <RichTextEditor
@@ -1026,7 +1026,7 @@ const RegulatoryDocumentGenerator = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  {aiEnabledSections.has('exclusion-criteria') ? '🤖 AI ON' : '🤖 AI OFF'}
+                  {aiEnabledSections.has('exclusion-criteria') ? 'AI ON' : 'AI OFF'}
                 </button>
               </div>
               <RichTextEditor
@@ -1123,7 +1123,7 @@ const RegulatoryDocumentGenerator = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  {aiEnabledSections.has('primary-endpoints') ? '🤖 AI ON' : '🤖 AI OFF'}
+                  {aiEnabledSections.has('primary-endpoints') ? 'AI ON' : 'AI OFF'}
                 </button>
               </div>
               <RichTextEditor

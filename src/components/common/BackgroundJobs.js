@@ -290,7 +290,7 @@ const BackgroundJobs = () => {
                 borderRadius: '8px',
                 border: '1px solid #16a34a'
               }}>
-                <span>✓</span>
+                <span>Complete</span>
                 <span>Completed Jobs ({completedJobs.length})</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -321,7 +321,7 @@ const BackgroundJobs = () => {
                           marginBottom: '4px',
                           fontWeight: '500'
                         }}>
-                          {job.status === 'completed' ? '✓ Completed' : '✗ Failed'} • {formatDuration(job.startTime, job.endTime)}
+                          {job.status === 'completed' ? 'Completed' : 'Failed'} • {formatDuration(job.startTime, job.endTime)}
                         </div>
                         {job.error && (
                           <div style={{

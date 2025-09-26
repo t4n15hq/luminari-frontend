@@ -921,7 +921,7 @@ const BatchRegulatoryGenerator = () => {
                         cursor: 'pointer'
                       }}
                     >
-                      {aiEnabledFields.has('inclusion_criteria') ? '🤖 AI ON' : '🤖 AI OFF'}
+                      {aiEnabledFields.has('inclusion_criteria') ? 'AI ON' : 'AI OFF'}
                     </button>
                   </div>
                   <RichTextEditor
@@ -950,7 +950,7 @@ const BatchRegulatoryGenerator = () => {
                         cursor: 'pointer'
                       }}
                     >
-                      {aiEnabledFields.has('exclusion_criteria') ? '🤖 AI ON' : '🤖 AI OFF'}
+                      {aiEnabledFields.has('exclusion_criteria') ? 'AI ON' : 'AI OFF'}
                     </button>
                   </div>
                   <RichTextEditor
@@ -1090,7 +1090,7 @@ const BatchRegulatoryGenerator = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    {aiEnabledFields.has('primary_endpoints') ? '🤖 AI ON' : '🤖 AI OFF'}
+                    {aiEnabledFields.has('primary_endpoints') ? 'AI ON' : 'AI OFF'}
                   </button>
                 </div>
                 <RichTextEditor
@@ -1120,7 +1120,7 @@ const BatchRegulatoryGenerator = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    {aiEnabledFields.has('secondary_endpoints') ? '🤖 AI ON' : '🤖 AI OFF'}
+                    {aiEnabledFields.has('secondary_endpoints') ? 'AI ON' : 'AI OFF'}
                   </button>
                 </div>
                 <RichTextEditor

@@ -296,7 +296,7 @@ const ExcelAnalysis = () => {
             onDragLeave={handleDragLeave}
           >
             <div className="upload-content">
-              <div className="upload-icon">📊</div>
+              <div className="upload-icon"></div>
               <h3>Upload Dataset</h3>
               <p>Drop Excel/CSV file here</p>
               <input
@@ -340,26 +340,26 @@ const ExcelAnalysis = () => {
                   className="btn btn-secondary"
                   title="Export analysis to PDF"
                 >
-                  📄 Export PDF
+                  Export PDF
                 </button>
               </div>
               
               {/* Patient Selection Overview */}
               <div className="patient-selection-overview">
                 <div className="selection-card primary">
-                  <div className="selection-icon">👥</div>
+                  <div className="selection-icon"></div>
                   <div className="selection-value">{analysisData.overallSummary.totalRecords.toLocaleString()}</div>
                   <div className="selection-label">Eligible Patients</div>
                   <div className="selection-sublabel">Total Population Pool</div>
                 </div>
                 <div className="selection-card success">
-                  <div className="selection-icon">🎯</div>
+                  <div className="selection-icon"></div>
                   <div className="selection-value">{analysisData.overallSummary.fdaCompliantBiomarkers}</div>
                   <div className="selection-label">Selection Criteria</div>
                   <div className="selection-sublabel">Biomarkers Available</div>
                 </div>
                 <div className="selection-card warning">
-                  <div className="selection-icon">📊</div>
+                  <div className="selection-icon"></div>
                   <div className="selection-value">{analysisData.overallSummary.averageDataQuality}%</div>
                   <div className="selection-label">Data Completeness</div>
                   <div className="selection-sublabel">Selection Reliability</div>
@@ -519,7 +519,7 @@ const ExcelAnalysis = () => {
                                                   
                                                   // Handle JSON blocks
                                                   if (line.trim().startsWith('``json') || line.trim().startsWith('```json')) {
-                                                    return <div key={index} className="json-indicator">📊 <strong>Detailed Analysis Data:</strong></div>;
+                                                    return <div key={index} className="json-indicator"><strong>Detailed Analysis Data:</strong></div>;
                                                   }
                                                   
                                                   if (line.trim() === '``' || line.trim() === '```') {
@@ -532,7 +532,7 @@ const ExcelAnalysis = () => {
                                                       const jsonData = JSON.parse(line);
                                                       return (
                                                         <div key={index} className="structured-analysis-summary">
-                                                          <h5>📊 Structured Analysis Summary</h5>
+                                                          <h5>Structured Analysis Summary</h5>
                                                           <div className="analysis-grid">
                                                             {jsonData.clinical_analysis && (
                                                               <div className="analysis-card">
@@ -700,7 +700,7 @@ const ExcelAnalysis = () => {
                               if (line.includes('DECISION SUMMARY:')) {
                                 return (
                                   <div key={lineIndex} className="clinical-major-section">
-                                    <h5 className="clinical-major-header">🎯 Clinical Decision Summary</h5>
+                                    <h5 className="clinical-major-header">Clinical Decision Summary</h5>
                                   </div>
                                 );
                               }
@@ -708,7 +708,7 @@ const ExcelAnalysis = () => {
                               if (line.includes('PRIMARY RATIONALE:')) {
                                 return (
                                   <div key={lineIndex} className="clinical-major-section">
-                                    <h5 className="clinical-major-header">📋 Primary Rationale</h5>
+                                    <h5 className="clinical-major-header">Primary Rationale</h5>
                                   </div>
                                 );
                               }
@@ -716,7 +716,7 @@ const ExcelAnalysis = () => {
                               if (line.includes('SUPPORTING EVIDENCE:')) {
                                 return (
                                   <div key={lineIndex} className="clinical-major-section">
-                                    <h5 className="clinical-major-header">🔬 Supporting Evidence</h5>
+                                    <h5 className="clinical-major-header">Supporting Evidence</h5>
                                   </div>
                                 );
                               }
@@ -724,7 +724,7 @@ const ExcelAnalysis = () => {
                               if (line.includes('RISK ASSESSMENT:')) {
                                 return (
                                   <div key={lineIndex} className="clinical-major-section">
-                                    <h5 className="clinical-major-header">⚠️ Risk Assessment</h5>
+                                    <h5 className="clinical-major-header">Risk Assessment</h5>
                                   </div>
                                 );
                               }
@@ -732,7 +732,7 @@ const ExcelAnalysis = () => {
                               if (line.includes('CONFIDENCE LEVEL:')) {
                                 return (
                                   <div key={lineIndex} className="clinical-major-section">
-                                    <h5 className="clinical-major-header">📊 Confidence Level</h5>
+                                    <h5 className="clinical-major-header">Confidence Level</h5>
                                   </div>
                                 );
                               }
@@ -740,7 +740,7 @@ const ExcelAnalysis = () => {
                               if (line.includes('CLINICAL IMPLICATIONS:')) {
                                 return (
                                   <div key={lineIndex} className="clinical-major-section">
-                                    <h5 className="clinical-major-header">💡 Clinical Implications</h5>
+                                    <h5 className="clinical-major-header">Clinical Implications</h5>
                                   </div>
                                 );
                               }
@@ -765,7 +765,7 @@ const ExcelAnalysis = () => {
                               if (line.includes('DETAILED CLINICAL ANALYSIS:')) {
                                 return (
                                   <div key={lineIndex} className="clinical-detailed-section">
-                                    <h5 className="clinical-major-header">📊 Detailed Clinical Analysis</h5>
+                                    <h5 className="clinical-major-header">Detailed Clinical Analysis</h5>
                                   </div>
                                 );
                               }
@@ -778,7 +778,7 @@ const ExcelAnalysis = () => {
                                       {/* Dataset Suitability Card */}
                                       {jsonData.dataset_suitability && (
                                         <div className="clinical-insight-card dataset-card">
-                                          <h6>📋 Dataset Suitability Assessment</h6>
+                                          <h6>Dataset Suitability Assessment</h6>
                                           <div className="assessment-status">
                                             <span className="status-label">Overall Assessment:</span>
                                             <span className={`status-value ${jsonData.dataset_suitability.overall_assessment?.toLowerCase().replace(/\s+/g, '-')}`}>
@@ -2447,7 +2447,7 @@ const ExcelAnalysis = () => {
         }
 
         .strategy-list li::before {
-          content: '✓';
+          content: '';
           color: var(--color-success);
           font-weight: bold;
           margin-right: var(--space-sm);

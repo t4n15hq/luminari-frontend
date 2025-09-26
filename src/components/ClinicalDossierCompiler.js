@@ -43,13 +43,13 @@ const ClinicalDossierCompiler = () => {
   ];
 
   const documentCategories = [
-    { id: 'protocol', name: 'Protocol', required: true, icon: '📄', maxFiles: 1 },                                                                              
-    { id: 'ib', name: "Investigator's Brochure (IB)", required: true, icon: '📖', maxFiles: 1 },                                                                
-    { id: 'quality', name: 'Quality Information', required: true, icon: '⚗️', maxFiles: 3 },                                                                     
-    { id: 'nonclinical', name: 'Non-clinical Data', required: true, icon: '🧪', maxFiles: 5 },                                                                  
-    { id: 'clinical', name: 'Clinical Data', required: true, icon: '🏥', maxFiles: 10 },                                                                        
-    { id: 'application', name: 'Application Form', required: true, icon: '📝', maxFiles: 1 },                                                                   
-    { id: 'other', name: 'Other Documents', required: false, icon: '📎', maxFiles: 5 }                                                                          
+    { id: 'protocol', name: 'Protocol', required: true, icon: '', maxFiles: 1 },                                                                              
+    { id: 'ib', name: "Investigator's Brochure (IB)", required: true, icon: '', maxFiles: 1 },                                                                
+    { id: 'quality', name: 'Quality Information', required: true, icon: '', maxFiles: 3 },                                                                     
+    { id: 'nonclinical', name: 'Non-clinical Data', required: true, icon: '', maxFiles: 5 },                                                                  
+    { id: 'clinical', name: 'Clinical Data', required: true, icon: '', maxFiles: 10 },                                                                        
+    { id: 'application', name: 'Application Form', required: true, icon: '', maxFiles: 1 },                                                                   
+    { id: 'other', name: 'Other Documents', required: false, icon: '', maxFiles: 5 }                                                                          
   ];
 
   // Country-specific regulatory requirements
@@ -387,8 +387,8 @@ const ClinicalDossierCompiler = () => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'missing': return '❌';
-      case 'full': return '✅';
+      case 'missing': return 'Missing';
+      case 'full': return 'Complete';
       case 'partial': return '🟡';
       default: return '⚪';
     }
@@ -396,9 +396,9 @@ const ClinicalDossierCompiler = () => {
 
   const getValidationIcon = (validation) => {
     if (!validation) return '⚪';
-    if (validation.confidence >= 0.8) return '✅';
+    if (validation.confidence >= 0.8) return 'Valid';
     if (validation.confidence >= 0.6) return '🟡';
-    return '❌';
+    return 'Invalid';
   };
 
   const getValidationColor = (validation) => {
@@ -549,7 +549,7 @@ const ClinicalDossierCompiler = () => {
             >
               <input {...getInputProps()} />
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-                {isDragActive ? '📂' : '📄'}
+                {isDragActive ? 'Drop files here' : 'Click to upload'}
               </div>
               <p style={{ fontSize: '1.1rem', fontWeight: '500', marginBottom: '0.5rem', color: '#1e293b' }}>
                 {isDragActive
@@ -616,7 +616,7 @@ const ClinicalDossierCompiler = () => {
           {/* Document Categories Checklist */}
           <div className="document-checklist" style={{ marginBottom: '2rem' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
-              ✅ Required Documents Checklist
+              Required Documents Checklist
             </h2>
             <div style={{ 
               display: 'grid', 
@@ -702,7 +702,7 @@ const ClinicalDossierCompiler = () => {
                           </div>
                           {doc.validation.recommendation && (
                             <div style={{ color: '#64748b', fontStyle: 'italic' }}>
-                              💡 {doc.validation.recommendation}
+                              Recommendation: {doc.validation.recommendation}
                             </div>
                           )}
                         </div>
@@ -794,7 +794,7 @@ const ClinicalDossierCompiler = () => {
                 fontSize: '0.9rem',
                 fontWeight: '500'
               }}>
-                ⚠️ Please upload all required documents and assign categories before compiling
+                Warning: Please upload all required documents and assign categories before compiling
               </p>
             )}
             {primaryIndication.trim() && uploadedDocuments.some(doc => doc.validation && !doc.validation.isValid) && (
@@ -832,7 +832,7 @@ const ClinicalDossierCompiler = () => {
           alignItems: 'center',
           gap: '0.5rem'
         }}>
-          🏛️ Country Compiler
+          Country Compiler
         </h3>
 
         {selectedCountry ? (
@@ -883,7 +883,7 @@ const ClinicalDossierCompiler = () => {
                 alignItems: 'center',
                 gap: '0.5rem'
               }}>
-                📋 Required Documents
+                Required Documents
               </h4>
               <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                 {countryRegulatoryData[selectedCountry].documents.map((doc, index) => (
@@ -899,7 +899,7 @@ const ClinicalDossierCompiler = () => {
                       marginRight: '0.5rem',
                       fontWeight: '500'
                     }}>
-                      ✓
+                      •
                     </span>
                     <span style={{
                       fontSize: '0.85rem',
@@ -933,7 +933,7 @@ const ClinicalDossierCompiler = () => {
                 onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
               >
-                🚀 Compile for {countryRegulatoryData[selectedCountry].name}
+                Compile for {countryRegulatoryData[selectedCountry].name}
               </button>
             </div>
           </div>
@@ -945,7 +945,7 @@ const ClinicalDossierCompiler = () => {
             border: '1px solid #e2e8f0',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🌍</div>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}></div>
             <p style={{ 
               fontSize: '0.9rem', 
               color: '#64748b', 

@@ -457,7 +457,7 @@ const LungCancerDetector = () => {
                         fontSize: '4rem', 
                         marginBottom: '15px' 
                       }}>
-                        {textPrediction.detected ? '!' : '✓'}
+                        {textPrediction.detected ? '!' : 'OK'}
                       </div>
                       
                       <h2 style={{ 

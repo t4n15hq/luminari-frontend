@@ -98,7 +98,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
     }
     
     if (selectedText.length > 0 && selection.rangeCount > 0) {
-      console.log('✅ Valid selection found! Setting up AI prompt...');
+      console.log('Valid selection found! Setting up AI prompt...');
       setSelectedText(selectedText);
       
       // Save the current selection range for later replacement

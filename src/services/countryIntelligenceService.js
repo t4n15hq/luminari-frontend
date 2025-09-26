@@ -67,15 +67,15 @@ class CountryIntelligenceService {
 
     // Use openaiService to get AI analysis
     try {
-      console.log('🤖 Attempting AI analysis for countries:', countries.map(c => c.name));
-      console.log('📝 Prompt being sent:', prompt.substring(0, 200) + '...');
+      console.log('Attempting AI analysis for countries:', countries.map(c => c.name));
+      console.log('Prompt being sent:', prompt.substring(0, 200) + '...');
       
       const response = await openaiService.queryAssistant({ question: prompt });
-      console.log('✅ AI response received:', response);
+      console.log('AI response received:', response);
       
       return this.parseAnalysisResponse(response, countries);
     } catch (error) {
-      console.warn('❌ AI analysis failed, using fallback:', error);
+      console.warn('AI analysis failed, using fallback:', error);
       return this.getFallbackAnalysis(countries);
     }
   }
@@ -88,7 +88,7 @@ class CountryIntelligenceService {
       // Try to parse JSON response
       const parsed = JSON.parse(responseText);
       if (parsed.recommendations) {
-        console.log('📊 Parsed AI recommendations:', parsed.recommendations);
+        console.log('Parsed AI recommendations:', parsed.recommendations);
         return this.validateAndFormatRecommendations(parsed.recommendations, countries);
       }
     } catch (error) {
