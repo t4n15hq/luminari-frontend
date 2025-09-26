@@ -173,7 +173,7 @@ Please rephrase your question to focus on clinical trials, protocol development,
 
   return (
     <div className="query-assistant">
-      <h2>Ask Lumina<span className="trademark">™</span></h2>
+      <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>Ask Lumina<span className="trademark">™</span></h2>
       <p>Ask me anything about clinical protocols, medical research, treatment options, or health-related topics</p>
 
       <form onSubmit={handleSubmit}>

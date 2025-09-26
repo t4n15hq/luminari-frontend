@@ -321,7 +321,7 @@ const BackgroundJobs = () => {
                           marginBottom: '4px',
                           fontWeight: '500'
                         }}>
-                          {job.status === 'completed' ? 'Completed' : 'Failed'} • {formatDuration(job.startTime, job.endTime)}
+                          {job.status === 'completed' ? '✓' : '✕'} • {formatDuration(job.startTime, job.endTime)}
                         </div>
                         {job.error && (
                           <div style={{

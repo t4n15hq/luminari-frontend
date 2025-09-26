@@ -148,8 +148,8 @@ const DiseaseDiagnosis = () => {
       />
 
       {/* Simple Header */}
-      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b' }}>
+      <div style={{ marginBottom: '2rem', textAlign: 'left' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>
          Disease Screening
         </h1>
         <p style={{ color: '#64748b' }}>

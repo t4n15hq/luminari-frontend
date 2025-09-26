@@ -85,7 +85,7 @@ const ProtocolGenerator = () => {
           <div style={{
             fontSize: '1rem',
             fontWeight: '600',
-            color: completion.requiredPercentage === 100 ? '#10b981' : '#3b82f6'
+            color: completion.requiredPercentage === 100 ? '#10b981' : '#683D94'
           }}>
             {completion.completedCount}/{completion.totalSections} sections completed
           </div>
@@ -114,7 +114,7 @@ const ProtocolGenerator = () => {
             <div style={{
               width: `${completion.percentage}%`,
               height: '100%',
-              backgroundColor: completion.percentage === 100 ? '#10b981' : '#3b82f6',
+              backgroundColor: completion.percentage === 100 ? '#10b981' : '#683D94',
               transition: 'width 0.3s ease, background-color 0.3s ease'
             }} />
           </div>
@@ -173,7 +173,7 @@ const ProtocolGenerator = () => {
                        padding: '0.5rem',
                        borderRadius: '6px',
                        backgroundColor: activeFormSection === section.key ? '#eff6ff' : (section.isCompleted() ? '#f0fdf4' : '#f8fafc'),
-                       border: `1px solid ${activeFormSection === section.key ? '#3b82f6' : (section.isCompleted() ? '#10b981' : '#e2e8f0')}`,
+                       border: `1px solid ${activeFormSection === section.key ? '#683D94' : (section.isCompleted() ? '#10b981' : '#e2e8f0')}`,
                        cursor: 'pointer',
                        transition: 'all 0.2s ease',
                        transform: activeFormSection === section.key ? 'translateY(-1px)' : 'none',
@@ -196,7 +196,7 @@ const ProtocolGenerator = () => {
                 fontSize: '1rem',
                 color: section.isCompleted() ? '#10b981' : '#64748b'
               }}>
-                {section.isCompleted() ? '[Complete]' : '[Incomplete]'}
+                {section.isCompleted() ? '✓' : '✕'}
               </span>
               <span style={{
                 fontSize: '0.85rem',
@@ -245,7 +245,7 @@ const ProtocolGenerator = () => {
             gap: '0.5rem'
           }}>
             <span style={{ color: isCompleted ? '#10b981' : '#64748b' }}>
-              {isCompleted ? '[Complete]' : '[Incomplete]'}
+              {isCompleted ? '✓' : '✕'}
             </span>
             {title}
             {isRequired && <span style={{ color: '#ef4444' }}>*</span>}
@@ -413,8 +413,8 @@ const ProtocolGenerator = () => {
         { id: 'cmc', name: 'CMC (Chemistry, Manufacturing, Controls)', required: true, icon: '', maxFiles: 3 },
         { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '', maxFiles: 5 },
         { id: 'irb', name: 'IRB Approval', required: true, icon: '', maxFiles: 1 },
-        { id: 'financial', name: 'Financial Disclosures', required: true, icon: '💰', maxFiles: 1 },
-        { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 }
+        { id: 'financial', name: 'Financial Disclosures', required: true, icon: '', maxFiles: 1 },
+        { id: 'insurance', name: 'Insurance', required: true, icon: '', maxFiles: 1 }
       ]
     },
     'US-BLA': {
@@ -431,10 +431,10 @@ const ProtocolGenerator = () => {
         { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '', maxFiles: 8 },
         { id: 'clinical_reports', name: 'Clinical Study Reports', required: true, icon: '', maxFiles: 10 },
         { id: 'irb', name: 'IRB Approval', required: true, icon: '', maxFiles: 1 },
-        { id: 'financial', name: 'Financial Disclosures', required: true, icon: '💰', maxFiles: 1 },
-        { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
-        { id: 'environmental', name: 'Environmental Assessment', required: true, icon: '🌱', maxFiles: 1 },
-        { id: 'labeling', name: 'Labeling', required: true, icon: '🏷️', maxFiles: 1 }
+        { id: 'financial', name: 'Financial Disclosures', required: true, icon: '', maxFiles: 1 },
+        { id: 'insurance', name: 'Insurance', required: true, icon: '', maxFiles: 1 },
+        { id: 'environmental', name: 'Environmental Assessment', required: true, icon: '', maxFiles: 1 },
+        { id: 'labeling', name: 'Labeling', required: true, icon: '', maxFiles: 1 }
       ]
     },
     'EU': {
@@ -445,13 +445,13 @@ const ProtocolGenerator = () => {
       documentCategories: [
         { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
         { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
-        { id: 'icf', name: 'ICF (translated)', required: true, icon: '🌐', maxFiles: 1 },
+        { id: 'icf', name: 'ICF (translated)', required: true, icon: '', maxFiles: 1 },
         { id: 'impd_quality', name: 'IMPD Quality Module', required: true, icon: '', maxFiles: 3 },
         { id: 'impd_nonclinical', name: 'IMPD Non-clinical Module', required: true, icon: '', maxFiles: 5 },
-        { id: 'impd_clinical', name: 'IMPD Clinical Module', required: true, icon: '🏥', maxFiles: 3 },
-        { id: 'gmp', name: 'GMP Certificate', required: true, icon: '📜', maxFiles: 1 },
+        { id: 'impd_clinical', name: 'IMPD Clinical Module', required: true, icon: '', maxFiles: 3 },
+        { id: 'gmp', name: 'GMP Certificate', required: true, icon: '', maxFiles: 1 },
         { id: 'ec_opinion', name: 'EC Opinion', required: true, icon: '', maxFiles: 1 },
-        { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 }
+        { id: 'insurance', name: 'Insurance', required: true, icon: '', maxFiles: 1 }
       ]
     },
     'JP': {
@@ -462,12 +462,12 @@ const ProtocolGenerator = () => {
       documentCategories: [
         { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
         { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
-        { id: 'icf', name: 'ICF (Japanese)', required: true, icon: '🇯🇵', maxFiles: 1 },
+        { id: 'icf', name: 'ICF (Japanese)', required: true, icon: '', maxFiles: 1 },
         { id: 'cta_form', name: 'CTA Form', required: true, icon: '', maxFiles: 1 },
         { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '', maxFiles: 5 },
         { id: 'cmc', name: 'CMC Data', required: true, icon: '', maxFiles: 3 },
         { id: 'irb', name: 'IRB Approval', required: true, icon: '', maxFiles: 1 },
-        { id: 'hgrac', name: 'HGRAC (if applicable)', required: false, icon: '🏛️', maxFiles: 1 }
+        { id: 'hgrac', name: 'HGRAC (if applicable)', required: false, icon: '', maxFiles: 1 }
       ]
     },
     'CN': {
@@ -478,12 +478,12 @@ const ProtocolGenerator = () => {
       documentCategories: [
         { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
         { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
-        { id: 'icf', name: 'ICF (Mandarin)', required: true, icon: '🇨🇳', maxFiles: 1 },
+        { id: 'icf', name: 'ICF (Mandarin)', required: true, icon: '', maxFiles: 1 },
         { id: 'cta_form', name: 'CTA Form', required: true, icon: '', maxFiles: 1 },
         { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '', maxFiles: 5 },
         { id: 'cmc', name: 'CMC Data', required: true, icon: '', maxFiles: 3 },
         { id: 'irb', name: 'IRB Approval', required: true, icon: '', maxFiles: 1 },
-        { id: 'hgrac', name: 'HGRAC (if applicable)', required: false, icon: '🏛️', maxFiles: 1 }
+        { id: 'hgrac', name: 'HGRAC (if applicable)', required: false, icon: '', maxFiles: 1 }
       ]
     },
     'IN': {
@@ -494,12 +494,12 @@ const ProtocolGenerator = () => {
       documentCategories: [
         { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
         { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
-        { id: 'icf', name: 'ICF (English + Local)', required: true, icon: '🌐', maxFiles: 2 },
+        { id: 'icf', name: 'ICF (English + Local)', required: true, icon: '', maxFiles: 2 },
         { id: 'form_44', name: 'Form 44', required: true, icon: '', maxFiles: 1 },
-        { id: 'schedule_y', name: 'Schedule Y', required: true, icon: '📑', maxFiles: 1 },
+        { id: 'schedule_y', name: 'Schedule Y', required: true, icon: '', maxFiles: 1 },
         { id: 'ec_approval', name: 'EC Approval', required: true, icon: '', maxFiles: 1 },
-        { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
-        { id: 'pi_cv', name: 'Principal Investigator CV', required: true, icon: '👨‍⚕️', maxFiles: 1 }
+        { id: 'insurance', name: 'Insurance', required: true, icon: '', maxFiles: 1 },
+        { id: 'pi_cv', name: 'Principal Investigator CV', required: true, icon: '', maxFiles: 1 }
       ]
     },
     'RU': {
@@ -515,9 +515,9 @@ const ProtocolGenerator = () => {
         { id: 'preclinical', name: 'Preclinical Data (Russian)', required: true, icon: '', maxFiles: 5 },
         { id: 'cmc', name: 'CMC Data (Russian)', required: true, icon: '', maxFiles: 3 },
         { id: 'ec_opinion', name: 'EC Opinion (Russian)', required: true, icon: '', maxFiles: 1 },
-        { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
-        { id: 'gmp', name: 'GMP Certificate', required: true, icon: '📜', maxFiles: 1 },
-        { id: 'pharmacovigilance', name: 'Pharmacovigilance Plan', required: true, icon: '🔍', maxFiles: 1 }
+        { id: 'insurance', name: 'Insurance', required: true, icon: '', maxFiles: 1 },
+        { id: 'gmp', name: 'GMP Certificate', required: true, icon: '', maxFiles: 1 },
+        { id: 'pharmacovigilance', name: 'Pharmacovigilance Plan', required: true, icon: '', maxFiles: 1 }
       ]
     },
     'CA': {
@@ -613,10 +613,10 @@ const ProtocolGenerator = () => {
     { id: 'icf', name: 'Informed Consent Form', required: true, icon: '', maxFiles: 1 },
     { id: 'quality', name: 'Quality Information', required: true, icon: '', maxFiles: 3 },
     { id: 'nonclinical', name: 'Non-clinical Data', required: true, icon: '', maxFiles: 5 },
-    { id: 'clinical', name: 'Clinical Data', required: true, icon: '🏥', maxFiles: 10 },
+    { id: 'clinical', name: 'Clinical Data', required: true, icon: '', maxFiles: 10 },
     { id: 'application', name: 'Application Form', required: true, icon: '', maxFiles: 1 },
-    { id: 'insurance', name: 'Insurance', required: true, icon: '🛡️', maxFiles: 1 },
-    { id: 'other', name: 'Other Documents', required: false, icon: '📎', maxFiles: 5 }
+    { id: 'insurance', name: 'Insurance', required: true, icon: '', maxFiles: 1 },
+    { id: 'other', name: 'Other Documents', required: false, icon: '', maxFiles: 5 }
   ];
 
   // Get document categories for selected country
@@ -687,10 +687,10 @@ const ProtocolGenerator = () => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'missing': return '❌';
-      case 'full': return '✅';
+      case 'missing': return '✕';
+      case 'full': return '✓';
       case 'partial': return '🟡';
-      default: return '⚪';
+      default: return '✕';
     }
   };
 
@@ -1731,7 +1731,7 @@ const ProtocolGenerator = () => {
             <button
               onClick={() => handleProtocolSectionToggle('protocol-section-1')}
               style={{
-                background: selectedProtocolSections.has('protocol-section-1') ? '#3b82f6' : '#f3f4f6',
+                background: selectedProtocolSections.has('protocol-section-1') ? '#683D94' : '#f3f4f6',
                 color: selectedProtocolSections.has('protocol-section-1') ? 'white' : '#374151',
                 border: '2px solid #d1d5db',
                 borderRadius: '50%',
@@ -1783,7 +1783,7 @@ const ProtocolGenerator = () => {
             <button
               onClick={() => handleProtocolSectionToggle(sectionId)}
               style={{
-                background: isSelected ? '#3b82f6' : '#f3f4f6',
+                background: isSelected ? '#683D94' : '#f3f4f6',
                 color: isSelected ? 'white' : '#374151',
                 border: '2px solid #d1d5db',
                 borderRadius: '50%',
@@ -1871,7 +1871,7 @@ const ProtocolGenerator = () => {
             <button
               onClick={() => handleStudyDesignSectionToggle(sectionId)}
               style={{
-                background: isSelected ? '#3b82f6' : '#f3f4f6',
+                background: isSelected ? '#683D94' : '#f3f4f6',
                 color: isSelected ? 'white' : '#374151',
                 border: '2px solid #d1d5db',
                 borderRadius: '50%',
@@ -2305,9 +2305,9 @@ const ProtocolGenerator = () => {
         }
         
         .tab-btn.active {
-          background-color: #3b82f6 !important;
+          background-color: #683D94 !important;
           color: white !important;
-          border-color: #3b82f6 !important;
+          border-color: #683D94 !important;
         }
         
         .tab-btn {
@@ -2338,7 +2338,7 @@ const ProtocolGenerator = () => {
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div>
-            <h2>Clinical Study Protocol Generator</h2>
+            <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>Clinical Study Protocol Generator</h2>
             <p>Generate a complete clinical study protocol with enhanced trial design parameters</p>
           </div>
           <button onClick={handleShowPreviousProtocols} className="btn btn-outline">
@@ -2356,10 +2356,10 @@ const ProtocolGenerator = () => {
             onClick={() => setActiveSection('protocol')}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: activeSection === 'protocol' ? '#3b82f6' : 'transparent',
+              backgroundColor: activeSection === 'protocol' ? '#683D94' : 'transparent',
               color: activeSection === 'protocol' ? 'white' : '#64748b',
               border: 'none',
-              borderBottom: activeSection === 'protocol' ? '3px solid #3b82f6' : '3px solid transparent',
+              borderBottom: activeSection === 'protocol' ? '3px solid #683D94' : '3px solid transparent',
               cursor: 'pointer',
               fontSize: '1rem',
               fontWeight: '600',
@@ -2367,16 +2367,16 @@ const ProtocolGenerator = () => {
               transition: 'all 0.2s ease'
             }}
           >
-            📋 Protocol Generator
+             Protocol Generator
           </button>
           <button
             onClick={() => setActiveSection('compiler')}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: activeSection === 'compiler' ? '#3b82f6' : 'transparent',
+              backgroundColor: activeSection === 'compiler' ? '#683D94' : 'transparent',
               color: activeSection === 'compiler' ? 'white' : '#64748b',
               border: 'none',
-              borderBottom: activeSection === 'compiler' ? '3px solid #3b82f6' : '3px solid transparent',
+              borderBottom: activeSection === 'compiler' ? '3px solid #683D94' : '3px solid transparent',
               cursor: 'pointer',
               fontSize: '1rem',
               fontWeight: '600',
@@ -2384,7 +2384,7 @@ const ProtocolGenerator = () => {
               transition: 'all 0.2s ease'
             }}
           >
-            🏛️ Country Compiler
+             Country Compiler
           </button>
         </div>
       </div>
@@ -2435,7 +2435,7 @@ const ProtocolGenerator = () => {
                         <button style={{ marginLeft: '1rem', padding: '2px 8px', borderRadius: '4px', background: '#64748b', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}>
                           View
                         </button>
-                        <button style={{ marginLeft: '0.5rem', padding: '2px 8px', borderRadius: '4px', background: '#3b82f6', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => handleReferenceProtocolSelect(doc)}>
+                        <button style={{ marginLeft: '0.5rem', padding: '2px 8px', borderRadius: '4px', background: '#683D94', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => handleReferenceProtocolSelect(doc)}>
                           Reference
                         </button>
                       </li>
@@ -2464,7 +2464,7 @@ const ProtocolGenerator = () => {
           width: '400px',
           maxHeight: '80vh',
           background: '#ffffff',
-          border: '2px solid #3b82f6',
+          border: '2px solid #683D94',
           borderRadius: '8px',
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
           zIndex: 1000,
@@ -2481,7 +2481,7 @@ const ProtocolGenerator = () => {
             background: '#f0f9ff'
           }}>
             <h4 style={{ margin: 0, color: '#1e40af', fontSize: '1rem' }}>
-              📋 Reference Protocol
+               Reference Protocol
             </h4>
             <button
               onClick={closeReferencePanel}
@@ -3157,7 +3157,7 @@ const ProtocolGenerator = () => {
                 <div style={{ 
                   marginTop: '2rem', 
                   padding: '1rem', 
-                  border: '2px solid #3b82f6', 
+                  border: '2px solid #683D94', 
                   borderRadius: '8px', 
                   backgroundColor: '#f0f9ff' 
                 }}>
@@ -3186,7 +3186,7 @@ const ProtocolGenerator = () => {
                         gap: '8px'
                       }}
                     >
-                      {showReferencePanel ? '✕' : '📋'} 
+                      {showReferencePanel ? '✕' : ''} 
                       {showReferencePanel ? 'Close Reference' : 'Open Reference Protocol'}
                     </button>
                   </div>
@@ -3281,7 +3281,7 @@ const ProtocolGenerator = () => {
                                       <button
                                         onClick={() => saveSectionEdit(sectionId, sectionContent)}
                                         style={{
-                                          background: '#3b82f6',
+                                          background: '#683D94',
                                           color: 'white',
                                           border: 'none',
                                           borderRadius: '4px',
@@ -3427,7 +3427,7 @@ const ProtocolGenerator = () => {
                                       <button
                                         onClick={() => saveSectionEdit(sectionId, sectionContent)}
                                         style={{
-                                          background: '#3b82f6',
+                                          background: '#683D94',
                                           color: 'white',
                                           border: 'none',
                                           borderRadius: '4px',
@@ -3517,7 +3517,7 @@ const ProtocolGenerator = () => {
                         downloadDocument(allContent, `All_Selected_Sections_${disease.replace(/\s+/g, '_')}.txt`);
                       }}
                       style={{
-                        background: '#3b82f6',
+                        background: '#683D94',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -3571,7 +3571,7 @@ const ProtocolGenerator = () => {
                         fontSize: '14px'
                       }}
                     >
-                      📋 Copy All to Clipboard
+                       Copy All to Clipboard
                     </button>
                   </div>
                 </div>
@@ -3643,7 +3643,7 @@ const ProtocolGenerator = () => {
                   <button
                     onClick={() => handleStudyDesignSectionToggle('cmc-section')}
                     style={{
-                      background: selectedStudyDesignSections.has('cmc-section') ? '#3b82f6' : '#f3f4f6',
+                      background: selectedStudyDesignSections.has('cmc-section') ? '#683D94' : '#f3f4f6',
                       color: selectedStudyDesignSections.has('cmc-section') ? 'white' : '#374151',
                       border: '2px solid #d1d5db',
                       borderRadius: '50%',
@@ -3689,7 +3689,7 @@ const ProtocolGenerator = () => {
                 <div style={{ 
                   marginTop: '2rem', 
                   padding: '1rem', 
-                  border: '2px solid #3b82f6', 
+                  border: '2px solid #683D94', 
                   borderRadius: '8px', 
                   backgroundColor: '#f0f9ff' 
                 }}>
@@ -3792,7 +3792,7 @@ const ProtocolGenerator = () => {
                                           setAiEnabledSections(newSet);
                                         }}
                                         style={{
-                                          background: aiEnabledSections.has(sectionId) ? '#3b82f6' : '#6b7280',
+                                          background: aiEnabledSections.has(sectionId) ? '#683D94' : '#6b7280',
                                           color: 'white',
                                           border: 'none',
                                           borderRadius: '4px',
@@ -3893,7 +3893,7 @@ const ProtocolGenerator = () => {
                                 onClick={() => handleReferenceProtocolSelect(protocol)}
                                 style={{
                                   padding: '0.5rem',
-                                  backgroundColor: selectedReferenceProtocol === protocol ? '#3b82f6' : 'white',
+                                  backgroundColor: selectedReferenceProtocol === protocol ? '#683D94' : 'white',
                                   color: selectedReferenceProtocol === protocol ? 'white' : '#374151',
                                   border: '1px solid #d1d5db',
                                   borderRadius: '4px',
@@ -3925,7 +3925,7 @@ const ProtocolGenerator = () => {
                           downloadDocument(allContent, `All_Selected_Study_Design_Sections_${disease.replace(/\s+/g, '_')}.txt`);
                         }}
                         style={{
-                          background: '#3b82f6',
+                          background: '#683D94',
                           color: 'white',
                           border: 'none',
                           borderRadius: '6px',
@@ -3951,7 +3951,7 @@ const ProtocolGenerator = () => {
                           cursor: 'pointer'
                         }}
                       >
-                        📋 Copy All to Clipboard
+                         Copy All to Clipboard
                       </button>
                     </div>
                   </div>
@@ -4015,7 +4015,7 @@ const ProtocolGenerator = () => {
                 marginBottom: '1rem', 
                 color: '#1e293b' 
               }}>
-                🌍 Select Target Country/Region
+                 Select Target Country/Region
               </h3>
               <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
                 Choose the country/region for which you want to compile regulatory documents and requirements.
@@ -4060,7 +4060,7 @@ const ProtocolGenerator = () => {
                     alignItems: 'center',
                     gap: '0.5rem'
                   }}>
-                    📋 {countryRegulatoryData[selectedCountry].name} Requirements
+                     {countryRegulatoryData[selectedCountry].name} Requirements
                   </h3>
                 
                     <div style={{
@@ -4101,7 +4101,7 @@ const ProtocolGenerator = () => {
                     alignItems: 'center',
                     gap: '0.5rem'
                   }}>
-                    📋 Required Documents
+                     Required Documents
                   </h4>
                   <div style={{ 
                     display: 'grid', 
@@ -4154,14 +4154,14 @@ const ProtocolGenerator = () => {
                     alignItems: 'center',
                     gap: '0.5rem'
                   }}>
-                    📁 Upload Documents
+                     Upload Documents
                   </h3>
                   
                   <div 
                     {...getRootProps()} 
                     className={`dropzone ${isDragActive ? 'active' : ''}`}
                     style={{
-                      border: isDragActive ? '3px dashed #3b82f6' : '2px dashed #94a3b8',
+                      border: isDragActive ? '3px dashed #683D94' : '2px dashed #94a3b8',
                       borderRadius: '12px',
                       padding: '3rem 2rem',
                       textAlign: 'center',
@@ -4196,7 +4196,7 @@ const ProtocolGenerator = () => {
                       alignItems: 'center',
                       gap: '0.5rem'
                     }}>
-                      ✅ Required Documents Checklist
+                       Required Documents Checklist
                     </h4>
                     <div style={{ 
                       display: 'grid', 
@@ -4244,7 +4244,7 @@ const ProtocolGenerator = () => {
                         marginBottom: '1rem', 
                         color: '#1e293b' 
                       }}>
-                        📚 Uploaded Documents ({uploadedDocuments.length})
+                         Uploaded Documents ({uploadedDocuments.length})
                       </h4>
                       <div style={{ 
                         backgroundColor: '#f8fafc', 
@@ -4328,7 +4328,7 @@ const ProtocolGenerator = () => {
                         boxShadow: isReadyToCompile() && !compilerLoading ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none'
                       }}
                     >
-                      {compilerLoading ? '⏳ Compiling Dossier...' : `🚀 Compile Dossier for ${countryRegulatoryData[selectedCountry].name}`}
+                      {compilerLoading ? ' Compiling Dossier...' : ` Compile Dossier for ${countryRegulatoryData[selectedCountry].name}`}
                     </button>
                     {!isReadyToCompile() && !compilerLoading && (
                       <p style={{ 
@@ -4337,7 +4337,7 @@ const ProtocolGenerator = () => {
                         fontSize: '0.9rem',
                         fontWeight: '500'
                       }}>
-                        ⚠️ Please upload all required documents and assign categories before compiling
+                         Please upload all required documents and assign categories before compiling
                       </p>
                     )}
                   </div>

@@ -388,14 +388,14 @@ const ClinicalDossierCompiler = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'missing': return 'Missing';
-      case 'full': return 'Complete';
+      case 'full': return '✓';
       case 'partial': return '🟡';
-      default: return '⚪';
+      default: return '✕';
     }
   };
 
   const getValidationIcon = (validation) => {
-    if (!validation) return '⚪';
+    if (!validation) return '✕';
     if (validation.confidence >= 0.8) return 'Valid';
     if (validation.confidence >= 0.6) return '🟡';
     return 'Invalid';

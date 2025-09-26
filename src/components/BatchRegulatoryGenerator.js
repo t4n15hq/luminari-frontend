@@ -1544,13 +1544,13 @@ const BatchRegulatoryGenerator = () => {
                       <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#10b981' }}>
                         {batchQueue.filter(doc => doc.status === 'completed').length}
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Completed</div>
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>✓</div>
                     </div>
                     <div>
                       <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#ef4444' }}>
                         {batchQueue.filter(doc => doc.status === 'error').length}
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Failed</div>
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>✕</div>
                     </div>
                     <div>
                       <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#3b82f6' }}>

@@ -283,8 +283,8 @@ const ExcelAnalysis = () => {
     <div className="excel-analysis-container">
       <div className="container">
         <div className="analysis-header">
-          <h1>Patient Selection Analysis</h1>
-          <p>Upload dataset to optimize patient selection criteria</p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>Patient Selection Analysis</h1>
+          <p style={{ textAlign: 'left' }}>Upload dataset to optimize patient selection criteria</p>
         </div>
 
         {/* File Upload Section */}

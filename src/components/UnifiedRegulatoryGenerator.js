@@ -1851,7 +1851,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
       {/* Header */}
       <div className="generator-header">
         <div>
-          <h2>🧬 Medical Research Document Generator</h2>
+          <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>Medical Research Document Generator</h2>
           <p>Generate regulatory submissions for your research studies</p>
         </div>
         <div className="header-actions">
@@ -2399,7 +2399,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
 
           {/* Treatment & Control */}
           <div className="form-section">
-            <h3>💊 Treatment & Control</h3>
+            <h3> Treatment & Control</h3>
             <div className="form-grid">
               <div className="form-group">
                 <label className="form-label">Drug Formulation</label>
@@ -2794,10 +2794,10 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                 <h4>Generation Results</h4>
                 <div className="results-summary">
                   <span className="success-count">
-                    ✅ {batchResults.filter(r => r.status === 'success').length} Successful
+                    ✓ {batchResults.filter(r => r.status === 'success').length} Successful
                   </span>
                   <span className="error-count">
-                    ❌ {batchResults.filter(r => r.status === 'error').length} Failed
+                    ✕ {batchResults.filter(r => r.status === 'error').length} Failed
                   </span>
                 </div>
                 
