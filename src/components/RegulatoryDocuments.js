@@ -366,14 +366,9 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
                       onClick={() => {
                         if (!selectedRegion && region) {
                           setSelectedRegion(region);
-                        } else if (selectedRegion && isRegion) {
-                          // Find country in regions[selectedRegion].countries
-                          const regionObj = regions[selectedRegion];
-                          if (regionObj) {
-                            const country = regionObj.countries.find(c => c.name === countryName);
-                            if (country) handleCountrySelect(country, selectedRegion);
-                          }
                         }
+                        // Removed direct navigation from map click
+                        // Users should now click the country cards below to expand and then proceed
                       }}
                       style={{
                         default: {
@@ -471,48 +466,99 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
             gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
             gap: '15px'
           }}>
-            {regions[selectedRegion].countries.map((country) => (
+            {regions[selectedRegion].countries.map((country) => {
+              return (
               <div
                 key={country.id}
-                onClick={() => handleCountrySelect(country, selectedRegion)}
                 style={{
                   padding: '15px',
                   backgroundColor: 'white',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  cursor: 'pointer',
+                  border: `2px solid ${regions[selectedRegion].color}`,
                   transition: 'all 0.2s ease',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = regions[selectedRegion].color;
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                 }}
               >
-                <div>
-                  <div style={{ fontWeight: 'bold', color: '#2d3748' }}>
-                    {country.name}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: '#4a5568' }}>
-                    {country.documents.length} document type{country.documents.length !== 1 ? 's' : ''} available
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '15px',
+                  paddingBottom: '15px',
+                  borderBottom: '1px solid #e2e8f0'
+                }}>
+                  <div>
+                    <div style={{ fontWeight: 'bold', color: '#2d3748', fontSize: '1.1rem', marginBottom: '4px' }}>
+                      {country.name}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#4a5568' }}>
+                      {country.documents.length} document type{country.documents.length !== 1 ? 's' : ''} available
+                    </div>
                   </div>
                 </div>
-                <div style={{ 
-                  fontSize: '1.2rem',
-                  color: regions[selectedRegion].color
-                }}>
-                  →
+
+                {/* Available Documents List - Always shown */}
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#4a5568', marginBottom: '10px' }}>
+                    Available Documents:
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {country.documents.map((doc, idx) => (
+                      <div
+                        key={doc.id || idx}
+                        style={{
+                          fontSize: '0.8rem',
+                          color: '#2d3748',
+                          padding: '10px 12px',
+                          backgroundColor: '#f7fafc',
+                          borderRadius: '6px',
+                          border: '1px solid #e2e8f0'
+                        }}
+                      >
+                        <div style={{ fontWeight: '600', marginBottom: '4px', color: regions[selectedRegion].color }}>
+                          • {doc.name}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#718096', marginLeft: '12px' }}>
+                          {doc.purpose}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Proceed Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCountrySelect(country, selectedRegion);
+                    }}
+                    style={{
+                      marginTop: '15px',
+                      width: '100%',
+                      padding: '12px',
+                      backgroundColor: regions[selectedRegion].color,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontWeight: '600',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = '0.9';
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = '1';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                  >
+                    Proceed to Generate Documents →
+                  </button>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       )}

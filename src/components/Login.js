@@ -35,8 +35,6 @@ const Login = () => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1>LumiPath<span className="trademark">™</span></h1>
-          <p>AI-driven clinical tools platform</p>
         </div>
         
         <form onSubmit={handleSubmit} className="login-form">

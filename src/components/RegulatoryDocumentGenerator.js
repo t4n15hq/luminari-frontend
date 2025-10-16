@@ -711,21 +711,58 @@ const RegulatoryDocumentGenerator = () => {
         </div>
       )}
 
-      {/* Selected Country Info */}
+      {/* Selected Country Info with Available Documents */}
       {selectedCountryData && (
         <div style={{
           backgroundColor: '#f0fff4',
-          border: '1px solid #9ae6b4',
-          borderRadius: '8px',
-          padding: '15px',
-          marginBottom: '20px'
+          border: '2px solid #9ae6b4',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '25px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#276749' }}>
+          <h3 style={{ margin: '0 0 15px 0', color: '#276749', fontSize: '1.25rem', fontWeight: '600' }}>
             📍 Selected: {selectedCountryData.country} ({selectedCountryData.region})
           </h3>
-          <p style={{ margin: '0', color: '#22543d' }}>
-            Available documents: {selectedCountryData.availableDocuments.map(doc => doc.name).join(', ')}
-          </p>
+          <div style={{ marginTop: '15px' }}>
+            <h4 style={{ margin: '0 0 12px 0', color: '#22543d', fontSize: '1.1rem', fontWeight: '500' }}>
+              Available Documents:
+            </h4>
+            <div style={{ display: 'grid', gap: '10px' }}>
+              {selectedCountryData.availableDocuments.map((doc, index) => (
+                <div key={doc.id || index} style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #9ae6b4',
+                  borderRadius: '6px',
+                  padding: '12px 15px',
+                  cursor: documentType === doc.name ? 'default' : 'pointer',
+                  backgroundColor: documentType === doc.name ? '#c6f6d5' : 'white',
+                  transition: 'all 0.2s ease'
+                }}
+                onClick={() => setDocumentType(doc.name)}
+                onMouseEnter={(e) => {
+                  if (documentType !== doc.name) {
+                    e.currentTarget.style.backgroundColor = '#f0fff4';
+                    e.currentTarget.style.borderColor = '#68d391';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (documentType !== doc.name) {
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.borderColor = '#9ae6b4';
+                  }
+                }}
+                >
+                  <div style={{ fontWeight: '600', color: '#2d3748', marginBottom: '4px' }}>
+                    {doc.name}
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: '#4a5568' }}>
+                    {doc.purpose}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

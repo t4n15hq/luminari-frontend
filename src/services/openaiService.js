@@ -310,6 +310,11 @@ ${detailedRequirements}
 - Use professional scientific language without overstatement or marketing language
 - Include specific rather than generic safety and efficacy monitoring procedures
 - Ensure internal consistency across all document sections
+- KEEP PROTOCOLS CONCISE: Investigators prefer shorter, scannable protocols with key information easily accessible
+- NO INTRODUCTION OR CONCLUSION SUBSECTIONS: Eliminate these space-wasting subsections from all sections
+- ZERO DUPLICATION: Each piece of information should appear in ONLY ONE section - never repeat content across sections
+- CONSOLIDATE INFORMATION: Study population, visit schedules, dose escalation should each be in ONE dedicated section only
+- Reference G1 Therapeutics Phase 1 NSCLC protocol (ClinicalTrials.gov) as model for consolidated, efficient structure
 
 🎯 THERAPEUTIC AREA ADAPTABILITY - MANDATORY:
 - Include indication-specific standard of care considerations
@@ -596,55 +601,55 @@ const openaiService = {
         }
       },
       protocol: {
-        1: { 
-          title: "BACKGROUND & RATIONALE", 
-          content: "Generate scientifically sound background using ESTABLISHED data: disease pathophysiology from published literature, epidemiology statistics with references, current standard-of-care treatments, unmet medical need with clear gaps, investigational product rationale using proven mechanisms of action. Use PLACEHOLDER markers like '[SPECIFIC PRODUCT NAME]' and '[TO BE DETERMINED FROM PHASE I DATA]'. Include modular sections for different therapeutic areas and patient populations.",
-          focus: "Evidence-based background with generic framework and clear placeholders"
+        1: {
+          title: "BACKGROUND & RATIONALE",
+          content: "NO INTRO/CONCLUSION subsections. Generate concise, scientifically sound background using ESTABLISHED data: disease pathophysiology from published literature, epidemiology statistics with references, current standard-of-care treatments, unmet medical need with clear gaps, investigational product rationale using proven mechanisms of action. Use PLACEHOLDER markers like '[SPECIFIC PRODUCT NAME]' and '[TO BE DETERMINED FROM PHASE I DATA]'. Keep concise - investigators want key information quickly accessible. DO NOT include study population, endpoints, or design details (those belong in other sections).",
+          focus: "Concise, evidence-based background with NO duplication of content from other sections"
         },
-        2: { 
-          title: "OBJECTIVES & ENDPOINTS", 
-          content: "Generate PHASE-APPROPRIATE objectives and established endpoints: **PHASE I**: Primary safety endpoints (dose-limiting toxicity, maximum tolerated dose), secondary PK/PD endpoints with validated biomarkers. **PHASE II**: Primary efficacy endpoints (objective response rate, progression-free survival), secondary safety/biomarker endpoints. **PHASE III**: Primary confirmatory efficacy endpoints with regulatory precedent, secondary quality of life/safety endpoints. Use ONLY literature-supported endpoints with established cutoffs or clear placeholders '[CLINICALLY MEANINGFUL DIFFERENCE: TO BE DETERMINED BASED ON REGULATORY GUIDANCE]'. Include indication-specific standard endpoints and patient-reported outcome measures where appropriate.",
-          focus: "Phase-appropriate, evidence-based objectives with regulatory-aligned endpoints"
+        2: {
+          title: "OBJECTIVES & ENDPOINTS",
+          content: "NO INTRO/CONCLUSION subsections. Generate PHASE-APPROPRIATE objectives and established endpoints ONLY: **PHASE I**: Primary safety endpoints (dose-limiting toxicity, maximum tolerated dose), secondary PK/PD endpoints with validated biomarkers. **PHASE II**: Primary efficacy endpoints (objective response rate, progression-free survival), secondary safety/biomarker endpoints. **PHASE III**: Primary confirmatory efficacy endpoints with regulatory precedent, secondary quality of life/safety endpoints. Use ONLY literature-supported endpoints with established cutoffs or clear placeholders '[CLINICALLY MEANINGFUL DIFFERENCE: TO BE DETERMINED BASED ON REGULATORY GUIDANCE]'. DO NOT include study design, population criteria, or assessment schedules (those belong in other sections).",
+          focus: "Concise, phase-appropriate objectives and endpoints ONLY - NO duplication"
         },
-        3: { 
-          title: "STUDY DESIGN", 
-          content: "Generate proven study design framework: standard randomized controlled design with established methodologies, realistic randomization schemes (block, stratified), appropriate blinding procedures. Include ASSUMPTIONS clearly marked: 'ASSUMPTION: [X-week treatment period based on similar studies]'. Provide modular design options for different phases and populations. Include standard visit schedules (screening, baseline, weeks 2, 4, 8, 12, 16, follow-up) with rationale from regulatory guidance.",
-          focus: "Evidence-based design methodology with clear assumptions and modular framework"
+        3: {
+          title: "STUDY DESIGN & SCHEMA",
+          content: "NO INTRO/CONCLUSION subsections. Generate concise study design framework: overall study schema, randomization scheme (block, stratified), blinding procedures, treatment arms/cohorts. Include DOSE ESCALATION PLAN if applicable (3+3, BOIN, etc.) - ALL dose escalation details belong HERE ONLY. Clearly mark assumptions: 'ASSUMPTION: [X-week treatment period based on similar studies]'. DO NOT repeat population criteria, detailed visit schedules, or endpoint definitions (those belong in other sections). Keep concise and scannable.",
+          focus: "Concise study schema with ALL dose escalation consolidated HERE - NO duplication"
         },
-        4: { 
-          title: "STUDY POPULATION", 
-          content: "Generate STANDARD eligibility criteria based on established precedents: inclusion criteria using validated diagnostic criteria (e.g., 'Disease severity score ≥ [TO BE DETERMINED based on regulatory precedent]'), evidence-based exclusion criteria for safety. Include modular criteria sets for different populations (adults/pediatric, treatment-naive/experienced). Mark assumptions: 'NOTE: Specific laboratory values require validation in target population'. Provide alternative recruitment strategies and standard screening procedures.",
-          focus: "Evidence-based population criteria with modular options and clear validation needs"
+        4: {
+          title: "STUDY POPULATION & ELIGIBILITY",
+          content: "NO INTRO/CONCLUSION subsections. This is the ONLY section for ALL study population information. Generate COMPLETE eligibility criteria: inclusion criteria using validated diagnostic criteria (e.g., 'Disease severity score ≥ [TO BE DETERMINED based on regulatory precedent]'), ALL exclusion criteria for safety, screening procedures, enrollment targets, recruitment strategies. Mark assumptions: 'NOTE: Specific laboratory values require validation in target population'. DO NOT repeat this information anywhere else in the protocol. Keep concise but complete.",
+          focus: "ALL study population details consolidated HERE ONLY - single source of truth"
         },
-        5: { 
-          title: "TREATMENTS", 
-          content: "Generate realistic dosing framework using established approaches: dose escalation schemes based on proven methodologies (3+3, BOIN), standard administration procedures, evidence-based concomitant medication restrictions. Use placeholders: '[STARTING DOSE: TO BE DETERMINED FROM PRECLINICAL DATA]', '[MAXIMUM TOLERATED DOSE: TO BE ESTABLISHED]'. Include modular dosing options for different routes of administration and patient populations. Reference similar approved products and dose rationale.",
-          focus: "Evidence-based treatment framework with clear dose rationale and modular options"
+        5: {
+          title: "TREATMENT & DOSING",
+          content: "NO INTRO/CONCLUSION subsections. Generate concise treatment framework: specific dosing regimens, administration procedures, concomitant medication restrictions, dose modifications for toxicity, treatment duration. Use placeholders: '[STARTING DOSE: TO BE DETERMINED FROM PRECLINICAL DATA]'. If dose escalation is part of design, reference Section 3 (do NOT duplicate escalation scheme here). Include treatment compliance monitoring. Keep concise and actionable.",
+          focus: "Concise dosing and administration details - reference but do NOT duplicate escalation from Section 3"
         },
-        6: { 
-          title: "ASSESSMENTS", 
-          content: "Generate EVIDENCE-BASED assessment procedures using ONLY validated tools: established clinical scales (cite literature references), proven imaging modalities with regulatory precedent, standard laboratory panels based on therapeutic class. Include indication-specific patient-reported outcome measures where appropriate. Use realistic timing (baseline, weeks 4, 8, 12, 16) with scientific rationale. Mark all customization areas: '[DISEASE-SPECIFIC BIOMARKERS: SELECTION REQUIRES LITERATURE VALIDATION]'. Include modular assessment plans for different phases with alternative validated biomarker options.",
-          focus: "Evidence-based assessments with validated tools and modular framework"
+        6: {
+          title: "STUDY PROCEDURES & SCHEDULE OF ASSESSMENTS",
+          content: "NO INTRO/CONCLUSION subsections. This is the ONLY section for visit schedules and ALL assessment timing. Generate consolidated schedule of events table format: screening, baseline, treatment visits (weeks 1, 2, 4, 8, 12, etc.), follow-up. Include ALL procedures per visit: physical exams, vital signs, laboratory tests (CBC, CMP, LFTs, etc.), imaging (CT, MRI per RECIST 1.1), biomarker collection, patient-reported outcomes. Use ONLY validated assessment tools with literature citations. This section consolidates ALL timing - DO NOT repeat visit schedules anywhere else. Model after G1 Therapeutics protocol structure for efficiency.",
+          focus: "ALL visit schedules and assessment timing consolidated HERE ONLY - single comprehensive schedule"
         },
-        7: { 
-          title: "STATISTICS", 
-          content: "Generate STATISTICALLY SOUND framework using established methodologies: sample size calculations with REALISTIC assumptions based on published data (power 80-90%, alpha 0.05), established analysis methods (ITT, per-protocol, as-treated), validated statistical tests appropriate for endpoints. Use evidence-based placeholders: '[EFFECT SIZE: TO BE DETERMINED FROM PHASE II DATA OR LITERATURE]', '[DROPOUT RATE: BASED ON SIMILAR INDICATION STUDIES - CITE REFERENCES]'. Include phase-appropriate statistical plans and alternative analysis strategies. Reference specific regulatory guidance documents for therapeutic area.",
-          focus: "Evidence-based statistical framework with clear assumptions and validation needs"
+        7: {
+          title: "SAFETY MONITORING & ADVERSE EVENT MANAGEMENT",
+          content: "NO INTRO/CONCLUSION subsections. Generate concise safety framework: adverse event grading (CTCAE v5.0), DLT definitions appropriate for therapeutic class '[DLT DEFINITION: TO BE REFINED BASED ON PRECLINICAL SAFETY DATA]', stopping rules with statistical basis, DSMB/DMC structure and responsibilities, AE reporting timelines per regulatory requirements. Include management of specific toxicities. Keep practical and actionable for site staff.",
+          focus: "Concise safety monitoring with clear DLT criteria and stopping rules - NO duplication"
         },
-        8: { 
-          title: "SAFETY MONITORING", 
-          content: "Generate COMPREHENSIVE safety monitoring using established procedures: proven adverse event classification systems (CTCAE v5.0), evidence-based stopping rules with statistical basis, realistic safety review committee structure (DSMB/DMC). Include established DLT criteria appropriate for therapeutic class with placeholders: '[DLT DEFINITION: TO BE REFINED BASED ON PRECLINICAL SAFETY DATA AND REGULATORY PRECEDENT]'. Provide phase-appropriate safety plans for different risk profiles, include real-time safety monitoring procedures. Reference specific FDA guidance documents for safety monitoring in therapeutic area.",
-          focus: "Evidence-based safety monitoring with established procedures and modular framework"
+        8: {
+          title: "STATISTICAL CONSIDERATIONS",
+          content: "NO INTRO/CONCLUSION subsections. Generate concise statistical framework: sample size calculations with REALISTIC assumptions (power 80-90%, alpha 0.05), primary analysis methods (ITT, per-protocol), handling of missing data, interim analysis plans if applicable. Use placeholders: '[EFFECT SIZE: TO BE DETERMINED FROM PHASE II DATA OR LITERATURE]', '[DROPOUT RATE: BASED ON SIMILAR INDICATION STUDIES]'. Include phase-appropriate statistical approaches. Keep focused on statistical methodology only.",
+          focus: "Concise statistical methods with justified sample size - NO duplication"
         },
-        9: { 
-          title: "REGULATORY COMPLIANCE", 
-          content: "Generate COMPREHENSIVE regulatory framework using established requirements: GCP compliance based on ICH E6(R2) guidelines, proven informed consent procedures meeting 21 CFR 50 requirements, established IRB/IEC processes per ICH E6. Include realistic regulatory timelines based on FDA guidance: '[IND SUBMISSION: 30-DAY SAFETY REVIEW PERIOD]', '[IRB APPROVAL: 2-4 WEEKS POST-SUBMISSION]'. Provide jurisdiction-specific compliance plans (FDA, EMA, Health Canada) for different study phases. Reference current regulatory guidance documents and include notes on indication-specific regulatory requirements (orphan designation, breakthrough therapy, etc.).",
-          focus: "Evidence-based regulatory framework with established procedures and modular compliance"
+        9: {
+          title: "REGULATORY & ETHICAL CONSIDERATIONS",
+          content: "NO INTRO/CONCLUSION subsections. Generate concise regulatory framework: GCP compliance (ICH E6(R2)), informed consent process (21 CFR 50), IRB/IEC approval requirements, regulatory reporting (IND safety reports, amendments), data protection compliance. Include realistic timelines: '[IND SUBMISSION: 30-DAY SAFETY REVIEW]', '[IRB APPROVAL: 2-4 WEEKS]'. Note indication-specific requirements (orphan designation, breakthrough therapy). Keep concise and practical.",
+          focus: "Concise regulatory compliance essentials - NO duplication"
         },
-        10: { 
-          title: "DATA MANAGEMENT", 
-          content: "Generate proven data management framework using standard procedures: established EDC systems and data collection best practices, validated data monitoring procedures, realistic database specifications. Include placeholders: '[EDC SYSTEM: TO BE SELECTED BASED ON STUDY REQUIREMENTS]'. Provide modular plans for different study complexities and alternative data management approaches. Reference regulatory guidance on data integrity and include notes on system validation requirements.",
-          focus: "Evidence-based data management with standard procedures and modular framework"
+        10: {
+          title: "DATA MANAGEMENT & STUDY OVERSIGHT",
+          content: "NO INTRO/CONCLUSION subsections. Generate concise consolidated section (model after G1 Therapeutics protocol): EDC system and data collection, source data verification, data monitoring procedures, quality assurance/quality control, database lock procedures, record retention, study committee responsibilities. Include placeholders: '[EDC SYSTEM: TO BE SELECTED]'. Keep practical for site implementation. This consolidates final administrative/operational elements efficiently.",
+          focus: "Concise data management and oversight - consolidated final section per G1 model"
         }
       },
       cta: {
@@ -658,10 +663,10 @@ const openaiService = {
           content: "ONLY generate IMP information: IMP characterization, pharmaceutical form, manufacturing authorization holder, IMPD reference, GMP compliance, labeling details, supply and accountability. Do NOT include clinical protocol or administrative information.",
           focus: "IMP characterization and regulatory status only"
         },
-        3: { 
-          title: "CLINICAL TRIAL PROTOCOL", 
-          content: "ONLY generate protocol information: study design and rationale, objectives and endpoints, methodology, population criteria, treatment arms, visit schedule, assessments. Do NOT include investigator details or risk assessment.",
-          focus: "Protocol design and methodology only"
+        3: {
+          title: "CLINICAL TRIAL PROTOCOL",
+          content: "NO INTRO/CONCLUSION subsections. ONLY generate concise protocol information: study design schema, objectives and endpoints, methodology, complete eligibility criteria (all inclusion/exclusion), treatment arms/dosing, consolidated schedule of assessments table (screening through follow-up), safety monitoring. Keep concise and scannable - investigators want key information quickly. Model efficiency after G1 Therapeutics protocol. Do NOT duplicate visit schedules, population criteria, or dose escalation across multiple subsections. Do NOT include investigator details or separate risk assessment.",
+          focus: "Complete but concise protocol with zero duplication - consolidated schedule"
         },
         4: { 
           title: "INVESTIGATOR AND SITE INFORMATION", 
@@ -910,45 +915,45 @@ const openaiService = {
         6: { title: "REGULATORY STRATEGY", content: "TGA requirements, submission strategy, and post-approval commitments" }
       },
       cta_uk: {
-        1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate MHRA CTA administrative details: application type, MHRA reference numbers, sponsor information, protocol overview, UK regulatory framework post-Brexit. Do NOT include clinical or quality information." },
-        2: { title: "STUDY DESIGN", content: "ONLY generate clinical study design: objectives, methodology, endpoints, randomization, blinding, statistical plan. Do NOT include manufacturing or administrative details." },
-        3: { title: "INVESTIGATIONAL MEDICINAL PRODUCT", content: "ONLY generate IMP information: drug substance details, formulation, manufacturing, quality control, UK GMP compliance. Do NOT include clinical design or safety data." },
-        4: { title: "SAFETY INFORMATION", content: "ONLY generate safety data: nonclinical safety summary, clinical safety experience, investigator brochure summary, risk assessment. Do NOT include efficacy or quality information." },
-        5: { title: "ETHICS AND PARTICIPANT PROTECTION", content: "ONLY generate ethics information: Research Ethics Committee approval, informed consent, participant insurance, data protection (UK GDPR compliance). Do NOT include study design or IMP details." },
-        6: { title: "TRIAL MANAGEMENT", content: "ONLY generate trial management: site information, investigator qualifications, monitoring plan, pharmacovigilance system. Do NOT include study design or regulatory details." },
-        7: { title: "UK REGULATORY COMPLIANCE", content: "ONLY generate UK regulatory compliance: Clinical Trials Regulations 2004 compliance, MHRA requirements, Good Clinical Practice adherence, post-Brexit regulatory framework. Do NOT include study-specific details." }
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise MHRA CTA administrative details: application type, MHRA reference numbers, sponsor information, protocol overview, UK regulatory framework post-Brexit. Keep concise. Do NOT include clinical or quality information." },
+        2: { title: "STUDY DESIGN", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise clinical study design: objectives, endpoints, methodology, complete eligibility criteria, randomization, blinding, treatment schedule, consolidated assessment schedule (screening through follow-up), statistical plan. ZERO DUPLICATION - visit schedules and population criteria appear HERE ONLY. Keep scannable. Do NOT include manufacturing or administrative details." },
+        3: { title: "INVESTIGATIONAL MEDICINAL PRODUCT", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise IMP information: drug substance details, formulation, manufacturing, quality control, UK GMP compliance. Keep concise. Do NOT include clinical design or safety data." },
+        4: { title: "SAFETY INFORMATION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise safety data: nonclinical safety summary, clinical safety experience, investigator brochure summary, risk assessment, DLT definitions, stopping rules. Keep concise. Do NOT include efficacy or quality information." },
+        5: { title: "ETHICS AND PARTICIPANT PROTECTION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise ethics information: Research Ethics Committee approval, informed consent, participant insurance, data protection (UK GDPR compliance). Keep concise. Do NOT include study design or IMP details." },
+        6: { title: "TRIAL MANAGEMENT", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise trial management: site information, investigator qualifications, monitoring plan, pharmacovigilance system. Keep concise. Do NOT include study design or regulatory details." },
+        7: { title: "UK REGULATORY COMPLIANCE", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise UK regulatory compliance: Clinical Trials Regulations 2004 compliance, MHRA requirements, Good Clinical Practice adherence, post-Brexit regulatory framework. Keep concise. Do NOT include study-specific details." }
       },
       cta_ca: {
-        1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate Health Canada CTA administrative details: NOC application pathway, sponsor information, Canadian regulatory framework, Health Canada reference numbers. Do NOT include clinical or quality information." },
-        2: { title: "CLINICAL PROTOCOL SUMMARY", content: "ONLY generate clinical protocol information: study objectives, design, endpoints, population, statistical considerations. Do NOT include manufacturing or regulatory details." },
-        3: { title: "INVESTIGATIONAL PRODUCT INFORMATION", content: "ONLY generate drug product details: formulation, manufacturing, Canadian GMP compliance, quality specifications. Do NOT include clinical design or safety data." },
-        4: { title: "SAFETY AND RISK ASSESSMENT", content: "ONLY generate safety information: nonclinical safety, clinical safety experience, risk-benefit assessment, Canadian population considerations. Do NOT include efficacy or quality data." },
-        5: { title: "INVESTIGATOR AND SITE INFORMATION", content: "ONLY generate Canadian site details: investigator qualifications, site capabilities, Canadian healthcare integration, provincial regulatory compliance. Do NOT include protocol or safety details." },
-        6: { title: "REGULATORY AND ETHICAL COMPLIANCE", content: "ONLY generate Canadian regulatory compliance: ICH-GCP compliance, Research Ethics Board approval, Health Canada regulations, Canadian privacy legislation compliance. Do NOT include study-specific information." }
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise Health Canada CTA administrative details: NOC application pathway, sponsor information, Canadian regulatory framework, Health Canada reference numbers. Keep concise. Do NOT include clinical or quality information." },
+        2: { title: "CLINICAL PROTOCOL SUMMARY", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise clinical protocol: study objectives, design, endpoints, complete eligibility criteria (all inclusion/exclusion), treatment schedule, consolidated assessment schedule (screening through follow-up), statistical considerations. ZERO DUPLICATION - visit schedules and population criteria appear HERE ONLY. Keep scannable. Do NOT include manufacturing or regulatory details." },
+        3: { title: "INVESTIGATIONAL PRODUCT INFORMATION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise drug product details: formulation, manufacturing, Canadian GMP compliance, quality specifications. Keep concise. Do NOT include clinical design or safety data." },
+        4: { title: "SAFETY AND RISK ASSESSMENT", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise safety information: nonclinical safety, clinical safety experience, risk-benefit assessment, Canadian population considerations, DLT definitions, stopping rules. Keep concise. Do NOT include efficacy or quality data." },
+        5: { title: "INVESTIGATOR AND SITE INFORMATION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise Canadian site details: investigator qualifications, site capabilities, Canadian healthcare integration, provincial regulatory compliance. Keep concise. Do NOT include protocol or safety details." },
+        6: { title: "REGULATORY AND ETHICAL COMPLIANCE", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise Canadian regulatory compliance: ICH-GCP compliance, Research Ethics Board approval, Health Canada regulations, Canadian privacy legislation compliance. Keep concise. Do NOT include study-specific information." }
       },
       cta_ru: {
-        1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate Roszdravnadzor administrative details: permit application type, Russian regulatory framework, sponsor information, authorization pathway. Do NOT include clinical or manufacturing information." },
-        2: { title: "CLINICAL STUDY OVERVIEW", content: "ONLY generate clinical study information: objectives, design, Russian population considerations, endpoints, statistical approach. Do NOT include regulatory or quality details." },
-        3: { title: "INVESTIGATIONAL MEDICINAL PRODUCT", content: "ONLY generate IMP details: drug substance, manufacturing information, Russian GMP compliance, quality control measures. Do NOT include clinical design or safety information." },
-        4: { title: "SAFETY ASSESSMENT", content: "ONLY generate safety data: nonclinical safety summary, clinical safety experience, Russian population safety considerations, risk evaluation. Do NOT include efficacy or quality information." },
-        5: { title: "RUSSIAN SITE AND INVESTIGATOR INFORMATION", content: "ONLY generate Russian site details: investigator qualifications, site authorization, Russian healthcare system integration, local regulatory compliance. Do NOT include protocol details." },
-        6: { title: "REGULATORY COMPLIANCE", content: "ONLY generate Russian regulatory compliance: Federal Law compliance, Roszdravnadzor requirements, Russian GCP standards, ethics committee approval. Do NOT include study-specific details." }
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise Roszdravnadzor administrative details: permit application type, Russian regulatory framework, sponsor information, authorization pathway. Keep concise. Do NOT include clinical or manufacturing information." },
+        2: { title: "CLINICAL STUDY OVERVIEW", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise clinical study information: objectives, design, complete eligibility criteria, Russian population considerations, endpoints, treatment schedule, consolidated assessment schedule (screening through follow-up), statistical approach. ZERO DUPLICATION - visit schedules and population criteria appear HERE ONLY. Keep scannable. Do NOT include regulatory or quality details." },
+        3: { title: "INVESTIGATIONAL MEDICINAL PRODUCT", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise IMP details: drug substance, manufacturing information, Russian GMP compliance, quality control measures. Keep concise. Do NOT include clinical design or safety information." },
+        4: { title: "SAFETY ASSESSMENT", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise safety data: nonclinical safety summary, clinical safety experience, Russian population safety considerations, risk evaluation, DLT definitions, stopping rules. Keep concise. Do NOT include efficacy or quality information." },
+        5: { title: "RUSSIAN SITE AND INVESTIGATOR INFORMATION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise Russian site details: investigator qualifications, site authorization, Russian healthcare system integration, local regulatory compliance. Keep concise. Do NOT include protocol details." },
+        6: { title: "REGULATORY COMPLIANCE", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise Russian regulatory compliance: Federal Law compliance, Roszdravnadzor requirements, Russian GCP standards, ethics committee approval. Keep concise. Do NOT include study-specific details." }
       },
       ind_ch: {
-        1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate NMPA IND administrative details: application type, Chinese regulatory pathway, sponsor information, NMPA reference numbers. Do NOT include clinical or manufacturing information." },
-        2: { title: "DRUG SUBSTANCE INFORMATION", content: "ONLY generate drug substance details: chemical characterization, synthesis, Chinese manufacturing standards, quality specifications. Do NOT include clinical or formulation information." },
-        3: { title: "NONCLINICAL SAFETY SUMMARY", content: "ONLY generate nonclinical safety data: pharmacology studies, toxicology assessment, Chinese population safety considerations, dose selection rationale. Do NOT include clinical or quality information." },
-        4: { title: "CLINICAL DEVELOPMENT PLAN", content: "ONLY generate clinical plan: study objectives, Chinese population considerations, clinical development strategy, regulatory pathway in China. Do NOT include manufacturing or safety details." },
-        5: { title: "MANUFACTURING AND QUALITY", content: "ONLY generate manufacturing information: Chinese GMP compliance, production facilities, quality control, NMPA manufacturing requirements. Do NOT include clinical or nonclinical data." },
-        6: { title: "CHINESE REGULATORY COMPLIANCE", content: "ONLY generate NMPA compliance: Chinese drug law compliance, NMPA guidelines adherence, Chinese clinical trial regulations, local regulatory requirements. Do NOT include study-specific details." }
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise NMPA IND administrative details: application type, Chinese regulatory pathway, sponsor information, NMPA reference numbers. Keep concise. Do NOT include clinical or manufacturing information." },
+        2: { title: "DRUG SUBSTANCE INFORMATION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise drug substance details: chemical characterization, synthesis, Chinese manufacturing standards, quality specifications. Keep concise. Do NOT include clinical or formulation information." },
+        3: { title: "NONCLINICAL SAFETY SUMMARY", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise nonclinical safety data: pharmacology studies, toxicology assessment, Chinese population safety considerations, dose selection rationale. Keep concise. Do NOT include clinical or quality information." },
+        4: { title: "CLINICAL DEVELOPMENT PLAN", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise clinical plan: study objectives, design, complete eligibility criteria, Chinese population considerations, treatment schedule, consolidated assessment schedule, clinical development strategy, regulatory pathway in China. ZERO DUPLICATION - visit schedules and population criteria appear HERE ONLY. Keep scannable. Do NOT include manufacturing or safety details." },
+        5: { title: "MANUFACTURING AND QUALITY", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise manufacturing information: Chinese GMP compliance, production facilities, quality control, NMPA manufacturing requirements. Keep concise. Do NOT include clinical or nonclinical data." },
+        6: { title: "CHINESE REGULATORY COMPLIANCE", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise NMPA compliance: Chinese drug law compliance, NMPA guidelines adherence, Chinese clinical trial regulations, local regulatory requirements. Keep concise. Do NOT include study-specific details." }
       },
       ind_kr: {
-        1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate K-FDA IND administrative details: application pathway, Korean regulatory framework, sponsor information, K-FDA reference numbers. Do NOT include clinical or manufacturing information." },
-        2: { title: "DRUG SUBSTANCE CHARACTERIZATION", content: "ONLY generate drug substance information: chemical structure, synthesis, Korean manufacturing standards, analytical specifications. Do NOT include clinical or safety information." },
-        3: { title: "NONCLINICAL SAFETY DATA", content: "ONLY generate nonclinical safety: pharmacology studies, toxicology assessment, Korean population safety considerations, safety margins. Do NOT include clinical or quality data." },
-        4: { title: "CLINICAL STUDY PLAN", content: "ONLY generate clinical information: study objectives, Korean population considerations, clinical development strategy, K-FDA regulatory alignment. Do NOT include manufacturing details." },
-        5: { title: "QUALITY AND MANUFACTURING", content: "ONLY generate manufacturing data: Korean GMP compliance, production information, quality control measures, K-FDA manufacturing requirements. Do NOT include clinical information." },
-        6: { title: "KOREAN REGULATORY COMPLIANCE", content: "ONLY generate K-FDA compliance: Korean pharmaceutical law compliance, K-FDA guidelines, Korean clinical trial regulations, regulatory submission strategy. Do NOT include study details." }
+        1: { title: "ADMINISTRATIVE INFORMATION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise K-FDA IND administrative details: application pathway, Korean regulatory framework, sponsor information, K-FDA reference numbers. Keep concise. Do NOT include clinical or manufacturing information." },
+        2: { title: "DRUG SUBSTANCE CHARACTERIZATION", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise drug substance information: chemical structure, synthesis, Korean manufacturing standards, analytical specifications. Keep concise. Do NOT include clinical or safety information." },
+        3: { title: "NONCLINICAL SAFETY DATA", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise nonclinical safety: pharmacology studies, toxicology assessment, Korean population safety considerations, safety margins. Keep concise. Do NOT include clinical or quality data." },
+        4: { title: "CLINICAL STUDY PLAN", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise clinical information: study objectives, design, complete eligibility criteria, Korean population considerations, treatment schedule, consolidated assessment schedule, clinical development strategy, K-FDA regulatory alignment. ZERO DUPLICATION - visit schedules and population criteria appear HERE ONLY. Keep scannable. Do NOT include manufacturing details." },
+        5: { title: "QUALITY AND MANUFACTURING", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise manufacturing data: Korean GMP compliance, production information, quality control measures, K-FDA manufacturing requirements. Keep concise. Do NOT include clinical information." },
+        6: { title: "KOREAN REGULATORY COMPLIANCE", content: "NO INTRO/CONCLUSION subsections. ONLY generate concise K-FDA compliance: Korean pharmaceutical law compliance, K-FDA guidelines, Korean clinical trial regulations, regulatory submission strategy. Keep concise. Do NOT include study details." }
       },
       nda_in: {
         1: { title: "ADMINISTRATIVE INFORMATION", content: "ONLY generate CDSCO NDA administrative details: application type, Indian regulatory pathway, applicant information, CDSCO reference numbers. Do NOT include clinical or quality information." },
@@ -1119,6 +1124,9 @@ ${sectionDef.focus ? `🎯 FOCUS AREA: ${sectionDef.focus}` : ''}
 ✅ Include specific safety/efficacy monitoring procedures
 ✅ Ensure internal consistency across document sections
 ✅ Flag assumptions/hypothetical elements clearly
+✅ NO INTRODUCTION OR CONCLUSION SUBSECTIONS - eliminate these space-wasters
+✅ KEEP CONCISE - investigators prefer shorter, scannable protocols
+✅ ZERO DUPLICATION - never repeat information that belongs in another section
 
 🎯 THERAPEUTIC AREA ADAPTATION REQUIREMENTS:
 - Include indication-specific standard of care considerations
@@ -1127,6 +1135,13 @@ ${sectionDef.focus ? `🎯 FOCUS AREA: ${sectionDef.focus}` : ''}
 - Consider indication-specific regulatory requirements
 - Include therapeutic class pharmacovigilance considerations
 - Address population-specific safety considerations
+
+🚨 CRITICAL CONSOLIDATION RULES FOR PROTOCOLS:
+- Study population details appear ONLY in Section 4 (Study Population & Eligibility)
+- Visit schedules and assessment timing appear ONLY in Section 6 (Study Procedures & Schedule of Assessments)
+- Dose escalation schemes appear ONLY in Section 3 (Study Design & Schema)
+- Do NOT duplicate these across multiple sections - reference other sections if needed
+- Model efficiency after G1 Therapeutics Phase 1 NSCLC protocol (ClinicalTrials.gov)
 
 Generate 800-1500 words about ${sectionDef.title} ONLY that demonstrates FULL COMPLIANCE with Universal Clinical Protocol Generation Standards.`
           }

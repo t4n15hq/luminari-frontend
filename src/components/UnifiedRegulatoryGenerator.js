@@ -2001,42 +2001,76 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                 {regions[selectedRegion].countries.map((country) => (
                   <div
                     key={country.id}
-                    onClick={() => handleMapCountrySelect(country, selectedRegion)}
                     style={{
                       padding: '15px',
                       backgroundColor: 'white',
                       borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      cursor: 'pointer',
+                      border: `2px solid ${regions[selectedRegion].color}`,
                       transition: 'all 0.2s ease',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = regions[selectedRegion].color;
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = '#e2e8f0';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = 'none';
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                     }}
                   >
-                    <div>
-                      <div style={{ fontWeight: 'bold', color: '#2d3748' }}>
-                        {country.name}
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#4a5568' }}>
-                        {country.documents.length} document type{country.documents.length !== 1 ? 's' : ''} available
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '15px',
+                      paddingBottom: '15px',
+                      borderBottom: '1px solid #e2e8f0'
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: 'bold', color: '#2d3748', fontSize: '1.1rem', marginBottom: '4px' }}>
+                          {country.name}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#4a5568' }}>
+                          {country.documents.length} document type{country.documents.length !== 1 ? 's' : ''} available
+                        </div>
                       </div>
                     </div>
-                    <div style={{ 
-                      fontSize: '1.2rem',
-                      color: regions[selectedRegion].color
-                    }}>
-                      →
+
+                    {/* Available Documents List - Always shown */}
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#4a5568', marginBottom: '10px' }}>
+                        Available Documents:
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {country.documents.map((doc, idx) => (
+                          <div
+                            key={doc.id || idx}
+                            onClick={() => {
+                              handleMapCountrySelect(country, selectedRegion);
+                              setDocumentType(doc.name);
+                            }}
+                            style={{
+                              fontSize: '0.8rem',
+                              color: '#2d3748',
+                              padding: '10px 12px',
+                              backgroundColor: '#f7fafc',
+                              borderRadius: '6px',
+                              border: '1px solid #e2e8f0',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#e6fffa';
+                              e.currentTarget.style.borderColor = regions[selectedRegion].color;
+                              e.currentTarget.style.transform = 'translateX(4px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#f7fafc';
+                              e.currentTarget.style.borderColor = '#e2e8f0';
+                              e.currentTarget.style.transform = 'translateX(0)';
+                            }}
+                          >
+                            <div style={{ fontWeight: '600', marginBottom: '4px', color: regions[selectedRegion].color }}>
+                              • {doc.name}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#718096', marginLeft: '12px' }}>
+                              {doc.purpose}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ))}

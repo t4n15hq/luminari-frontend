@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import apiService from '../services/api';
 import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
@@ -10,6 +10,203 @@ import DocumentViewer from './common/DocumentViewer';
 import AskLuminaPopup from './common/AskLuminaPopup';
 import FloatingButton from './common/FloatingButton';
 import RichTextEditor from './common/RichTextEditor';
+
+// Memoized ProgressBar component to prevent unnecessary re-renders
+const ProgressBar = memo(({ completion, activeFormSection, setActiveFormSection }) => {
+  return (
+    <div style={{
+      marginBottom: '2rem',
+      backgroundColor: 'white',
+      borderRadius: '12px',
+      padding: '1.5rem',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '1rem'
+      }}>
+        <h3 style={{
+          fontSize: '1.25rem',
+          fontWeight: '600',
+          margin: 0,
+          color: '#1e293b'
+        }}>
+          Form Progress
+        </h3>
+        <div style={{
+          fontSize: '1rem',
+          fontWeight: '600',
+          color: completion.requiredPercentage === 100 ? '#10b981' : '#683D94'
+        }}>
+          {completion.completedCount}/{completion.totalSections} sections completed
+        </div>
+      </div>
+
+      {/* Overall Progress Bar */}
+      <div style={{ marginBottom: '1rem' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '0.5rem'
+        }}>
+          <span style={{ fontSize: '0.9rem', color: '#64748b' }}>Overall Progress</span>
+          <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>
+            {completion.percentage}%
+          </span>
+        </div>
+        <div style={{
+          width: '100%',
+          height: '8px',
+          backgroundColor: '#e2e8f0',
+          borderRadius: '4px',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            width: `${completion.percentage}%`,
+            height: '100%',
+            backgroundColor: completion.percentage === 100 ? '#10b981' : '#683D94',
+            transition: 'width 0.3s ease, background-color 0.3s ease'
+          }} />
+        </div>
+      </div>
+
+      {/* Required Fields Progress Bar */}
+      <div style={{ marginBottom: '1rem' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '0.5rem'
+        }}>
+          <span style={{ fontSize: '0.9rem', color: '#64748b' }}>Required Fields</span>
+          <span style={{
+            fontSize: '0.9rem',
+            fontWeight: '600',
+            color: completion.requiredPercentage === 100 ? '#10b981' : '#ef4444'
+          }}>
+            {completion.requiredCompletedCount}/{completion.requiredCount} completed
+          </span>
+        </div>
+        <div style={{
+          width: '100%',
+          height: '8px',
+          backgroundColor: '#fef2f2',
+          borderRadius: '4px',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            width: `${completion.requiredPercentage}%`,
+            height: '100%',
+            backgroundColor: completion.requiredPercentage === 100 ? '#10b981' : '#ef4444',
+            transition: 'width 0.3s ease, background-color 0.3s ease'
+          }} />
+        </div>
+      </div>
+
+      {/* Section Status */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '0.5rem'
+      }}>
+        {completion.sections.map(section => (
+          <div
+            key={section.key}
+            onClick={() => {
+              setActiveFormSection(section.key);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem',
+              borderRadius: '6px',
+              backgroundColor: activeFormSection === section.key ? '#eff6ff' : (section.isCompleted() ? '#f0fdf4' : '#f8fafc'),
+              border: `1px solid ${activeFormSection === section.key ? '#683D94' : (section.isCompleted() ? '#10b981' : '#e2e8f0')}`,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: activeFormSection === section.key ? '0 2px 4px rgba(59, 130, 246, 0.2)' : 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = section.isCompleted() ? '#ecfdf5' : '#f1f5f9';
+              e.currentTarget.style.border = `1px solid ${section.isCompleted() ? '#059669' : '#cbd5e1'}`;
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = activeFormSection === section.key ? '#eff6ff' : (section.isCompleted() ? '#f0fdf4' : '#f8fafc');
+              e.currentTarget.style.border = `1px solid ${activeFormSection === section.key ? '#683D94' : (section.isCompleted() ? '#10b981' : '#e2e8f0')}`;
+              e.currentTarget.style.boxShadow = activeFormSection === section.key ? '0 2px 4px rgba(59, 130, 246, 0.2)' : 'none';
+            }}
+          >
+            <span style={{
+              fontSize: '1rem',
+              color: section.isCompleted() ? '#10b981' : '#64748b'
+            }}>
+              {section.isCompleted() ? '✓' : '✕'}
+            </span>
+            <span style={{
+              fontSize: '0.85rem',
+              color: section.isCompleted() ? '#059669' : '#64748b',
+              fontWeight: section.isCompleted() ? '500' : '400'
+            }}>
+              {section.title}
+              {section.isRequired && <span style={{ color: '#ef4444' }}>*</span>}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+// Memoized FormSection component
+const FormSection = memo(({ title, sectionKey, children, isRequired, completion, activeFormSection }) => {
+  const isCompleted = completion.sections.find(s => s.key === sectionKey)?.isCompleted() || false;
+  const isActive = activeFormSection === sectionKey;
+
+  if (!isActive) return null;
+
+  return (
+    <div style={{
+      marginBottom: '1.5rem',
+      backgroundColor: 'white',
+      borderRadius: '12px',
+      border: `2px solid ${isCompleted ? '#10b981' : '#e2e8f0'}`,
+      overflow: 'hidden',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    }}>
+      <div style={{
+        padding: '1rem 1.5rem',
+        backgroundColor: '#f8fafc',
+        borderBottom: '1px solid #e2e8f0'
+      }}>
+        <h3 style={{
+          fontSize: '1.25rem',
+          fontWeight: '600',
+          margin: 0,
+          color: '#1e293b',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <span style={{ color: isCompleted ? '#10b981' : '#64748b' }}>
+            {isCompleted ? '✓' : '✕'}
+          </span>
+          {title}
+          {isRequired && <span style={{ color: '#ef4444' }}>*</span>}
+        </h3>
+      </div>
+
+      <div style={{ padding: '1.5rem' }}>
+        {children}
+      </div>
+    </div>
+  );
+});
 
 const ProtocolGenerator = () => {
   const [showAskLumina, setShowAskLumina] = useState(false);
@@ -25,239 +222,40 @@ const ProtocolGenerator = () => {
     saveGlobalProtocolState 
   } = useAuth();
 
-  // Debounced update function to prevent excessive re-renders
-  const debouncedUpdate = useCallback((updateFn) => {
-    let timeoutId;
-    return (...args) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        updateFn(...args);
-      }, 300); // 300ms delay
-    };
-  }, []);
+  // Create individual memoized handlers for each field to prevent re-creation
+  const handleFieldChange = useMemo(() => {
+    const handlers = {};
+    const fieldNames = [
+      'disease', 'population', 'treatment', 'drugClass', 'mechanism', 'clinicalInfo',
+      'studyType', 'trialPhase', 'trialType', 'randomization', 'blinding', 'controlGroupType',
+      'sampleSize', 'minAge', 'maxAge', 'gender', 'inclusionCriteria', 'exclusionCriteria',
+      'routeOfAdministration', 'dosingFrequency', 'comparatorDrug', 'primaryEndpoints',
+      'secondaryEndpoints', 'outcomeMeasurementTool', 'statisticalPower', 'significanceLevel',
+      'studyDuration'
+    ];
 
-  // Local state for immediate UI updates
-  const [localFormData, setLocalFormData] = useState({});
+    fieldNames.forEach(field => {
+      handlers[field] = (e) => {
+        const value = e.target.value;
+        setGlobalProtocolFormData(prev => ({ ...prev, [field]: value }));
+      };
+    });
 
-  // Optimized form setters with debouncing and immediate local updates
-  const createOptimizedSetter = useCallback((field) => {
-    return (value) => {
-      // Immediate local update for smooth typing
-      setLocalFormData(prev => ({ ...prev, [field]: value }));
-      
-      // Debounced global update
-      debouncedUpdate((val) => {
-        setGlobalProtocolFormData(prev => ({ ...prev, [field]: val }));
-      })(value);
-    };
-  }, [debouncedUpdate, setGlobalProtocolFormData]);
-  
+    return handlers;
+  }, [setGlobalProtocolFormData]);
+
   // Active section state for navigation
   const [activeFormSection, setActiveFormSection] = useState('basicInfo');
 
+  // Clear all form fields
+  const handleClearForm = useCallback(() => {
+    if (window.confirm('Are you sure you want to clear all fields? This action cannot be undone.')) {
+      setGlobalProtocolFormData({});
+      setActiveFormSection('basicInfo');
+    }
+  }, [setGlobalProtocolFormData]);
 
-  const ProgressBar = () => {
-    const completion = getSectionCompletion();
-    
-    return (
-      <div style={{
-        marginBottom: '2rem',
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '1.5rem',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1rem'
-        }}>
-          <h3 style={{
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            margin: 0,
-            color: '#1e293b'
-          }}>
-            Form Progress
-          </h3>
-          <div style={{
-            fontSize: '1rem',
-            fontWeight: '600',
-            color: completion.requiredPercentage === 100 ? '#10b981' : '#683D94'
-          }}>
-            {completion.completedCount}/{completion.totalSections} sections completed
-          </div>
-        </div>
 
-        {/* Overall Progress Bar */}
-        <div style={{ marginBottom: '1rem' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '0.5rem'
-          }}>
-            <span style={{ fontSize: '0.9rem', color: '#64748b' }}>Overall Progress</span>
-            <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>
-              {completion.percentage}%
-            </span>
-          </div>
-          <div style={{
-            width: '100%',
-            height: '8px',
-            backgroundColor: '#e2e8f0',
-            borderRadius: '4px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              width: `${completion.percentage}%`,
-              height: '100%',
-              backgroundColor: completion.percentage === 100 ? '#10b981' : '#683D94',
-              transition: 'width 0.3s ease, background-color 0.3s ease'
-            }} />
-          </div>
-        </div>
-
-        {/* Required Fields Progress Bar */}
-        <div style={{ marginBottom: '1rem' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '0.5rem'
-          }}>
-            <span style={{ fontSize: '0.9rem', color: '#64748b' }}>Required Fields</span>
-            <span style={{ 
-              fontSize: '0.9rem', 
-              fontWeight: '600', 
-              color: completion.requiredPercentage === 100 ? '#10b981' : '#ef4444'
-            }}>
-              {completion.requiredCompletedCount}/{completion.requiredCount} completed
-            </span>
-          </div>
-          <div style={{
-            width: '100%',
-            height: '8px',
-            backgroundColor: '#fef2f2',
-            borderRadius: '4px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              width: `${completion.requiredPercentage}%`,
-              height: '100%',
-              backgroundColor: completion.requiredPercentage === 100 ? '#10b981' : '#ef4444',
-              transition: 'width 0.3s ease, background-color 0.3s ease'
-            }} />
-          </div>
-        </div>
-
-        {/* Section Status */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '0.5rem'
-        }}>
-                 {completion.sections.map(section => (
-                   <div
-                     key={section.key}
-                     onClick={() => {
-                       // Set the active section for navigation
-                       setActiveFormSection(section.key);
-                     }}
-                     style={{
-                       display: 'flex',
-                       alignItems: 'center',
-                       gap: '0.5rem',
-                       padding: '0.5rem',
-                       borderRadius: '6px',
-                       backgroundColor: activeFormSection === section.key ? '#eff6ff' : (section.isCompleted() ? '#f0fdf4' : '#f8fafc'),
-                       border: `1px solid ${activeFormSection === section.key ? '#683D94' : (section.isCompleted() ? '#10b981' : '#e2e8f0')}`,
-                       cursor: 'pointer',
-                       transition: 'all 0.2s ease',
-                       transform: activeFormSection === section.key ? 'translateY(-1px)' : 'none',
-                       boxShadow: activeFormSection === section.key ? '0 2px 4px rgba(59, 130, 246, 0.2)' : 'none'
-                     }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = section.isCompleted() ? '#ecfdf5' : '#f1f5f9';
-                e.target.style.border = `1px solid ${section.isCompleted() ? '#059669' : '#cbd5e1'}`;
-                e.target.style.transform = 'translateY(-1px)';
-                e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = section.isCompleted() ? '#f0fdf4' : '#f8fafc';
-                e.target.style.border = `1px solid ${section.isCompleted() ? '#10b981' : '#e2e8f0'}`;
-                e.target.style.transform = 'none';
-                e.target.style.boxShadow = 'none';
-              }}
-            >
-              <span style={{
-                fontSize: '1rem',
-                color: section.isCompleted() ? '#10b981' : '#64748b'
-              }}>
-                {section.isCompleted() ? '✓' : '✕'}
-              </span>
-              <span style={{
-                fontSize: '0.85rem',
-                color: section.isCompleted() ? '#059669' : '#64748b',
-                fontWeight: section.isCompleted() ? '500' : '400'
-              }}>
-                {section.title}
-                {section.isRequired && <span style={{ color: '#ef4444' }}>*</span>}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  // Form section component for navigation
-  const FormSection = ({ title, sectionKey, children, isRequired = false }) => {
-    const completion = getSectionCompletion();
-    const isCompleted = completion.sections.find(s => s.key === sectionKey)?.isCompleted() || false;
-    const isActive = activeFormSection === sectionKey;
-
-    if (!isActive) return null;
-
-    return (
-      <div style={{
-        marginBottom: '1.5rem',
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        border: `2px solid ${isCompleted ? '#10b981' : '#e2e8f0'}`,
-        overflow: 'hidden',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{
-          padding: '1rem 1.5rem',
-          backgroundColor: '#f8fafc',
-          borderBottom: '1px solid #e2e8f0'
-        }}>
-          <h3 style={{
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            margin: 0,
-            color: '#1e293b',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            <span style={{ color: isCompleted ? '#10b981' : '#64748b' }}>
-              {isCompleted ? '✓' : '✕'}
-            </span>
-            {title}
-            {isRequired && <span style={{ color: '#ef4444' }}>*</span>}
-          </h3>
-        </div>
-
-        <div style={{ padding: '1.5rem' }}>
-          {children}
-        </div>
-      </div>
-    );
-  };
   
   // Use global form data and create setters that update global state
   const {
@@ -290,34 +288,6 @@ const ProtocolGenerator = () => {
     studyDuration
   } = globalProtocolFormData;
 
-  // Create optimized setters that update global state with debouncing
-  const setDisease = createOptimizedSetter('disease');
-  const setPopulation = createOptimizedSetter('population');
-  const setTreatment = createOptimizedSetter('treatment');
-  const setDrugClass = createOptimizedSetter('drugClass');
-  const setMechanism = createOptimizedSetter('mechanism');
-  const setClinicalInfo = createOptimizedSetter('clinicalInfo');
-  const setStudyType = createOptimizedSetter('studyType');
-  const setTrialPhase = createOptimizedSetter('trialPhase');
-  const setTrialType = createOptimizedSetter('trialType');
-  const setRandomization = createOptimizedSetter('randomization');
-  const setBlinding = createOptimizedSetter('blinding');
-  const setControlGroupType = createOptimizedSetter('controlGroupType');
-  const setSampleSize = createOptimizedSetter('sampleSize');
-  const setMinAge = createOptimizedSetter('minAge');
-  const setMaxAge = createOptimizedSetter('maxAge');
-  const setGender = createOptimizedSetter('gender');
-  const setInclusionCriteria = createOptimizedSetter('inclusionCriteria');
-  const setExclusionCriteria = createOptimizedSetter('exclusionCriteria');
-  const setRouteOfAdministration = createOptimizedSetter('routeOfAdministration');
-  const setDosingFrequency = createOptimizedSetter('dosingFrequency');
-  const setComparatorDrug = createOptimizedSetter('comparatorDrug');
-  const setPrimaryEndpoints = createOptimizedSetter('primaryEndpoints');
-  const setSecondaryEndpoints = createOptimizedSetter('secondaryEndpoints');
-  const setOutcomeMeasurementTool = createOptimizedSetter('outcomeMeasurementTool');
-  const setStatisticalPower = createOptimizedSetter('statisticalPower');
-  const setSignificanceLevel = createOptimizedSetter('significanceLevel');
-  const setStudyDuration = createOptimizedSetter('studyDuration');
 
   // Preclinical-specific parameters
   const [animalModel, setAnimalModel] = useState('');
@@ -332,6 +302,11 @@ const ProtocolGenerator = () => {
 
   // UI State
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [eta, setEta] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const progressIntervalRef = React.useRef(null);
+
   // Use global result and studyDesign state
   const result = globalProtocolResult;
   const studyDesign = globalStudyDesign;
@@ -736,11 +711,6 @@ const ProtocolGenerator = () => {
     }
   }, [globalProtocolFormData]);
 
-  // Sync local state with global state on mount
-  useEffect(() => {
-    setLocalFormData(globalProtocolFormData || {});
-  }, []); // Only run on mount
-
   // Function to calculate section completion (memoized for performance)
   const getSectionCompletion = useMemo(() => {
     const calculateCompletion = () => {
@@ -748,49 +718,49 @@ const ProtocolGenerator = () => {
       {
         key: 'basicInfo',
         title: 'Basic Information',
-        isCompleted: () => disease.trim() !== '',
+        isCompleted: () => (disease || '').trim() !== '',
         isRequired: true
       },
       {
         key: 'studyType',
         title: 'Study Type',
-        isCompleted: () => studyType.trim() !== '',
+        isCompleted: () => (studyType || '').trim() !== '',
         isRequired: true
       },
       {
         key: 'trialDesign',
         title: studyType === 'preclinical' ? 'Study Design & Basics' : 'Trial Design & Basics',
-        isCompleted: () => trialPhase.trim() !== '' || trialType.trim() !== '' || randomization.trim() !== '' || blinding.trim() !== '',
+        isCompleted: () => (trialPhase || '').trim() !== '' || (trialType || '').trim() !== '' || (randomization || '').trim() !== '' || (blinding || '').trim() !== '',
         isRequired: false
       },
       {
         key: 'population',
         title: studyType === 'preclinical' ? 'Animal Model & Study Design' : 'Population & Eligibility',
-        isCompleted: () => sampleSize.trim() !== '' || minAge.trim() !== '' || maxAge.trim() !== '' || inclusionCriteria.trim() !== '',
+        isCompleted: () => (sampleSize || '').trim() !== '' || (minAge || '').trim() !== '' || (maxAge || '').trim() !== '' || (inclusionCriteria || '').trim() !== '',
         isRequired: false
       },
       {
         key: 'intervention',
         title: 'Intervention & Drug Details',
-        isCompleted: () => routeOfAdministration.trim() !== '' || dosingFrequency.trim() !== '' || comparatorDrug.trim() !== '',
+        isCompleted: () => (routeOfAdministration || '').trim() !== '' || (dosingFrequency || '').trim() !== '' || (comparatorDrug || '').trim() !== '',
         isRequired: false
       },
       {
         key: 'endpoints',
         title: 'Endpoints & Outcome Measures',
-        isCompleted: () => primaryEndpoints.trim() !== '' || secondaryEndpoints.trim() !== '' || outcomeMeasurementTool.trim() !== '',
+        isCompleted: () => (primaryEndpoints || '').trim() !== '' || (secondaryEndpoints || '').trim() !== '' || (outcomeMeasurementTool || '').trim() !== '',
         isRequired: false
       },
       {
         key: 'statistics',
         title: 'Statistical Considerations',
-        isCompleted: () => statisticalPower.trim() !== '' || studyDuration.trim() !== '',
+        isCompleted: () => (statisticalPower || '').trim() !== '' || (studyDuration || '').trim() !== '',
         isRequired: false
       },
       {
         key: 'additionalInfo',
         title: 'Additional Information',
-        isCompleted: () => clinicalInfo.trim() !== '',
+        isCompleted: () => (clinicalInfo || '').trim() !== '',
         isRequired: false
       }
     ];
@@ -813,7 +783,7 @@ const ProtocolGenerator = () => {
         requiredPercentage: Math.round((requiredCompletedCount / requiredCount) * 100)
       };
     };
-    
+
     return calculateCompletion;
   }, [disease, studyType, trialPhase, trialType, randomization, blinding, sampleSize, minAge, maxAge, inclusionCriteria, routeOfAdministration, dosingFrequency, comparatorDrug, primaryEndpoints, secondaryEndpoints, outcomeMeasurementTool, statisticalPower, studyDuration, clinicalInfo]);
 
@@ -998,9 +968,32 @@ const ProtocolGenerator = () => {
       // Start background jobs for both protocol and study design
       const protocolJobId = startJob('protocol', formData, apiService.generateProtocol);
       const studyDesignJobId = startJob('study_design', formData, apiService.generateIndModule);
-      
+
       setBackgroundJobId(protocolJobId);
       setLoading(true);
+      setProgress(0);
+      setStartTime(Date.now());
+
+      // Simulate progress updates (since we don't get real progress from backend)
+      progressIntervalRef.current = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 95) return prev; // Cap at 95% until actually complete
+          // Slow down as we approach completion
+          const increment = prev < 50 ? 15 : prev < 80 ? 8 : 3;
+          const newProgress = Math.min(prev + increment, 95);
+
+          // Calculate ETA based on current progress
+          const currentStartTime = startTime || Date.now();
+          if (newProgress > 0) {
+            const elapsed = Date.now() - currentStartTime;
+            const estimatedTotal = (elapsed / newProgress) * 100;
+            const remaining = estimatedTotal - elapsed;
+            setEta(Math.max(0, Math.ceil(remaining / 1000))); // in seconds
+          }
+
+          return newProgress;
+        });
+      }, 2000); // Update every 2 seconds
       
       // Monitor both jobs
       const checkJobsStatus = async () => {
@@ -1009,9 +1002,14 @@ const ProtocolGenerator = () => {
         
         if (protocolJob && studyDesignJob) {
           if (protocolJob.status === 'completed' && studyDesignJob.status === 'completed') {
+            if (progressIntervalRef.current) {
+              clearInterval(progressIntervalRef.current);
+              progressIntervalRef.current = null;
+            }
+            setProgress(100);
             setLoading(false);
             setBackgroundJobId(null);
-            
+
             setResult(protocolJob.result);
             setStudyDesign(studyDesignJob.result);
             setShowGeneratedInfo(true);
@@ -1068,8 +1066,13 @@ const ProtocolGenerator = () => {
             }, 100);
             
           } else if (protocolJob.status === 'error' || studyDesignJob.status === 'error') {
+            if (progressIntervalRef.current) {
+              clearInterval(progressIntervalRef.current);
+              progressIntervalRef.current = null;
+            }
             setLoading(false);
             setBackgroundJobId(null);
+            setProgress(0);
             setError('Failed to generate protocol. Please try again.');
           } else {
             // Jobs still running, check again in 1 second
@@ -1085,10 +1088,15 @@ const ProtocolGenerator = () => {
       checkJobsStatus();
       
     } catch (err) {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
       setError('Failed to generate protocol. Please try again.');
       console.error(err);
       setLoading(false);
       setBackgroundJobId(null);
+      setProgress(0);
     }
   };
 
@@ -2562,10 +2570,54 @@ const ProtocolGenerator = () => {
       
       <form onSubmit={handleSubmit}>
         {/* Progress Bar */}
-        <ProgressBar />
-        
+        <ProgressBar
+          completion={getSectionCompletion()}
+          activeFormSection={activeFormSection}
+          setActiveFormSection={setActiveFormSection}
+        />
+
+        {/* Clear Button */}
+        <div style={{
+          marginBottom: '1.5rem',
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }}>
+          <button
+            type="button"
+            onClick={handleClearForm}
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#dc2626';
+              e.target.style.boxShadow = '0 4px 6px rgba(239, 68, 68, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#ef4444';
+              e.target.style.boxShadow = '0 2px 4px rgba(239, 68, 68, 0.2)';
+            }}
+          >
+            Clear All Fields
+          </button>
+        </div>
+
         {/* Basic Information Section */}
-        <FormSection title="Basic Information" sectionKey="basicInfo" isRequired>
+        <FormSection
+          title="Basic Information"
+          sectionKey="basicInfo"
+          isRequired
+          completion={getSectionCompletion()}
+          activeFormSection={activeFormSection}
+        >
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="disease" className="form-label">Disease/Condition <span className="required">*</span></label>
@@ -2573,45 +2625,45 @@ const ProtocolGenerator = () => {
                 id="disease"
                 type="text"
                 className="form-input"
-                value={localFormData.disease !== undefined ? localFormData.disease : disease}
-                onChange={(e) => setDisease(e.target.value)}
+                value={disease || ''}
+                onChange={handleFieldChange.disease}
                 placeholder="e.g., Psoriasis, Eczema, Atopic Dermatitis"
                 required
               />
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="population" className="form-label">Target Population</label>
               <input
                 id="population"
                 type="text"
                 className="form-input"
-                value={population}
-                onChange={(e) => setPopulation(e.target.value)}
+                value={population || ''}
+                onChange={handleFieldChange.population}
                 placeholder="e.g., Adults, Pediatric, Elderly"
               />
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="drugClass" className="form-label">Drug Class</label>
               <input
                 id="drugClass"
                 type="text"
                 className="form-input"
-                value={drugClass}
-                onChange={(e) => setDrugClass(e.target.value)}
+                value={drugClass || ''}
+                onChange={handleFieldChange.drugClass}
                 placeholder="e.g., small molecule JAK inhibitor"
               />
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="mechanism" className="form-label">Mechanism of Action</label>
               <input
                 id="mechanism"
                 type="text"
                 className="form-input"
-                value={mechanism}
-                onChange={(e) => setMechanism(e.target.value)}
+                value={mechanism || ''}
+                onChange={handleFieldChange.mechanism}
                 placeholder="e.g., Selectively inhibits JAK1 and JAK2"
               />
             </div>
@@ -2619,15 +2671,21 @@ const ProtocolGenerator = () => {
         </FormSection>
 
         {/* Study Type Selection */}
-        <FormSection title="Study Type" sectionKey="studyType" isRequired>
+        <FormSection
+          title="Study Type"
+          sectionKey="studyType"
+          isRequired
+          completion={getSectionCompletion()}
+          activeFormSection={activeFormSection}
+        >
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="studyType" className="form-label">Study Type <span className="required">*</span></label>
               <select
                 id="studyType"
                 className="form-select"
-                value={studyType}
-                onChange={(e) => setStudyType(e.target.value)}
+                value={studyType || ''}
+                onChange={handleFieldChange.studyType}
                 required
               >
                 <option value="clinical">Clinical Study</option>
@@ -2638,15 +2696,20 @@ const ProtocolGenerator = () => {
         </FormSection>
 
         {/* Trial Design & Basics Section */}
-        <FormSection title={studyType === 'preclinical' ? 'Study Design & Basics' : 'Trial Design & Basics'} sectionKey="trialDesign">
+        <FormSection
+          title={studyType === 'preclinical' ? 'Study Design & Basics' : 'Trial Design & Basics'}
+          sectionKey="trialDesign"
+          completion={getSectionCompletion()}
+          activeFormSection={activeFormSection}
+        >
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="trialPhase" className="form-label">{studyType === 'preclinical' ? 'Study Phase' : 'Trial Phase'}</label>
               <select
                 id="trialPhase"
                 className="form-select"
-                value={trialPhase}
-                onChange={(e) => setTrialPhase(e.target.value)}
+                value={trialPhase || ''}
+                onChange={handleFieldChange.trialPhase}
               >
                 <option value="">Select Phase</option>
                 {(studyType === 'preclinical' ? preclinicalPhases : trialPhases).map(phase => (
@@ -2659,8 +2722,8 @@ const ProtocolGenerator = () => {
               <label htmlFor="trialType">{studyType === 'preclinical' ? 'Study Type' : 'Trial Type'}</label>
               <select
                 id="trialType"
-                value={trialType}
-                onChange={(e) => setTrialType(e.target.value)}
+                value={trialType || ''}
+                onChange={handleFieldChange.trialType}
               >
                 <option value="">Select Type</option>
                 {(studyType === 'preclinical' ? preclinicalTypes : trialTypes).map(type => (
@@ -2677,8 +2740,8 @@ const ProtocolGenerator = () => {
                     type="radio"
                     name="randomization"
                     value="Yes"
-                    checked={randomization === 'Yes'}
-                    onChange={(e) => setRandomization(e.target.value)}
+                    checked={(randomization || '') === 'Yes'}
+                    onChange={handleFieldChange.randomization}
                     style={{ marginRight: '0.5rem' }}
                   />
                   Yes
@@ -2688,8 +2751,8 @@ const ProtocolGenerator = () => {
                     type="radio"
                     name="randomization"
                     value="No"
-                    checked={randomization === 'No'}
-                    onChange={(e) => setRandomization(e.target.value)}
+                    checked={(randomization || '') === 'No'}
+                    onChange={handleFieldChange.randomization}
                     style={{ marginRight: '0.5rem' }}
                   />
                   No
@@ -2701,8 +2764,8 @@ const ProtocolGenerator = () => {
               <label htmlFor="blinding">Blinding</label>
               <select
                 id="blinding"
-                value={blinding}
-                onChange={(e) => setBlinding(e.target.value)}
+                value={blinding || ''}
+                onChange={handleFieldChange.blinding}
               >
                 <option value="">Select Blinding</option>
                 {blindingOptions.map(option => (
@@ -2715,8 +2778,8 @@ const ProtocolGenerator = () => {
               <label htmlFor="controlGroupType">Control Group Type</label>
               <select
                 id="controlGroupType"
-                value={controlGroupType}
-                onChange={(e) => setControlGroupType(e.target.value)}
+                value={controlGroupType || ''}
+                onChange={handleFieldChange.controlGroupType}
               >
                 <option value="">Select Control</option>
                 {controlGroupTypes.map(type => (
@@ -2728,7 +2791,12 @@ const ProtocolGenerator = () => {
         </FormSection>
 
         {/* Population & Eligibility Section */}
-        <FormSection title={studyType === 'preclinical' ? 'Animal Model & Study Design' : 'Population & Eligibility'} sectionKey="population">
+        <FormSection
+          title={studyType === 'preclinical' ? 'Animal Model & Study Design' : 'Population & Eligibility'}
+          sectionKey="population"
+          completion={getSectionCompletion()}
+          activeFormSection={activeFormSection}
+        >
           {studyType === 'preclinical' ? (
             // Preclinical Animal Model Fields
             <>
@@ -2852,8 +2920,8 @@ const ProtocolGenerator = () => {
                   <input
                     id="sampleSize"
                     type="number"
-                    value={sampleSize}
-                    onChange={(e) => setSampleSize(e.target.value)}
+                    value={sampleSize || ''}
+                    onChange={handleFieldChange.sampleSize}
                     placeholder="e.g., 120"
                     min="1"
                   />
@@ -2864,8 +2932,8 @@ const ProtocolGenerator = () => {
                   <input
                     id="minAge"
                     type="number"
-                    value={minAge}
-                    onChange={(e) => setMinAge(e.target.value)}
+                    value={minAge || ''}
+                    onChange={handleFieldChange.minAge}
                     placeholder="e.g., 18"
                     min="0"
                   />
@@ -2876,8 +2944,8 @@ const ProtocolGenerator = () => {
                   <input
                     id="maxAge"
                     type="number"
-                    value={maxAge}
-                    onChange={(e) => setMaxAge(e.target.value)}
+                    value={maxAge || ''}
+                    onChange={handleFieldChange.maxAge}
                     placeholder="e.g., 75"
                     min="0"
                   />
@@ -2887,8 +2955,8 @@ const ProtocolGenerator = () => {
                   <label htmlFor="gender">Gender</label>
                   <select
                     id="gender"
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
+                    value={gender || ''}
+                    onChange={handleFieldChange.gender}
                   >
                     <option value="">Select Gender</option>
                     {genderOptions.map(option => (
@@ -2903,8 +2971,8 @@ const ProtocolGenerator = () => {
                   <label htmlFor="inclusionCriteria">Inclusion Criteria</label>
                   <textarea
                     id="inclusionCriteria"
-                    value={inclusionCriteria}
-                    onChange={(e) => setInclusionCriteria(e.target.value)}
+                    value={inclusionCriteria || ''}
+                    onChange={handleFieldChange.inclusionCriteria}
                     placeholder="e.g., Adults aged 18-75 years, Confirmed diagnosis of moderate-to-severe condition..."
                     rows="4"
                   />
@@ -2914,8 +2982,8 @@ const ProtocolGenerator = () => {
                   <label htmlFor="exclusionCriteria">Exclusion Criteria</label>
                   <textarea
                     id="exclusionCriteria"
-                    value={exclusionCriteria}
-                    onChange={(e) => setExclusionCriteria(e.target.value)}
+                    value={exclusionCriteria || ''}
+                    onChange={handleFieldChange.exclusionCriteria}
                     placeholder="e.g., Pregnancy, Active infection, Immunocompromised state..."
                     rows="4"
                   />
@@ -2926,14 +2994,19 @@ const ProtocolGenerator = () => {
         </FormSection>
 
         {/* Intervention & Drug Details Section */}
-        <FormSection title="Intervention & Drug Details" sectionKey="intervention">
+        <FormSection
+          title="Intervention & Drug Details"
+          sectionKey="intervention"
+          completion={getSectionCompletion()}
+          activeFormSection={activeFormSection}
+        >
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="routeOfAdministration">Route of Administration</label>
               <select
                 id="routeOfAdministration"
-                value={routeOfAdministration}
-                onChange={(e) => setRouteOfAdministration(e.target.value)}
+                value={routeOfAdministration || ''}
+                onChange={handleFieldChange.routeOfAdministration}
               >
                 <option value="">Select Route</option>
                 {routeOptions.map(route => (
@@ -2946,8 +3019,8 @@ const ProtocolGenerator = () => {
               <label htmlFor="dosingFrequency">Dosing Frequency</label>
               <select
                 id="dosingFrequency"
-                value={dosingFrequency}
-                onChange={(e) => setDosingFrequency(e.target.value)}
+                value={dosingFrequency || ''}
+                onChange={handleFieldChange.dosingFrequency}
               >
                 <option value="">Select Frequency</option>
                 {dosingFrequencyOptions.map(freq => (
@@ -2961,8 +3034,8 @@ const ProtocolGenerator = () => {
               <input
                 id="comparatorDrug"
                 type="text"
-                value={comparatorDrug}
-                onChange={(e) => setComparatorDrug(e.target.value)}
+                value={comparatorDrug || ''}
+                onChange={handleFieldChange.comparatorDrug}
                 placeholder="e.g., Placebo, Standard of care"
               />
             </div>
@@ -2972,8 +3045,8 @@ const ProtocolGenerator = () => {
               <input
                 id="treatment"
                 type="text"
-                value={treatment}
-                onChange={(e) => setTreatment(e.target.value)}
+                value={treatment || ''}
+                onChange={handleFieldChange.treatment}
                 placeholder="e.g., 12 weeks, 6 months"
               />
             </div>
@@ -2981,14 +3054,19 @@ const ProtocolGenerator = () => {
         </FormSection>
 
         {/* Endpoints & Outcome Measures Section */}
-        <FormSection title="Endpoints & Outcome Measures" sectionKey="endpoints">
+        <FormSection
+          title="Endpoints & Outcome Measures"
+          sectionKey="endpoints"
+          completion={getSectionCompletion()}
+          activeFormSection={activeFormSection}
+        >
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="primaryEndpoints">Primary Endpoint(s)</label>
               <textarea
                 id="primaryEndpoints"
-                value={primaryEndpoints}
-                onChange={(e) => setPrimaryEndpoints(e.target.value)}
+                value={primaryEndpoints || ''}
+                onChange={handleFieldChange.primaryEndpoints}
                 placeholder="e.g., Proportion of patients achieving PASI 75 at Week 16"
                 rows="3"
               />
@@ -2998,8 +3076,8 @@ const ProtocolGenerator = () => {
               <label htmlFor="secondaryEndpoints">Secondary Endpoint(s)</label>
               <textarea
                 id="secondaryEndpoints"
-                value={secondaryEndpoints}
-                onChange={(e) => setSecondaryEndpoints(e.target.value)}
+                value={secondaryEndpoints || ''}
+                onChange={handleFieldChange.secondaryEndpoints}
                 placeholder="e.g., PASI 90 response, sPGA score, Quality of life measures"
                 rows="3"
               />
@@ -3009,8 +3087,8 @@ const ProtocolGenerator = () => {
               <label htmlFor="outcomeMeasurementTool">Outcome Measurement Tool</label>
               <select
                 id="outcomeMeasurementTool"
-                value={outcomeMeasurementTool}
-                onChange={(e) => setOutcomeMeasurementTool(e.target.value)}
+                value={outcomeMeasurementTool || ''}
+                onChange={handleFieldChange.outcomeMeasurementTool}
               >
                 <option value="">Select Measurement Tool</option>
                 {outcomeMeasurementTools.map(tool => (
@@ -3022,15 +3100,20 @@ const ProtocolGenerator = () => {
         </FormSection>
 
         {/* Statistics & Duration Section */}
-        <FormSection title="Statistical Considerations" sectionKey="statistics">
+        <FormSection
+          title="Statistical Considerations"
+          sectionKey="statistics"
+          completion={getSectionCompletion()}
+          activeFormSection={activeFormSection}
+        >
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="statisticalPower">Statistical Power (%)</label>
               <input
                 id="statisticalPower"
                 type="number"
-                value={statisticalPower}
-                onChange={(e) => setStatisticalPower(e.target.value)}
+                value={statisticalPower || ''}
+                onChange={handleFieldChange.statisticalPower}
                 placeholder="80"
                 min="1"
                 max="99"
@@ -3042,8 +3125,8 @@ const ProtocolGenerator = () => {
               <input
                 id="significanceLevel"
                 type="number"
-                value={significanceLevel}
-                onChange={(e) => setSignificanceLevel(e.target.value)}
+                value={significanceLevel || ''}
+                onChange={handleFieldChange.significanceLevel}
                 placeholder="0.05"
                 step="0.01"
                 min="0.01"
@@ -3056,8 +3139,8 @@ const ProtocolGenerator = () => {
               <input
                 id="studyDuration"
                 type="text"
-                value={studyDuration}
-                onChange={(e) => setStudyDuration(e.target.value)}
+                value={studyDuration || ''}
+                onChange={handleFieldChange.studyDuration}
                 placeholder="e.g., 18 months total (12 weeks treatment + 6 months follow-up)"
               />
             </div>
@@ -3065,13 +3148,18 @@ const ProtocolGenerator = () => {
         </FormSection>
 
         {/* Clinical Study Information */}
-        <FormSection title="Additional Information" sectionKey="additionalInfo">
+        <FormSection
+          title="Additional Information"
+          sectionKey="additionalInfo"
+          completion={getSectionCompletion()}
+          activeFormSection={activeFormSection}
+        >
           <div className="form-group full-width">
           <label htmlFor="clinicalInfo">Additional Clinical Study Information</label>
           <textarea
             id="clinicalInfo"
-            value={clinicalInfo}
-            onChange={(e) => setClinicalInfo(e.target.value)}
+            value={clinicalInfo || ''}
+            onChange={handleFieldChange.clinicalInfo}
             placeholder="e.g., Previous clinical data, specific assessment methods, biomarker strategies, special populations, regulatory considerations..."
             rows="4"
             className="clinical-info-textarea"
@@ -3092,6 +3180,46 @@ const ProtocolGenerator = () => {
             <div className="loading-indicator">
               <div className="loading-spinner"></div>
               <p>Generating comprehensive protocol with all specified parameters...</p>
+
+              {/* Progress Bar */}
+              <div style={{
+                marginTop: '1.5rem',
+                width: '100%',
+                maxWidth: '500px',
+                margin: '1.5rem auto 0'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.9rem',
+                  color: '#64748b'
+                }}>
+                  <span>Progress: {progress}%</span>
+                  {eta !== null && eta > 0 && (
+                    <span>
+                      ETA: {Math.floor(eta / 60) > 0 ? `${Math.floor(eta / 60)}m ` : ''}{eta % 60}s
+                    </span>
+                  )}
+                </div>
+                <div style={{
+                  width: '100%',
+                  height: '10px',
+                  backgroundColor: '#e2e8f0',
+                  borderRadius: '5px',
+                  overflow: 'hidden',
+                  boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{
+                    width: `${progress}%`,
+                    height: '100%',
+                    backgroundColor: progress === 100 ? '#10b981' : '#683D94',
+                    transition: 'width 0.5s ease, background-color 0.3s ease',
+                    boxShadow: '0 0 10px rgba(104, 61, 148, 0.5)'
+                  }} />
+                </div>
+              </div>
             </div>
           )}
         </div>

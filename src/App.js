@@ -62,8 +62,6 @@ const AppContent = () => {
                 <div className="main-content">
                   <header className="App-header">
                     <div className="container">
-                      <h1>LumiPath<span className="trademark">™</span></h1>
-                      <p className="tagline">AI-driven clinical tools platform</p>
                     </div>
                   </header>
       <main>
