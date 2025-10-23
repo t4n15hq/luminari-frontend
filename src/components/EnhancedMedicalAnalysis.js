@@ -102,7 +102,7 @@ const EnhancedMedicalAnalysis = () => {
     <div className="unified-regulatory-generator">
       <div className="generator-header">
         <div>
-          <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>Enhanced Medical Analysis</h2>
+          <h2>Enhanced Medical Analysis</h2>
           <p>Advanced AI-powered medical analysis with enhanced capabilities</p>
         </div>
       </div>

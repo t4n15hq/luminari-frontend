@@ -10,6 +10,7 @@ import DocumentViewer from './common/DocumentViewer';
 import AskLuminaPopup from './common/AskLuminaPopup';
 import FloatingButton from './common/FloatingButton';
 import RichTextEditor from './common/RichTextEditor';
+import './ProtocolGenerator.css';
 
 // Memoized ProgressBar component to prevent unnecessary re-renders
 const ProgressBar = memo(({ completion, activeFormSection, setActiveFormSection }) => {
@@ -402,7 +403,7 @@ const ProtocolGenerator = () => {
         { id: 'protocol', name: 'Clinical Protocol', required: true, icon: '', maxFiles: 1 },
         { id: 'ib', name: "Investigator's Brochure", required: true, icon: '', maxFiles: 1 },
         { id: 'icf', name: 'Informed Consent Form', required: true, icon: '', maxFiles: 1 },
-        { id: 'cmc_bla', name: 'CMC/Biologics License Application', required: true, icon: '🧬', maxFiles: 5 },
+        { id: 'cmc_bla', name: 'CMC/Biologics License Application', required: true, icon: '', maxFiles: 5 },
         { id: 'preclinical', name: 'Preclinical Data', required: true, icon: '', maxFiles: 8 },
         { id: 'clinical_reports', name: 'Clinical Study Reports', required: true, icon: '', maxFiles: 10 },
         { id: 'irb', name: 'IRB Approval', required: true, icon: '', maxFiles: 1 },
@@ -1819,12 +1820,46 @@ const ProtocolGenerator = () => {
         );
       } else if (line.trim()) {
         // For other text content
-        if (line.match(/^[A-Z][a-z]/) || line.match(/^\d+\.\d+/)) {
-          // Possible subsection title
-          sectionsMarkup.push(<h5 key={`subsection-${idx}`}>{line}</h5>);
+        // Check for subsection headers (numbered like 1.1, 1.2, etc. or starting with bold text)
+        const isSubsection = line.match(/^\d+\.\d+/) ||
+                             line.match(/^[A-Z][a-z]+:/) ||
+                             line.match(/^\*\*(.*?)\*\*/);
+
+        // Parse bold text (**text**)
+        const parseBoldText = (text) => {
+          const parts = text.split(/(\*\*.*?\*\*)/g);
+          return parts.map((part, i) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              return <strong key={i}>{part.slice(2, -2)}</strong>;
+            }
+            return part;
+          });
+        };
+
+        if (isSubsection) {
+          // Subsection title
+          sectionsMarkup.push(
+            <h5 key={`subsection-${idx}`} style={{
+              fontWeight: '600',
+              marginTop: '1rem',
+              marginBottom: '0.5rem',
+              color: '#2D2D2D',
+              fontFamily: 'Inter, sans-serif'
+            }}>
+              {parseBoldText(line)}
+            </h5>
+          );
         } else {
-          // Regular paragraph
-          sectionsMarkup.push(<p key={`p-${idx}`}>{line}</p>);
+          // Regular paragraph with bold text parsing
+          sectionsMarkup.push(
+            <p key={`p-${idx}`} style={{
+              lineHeight: '1.6',
+              marginBottom: '0.75rem',
+              fontFamily: 'Inter, sans-serif'
+            }}>
+              {parseBoldText(line)}
+            </p>
+          );
         }
       } else {
         // Empty line
@@ -1907,16 +1942,53 @@ const ProtocolGenerator = () => {
           </div>
         );
       } else if (line.trim()) {
+        // Parse bold text (**text**)
+        const parseBoldText = (text) => {
+          const parts = text.split(/(\*\*.*?\*\*)/g);
+          return parts.map((part, i) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              return <strong key={i}>{part.slice(2, -2)}</strong>;
+            }
+            return part;
+          });
+        };
+
         // For other text content
         if (line.match(/^[A-Z][a-z]/) || line.match(/^\d+\.\d+/)) {
           // Possible subsection title
-          sectionsMarkup.push(<h5 key={`clinical-subsection-${idx}`} className="subsection-title">{line}</h5>);
+          sectionsMarkup.push(
+            <h5 key={`clinical-subsection-${idx}`} className="subsection-title" style={{
+              fontWeight: '600',
+              marginTop: '1rem',
+              marginBottom: '0.5rem',
+              color: '#2D2D2D',
+              fontFamily: 'Inter, sans-serif'
+            }}>
+              {parseBoldText(line)}
+            </h5>
+          );
         } else if (line.match(/^[•\-*]/)) {
           // List item
-          sectionsMarkup.push(<li key={`li-${idx}`} className="list-item">{line.substring(1).trim()}</li>);
+          sectionsMarkup.push(
+            <li key={`li-${idx}`} className="list-item" style={{
+              lineHeight: '1.6',
+              marginBottom: '0.5rem',
+              fontFamily: 'Inter, sans-serif'
+            }}>
+              {parseBoldText(line.substring(1).trim())}
+            </li>
+          );
         } else {
           // Regular paragraph
-          sectionsMarkup.push(<p key={`p-${idx}`}>{line}</p>);
+          sectionsMarkup.push(
+            <p key={`p-${idx}`} style={{
+              lineHeight: '1.6',
+              marginBottom: '0.75rem',
+              fontFamily: 'Inter, sans-serif'
+            }}>
+              {parseBoldText(line)}
+            </p>
+          );
         }
       } else {
         // Empty line
@@ -2346,7 +2418,7 @@ const ProtocolGenerator = () => {
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div>
-            <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>Clinical Study Protocol Generator</h2>
+            <h2 style={{ fontSize: '36px', fontWeight: '700', marginBottom: '0.5rem', color: '#2D2D2D', textAlign: 'left', fontFamily: 'Inter, sans-serif' }}>Clinical Study Protocol Generator</h2>
             <p>Generate a complete clinical study protocol with enhanced trial design parameters</p>
           </div>
           <button onClick={handleShowPreviousProtocols} className="btn btn-outline">
@@ -2576,12 +2648,51 @@ const ProtocolGenerator = () => {
           setActiveFormSection={setActiveFormSection}
         />
 
-        {/* Clear Button */}
+        {/* Clear Buttons */}
         <div style={{
           marginBottom: '1.5rem',
           display: 'flex',
-          justifyContent: 'flex-end'
+          justifyContent: 'flex-end',
+          gap: '1rem'
         }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Are you sure you want to clear the generated protocol? This action cannot be undone.')) {
+                setResult(null);
+                setStudyDesign(null);
+                setSectionEdits({});
+                setSelectedProtocolSections(new Set());
+                setSelectedStudyDesignSections(new Set());
+              }
+            }}
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#dc2626',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 4px rgba(220, 38, 38, 0.2)',
+              opacity: result || studyDesign ? 1 : 0.5,
+              pointerEvents: result || studyDesign ? 'auto' : 'none'
+            }}
+            onMouseEnter={(e) => {
+              if (result || studyDesign) {
+                e.target.style.backgroundColor = '#b91c1c';
+                e.target.style.boxShadow = '0 4px 6px rgba(220, 38, 38, 0.3)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#dc2626';
+              e.target.style.boxShadow = '0 2px 4px rgba(220, 38, 38, 0.2)';
+            }}
+          >
+            Clear Protocol
+          </button>
           <button
             type="button"
             onClick={handleClearForm}
@@ -3654,12 +3765,12 @@ const ProtocolGenerator = () => {
                         fontSize: '14px'
                       }}
                     >
-                      📄 Download Text
+                      Download Text
                     </button>
-                    <button 
+                    <button
                       onClick={generateSelectedSectionsWord}
                       style={{
-                        background: '#10b981',
+                        background: '#683D94',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -3668,12 +3779,12 @@ const ProtocolGenerator = () => {
                         fontSize: '14px'
                       }}
                     >
-                      📝 Download Word Document
+                      Download Word Document
                     </button>
-                    <button 
+                    <button
                       onClick={generateSelectedSectionsPDF}
                       style={{
-                        background: '#dc2626',
+                        background: '#683D94',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -3682,9 +3793,9 @@ const ProtocolGenerator = () => {
                         fontSize: '14px'
                       }}
                     >
-                      📄 Download PDF Document
+                      Download PDF Document
                     </button>
-                    <button 
+                    <button
                       onClick={() => {
                         const allContent = Object.values(sectionEdits).join('\n\n---\n\n');
                         navigator.clipboard.writeText(allContent);
@@ -3700,6 +3811,28 @@ const ProtocolGenerator = () => {
                       }}
                     >
                        Copy All to Clipboard
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to clear the generated protocol? This action cannot be undone.')) {
+                          setResult(null);
+                          setStudyDesign(null);
+                          setSectionEdits({});
+                          setSelectedProtocolSections(new Set());
+                          setSelectedStudyDesignSections(new Set());
+                        }
+                      }}
+                      style={{
+                        background: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Clear Protocol
                     </button>
                   </div>
                 </div>
@@ -4062,7 +4195,7 @@ const ProtocolGenerator = () => {
                           cursor: 'pointer'
                         }}
                       >
-                        📄 Download All as Text
+                        Download All as Text
                       </button>
                       <button 
                         onClick={() => {
@@ -4300,9 +4433,6 @@ const ProtocolGenerator = () => {
                     }}
                   >
                     <input {...getInputProps()} />
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-                      {isDragActive ? '📂' : '📄'}
-                    </div>
                     <p style={{ fontSize: '1.1rem', fontWeight: '500', marginBottom: '0.5rem', color: '#1e293b' }}>
                       {isDragActive
                         ? 'Drop the files here...'
@@ -4390,9 +4520,6 @@ const ProtocolGenerator = () => {
                             borderRadius: '8px'
                           }}>
                             <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                              <span style={{ fontSize: '1.2rem', marginRight: '0.75rem' }}>
-                                {doc.name.includes('.pdf') ? '📄' : doc.name.includes('.doc') ? '📝' : '📁'}
-                              </span>
                               <div style={{ flexGrow: 1 }}>
                                 <p style={{ fontWeight: '500', margin: 0, fontSize: '0.9rem', color: '#1e293b' }}>{doc.name}</p>
                                 <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>

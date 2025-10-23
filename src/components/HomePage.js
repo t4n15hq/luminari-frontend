@@ -1,121 +1,102 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import '../styles/designSystem.css';
+import './HomePage.css';
 
 const HomePage = () => {
   const featureCards = [
     {
       id: 'protocol',
       title: 'Protocol & Study Design Generator',
-      icon: '',
       description: 'Generate comprehensive clinical protocols for various diseases and conditions',
       path: '/protocol',
-      color: '#f7f3fb',
-      borderColor: 'var(--color-info)',
-      textColor: '#5a3280'
+      backgroundColor: '#FFFFFF',
+      icon: '/assets/icons/protocol.png'
     },
     {
       id: 'regulatory',
       title: 'Regulatory Document Generator',
-      icon: '',
-      description: 'Create regulatory documents for pharmaceutical development across global markets (Single & Batch)',
+      description: 'Create regulatory documents for pharmaceutical development across global markets',
       path: '/unified-regulatory',
-      color: '#f7fdf0',
-      borderColor: 'var(--color-success)',
-      textColor: '#6b8e23'
+      backgroundColor: '#FFFFFF',
+      icon: '/assets/icons/reg-doc-gen.png'
     },
     {
       id: 'diagnosis',
       title: 'Disease Screening',
-      icon: '',
       description: 'AI-powered tools for diagnosing conditions across multiple medical specialties',
       path: '/diagnosis',
-      color: '#f4f0f8',
-      borderColor: 'var(--color-primary)',
-      textColor: 'var(--color-primary-dark)'
+      backgroundColor: '#FFFFFF',
+      icon: '/assets/icons/disease-screening.png'
     },
     {
       id: 'query',
-      title: <>Ask Lumina<span className="trademark">™</span></>,
-      icon: '',
-      description: 'Get expert answers to complex questions about clinical trials and protocols',
+      title: 'Ask Lumina™',
+      description: 'get expert answers to complex questions about clinical trials, and protocols',
       path: '/query',
-      color: '#faf7fd',
-      borderColor: 'var(--color-primary-light)',
-      textColor: '#683D94'
+      backgroundColor: '#FFFFFF',
+      icon: '/assets/icons/ask-lumina.png'
     }
   ];
 
   return (
-    <div className="home-page">
-      <div className="hero-section fade-in">
-        <h1>LumiPath<span className="trademark">™</span></h1>
-        <p>
-          Advanced AI tools for clinical protocol development, regulatory documentation, 
-          and disease diagnosis
-        </p>
-      </div>
+    <div className="homepage-new">
+      {/* Main Content Area */}
+      <div className="homepage-content">
+        {/* Feature Cards */}
+        <div className="feature-cards-grid">
+          {featureCards.map(card => (
+            <Link
+              to={card.path}
+              key={card.id}
+              className="feature-card-new"
+              style={{ backgroundColor: card.backgroundColor }}
+            >
+              <div className="card-content">
+                <h3 className="card-title">{card.title}</h3>
+                <p className="card-description">{card.description}</p>
+              </div>
+              <div className="card-footer">
+                <div className="card-icon">
+                  <img src={card.icon} alt={card.title} />
+                </div>
+                <div className="card-arrow">→</div>
+              </div>
+            </Link>
+          ))}
+        </div>
 
-      <div className="feature-grid">
-        {featureCards.map(card => (
-          <Link 
-            to={card.path} 
-            key={card.id} 
-            className="feature-card"
-            style={{ 
-              backgroundColor: card.color,
-              borderColor: card.borderColor,
-              color: card.textColor
-            }}
-          >
-            <div className="card-icon">{card.icon}</div>
-            <h2>{card.title}</h2>
-            <p>{card.description}</p>
-            <div className="card-button">
-              Access Tool →
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      <div className="info-section">
-        <h2>How It Works</h2>
-        <div className="workflow-steps">
-          <div className="step">
-            <div className="step-number">1</div>
-            <div className="step-content">
-              <h3>Select a Tool</h3>
-              <p>Choose from our suite of AI-powered clinical tools</p>
-            </div>
-          </div>
-          <div className="step">
-            <div className="step-number">2</div>
-            <div className="step-content">
-              <h3>Input Parameters</h3>
-              <p>Provide disease information, patient data, or research requirements</p>
-            </div>
-          </div>
-          <div className="step">
-            <div className="step-number">3</div>
-            <div className="step-content">
-              <h3>Generate Results</h3>
-              <p>Receive AI-generated protocols, documentation, or diagnoses</p>
+        {/* How It Works Section */}
+        <div className="how-it-works-section">
+          <h2 className="section-heading">How It Works</h2>
+          <div className="steps-container">
+            <div className="steps-grid">
+              <div className="step-item">
+                <h3 className="step-heading">Select a Tool</h3>
+                <p className="step-text">Choose from our suite of AI-powered clinical tools</p>
+                <div className="step-icon">
+                  <img src="/assets/icons/select-tool.svg" alt="Select a Tool" />
+                </div>
+              </div>
+              <div className="step-connector">→</div>
+              <div className="step-item">
+                <h3 className="step-heading">Input Parameters</h3>
+                <p className="step-text">Provide disease information, patient data, or research requirements</p>
+                <div className="step-icon">
+                  <img src="/assets/icons/input-params.svg" alt="Input Parameters" />
+                </div>
+              </div>
+              <div className="step-connector">→</div>
+              <div className="step-item">
+                <h3 className="step-heading">Generate Results</h3>
+                <p className="step-text">Receive AI-generated protocols, documentation, or diagnoses</p>
+                <div className="step-icon">
+                  <img src="/assets/icons/generate-results.svg" alt="Generate Results" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="about-section">
-        <h2>About LumiPath<span className="trademark">™</span></h2>
-        <p>
-          LumiPath<span className="trademark">™</span> is an AI platform designed to streamline clinical research and 
-          pharmaceutical development. Our tools leverage artificial intelligence 
-          to generate high-quality, regulatory-compliant documentation and assist with 
-          medical diagnoses across multiple specialties.
-        </p>
-        <p>
-          Our mission is to accelerate medical innovation and improve patient outcomes by
-          reducing the time and complexity involved in clinical research documentation.
-        </p>
       </div>
     </div>
   );

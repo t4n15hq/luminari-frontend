@@ -1869,7 +1869,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
         <div className="interactive-map-container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <div>
-              <h3 style={{ margin: 0, color: '#2d3748' }}>🗺️ Global Regulatory Document Map</h3>
+              <h3 style={{ margin: 0, color: '#2d3748' }}>Global Regulatory Document Map</h3>
               <p style={{ margin: '0.5rem 0 0 0', color: '#4a5568' }}>
                 Select a region to explore available regulatory documents by country
               </p>
@@ -2199,7 +2199,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                     <label className="form-label" style={{ margin: 0 }}>Country</label>
                     {intelligenceLoading && (
                       <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                        🔍 Analyzing recommendations...
+                        Analyzing recommendations...
                       </span>
                     )}
                   </div>
@@ -2676,33 +2676,32 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                   onChange={handleCsvUpload}
                   style={{ display: 'none' }}
                 />
-                <div 
+                <div
                   className="upload-dropzone"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <div className="upload-content">
-                    <div className="upload-icon">📁</div>
                     <p>Drag & drop CSV file or click to browse</p>
-                    <button type="button" className="btn btn-outline">
+                    <button type="button" className="btn btn-primary">
                       Choose File
                     </button>
                   </div>
                 </div>
                 
                 <div className="upload-actions">
-                  <button 
+                  <button
                     onClick={generateCsvTemplate}
                     className="btn btn-outline"
                     type="button"
                   >
-                    📥 Download CSV Template
+                    Download CSV Template
                   </button>
-                  <button 
+                  <button
                     onClick={() => setShowCountryReference(!showCountryReference)}
                     className="btn btn-outline"
                     type="button"
                   >
-                    🌍 {showCountryReference ? 'Hide' : 'Show'} Available Countries
+                    {showCountryReference ? 'Hide' : 'Show'} Available Countries
                   </button>
                 </div>
               </div>
@@ -2717,7 +2716,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                 marginTop: '20px',
                 border: '1px solid #dee2e6'
               }}>
-                <h4>🌍 Available Countries and Document Types</h4>
+                <h4>Available Countries and Document Types</h4>
                 <p>Copy these exact names for your CSV:</p>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginTop: '15px' }}>
@@ -2828,10 +2827,10 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                 <h4>Generation Results</h4>
                 <div className="results-summary">
                   <span className="success-count">
-                    ✓ {batchResults.filter(r => r.status === 'success').length} Successful
+                    {batchResults.filter(r => r.status === 'success').length} Successful
                   </span>
                   <span className="error-count">
-                    ✕ {batchResults.filter(r => r.status === 'error').length} Failed
+                    {batchResults.filter(r => r.status === 'error').length} Failed
                   </span>
                 </div>
                 
@@ -2852,7 +2851,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                 disabled={loading || csvData.length === 0}
                 className={`btn btn-primary btn-lg ${loading ? 'btn-loading' : ''}`}
               >
-                {loading ? 'Processing Pipeline...' : '🚀 Generate All Documents'}
+                {loading ? 'Processing Pipeline...' : 'Generate All Documents'}
               </button>
               <button onClick={resetForm} className="btn btn-secondary">
                 Reset Pipeline

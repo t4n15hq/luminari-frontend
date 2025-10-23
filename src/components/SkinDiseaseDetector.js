@@ -6,6 +6,7 @@ import openaiService from '../services/openaiService';
 import AskLuminaPopup from './common/AskLuminaPopup';
 import FloatingButton from './common/FloatingButton';
 import ResultsChart from './common/ResultsChart';
+import './SkinDiseaseDetector.css';
 
 
 const SkinDiseaseDetector = () => {
@@ -747,7 +748,7 @@ const SkinDiseaseDetector = () => {
                   className="btn btn-secondary"
                   style={{ fontSize: '14px', padding: '8px 15px' }}
                 >
-                  🗑️ Clear All Data
+                  Clear All Data
                 </button>
                 <div style={{ 
                   flex: 1, 
@@ -893,7 +894,7 @@ const SkinDiseaseDetector = () => {
 
                 {/* Enhanced AI Insights */}
                 {enhancedInsights && (
-                  <div style={{ 
+                  <div style={{
                     backgroundColor: '#f0fdf4',
                     border: '1px solid #86efac',
                     borderRadius: '8px',
@@ -901,7 +902,7 @@ const SkinDiseaseDetector = () => {
                     marginBottom: '25px'
                   }}>
                     <h4 style={{ margin: '0 0 15px 0', color: '#166534', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🧠 AI-Enhanced Clinical Insights
+                      AI-Enhanced Clinical Insights
                       <span style={{ fontSize: '12px', fontWeight: 'normal', color: '#4b5563' }}>
                         (Based on your additional clinical data)
                       </span>

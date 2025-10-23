@@ -99,7 +99,7 @@ const BackgroundJobs = () => {
   return (
     <div style={{
       position: 'fixed',
-      bottom: !isExpanded ? '100px' : 'auto',
+      bottom: '100px',
       right: '20px',
       zIndex: 1000,
       fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
@@ -179,7 +179,7 @@ const BackgroundJobs = () => {
           backdropFilter: 'blur(20px)',
           padding: '20px',
           maxWidth: '400px',
-          maxHeight: '500px',
+          maxHeight: '60vh',
           overflowY: 'auto'
         }}>
           {/* Active Jobs */}

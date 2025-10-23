@@ -2,6 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import ExcelAnalysisService from '../services/excelAnalysisService';
 import PDFExportService from '../services/pdfExportService';
+import './ExcelAnalysis.css';
 import '../App.css';
 
 const ExcelAnalysis = () => {
@@ -283,8 +284,8 @@ const ExcelAnalysis = () => {
     <div className="excel-analysis-container">
       <div className="container">
         <div className="analysis-header">
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>Patient Selection Analysis</h1>
-          <p style={{ textAlign: 'left' }}>Upload dataset to optimize patient selection criteria</p>
+          <h1>Excel Biomarker Analysis</h1>
+          <p>Upload your dataset to analyze biomarkers and optimize patient selection criteria</p>
         </div>
 
         {/* File Upload Section */}
@@ -365,7 +366,7 @@ const ExcelAnalysis = () => {
                   <div className="selection-sublabel">Selection Reliability</div>
                 </div>
                 <div className="selection-card secondary">
-                  <div className="selection-icon">⚖️</div>
+                  <div className="selection-icon"></div>
                   <div className="selection-value">{Math.round(analysisData.overallSummary.totalRecords * 0.15)}</div>
                   <div className="selection-label">Estimated Enrollment</div>
                   <div className="selection-sublabel">After Screening</div>
@@ -452,7 +453,10 @@ const ExcelAnalysis = () => {
                 {/* AI Analysis */}
                 {analysisData.aiAnalysis && (
                   <div className="analysis-section ai-analysis">
-                    <h4>AI Analysis</h4>
+                    <details className="ai-analysis-toggle">
+                      <summary className="ai-analysis-header">
+                        AI Analysis
+                      </summary>
                     <div className="ai-analysis-content">
                       {analysisData.aiAnalysis.claudeInsights?.error ? (
                         <div className="ai-error">
@@ -552,7 +556,7 @@ const ExcelAnalysis = () => {
                                                             )}
                                                           </div>
                                                           <details className="full-analysis-details">
-                                                            <summary>🔍 View Complete Detailed Analysis</summary>
+                                                            <summary>View Complete Detailed Analysis</summary>
                                                             <pre className="json-display">{JSON.stringify(jsonData, null, 2)}</pre>
                                                           </details>
                                                         </div>
@@ -677,6 +681,7 @@ const ExcelAnalysis = () => {
                         </div>
                       )}
                     </div>
+                    </details>
                   </div>
                 )}
 
@@ -846,7 +851,7 @@ const ExcelAnalysis = () => {
                                       {/* Regulatory Compliance Card */}
                                       {jsonData.regulatory_compliance && (
                                         <div className="clinical-insight-card regulatory-card">
-                                          <h6>⚖️ Regulatory Compliance Status</h6>
+                                          <h6>Regulatory Compliance Status</h6>
                                           <div className="regulatory-status">
                                             <span className="status-label">FDA Submission Readiness:</span>
                                             <span className="status-value">{jsonData.regulatory_compliance.fda_submission_readiness?.current_status}</span>
@@ -861,7 +866,7 @@ const ExcelAnalysis = () => {
                                       
                                       {/* Complete Analysis Toggle */}
                                       <details className="full-clinical-analysis-toggle">
-                                        <summary>🔍 View Complete Technical Analysis</summary>
+                                        <summary>View Complete Technical Analysis</summary>
                                         <pre className="clinical-json-display">{JSON.stringify(jsonData, null, 2)}</pre>
                                       </details>
                                     </div>
@@ -967,7 +972,7 @@ const ExcelAnalysis = () => {
         }
 
         .analysis-header h1 {
-          color: var(--color-primary);
+          color: #2D2D2D;
           margin-bottom: var(--space-md);
         }
 
@@ -1126,7 +1131,7 @@ const ExcelAnalysis = () => {
         }
 
         .status-badge.relevant {
-          background: var(--color-success);
+          background: var(--color-primary);
           color: white;
         }
 
@@ -1244,12 +1249,12 @@ const ExcelAnalysis = () => {
         }
 
         .correlation-value.positive {
-          color: var(--color-success);
+          color: var(--color-primary);
           font-weight: 600;
         }
 
         .correlation-value.negative {
-          color: var(--color-error);
+          color: var(--color-primary);
           font-weight: 600;
         }
 
@@ -1272,6 +1277,30 @@ const ExcelAnalysis = () => {
           display: flex;
           align-items: center;
           gap: var(--space-sm);
+        }
+
+        /* AI Analysis Toggle */
+        .ai-analysis-toggle {
+          width: 100%;
+        }
+
+        .ai-analysis-header {
+          cursor: pointer;
+          font-size: var(--text-xl);
+          font-weight: 700;
+          color: var(--color-primary);
+          text-align: center;
+          padding: var(--space-xl);
+          background: linear-gradient(135deg, rgba(104, 61, 148, 0.1) 0%, rgba(104, 61, 148, 0.05) 100%);
+          border: 2px solid rgba(104, 61, 148, 0.2);
+          border-radius: var(--radius-lg);
+          margin-bottom: var(--space-lg);
+          transition: all 0.2s ease;
+        }
+
+        .ai-analysis-header:hover {
+          background: linear-gradient(135deg, rgba(104, 61, 148, 0.15) 0%, rgba(104, 61, 148, 0.08) 100%);
+          transform: translateY(-1px);
         }
 
         .ai-analysis-type {
@@ -1312,73 +1341,73 @@ const ExcelAnalysis = () => {
         }
 
         .ai-decision {
-          background: rgba(34, 197, 94, 0.1);
+          background: rgba(104, 61, 148, 0.05);
           padding: var(--space-md);
           border-radius: var(--radius-md);
-          border-left: 4px solid var(--color-success);
+          border-left: 4px solid var(--color-primary);
           margin-bottom: var(--space-md);
         }
 
         .ai-reasoning {
-          background: rgba(59, 130, 246, 0.1);
+          background: rgba(104, 61, 148, 0.05);
           padding: var(--space-md);
           border-radius: var(--radius-md);
-          border-left: 4px solid #3b82f6;
+          border-left: 4px solid var(--color-primary);
         }
 
         .ai-summary {
-          background: rgba(99, 102, 241, 0.1);
+          background: rgba(104, 61, 148, 0.05);
           padding: var(--space-md);
           border-radius: var(--radius-md);
-          border-left: 4px solid #6366f1;
+          border-left: 4px solid var(--color-primary);
           margin-bottom: var(--space-md);
         }
 
         .ai-rationale {
-          background: rgba(168, 85, 247, 0.1);
+          background: rgba(104, 61, 148, 0.05);
           padding: var(--space-md);
           border-radius: var(--radius-md);
-          border-left: 4px solid #a855f7;
+          border-left: 4px solid var(--color-primary);
           margin-bottom: var(--space-md);
         }
 
         .ai-evidence {
-          background: rgba(14, 165, 233, 0.1);
+          background: rgba(104, 61, 148, 0.05);
           padding: var(--space-md);
           border-radius: var(--radius-md);
-          border-left: 4px solid #0ea5e9;
+          border-left: 4px solid var(--color-primary);
           margin-bottom: var(--space-md);
         }
 
         .ai-alternatives {
-          background: rgba(245, 158, 11, 0.1);
+          background: rgba(104, 61, 148, 0.05);
           padding: var(--space-md);
           border-radius: var(--radius-md);
-          border-left: 4px solid #f59e0b;
+          border-left: 4px solid var(--color-primary);
           margin-bottom: var(--space-md);
         }
 
         .ai-risks {
-          background: rgba(239, 68, 68, 0.1);
+          background: rgba(104, 61, 148, 0.05);
           padding: var(--space-md);
           border-radius: var(--radius-md);
-          border-left: 4px solid #ef4444;
+          border-left: 4px solid var(--color-primary);
           margin-bottom: var(--space-md);
         }
 
         .ai-confidence {
-          background: rgba(16, 185, 129, 0.1);
+          background: rgba(104, 61, 148, 0.05);
           padding: var(--space-md);
           border-radius: var(--radius-md);
-          border-left: 4px solid #10b981;
+          border-left: 4px solid var(--color-primary);
           margin-bottom: var(--space-md);
         }
 
         .ai-raw-response {
-          background: rgba(156, 163, 175, 0.1);
+          background: rgba(104, 61, 148, 0.05);
           padding: var(--space-md);
           border-radius: var(--radius-md);
-          border-left: 4px solid #9ca3af;
+          border-left: 4px solid var(--color-primary);
           margin-bottom: var(--space-md);
         }
 
@@ -1415,7 +1444,7 @@ const ExcelAnalysis = () => {
         }
 
         .risk-category {
-          color: #dc2626;
+          color: var(--color-primary);
           font-size: var(--text-md);
           font-weight: 600;
           margin: var(--space-md) 0 var(--space-sm) 0;
@@ -1425,8 +1454,8 @@ const ExcelAnalysis = () => {
           color: var(--color-text);
           margin: var(--space-xs) 0;
           padding-left: var(--space-md);
-          border-left: 3px solid #3b82f6;
-          background: rgba(59, 130, 246, 0.05);
+          border-left: 3px solid var(--color-primary);
+          background: rgba(104, 61, 148, 0.05);
           padding: var(--space-xs) var(--space-md);
           border-radius: var(--radius-sm);
           list-style: none;
@@ -1461,15 +1490,15 @@ const ExcelAnalysis = () => {
         }
 
         .structured-analysis-summary {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
-          border: 1px solid rgba(16, 185, 129, 0.2);
+          background: linear-gradient(135deg, rgba(104, 61, 148, 0.05) 0%, rgba(104, 61, 148, 0.02) 100%);
+          border: 1px solid rgba(104, 61, 148, 0.2);
           border-radius: var(--radius-lg);
           padding: var(--space-lg);
           margin: var(--space-lg) 0;
         }
 
         .structured-analysis-summary h5 {
-          color: var(--color-success);
+          color: var(--color-primary);
           margin-bottom: var(--space-md);
           font-size: var(--text-lg);
           font-weight: 600;
@@ -1546,12 +1575,12 @@ const ExcelAnalysis = () => {
 
         /* Enhanced Recommendations Styles */
         .enhanced-recommendations {
-          background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(34, 197, 94, 0.02) 100%);
-          border: 1px solid rgba(34, 197, 94, 0.3);
+          background: linear-gradient(135deg, rgba(104, 61, 148, 0.05) 0%, rgba(104, 61, 148, 0.02) 100%);
+          border: 1px solid rgba(104, 61, 148, 0.3);
         }
 
         .enhanced-recommendations h4 {
-          color: var(--color-success);
+          color: var(--color-primary);
         }
 
         .recommendations-grid {
@@ -1577,7 +1606,7 @@ const ExcelAnalysis = () => {
         }
 
         .rec-count {
-          background: var(--color-success);
+          background: var(--color-primary);
           color: white;
           padding: var(--space-xs) var(--space-sm);
           border-radius: var(--radius-full);
@@ -1601,8 +1630,8 @@ const ExcelAnalysis = () => {
         }
 
         .recommendation-item.immediate {
-          border-left-color: var(--color-error);
-          background: rgba(239, 68, 68, 0.05);
+          border-left-color: var(--color-primary);
+          background: rgba(104, 61, 148, 0.05);
         }
 
         .recommendation-item.regulatory {
@@ -1611,23 +1640,23 @@ const ExcelAnalysis = () => {
         }
 
         .recommendation-item.clinical {
-          border-left-color: var(--color-success);
-          background: rgba(34, 197, 94, 0.05);
+          border-left-color: var(--color-primary);
+          background: rgba(104, 61, 148, 0.05);
         }
 
         .recommendation-item.statistical {
-          border-left-color: #3b82f6;
-          background: rgba(59, 130, 246, 0.05);
+          border-left-color: var(--color-primary);
+          background: rgba(104, 61, 148, 0.05);
         }
 
         .recommendation-item.aiInsights {
-          border-left-color: #8b5cf6;
-          background: rgba(139, 92, 246, 0.05);
+          border-left-color: var(--color-primary);
+          background: rgba(104, 61, 148, 0.05);
         }
 
         .recommendation-item.dataQuality {
-          border-left-color: #f59e0b;
-          background: rgba(245, 158, 11, 0.05);
+          border-left-color: var(--color-primary);
+          background: rgba(104, 61, 148, 0.05);
         }
 
         /* Clinical Recommendation Specific Styles */
@@ -1638,17 +1667,17 @@ const ExcelAnalysis = () => {
         .rec-summary {
           cursor: pointer;
           font-weight: 600;
-          color: var(--color-success);
+          color: var(--color-primary);
           padding: var(--space-sm);
           border-radius: var(--radius-sm);
-          background: rgba(34, 197, 94, 0.05);
-          border: 1px solid rgba(34, 197, 94, 0.2);
+          background: rgba(104, 61, 148, 0.05);
+          border: 1px solid rgba(104, 61, 148, 0.2);
           transition: background 0.2s ease;
           margin-bottom: var(--space-sm);
         }
 
         .rec-summary:hover {
-          background: rgba(34, 197, 94, 0.1);
+          background: rgba(104, 61, 148, 0.1);
         }
 
         .rec-content {
@@ -1668,7 +1697,7 @@ const ExcelAnalysis = () => {
         }
 
         .clinical-subsection {
-          color: #dc2626;
+          color: var(--color-primary);
           font-size: var(--text-sm);
           font-weight: 600;
           margin: var(--space-md) 0 var(--space-sm) 0;
@@ -1678,8 +1707,8 @@ const ExcelAnalysis = () => {
           color: var(--color-text);
           margin: var(--space-xs) 0;
           padding: var(--space-xs) var(--space-md);
-          background: rgba(59, 130, 246, 0.05);
-          border-left: 3px solid #3b82f6;
+          background: rgba(104, 61, 148, 0.05);
+          border-left: 3px solid var(--color-primary);
           border-radius: var(--radius-sm);
           list-style: none;
         }
@@ -1703,15 +1732,15 @@ const ExcelAnalysis = () => {
         }
 
         .clinical-structured-data {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
-          border: 1px solid rgba(16, 185, 129, 0.2);
+          background: linear-gradient(135deg, rgba(104, 61, 148, 0.05) 0%, rgba(104, 61, 148, 0.02) 100%);
+          border: 1px solid rgba(104, 61, 148, 0.2);
           border-radius: var(--radius-lg);
           padding: var(--space-lg);
           margin: var(--space-md) 0;
         }
 
         .clinical-structured-data h6 {
-          color: var(--color-success);
+          color: var(--color-primary);
           margin-bottom: var(--space-md);
           font-size: var(--text-md);
           font-weight: 600;
@@ -1767,18 +1796,18 @@ const ExcelAnalysis = () => {
 
         /* Major Clinical Assessment Section */
         .clinical-assessment-major {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, rgba(104, 61, 148, 0.03) 100%);
-          border: 2px solid rgba(16, 185, 129, 0.2);
+          background: linear-gradient(135deg, rgba(104, 61, 148, 0.03) 0%, rgba(104, 61, 148, 0.03) 100%);
+          border: 2px solid rgba(104, 61, 148, 0.2);
           margin: var(--space-xl) 0;
           padding: var(--space-xl);
         }
 
         .clinical-assessment-major h4 {
-          color: var(--color-success);
+          color: var(--color-primary);
           font-size: var(--text-xl);
           margin-bottom: var(--space-lg);
           text-align: center;
-          border-bottom: 3px solid var(--color-success);
+          border-bottom: 3px solid var(--color-primary);
           padding-bottom: var(--space-md);
         }
 
@@ -1811,11 +1840,11 @@ const ExcelAnalysis = () => {
         .clinical-subsection-header {
           font-size: var(--text-lg);
           font-weight: 600;
-          color: #dc2626;
+          color: var(--color-primary);
           margin: var(--space-lg) 0 var(--space-md) 0;
           padding: var(--space-sm) var(--space-md);
-          background: rgba(239, 68, 68, 0.05);
-          border-left: 4px solid #dc2626;
+          background: rgba(104, 61, 148, 0.05);
+          border-left: 4px solid var(--color-primary);
           border-radius: var(--radius-sm);
         }
 
@@ -1824,13 +1853,13 @@ const ExcelAnalysis = () => {
           align-items: flex-start;
           margin: var(--space-md) 0;
           padding: var(--space-md);
-          background: rgba(59, 130, 246, 0.05);
-          border-left: 4px solid #3b82f6;
+          background: rgba(104, 61, 148, 0.05);
+          border-left: 4px solid var(--color-primary);
           border-radius: var(--radius-md);
         }
 
         .evidence-bullet {
-          color: #3b82f6;
+          color: var(--color-primary);
           font-weight: bold;
           margin-right: var(--space-md);
           font-size: var(--text-lg);
@@ -1867,15 +1896,15 @@ const ExcelAnalysis = () => {
         }
 
         .dataset-card {
-          border-left: 5px solid var(--color-success);
+          border-left: 5px solid var(--color-primary);
         }
 
         .biomarker-card {
-          border-left: 5px solid #3b82f6;
+          border-left: 5px solid var(--color-primary);
         }
 
         .regulatory-card {
-          border-left: 5px solid #f59e0b;
+          border-left: 5px solid var(--color-primary);
         }
 
         .assessment-status {
@@ -1900,9 +1929,9 @@ const ExcelAnalysis = () => {
         }
 
         .status-value.suitable-with-modifications {
-          background: rgba(245, 158, 11, 0.1);
-          color: #f59e0b;
-          border: 1px solid #f59e0b;
+          background: rgba(104, 61, 148, 0.1);
+          color: var(--color-primary);
+          border: 1px solid var(--color-primary);
         }
 
         .status-value.regulatory {
@@ -1944,12 +1973,12 @@ const ExcelAnalysis = () => {
         }
 
         .strengths-list li {
-          color: var(--color-success);
+          color: var(--color-primary);
           margin: var(--space-sm) 0;
         }
 
         .limitations-list li {
-          color: #dc2626;
+          color: var(--color-primary);
           margin: var(--space-sm) 0;
         }
 
@@ -1966,9 +1995,9 @@ const ExcelAnalysis = () => {
         .regulatory-pathway {
           margin: var(--space-md) 0;
           padding: var(--space-md);
-          background: rgba(245, 158, 11, 0.05);
+          background: rgba(104, 61, 148, 0.05);
           border-radius: var(--radius-md);
-          border-left: 4px solid #f59e0b;
+          border-left: 4px solid var(--color-primary);
         }
 
         .full-clinical-analysis-toggle {
@@ -2056,25 +2085,25 @@ const ExcelAnalysis = () => {
           cursor: pointer;
           font-size: var(--text-xl);
           font-weight: 700;
-          color: var(--color-success);
+          color: var(--color-primary);
           text-align: center;
           padding: var(--space-xl);
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
-          border: 2px solid rgba(16, 185, 129, 0.2);
+          background: linear-gradient(135deg, rgba(104, 61, 148, 0.1) 0%, rgba(104, 61, 148, 0.05) 100%);
+          border: 2px solid rgba(104, 61, 148, 0.2);
           border-radius: var(--radius-lg);
           margin-bottom: var(--space-lg);
           transition: all 0.2s ease;
         }
 
         .clinical-assessment-header:hover {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
+          background: linear-gradient(135deg, rgba(104, 61, 148, 0.15) 0%, rgba(104, 61, 148, 0.08) 100%);
           transform: translateY(-1px);
         }
 
         /* Patient Selection Criteria Styles */
         .patient-selection-criteria {
-          background: linear-gradient(135deg, rgba(34, 197, 94, 0.03) 0%, rgba(59, 130, 246, 0.03) 100%);
-          border: 2px solid rgba(34, 197, 94, 0.2);
+          background: linear-gradient(135deg, rgba(104, 61, 148, 0.03) 0%, rgba(104, 61, 148, 0.03) 100%);
+          border: 2px solid rgba(104, 61, 148, 0.2);
         }
 
         .selection-tabs {
@@ -2189,21 +2218,21 @@ const ExcelAnalysis = () => {
         }
 
         .priority-badge.high {
-          background: rgba(239, 68, 68, 0.1);
-          color: #dc2626;
-          border: 1px solid #dc2626;
+          background: rgba(104, 61, 148, 0.15);
+          color: var(--color-primary);
+          border: 1px solid var(--color-primary);
         }
 
         .priority-badge.medium {
-          background: rgba(245, 158, 11, 0.1);
-          color: #d97706;
-          border: 1px solid #d97706;
+          background: rgba(104, 61, 148, 0.1);
+          color: var(--color-primary);
+          border: 1px solid var(--color-primary);
         }
 
         .priority-badge.low {
-          background: rgba(107, 114, 128, 0.1);
-          color: #6b7280;
-          border: 1px solid #6b7280;
+          background: rgba(104, 61, 148, 0.05);
+          color: var(--color-primary);
+          border: 1px solid var(--color-primary);
         }
 
         .criteria-recommendations {
@@ -2278,7 +2307,7 @@ const ExcelAnalysis = () => {
         }
 
         .outlier-warning {
-          color: #f59e0b;
+          color: var(--color-primary);
           font-weight: 600;
         }
 
@@ -2290,7 +2319,7 @@ const ExcelAnalysis = () => {
         }
 
         .numeric-badge {
-          background: #3b82f6;
+          background: var(--color-primary);
           color: white;
           padding: 2px 6px;
           border-radius: var(--radius-sm);
@@ -2299,7 +2328,7 @@ const ExcelAnalysis = () => {
         }
 
         .fda-badge {
-          background: var(--color-success);
+          background: var(--color-primary);
           color: white;
           padding: 2px 6px;
           border-radius: var(--radius-sm);
@@ -2334,13 +2363,13 @@ const ExcelAnalysis = () => {
         }
 
         .strategy-card.enrollment {
-          background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
-          border-left: 4px solid #3b82f6;
+          background: linear-gradient(135deg, rgba(104, 61, 148, 0.05) 0%, rgba(104, 61, 148, 0.02) 100%);
+          border-left: 4px solid var(--color-primary);
         }
 
         .strategy-card.regulatory {
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(245, 158, 11, 0.02) 100%);
-          border-left: 4px solid #f59e0b;
+          background: linear-gradient(135deg, rgba(104, 61, 148, 0.05) 0%, rgba(104, 61, 148, 0.02) 100%);
+          border-left: 4px solid var(--color-primary);
         }
 
         .strategy-card h6 {
@@ -2390,7 +2419,7 @@ const ExcelAnalysis = () => {
         }
 
         .trial-card.enrollment {
-          border-left: 4px solid var(--color-success);
+          border-left: 4px solid var(--color-primary);
         }
 
         .trial-card h5 {
@@ -2448,7 +2477,7 @@ const ExcelAnalysis = () => {
 
         .strategy-list li::before {
           content: '';
-          color: var(--color-success);
+          color: var(--color-primary);
           font-weight: bold;
           margin-right: var(--space-sm);
         }
@@ -2486,15 +2515,15 @@ const ExcelAnalysis = () => {
         }
 
         .selection-card.success::before {
-          background: var(--color-success);
+          background: var(--color-primary);
         }
 
         .selection-card.warning::before {
-          background: #f59e0b;
+          background: var(--color-primary);
         }
 
         .selection-card.secondary::before {
-          background: #6b7280;
+          background: var(--color-primary);
         }
 
         .selection-icon {

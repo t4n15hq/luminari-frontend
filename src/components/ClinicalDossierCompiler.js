@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import apiService from '../services/api';
+import './ClinicalDossierCompiler.css';
 
 const ClinicalDossierCompiler = () => {
   const [selectedDossierType, setSelectedDossierType] = useState('');
@@ -388,16 +389,16 @@ const ClinicalDossierCompiler = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'missing': return 'Missing';
-      case 'full': return '✓';
-      case 'partial': return '🟡';
-      default: return '✕';
+      case 'full': return 'Complete';
+      case 'partial': return 'Partial';
+      default: return 'Empty';
     }
   };
 
   const getValidationIcon = (validation) => {
-    if (!validation) return '✕';
+    if (!validation) return 'Not Validated';
     if (validation.confidence >= 0.8) return 'Valid';
-    if (validation.confidence >= 0.6) return '🟡';
+    if (validation.confidence >= 0.6) return 'Warning';
     return 'Invalid';
   };
 
@@ -424,231 +425,154 @@ const ClinicalDossierCompiler = () => {
   const summary = getValidationSummary();
 
   return (
-    <div className="clinical-dossier-compiler" style={{ display: 'flex', gap: '2rem', maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
+    <div className="clinical-dossier-compiler">
       {/* Main Content Area */}
-      <div style={{ flex: 1, maxWidth: '800px' }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b' }}>
-        Clinical Dossier Compiler
-      </h1>
-      <p style={{ color: '#64748b', marginBottom: '2rem' }}>
-        Compile various clinical trial documents into a single regulatory dossier with AI-powered document validation
-      </p>
-
-      {/* Primary Indication Input */}
-      <div style={{ marginBottom: '2rem', backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>                    
-        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>                                                         
-          Primary Indication
-        </h2>
-        <input
-          type="text"
-          value={primaryIndication}
-          onChange={(e) => setPrimaryIndication(e.target.value)}
-          placeholder="Enter the primary disease/condition (e.g., Type 2 Diabetes, Alzheimer's Disease)"                                                        
-          style={{
-            width: '100%',
-            padding: '0.75rem',
-            borderRadius: '8px',
-            border: '1px solid #d1d5db',
-            fontSize: '1rem'
-          }}
-        />
-        <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.5rem' }}>                                                                               
-          This helps validate that uploaded documents are relevant to your clinical indication                                                                  
-        </p>
-      </div>
-
-      {/* Country Selection */}
-      <div style={{ marginBottom: '2rem', backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>                    
-        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>                                                         
-          Target Country/Region
-        </h2>
-        <select
-          value={selectedCountry}
-          onChange={(e) => setSelectedCountry(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '0.75rem',
-            borderRadius: '8px',
-            border: '1px solid #d1d5db',
-            fontSize: '1rem',
-            backgroundColor: 'white'
-          }}
-        >
-          <option value="">Select a country/region...</option>
-          {Object.entries(countryRegulatoryData).map(([code, data]) => (
-            <option key={code} value={code}>
-              {data.name} ({data.regulator})
-            </option>
-          ))}
-        </select>
-        <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.5rem' }}>                                                                               
-          Select the target country/region for regulatory submission                                                                  
-        </p>
-      </div>
-
-      {/* Dossier Type Selection */}
-      <div className="dossier-type-selection" style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
-           Select Dossier Type
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-          {dossierTypes.map(type => (
-            <div 
-              key={type.id}
-              className={`dossier-type-card ${selectedDossierType === type.id ? 'selected' : ''}`}
-              onClick={() => setSelectedDossierType(type.id)}
-              style={{
-                padding: '1.5rem',
-                borderRadius: '12px',
-                border: selectedDossierType === type.id ? `3px solid ${type.color}` : '2px solid #e2e8f0',
-                backgroundColor: selectedDossierType === type.id ? `${type.color}10` : 'white',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: selectedDossierType === type.id ? `0 8px 25px ${type.color}20` : '0 2px 4px rgba(0,0,0,0.1)',
-                transform: selectedDossierType === type.id ? 'translateY(-2px)' : 'none'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '1.5rem', marginRight: '0.75rem' }}>{type.icon}</span>
-                <h3 style={{ 
-                  fontSize: '1.1rem', 
-                  fontWeight: '600', 
-                  margin: 0,
-                  color: selectedDossierType === type.id ? type.color : '#1e293b'
-                }}>
-                  {type.name}
-                </h3>
-              </div>
-              <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0 }}>
-                {type.description}
-              </p>
-            </div>
-          ))}
+      <div className="dossier-main-content">
+        <div className="page-header">
+          <h1 className="page-title">Clinical Dossier Compiler</h1>
+          <p className="page-description">
+            Compile various clinical trial documents into a single regulatory dossier with AI-powered document validation
+          </p>
         </div>
-      </div>
+
+        {/* Primary Indication Input */}
+        <div className="dossier-section">
+          <h2 className="section-title">Primary Indication</h2>
+          <input
+            type="text"
+            value={primaryIndication}
+            onChange={(e) => setPrimaryIndication(e.target.value)}
+            placeholder="Enter the primary disease/condition (e.g., Type 2 Diabetes, Alzheimer's Disease)"
+            className="form-input"
+          />
+          <p className="section-description">
+            This helps validate that uploaded documents are relevant to your clinical indication
+          </p>
+        </div>
+
+        {/* Country Selection */}
+        <div className="dossier-section">
+          <h2 className="section-title">Target Country/Region</h2>
+          <select
+            value={selectedCountry}
+            onChange={(e) => setSelectedCountry(e.target.value)}
+            className="form-select"
+          >
+            <option value="">Select a country/region...</option>
+            {Object.entries(countryRegulatoryData).map(([code, data]) => (
+              <option key={code} value={code}>
+                {data.name} ({data.regulator})
+              </option>
+            ))}
+          </select>
+          <p className="section-description">
+            Select the target country/region for regulatory submission
+          </p>
+        </div>
+
+        {/* Dossier Type Selection */}
+        <div className="dossier-section">
+          <h2 className="section-title">Select Dossier Type</h2>
+          <div className="dossier-types-grid">
+            {dossierTypes.map(type => (
+              <button
+                key={type.id}
+                className={`dossier-type-card ${selectedDossierType === type.id ? 'selected' : ''}`}
+                onClick={() => setSelectedDossierType(type.id)}
+              >
+                <div className="dossier-type-header">
+                  <h3 className="dossier-type-name">{type.name}</h3>
+                </div>
+                <p className="dossier-type-description">{type.description}</p>
+              </button>
+            ))}
+          </div>
+        </div>
 
       {selectedDossierType && (
         <>
           {/* Document Upload Area */}
-          <div className="document-upload-section" style={{ marginBottom: '2rem' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
-              📁 Upload Documents
-            </h2>
-            <div 
-              {...getRootProps()} 
+          <div className="dossier-section">
+            <h2 className="section-title">Upload Documents</h2>
+            <div
+              {...getRootProps()}
               className={`dropzone ${isDragActive ? 'active' : ''}`}
-              style={{
-                border: isDragActive ? '3px dashed #3b82f6' : '2px dashed #94a3b8',
-                borderRadius: '12px',
-                padding: '3rem 2rem',
-                textAlign: 'center',
-                backgroundColor: isDragActive ? '#eff6ff' : 'white',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
             >
               <input {...getInputProps()} />
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-                {isDragActive ? 'Drop files here' : 'Click to upload'}
+              <div className="dropzone-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13 7L11.8845 4.76892C11.5634 4.1268 11.4029 3.80573 11.1634 3.57116C10.9516 3.36373 10.6963 3.20597 10.4161 3.10931C10.0992 3 9.74021 3 9.02229 3H5.2C4.0799 3 3.51984 3 3.09202 3.21799C2.71569 3.40973 2.40973 3.71569 2.21799 4.09202C2 4.51984 2 5.0799 2 6.2V7M2 7H17.2C18.8802 7 19.7202 7 20.362 7.32698C20.9265 7.6146 21.3854 8.07354 21.673 8.63803C22 9.27976 22 10.1198 22 11.8V16.2C22 17.8802 22 18.7202 21.673 19.362C21.3854 19.9265 20.9265 20.3854 20.362 20.673C19.7202 21 18.8802 21 17.2 21H6.8C5.11984 21 4.27976 21 3.63803 20.673C3.07354 20.3854 2.6146 19.9265 2.32698 19.362C2 18.7202 2 17.8802 2 16.2V7Z" stroke="#2D2D2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
-              <p style={{ fontSize: '1.1rem', fontWeight: '500', marginBottom: '0.5rem', color: '#1e293b' }}>
+              <p className="dropzone-title">
                 {isDragActive
                   ? 'Drop the files here...'
                   : 'Drag and drop documents here, or click to select files'}
               </p>
-              <small style={{ fontSize: '0.9rem', color: '#64748b' }}>
+              <p className="dropzone-subtitle">
                 Accepted formats: PDF, DOC, DOCX, XLS, XLSX, TXT
-              </small>
+              </p>
             </div>
           </div>
 
           {/* Validation Summary */}
           {uploadedDocuments.length > 0 && (
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '12px', 
-              padding: '1.5rem',
-              border: '1px solid #e2e8f0',
-              marginBottom: '2rem'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0, color: '#1e293b' }}>
-                  🔍 Document Validation Summary
-                </h2>
+            <div className="dossier-section">
+              <div className="section-header">
+                <h2 className="section-title">Document Validation Summary</h2>
                 <button
                   onClick={validateAllDocuments}
                   disabled={!primaryIndication.trim() || validatingDocuments.size > 0}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: primaryIndication.trim() ? 'var(--color-primary)' : 'var(--color-gray-400)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: primaryIndication.trim() ? 'pointer' : 'not-allowed',
-                    fontSize: '0.9rem'
-                  }}
+                  className={`btn btn-small ${primaryIndication.trim() ? 'btn-primary' : 'btn-secondary'}`}
                 >
-                  {validatingDocuments.size > 0 ? 'Validating...' : 'Validate All Documents'}
+                  {validatingDocuments.size > 0 ? 'Validating...' : 'Validate All'}
                 </button>
               </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
-                <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b' }}>{summary.total}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Total Documents</div>
+
+              <div className="validation-metrics">
+                <div className="validation-metric-card">
+                  <div className="metric-value">{summary.total}</div>
+                  <div className="metric-label">Total Documents</div>
                 </div>
-                <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#eff6ff', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3b82f6' }}>{summary.validated}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Validated</div>
+                <div className="validation-metric-card">
+                  <div className="metric-value">{summary.validated}</div>
+                  <div className="metric-label">Validated</div>
                 </div>
-                <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#10b981' }}>{summary.valid}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Valid Documents</div>
+                <div className="validation-metric-card">
+                  <div className="metric-value">{summary.valid}</div>
+                  <div className="metric-label">Valid Documents</div>
                 </div>
-                <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#ecfdf5', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#059669' }}>{summary.highConfidence}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>High Confidence</div>
+                <div className="validation-metric-card">
+                  <div className="metric-value">{summary.highConfidence}</div>
+                  <div className="metric-label">High Confidence</div>
                 </div>
               </div>
             </div>
           )}
 
           {/* Document Categories Checklist */}
-          <div className="document-checklist" style={{ marginBottom: '2rem' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
-              Required Documents Checklist
-            </h2>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-              gap: '1rem'
-            }}>
+          <div className="dossier-section">
+            <h2 className="section-title">Required Documents Checklist</h2>
+            <div className="document-checklist-grid">
               {documentCategories.map(cat => {
                 const status = getCategoryStatus(cat.id);
                 const uploadedCount = uploadedDocuments.filter(doc => doc.category === cat.id).length;
-                
+
+                const statusClass = status === 'missing' ? 'status-danger' :
+                                   status === 'full' ? 'status-success' :
+                                   status === 'partial' ? 'status-warning' : 'status-neutral';
+
                 return (
-                  <div key={cat.id} className={`checklist-item ${status}`} style={{
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    backgroundColor: 'white',
-                    border: `2px solid ${status === 'missing' ? '#ef4444' : status === 'full' ? '#10b981' : '#e2e8f0'}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <span style={{ fontSize: '1.2rem', marginRight: '0.5rem' }}>{cat.icon}</span>
-                      <div>
-                        <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>
-                          {cat.name} {cat.required && <span style={{ color: '#ef4444' }}>*</span>}
-                        </span>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                          {uploadedCount}/{cat.maxFiles} files
-                        </div>
+                  <div key={cat.id} className={`checklist-item ${statusClass}`}>
+                    <div className="checklist-item-content">
+                      <div className="checklist-item-name">
+                        {cat.name} {cat.required && <span className="checklist-item-required">*</span>}
+                      </div>
+                      <div className="checklist-item-count">
+                        {uploadedCount}/{cat.maxFiles} files
                       </div>
                     </div>
-                    <span style={{ fontSize: '1.2rem' }}>{getStatusIcon(status)}</span>
+                    <span className={`status-chip ${statusClass}`}>{getStatusIcon(status)}</span>
                   </div>
                 );
               })}
@@ -657,73 +581,47 @@ const ClinicalDossierCompiler = () => {
 
           {/* Uploaded Documents List */}
           {uploadedDocuments.length > 0 && (
-            <div className="uploaded-documents" style={{ marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#1e293b' }}>
-                📚 Uploaded Documents ({uploadedDocuments.length})
-              </h2>
-              <div className="documents-list" style={{ 
-                backgroundColor: 'white', 
-                borderRadius: '12px', 
-                padding: '1rem',
-                border: '1px solid #e2e8f0'
-              }}>
+            <div className="dossier-section">
+              <h2 className="section-title">Uploaded Documents ({uploadedDocuments.length})</h2>
+              <div className="documents-list">
                 {uploadedDocuments.map(doc => (
-                  <div key={doc.id} className="document-item" style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '1rem',
-                    borderBottom: '1px solid #f1f5f9',
-                    borderRadius: '8px'
-                  }}>
-                    <div className="document-info" style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.25rem' }}>
-                        <span className="document-name" style={{ fontWeight: '500', marginRight: '0.5rem' }}>
-                          {doc.name}
-                        </span>
-                        <span style={{ fontSize: '1rem', marginRight: '0.5rem' }}>
-                          {getValidationIcon(doc.validation)}
-                        </span>
+                  <div key={doc.id} className="document-item">
+                    <div className="document-info">
+                      <div className="document-name-row">
+                        <span className="document-name">{doc.name}</span>
                         {validatingDocuments.has(doc.id) && (
-                          <span style={{ fontSize: '0.8rem', color: '#3b82f6' }}>Validating...</span>
+                          <span className="tag tag-light">Validating...</span>
                         )}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.5rem' }}>
+                      <div className="document-size">
                         {(doc.size / 1024 / 1024).toFixed(2)} MB
                       </div>
                       {doc.validation && (
-                        <div style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>
-                          <div style={{ 
-                            color: getValidationColor(doc.validation), 
-                            fontWeight: '500',
-                            marginBottom: '0.25rem'
-                          }}>
+                        <div className="document-validation">
+                          <span className="validation-description" style={{ color: getValidationColor(doc.validation) }}>
                             Confidence: {(doc.validation.confidence * 100).toFixed(1)}% - {doc.validation.reason}
-                          </div>
+                          </span>
                           {doc.validation.recommendation && (
-                            <div style={{ color: '#64748b', fontStyle: 'italic' }}>
-                              Recommendation: {doc.validation.recommendation}
-                            </div>
+                            <>
+                              {' | '}
+                              <span className="validation-recommendation">
+                                Recommendation: {doc.validation.recommendation}
+                              </span>
+                            </>
                           )}
                         </div>
                       )}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div className="document-actions">
                       <select
                         value={doc.category}
                         onChange={(e) => handleCategoryChange(doc.id, e.target.value)}
                         className="category-select"
-                        style={{
-                          padding: '0.5rem',
-                          borderRadius: '6px',
-                          border: '1px solid #d1d5db',
-                          minWidth: '180px'
-                        }}
                       >
                         <option value="">Select Category</option>
                         {documentCategories.map(cat => (
                           <option key={cat.id} value={cat.id}>
-                            {cat.icon} {cat.name} {cat.required && '*'}
+                            {cat.name} {cat.required && '*'}
                           </option>
                         ))}
                       </select>
@@ -731,31 +629,14 @@ const ClinicalDossierCompiler = () => {
                         <button
                           onClick={() => manualValidateDocument(doc.id)}
                           disabled={validatingDocuments.has(doc.id)}
-                          style={{
-                            padding: '0.5rem 0.75rem',
-                            backgroundColor: 'var(--color-primary)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '0.8rem'
-                          }}
+                          className="btn btn-small btn-outline-primary"
                         >
-                          {validatingDocuments.has(doc.id) ? '⏳' : '🔍'}
+                          {validatingDocuments.has(doc.id) ? 'Validating...' : 'Validate'}
                         </button>
                       )}
                       <button
                         onClick={() => removeDocument(doc.id)}
-                        className="remove-button"
-                        style={{
-                          padding: '0.5rem 1rem',
-                          backgroundColor: 'var(--color-error)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '0.8rem'
-                        }}
+                        className="btn btn-small btn-outline-danger"
                       >
                         Remove
                       </button>
@@ -767,190 +648,81 @@ const ClinicalDossierCompiler = () => {
           )}
 
           {/* Compile Button */}
-          <div className="compile-section" style={{ textAlign: 'center' }}>
-            <button
-              onClick={compileDossier}
-              disabled={!isReadyToCompile() || loading}
-              className="compile-button"
-              style={{
-                padding: '1rem 3rem',
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                borderRadius: '12px',
-                border: 'none',
-                backgroundColor: isReadyToCompile() && !loading ? 'var(--color-success)' : 'var(--color-gray-400)',
-                color: 'white',
-                cursor: isReadyToCompile() && !loading ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s ease',
-                boxShadow: isReadyToCompile() && !loading ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none'
-              }}
-            >
-              {loading ? 'Compiling Dossier...' : 'Compile Dossier'}
-            </button>
-            {!isReadyToCompile() && !loading && (
-              <p className="warning-message" style={{ 
-                marginTop: '1rem', 
-                color: '#ef4444', 
-                fontSize: '0.9rem',
-                fontWeight: '500'
-              }}>
-                Warning: Please upload all required documents and assign categories before compiling
-              </p>
-            )}
-            {primaryIndication.trim() && uploadedDocuments.some(doc => doc.validation && !doc.validation.isValid) && (
-              <p style={{ 
-                marginTop: '1rem', 
-                color: '#f59e0b', 
-                fontSize: '0.9rem',
-                fontWeight: '500'
-              }}>
-                ! Some documents have validation issues. Review and address them before compiling.
-              </p>
-            )}
+          <div className="dossier-section dossier-cta">
+            <div className="dossier-cta-content">
+              <button
+                onClick={compileDossier}
+                disabled={!isReadyToCompile() || loading}
+                className={`btn btn-lg btn-block ${isReadyToCompile() && !loading ? 'btn-primary' : 'btn-secondary'}`}
+              >
+                {loading ? 'Compiling Dossier...' : 'Compile Dossier'}
+              </button>
+              {!isReadyToCompile() && !loading && (
+                <p className="warning-message">
+                  Please upload all required documents and assign categories before compiling
+                </p>
+              )}
+              {primaryIndication.trim() && uploadedDocuments.some(doc => doc.validation && !doc.validation.isValid) && (
+                <p className="info-message">
+                  Some documents have validation issues. Review and address them before compiling.
+                </p>
+              )}
+            </div>
           </div>
         </>
       )}
       </div>
 
       {/* Country-Specific Compiler Sidebar */}
-      <div style={{ 
-        width: '350px', 
-        backgroundColor: '#f8fafc', 
-        borderRadius: '12px', 
-        padding: '1.5rem',
-        border: '1px solid #e2e8f0',
-        height: 'fit-content',
-        position: 'sticky',
-        top: '2rem'
-      }}>
-        <h3 style={{ 
-          fontSize: '1.25rem', 
-          fontWeight: '600', 
-          marginBottom: '1rem', 
-          color: '#1e293b',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem'
-        }}>
-          Country Compiler
-        </h3>
+      <div className="dossier-sidebar">
+        <h3 className="sidebar-title">Country Compiler</h3>
 
         {selectedCountry ? (
-          <div>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '1rem',
-              border: '1px solid #e2e8f0',
-              marginBottom: '1rem'
-            }}>
-              <h4 style={{ 
-                fontSize: '1rem', 
-                fontWeight: '600', 
-                marginBottom: '0.5rem', 
-                color: '#1e293b' 
-              }}>
+          <>
+            <div className="sidebar-card">
+              <h4 className="sidebar-card-title">
                 {countryRegulatoryData[selectedCountry].name}
               </h4>
-              <p style={{ 
-                fontSize: '0.9rem', 
-                color: '#64748b', 
-                marginBottom: '0.5rem' 
-              }}>
+              <p className="sidebar-card-info">
                 <strong>Regulator:</strong> {countryRegulatoryData[selectedCountry].regulator}
               </p>
-              <p style={{ 
-                fontSize: '0.9rem', 
-                color: '#64748b', 
-                marginBottom: '0' 
-              }}>
+              <p className="sidebar-card-info">
                 <strong>Submission Route:</strong> {countryRegulatoryData[selectedCountry].submissionRoute}
               </p>
             </div>
 
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '1rem',
-              border: '1px solid #e2e8f0'
-            }}>
-              <h4 style={{ 
-                fontSize: '1rem', 
-                fontWeight: '600', 
-                marginBottom: '0.75rem', 
-                color: '#1e293b',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                Required Documents
-              </h4>
-              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            <div className="sidebar-card">
+              <h4 className="sidebar-card-title">Required Documents</h4>
+              <div className="sidebar-documents-list">
                 {countryRegulatoryData[selectedCountry].documents.map((doc, index) => (
-                  <div key={index} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0.5rem 0',
-                    borderBottom: index < countryRegulatoryData[selectedCountry].documents.length - 1 ? '1px solid #f1f5f9' : 'none'
-                  }}>
-                    <span style={{
-                      fontSize: '0.8rem',
-                      color: '#10b981',
-                      marginRight: '0.5rem',
-                      fontWeight: '500'
-                    }}>
-                      •
-                    </span>
-                    <span style={{
-                      fontSize: '0.85rem',
-                      color: '#374151'
-                    }}>
-                      {doc}
-                    </span>
+                  <div key={index} className="sidebar-document-item">
+                    <span className="sidebar-document-bullet">•</span>
+                    <span className="sidebar-document-name">{doc}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div style={{ marginTop: '1rem' }}>
-              <button
-                onClick={() => {
-                  // Generate country-specific dossier
-                  console.log(`Compiling dossier for ${countryRegulatoryData[selectedCountry].name}`);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
-              >
-                Compile for {countryRegulatoryData[selectedCountry].name}
-              </button>
-            </div>
-          </div>
+            <button
+              onClick={() => {
+                // Generate country-specific dossier
+                console.log(`Compiling dossier for ${countryRegulatoryData[selectedCountry].name}`);
+              }}
+              className="btn btn-primary btn-block"
+            >
+              Compile for {countryRegulatoryData[selectedCountry].name}
+            </button>
+          </>
         ) : (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '2rem 1rem',
-            border: '1px solid #e2e8f0',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}></div>
-            <p style={{ 
-              fontSize: '0.9rem', 
-              color: '#64748b', 
-              margin: 0 
-            }}>
+          <div className="sidebar-empty">
+            <div className="sidebar-empty-icon">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#2D2D2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 12H22" stroke="#2D2D2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 2C14.5013 4.73835 15.9228 8.29203 16 12C15.9228 15.708 14.5013 19.2616 12 22C9.49872 19.2616 8.07725 15.708 8 12C8.07725 8.29203 9.49872 4.73835 12 2V2Z" stroke="#2D2D2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <p className="sidebar-empty-text">
               Select a country/region to view specific regulatory requirements and compile a targeted dossier.
             </p>
           </div>

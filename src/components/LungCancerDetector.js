@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FileUpload, ResultsChat } from './common';
 import apiService from '../services/api';
-import { 
+import {
   ArrowLeftIcon,
   UploadIcon,
   ActivityIcon,
@@ -17,6 +17,7 @@ import {
 import AskLuminaPopup from './common/AskLuminaPopup';
 import FloatingButton from './common/FloatingButton';
 import ResultsChart from './common/ResultsChart';
+import './LungCancerDetector.css';
 
 const LungCancerDetector = () => {
   // Analysis mode state - 'single' or 'batch'
@@ -559,7 +560,7 @@ const LungCancerDetector = () => {
             
             <button
               onClick={addManualText}
-              className="btn btn-success"
+              className="btn btn-primary"
             >
               Add Manual Text Entry
             </button>
