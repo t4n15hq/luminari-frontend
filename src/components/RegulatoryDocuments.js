@@ -315,7 +315,7 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
   };
 
   return (
-    <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '30px', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
+    <div style={{ backgroundColor: 'white', borderRadius: '0', padding: '30px', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
       {/* Ask Lumina Popup */}
       <AskLuminaPopup 
         isOpen={showAskLumina}
@@ -437,7 +437,7 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
       {selectedRegion && (
         <div style={{
           backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
+          borderRadius: '0',
           padding: '20px',
           marginTop: '20px',
           border: `2px solid ${regions[selectedRegion].color}`
@@ -455,7 +455,7 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
               background: regions[selectedRegion].color,
               color: 'white',
               padding: '2px 8px',
-              borderRadius: '12px'
+              borderRadius: '0'
             }}>
               {regions[selectedRegion].countries.length} countries
             </span>
@@ -473,7 +473,7 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
                 style={{
                   padding: '15px',
                   backgroundColor: 'white',
-                  borderRadius: '8px',
+                  borderRadius: '0',
                   border: `2px solid ${regions[selectedRegion].color}`,
                   transition: 'all 0.2s ease',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
@@ -511,7 +511,7 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
                           color: '#2d3748',
                           padding: '10px 12px',
                           backgroundColor: '#f7fafc',
-                          borderRadius: '6px',
+                          borderRadius: '0',
                           border: '1px solid #e2e8f0'
                         }}
                       >
@@ -538,7 +538,7 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
                       backgroundColor: regions[selectedRegion].color,
                       color: 'white',
                       border: 'none',
-                      borderRadius: '6px',
+                      borderRadius: '0',
                       fontWeight: '600',
                       fontSize: '0.9rem',
                       cursor: 'pointer',
@@ -569,7 +569,7 @@ const InteractiveRegulatoryMap = ({ onCountrySelect }) => {
         marginTop: '20px',
         padding: '15px',
         backgroundColor: '#ebf8ff',
-        borderRadius: '8px',
+        borderRadius: '0',
         border: '1px solid #bee3f8'
       }}>
         <div style={{ fontSize: '0.9rem', color: '#2c5282' }}>

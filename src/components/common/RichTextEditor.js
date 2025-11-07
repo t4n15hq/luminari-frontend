@@ -316,7 +316,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
   }, [showAIPrompt, closeAIPrompt]);
 
   return (
-    <div className="rich-text-editor" style={{ border: '1px solid #d1d5db', borderRadius: '4px' }}>
+    <div className="rich-text-editor" style={{ border: '1px solid #d1d5db', borderRadius: '0' }}>
       {/* Rich Text Toolbar */}
       <div style={{
         borderBottom: '1px solid #d1d5db',
@@ -333,7 +333,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
-            borderRadius: '6px',
+            borderRadius: '0',
             fontSize: '14px',
             color: '#1e40af',
             background: '#ffffff',
@@ -356,7 +356,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
-            borderRadius: '6px',
+            borderRadius: '0',
             background: '#ffffff',
             cursor: 'pointer',
             fontWeight: 'bold',
@@ -382,7 +382,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
-            borderRadius: '6px',
+            borderRadius: '0',
             background: '#ffffff',
             cursor: 'pointer',
             fontStyle: 'italic',
@@ -408,7 +408,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
-            borderRadius: '6px',
+            borderRadius: '0',
             background: '#ffffff',
             cursor: 'pointer',
             textDecoration: 'underline',
@@ -437,7 +437,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
-            borderRadius: '6px',
+            borderRadius: '0',
             background: '#ffffff',
             cursor: 'pointer',
             fontSize: '14px',
@@ -461,7 +461,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
-            borderRadius: '6px',
+            borderRadius: '0',
             background: '#ffffff',
             cursor: 'pointer',
             fontSize: '14px',
@@ -485,7 +485,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
-            borderRadius: '6px',
+            borderRadius: '0',
             background: '#ffffff',
             cursor: 'pointer',
             fontSize: '14px',
@@ -513,7 +513,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
           style={{
             padding: '6px 10px',
             border: '2px solid #3b82f6',
-            borderRadius: '6px',
+            borderRadius: '0',
             background: '#ffffff',
             cursor: 'pointer',
             fontSize: '14px',
@@ -542,7 +542,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
             style={{
               padding: '6px 10px',
               border: `2px solid ${aiPromptEnabled ? '#10b981' : '#3b82f6'}`,
-              borderRadius: '6px',
+              borderRadius: '0',
               background: aiPromptEnabled ? '#d1fae5' : '#ffffff',
               cursor: 'pointer',
               fontSize: '14px',
@@ -568,7 +568,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
           style={{
             padding: '6px 10px',
             border: '2px solid #ef4444',
-            borderRadius: '6px',
+            borderRadius: '0',
             background: '#ffffff',
             cursor: 'pointer',
             fontSize: '12px',
@@ -603,7 +603,7 @@ const RichTextEditor = ({ value, onChange, placeholder, style, aiEnabled = false
           fontSize: '14px',
           lineHeight: '1.5',
           border: '1px solid #d1d5db',
-          borderRadius: '4px',
+          borderRadius: '0',
           backgroundColor: '#ffffff'
         }}
         placeholder={placeholder}

@@ -1969,7 +1969,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
           {selectedRegion && (
             <div style={{
               backgroundColor: '#f8f9fa',
-              borderRadius: '8px',
+              borderRadius: '0',
               padding: '20px',
               marginTop: '20px',
               border: `2px solid ${regions[selectedRegion].color}`
@@ -1987,7 +1987,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                   background: regions[selectedRegion].color,
                   color: 'white',
                   padding: '2px 8px',
-                  borderRadius: '12px'
+                  borderRadius: '0'
                 }}>
                   {regions[selectedRegion].countries.length} countries
                 </span>
@@ -2004,7 +2004,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                     style={{
                       padding: '15px',
                       backgroundColor: 'white',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       border: `2px solid ${regions[selectedRegion].color}`,
                       transition: 'all 0.2s ease',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
@@ -2046,7 +2046,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                               color: '#2d3748',
                               padding: '10px 12px',
                               backgroundColor: '#f7fafc',
-                              borderRadius: '6px',
+                              borderRadius: '0',
                               border: '1px solid #e2e8f0',
                               cursor: 'pointer',
                               transition: 'all 0.2s ease'
@@ -2084,7 +2084,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
             marginTop: '20px',
             padding: '15px',
             backgroundColor: '#ebf8ff',
-            borderRadius: '8px',
+            borderRadius: '0',
             border: '1px solid #bee3f8'
           }}>
             <div style={{ fontSize: '0.9rem', color: '#2c5282' }}>
@@ -2585,7 +2585,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
             marginTop: '2rem', 
             padding: '1.5rem', 
             border: '2px solid #10b981', 
-            borderRadius: '8px',
+            borderRadius: '0',
             backgroundColor: '#f0fdf4' 
           }}>
             <div className="sections-header">
@@ -2618,7 +2618,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                           color: 'white',
                           border: 'none',
                           padding: '4px 8px',
-                          borderRadius: '4px',
+                          borderRadius: '0',
                           fontSize: '10px',
                           cursor: 'pointer'
                         }}
@@ -2656,7 +2656,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
               <div className="csv-guidance" style={{ 
                 background: '#f8f9fa', 
                 padding: '15px', 
-                borderRadius: '8px', 
+                borderRadius: '0', 
                 marginBottom: '15px',
                 border: '1px solid #dee2e6'
               }}>
@@ -2712,7 +2712,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
               <div className="country-reference-section" style={{
                 background: '#f8f9fa',
                 padding: '20px',
-                borderRadius: '8px',
+                borderRadius: '0',
                 marginTop: '20px',
                 border: '1px solid #dee2e6'
               }}>
@@ -2724,7 +2724,7 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
                     <div key={regionKey} style={{
                       background: 'white',
                       padding: '15px',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       border: '1px solid #e9ecef'
                     }}>
                       <h5 style={{ 

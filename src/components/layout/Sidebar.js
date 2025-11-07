@@ -5,7 +5,6 @@ import './Sidebar.css';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const location = useLocation();
-  const [isHovered, setIsHovered] = useState(false);
 
   const navigationItems = [
     {
@@ -73,9 +72,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
       {/* Sidebar */}
       <nav
-        className={`sidebar ${isCollapsed && !isHovered ? 'sidebar-collapsed' : ''}`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        className={`sidebar ${isCollapsed ? 'sidebar-collapsed' : ''}`}
       >
         {/* Brand */}
         <div className="sidebar-brand">

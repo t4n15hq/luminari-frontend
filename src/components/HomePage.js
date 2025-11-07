@@ -39,13 +39,72 @@ const HomePage = () => {
     }
   ];
 
+  const secondaryFeatureCards = [
+    {
+      id: 'enhanced-analysis',
+      title: 'Enhanced Medical Analysis',
+      description: 'Advanced AI-powered analysis for complex medical data and research insights',
+      path: '/enhanced-analysis',
+      backgroundColor: '#FFFFFF',
+      icon: '/assets/icons/enhanced-analysis-new.svg'
+    },
+    {
+      id: 'excel-analysis',
+      title: 'Excel Biomarker Analysis',
+      description: 'Comprehensive analysis of biomarker data from Excel spreadsheets',
+      path: '/excel-analysis',
+      backgroundColor: '#FFFFFF',
+      icon: '/assets/icons/excel-analysis-new.svg'
+    },
+    {
+      id: 'clinical-dossier',
+      title: 'Clinical Dossier Compiler',
+      description: 'Compile and organize clinical documentation for regulatory submissions',
+      path: '/clinical-dossier',
+      backgroundColor: '#FFFFFF',
+      icon: '/assets/icons/clinical-dossier-new.svg'
+    }
+  ];
+
   return (
     <div className="homepage-new">
       {/* Main Content Area */}
       <div className="homepage-content">
+        {/* Hero Image */}
+        <div className="hero-image-container">
+          <img
+            src="/assets/images/lab-hero.png"
+            alt="Laboratory Research"
+            className="hero-image"
+          />
+        </div>
+
         {/* Feature Cards */}
         <div className="feature-cards-grid">
           {featureCards.map(card => (
+            <Link
+              to={card.path}
+              key={card.id}
+              className="feature-card-new"
+              style={{ backgroundColor: card.backgroundColor }}
+            >
+              <div className="card-content">
+                <h3 className="card-title">{card.title}</h3>
+                <p className="card-description">{card.description}</p>
+              </div>
+              <div className="card-footer">
+                <div className="card-icon">
+                  <img src={card.icon} alt={card.title} />
+                </div>
+                <div className="card-arrow">→</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Secondary Feature Cards */}
+        <div className="feature-cards-grid secondary-grid">
+          {secondaryFeatureCards.map(card => (
             <Link
               to={card.path}
               key={card.id}

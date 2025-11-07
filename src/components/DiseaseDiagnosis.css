@@ -42,8 +42,8 @@
 /* Specialty Card */
 .specialty-card {
   background-color: white;
-  border: 1px solid #E0E0E0;
-  border-radius: 8px;
+  border: 1px solid #000000;
+  border-radius: 0;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
@@ -68,18 +68,18 @@
   display: flex;
   align-items: center;
   margin-bottom: 1rem;
+  gap: 1rem;
 }
 
 .specialty-icon {
   width: 40px;
   height: 40px;
   min-width: 40px;
-  border-radius: 8px;
+  border-radius: 0;
   background-color: #F5F5F5;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 1rem;
   font-size: 14px;
   color: #683D94;
   font-weight: 600;
@@ -88,10 +88,12 @@
 
 .specialty-card-header h3 {
   margin: 0;
+  padding: 0;
   font-size: 18px;
   font-weight: 600;
   color: #2D2D2D;
   font-family: 'Inter', sans-serif;
+  line-height: 1;
 }
 
 /* Card Description */

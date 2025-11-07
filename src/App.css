@@ -704,17 +704,13 @@ label {
 }
 
 .form-input,
-.form-select,
-.form-textarea,
 input[type="text"],
 input[type="number"],
 input[type="email"],
 input[type="password"],
 input[type="date"],
 input[type="time"],
-input[type="search"],
-select,
-textarea {
+input[type="search"] {
   width: 100%;
   padding: 0.625rem;
   font-size: 0.875rem;
@@ -724,15 +720,39 @@ textarea {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.form-select,
+.form-textarea,
+select,
+textarea {
+  width: 100%;
+  padding: 0.625rem;
+  font-size: 0.875rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
 .form-input:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="search"]:focus {
+  outline: none;
+  border-color: var(--color-primary-light);
+  box-shadow: none;
+}
+
 .form-select:focus,
 .form-textarea:focus,
-input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--color-primary-light);
-  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.25);
+  border: none;
+  box-shadow: none;
 }
 
 .form-input::placeholder,

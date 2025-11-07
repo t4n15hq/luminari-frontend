@@ -3,22 +3,22 @@
  */
 
 .sidebar {
-  position: fixed;
+  position: fixed !important;
   top: 0;
-  left: 0;
+  left: 0 !important;
   height: 100vh;
-  width: 280px;
+  width: 280px !important;
   background-color: #5A5A5A;
   display: flex;
   flex-direction: column;
-  z-index: var(--z-index-fixed);
-  transition: width 0.3s ease, all var(--transition-base);
+  z-index: 1010;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
 .sidebar-collapsed {
-  width: 70px;
+  width: 70px !important;
 }
 
 /* Brand Section */
@@ -67,7 +67,7 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-sm);
   color: var(--color-white);
-  text-decoration: none;
+  text-decoration: none !important;
   transition: all var(--transition-fast);
   position: relative;
   white-space: nowrap;
@@ -75,12 +75,16 @@
 
 .sidebar-nav-item:hover {
   background-color: #683D94;
+  color: var(--color-white) !important;
+  text-decoration: none !important;
 }
 
 .sidebar-nav-item-active {
   background-color: transparent;
   border-left: 4px solid #683D94;
   padding-left: calc(var(--spacing-sm) - 4px);
+  color: var(--color-white) !important;
+  text-decoration: none !important;
 }
 
 .sidebar-nav-icon {
@@ -101,6 +105,8 @@
 .sidebar-nav-label {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-medium);
+  color: var(--color-white) !important;
+  text-decoration: none !important;
 }
 
 .sidebar-collapsed .sidebar-nav-label {

@@ -393,7 +393,7 @@ const LungCancerDetector = () => {
                 <div style={{ 
                   backgroundColor: '#f8f9fa',
                   padding: '15px',
-                  borderRadius: '8px',
+                  borderRadius: '0',
                   maxHeight: '200px',
                   overflowY: 'auto',
                   border: '1px solid #e9ecef'
@@ -417,7 +417,7 @@ const LungCancerDetector = () => {
               <div style={{ 
                 backgroundColor: '#ffffff',
                 padding: '30px',
-                borderRadius: '12px',
+                borderRadius: '0',
                 boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                 border: '1px solid #e5e7eb'
               }}>
@@ -437,7 +437,7 @@ const LungCancerDetector = () => {
                     color: '#dc2626', 
                     padding: '20px',
                     backgroundColor: '#fef2f2',
-                    borderRadius: '8px',
+                    borderRadius: '0',
                     border: '1px solid #fecaca'
                   }}>
                     <h4>× Analysis Error</h4>
@@ -451,7 +451,7 @@ const LungCancerDetector = () => {
                       marginBottom: '30px',
                       padding: '25px',
                       backgroundColor: textPrediction.detected ? '#fef2f2' : '#f0fdf4',
-                      borderRadius: '12px',
+                      borderRadius: '0',
                       border: `2px solid ${textPrediction.detected ? '#fecaca' : '#bbf7d0'}`
                     }}>
                       <div style={{ 
@@ -494,7 +494,7 @@ const LungCancerDetector = () => {
                     <div style={{ 
                       backgroundColor: '#f8f9fa',
                       padding: '20px',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       marginBottom: '25px'
                     }}>
                       <h4 style={{ margin: '0 0 10px 0', color: '#374151' }}>
@@ -571,7 +571,7 @@ const LungCancerDetector = () => {
             <div className="batch-files-container" style={{ marginTop: '20px' }}>
               <h3>Files for Processing ({batchFiles.length})</h3>
               
-              <div style={{ maxHeight: '500px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px' }}>
+              <div style={{ maxHeight: '500px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '0', padding: '10px' }}>
                 {batchFiles.map((item) => (
                   <div key={item.id} className={`batch-result-card ${item.prediction?.detected ? 'positive' : item.status === 'error' ? 'error' : item.status === 'completed' ? 'negative' : ''}`}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -599,7 +599,7 @@ const LungCancerDetector = () => {
                               color: '#4b5563', 
                               backgroundColor: '#f9fafb',
                               padding: '8px',
-                              borderRadius: '4px',
+                              borderRadius: '0',
                               marginBottom: '10px',
                               maxHeight: '80px',
                               overflowY: 'auto'
@@ -702,7 +702,7 @@ const LungCancerDetector = () => {
 
               {batchLoading && (
                 <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                  <div style={{ width: '100%', backgroundColor: '#e5e7eb', borderRadius: '8px', overflow: 'hidden', marginBottom: '10px' }}>
+                  <div style={{ width: '100%', backgroundColor: '#e5e7eb', borderRadius: '0', overflow: 'hidden', marginBottom: '10px' }}>
                     <div 
                       style={{ 
                         width: `${batchProgress}%`, 
@@ -729,7 +729,7 @@ const nextBtnStyle = (bg, color) => ({
   backgroundColor: bg,
   color,
   border: 'none',
-  borderRadius: '8px',
+  borderRadius: '0',
   cursor: 'pointer',
   fontWeight: '500',
   fontSize: '14px',

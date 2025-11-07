@@ -9,6 +9,9 @@
   max-width: calc(var(--max-content-width) + var(--spacing-2xl));
   margin: 0 auto;
   padding: var(--spacing-2xl);
+  border: 1px solid #000000;
+  border-radius: 0;
+  background-color: white;
 }
 
 .dossier-main-content {

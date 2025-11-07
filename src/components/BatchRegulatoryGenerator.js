@@ -588,7 +588,7 @@ const BatchRegulatoryGenerator = () => {
         </div>
       </div>
       {showPreviousDocs && (
-        <div style={{ background: '#f7fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ background: '#f7fafc', border: '1px solid #000000', borderRadius: '0', padding: '1rem', marginBottom: '1.5rem' }}>
           <h4 style={{ margin: 0, marginBottom: '0.5rem' }}>Previous Regulatory Documents</h4>
           <input
             type="text"
@@ -615,16 +615,16 @@ const BatchRegulatoryGenerator = () => {
                     {paginated.map(doc => (
                       <li key={doc.id} style={{ marginBottom: '0.5rem', listStyle: 'none', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
                         <strong>{doc.title}</strong> <span style={{ color: '#64748b', fontSize: '0.9em' }}>{doc.disease} {doc.region && `| ${doc.region}`} {doc.country && `| ${doc.country}`}</span>
-                        <button style={{ marginLeft: '1rem', padding: '2px 8px', borderRadius: '4px', background: '#64748b', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}>
+                        <button style={{ marginLeft: '1rem', padding: '2px 8px', borderRadius: '0', background: '#64748b', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}>
                           View
                         </button>
                       </li>
                     ))}
                   </ul>
                   <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem', gap: '0.5rem' }}>
-                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} style={{ minWidth: 60, padding: '6px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: currentPage === 1 ? '#e2e8f0' : '#4299e1', color: currentPage === 1 ? '#a0aec0' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: '1rem' }}>Previous</button>
+                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} style={{ minWidth: 60, padding: '6px 16px', borderRadius: '0', border: '1px solid #000000', background: currentPage === 1 ? '#e2e8f0' : '#4299e1', color: currentPage === 1 ? '#a0aec0' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: '1rem' }}>Previous</button>
                     <span style={{ alignSelf: 'center', fontWeight: 500, fontSize: '1rem', color: '#1e293b' }}>Page {currentPage} of {totalPages}</span>
-                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} style={{ minWidth: 60, padding: '6px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: currentPage === totalPages ? '#e2e8f0' : '#4299e1', color: currentPage === totalPages ? '#a0aec0' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: '1rem' }}>Next</button>
+                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} style={{ minWidth: 60, padding: '6px 16px', borderRadius: '0', border: '1px solid #000000', background: currentPage === totalPages ? '#e2e8f0' : '#4299e1', color: currentPage === totalPages ? '#a0aec0' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: '1rem' }}>Next</button>
                   </div>
                 </>
               );
@@ -642,7 +642,7 @@ const BatchRegulatoryGenerator = () => {
             {/* Basic Information Form - ENHANCED WITH ALL FIELDS */}
             <div style={{ 
               backgroundColor: 'white', 
-              borderRadius: '12px', 
+              borderRadius: '0', 
               padding: '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               marginBottom: '2rem'
@@ -678,7 +678,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   />
                 </div>
@@ -695,7 +695,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   />
                 </div>
@@ -705,7 +705,7 @@ const BatchRegulatoryGenerator = () => {
             {/* Trial Characteristics Section */}
             <div style={{ 
               backgroundColor: 'white', 
-              borderRadius: '12px', 
+              borderRadius: '0', 
               padding: '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               marginBottom: '2rem'
@@ -726,7 +726,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   >
                     <option value="">Select Phase</option>
@@ -746,7 +746,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   >
                     <option value="">Select Type</option>
@@ -769,7 +769,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   >
                     <option value="">Select Blinding</option>
@@ -813,7 +813,7 @@ const BatchRegulatoryGenerator = () => {
             {/* Population Details Section */}
             <div style={{ 
               backgroundColor: 'white', 
-              borderRadius: '12px', 
+              borderRadius: '0', 
               padding: '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               marginBottom: '2rem'
@@ -837,7 +837,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   />
                 </div>
@@ -855,7 +855,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   />
                 </div>
@@ -873,7 +873,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   >
                     <option value="">Select Gender</option>
@@ -896,7 +896,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   />
                 </div>
@@ -916,7 +916,7 @@ const BatchRegulatoryGenerator = () => {
                         color: 'white',
                         border: 'none',
                         padding: '4px 8px',
-                        borderRadius: '4px',
+                        borderRadius: '0',
                         fontSize: '10px',
                         cursor: 'pointer'
                       }}
@@ -945,7 +945,7 @@ const BatchRegulatoryGenerator = () => {
                         color: 'white',
                         border: 'none',
                         padding: '4px 8px',
-                        borderRadius: '4px',
+                        borderRadius: '0',
                         fontSize: '10px',
                         cursor: 'pointer'
                       }}
@@ -967,7 +967,7 @@ const BatchRegulatoryGenerator = () => {
             {/* Treatment & Control Section */}
             <div style={{ 
               backgroundColor: 'white', 
-              borderRadius: '12px', 
+              borderRadius: '0', 
               padding: '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               marginBottom: '2rem'
@@ -988,7 +988,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   >
                     <option value="">Select Formulation</option>
@@ -1008,7 +1008,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   >
                     <option value="">Select Route</option>
@@ -1033,7 +1033,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   />
                 </div>
@@ -1048,7 +1048,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   >
                     <option value="">Select Control</option>
@@ -1063,7 +1063,7 @@ const BatchRegulatoryGenerator = () => {
             {/* Endpoints & Outcomes Section */}
             <div style={{ 
               backgroundColor: 'white', 
-              borderRadius: '12px', 
+              borderRadius: '0', 
               padding: '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               marginBottom: '2rem'
@@ -1085,7 +1085,7 @@ const BatchRegulatoryGenerator = () => {
                       color: 'white',
                       border: 'none',
                       padding: '4px 8px',
-                      borderRadius: '4px',
+                      borderRadius: '0',
                       fontSize: '10px',
                       cursor: 'pointer'
                     }}
@@ -1115,7 +1115,7 @@ const BatchRegulatoryGenerator = () => {
                       color: 'white',
                       border: 'none',
                       padding: '4px 8px',
-                      borderRadius: '4px',
+                      borderRadius: '0',
                       fontSize: '10px',
                       cursor: 'pointer'
                     }}
@@ -1143,7 +1143,7 @@ const BatchRegulatoryGenerator = () => {
                     width: '100%',
                     padding: '0.75rem',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px'
+                    borderRadius: '0'
                   }}
                 >
                   <option value="">Select Measurement Tool</option>
@@ -1157,7 +1157,7 @@ const BatchRegulatoryGenerator = () => {
             {/* Statistical Considerations Section */}
             <div style={{ 
               backgroundColor: 'white', 
-              borderRadius: '12px', 
+              borderRadius: '0', 
               padding: '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               marginBottom: '2rem'
@@ -1182,7 +1182,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   />
                 </div>
@@ -1202,7 +1202,7 @@ const BatchRegulatoryGenerator = () => {
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px'
+                      borderRadius: '0'
                     }}
                   />
                 </div>
@@ -1219,7 +1219,7 @@ const BatchRegulatoryGenerator = () => {
             {/* Document Selection */}
             <div style={{ 
               backgroundColor: 'white', 
-              borderRadius: '12px', 
+              borderRadius: '0', 
               padding: '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               marginBottom: '2rem'
@@ -1236,7 +1236,7 @@ const BatchRegulatoryGenerator = () => {
                       backgroundColor: 'var(--color-error)',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '6px',
+                      borderRadius: '0',
                       cursor: 'pointer',
                       fontSize: '0.875rem'
                     }}
@@ -1269,7 +1269,7 @@ const BatchRegulatoryGenerator = () => {
                         backgroundColor: 'var(--color-primary)',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '0',
                         cursor: 'pointer',
                         fontSize: '0.75rem'
                       }}
@@ -1285,7 +1285,7 @@ const BatchRegulatoryGenerator = () => {
                     overflowY: 'auto',
                     padding: '0.5rem',
                     backgroundColor: '#f8f9fa',
-                    borderRadius: '6px'
+                    borderRadius: '0'
                   }}>
                     {documents.map((doc) => {
                       const isSelected = selectedDocuments.some(selected => selected.id === doc.id);
@@ -1297,7 +1297,7 @@ const BatchRegulatoryGenerator = () => {
                             alignItems: 'center',
                             padding: '0.5rem',
                             backgroundColor: isSelected ? '#dbeafe' : 'white',
-                            borderRadius: '4px',
+                            borderRadius: '0',
                             border: isSelected ? '1px solid #3b82f6' : '1px solid #e5e7eb',
                             cursor: 'pointer',
                             fontSize: '0.875rem'
@@ -1328,7 +1328,7 @@ const BatchRegulatoryGenerator = () => {
             {/* Processing Controls */}
             <div style={{ 
               backgroundColor: 'white', 
-              borderRadius: '12px', 
+              borderRadius: '0', 
               padding: '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               marginBottom: '2rem'
@@ -1341,7 +1341,7 @@ const BatchRegulatoryGenerator = () => {
                 <div style={{ 
                   backgroundColor: '#f0f9ff',
                   border: '1px solid #0ea5e9',
-                  borderRadius: '6px',
+                  borderRadius: '0',
                   padding: '1rem',
                   marginBottom: '1rem'
                 }}>
@@ -1378,7 +1378,7 @@ const BatchRegulatoryGenerator = () => {
                   <div style={{ 
                     width: '100%', 
                     backgroundColor: '#e5e7eb', 
-                    borderRadius: '8px', 
+                    borderRadius: '0', 
                     overflow: 'hidden',
                     marginBottom: '0.5rem'
                   }}>
@@ -1405,7 +1405,7 @@ const BatchRegulatoryGenerator = () => {
             {batchQueue.length > 0 && (
               <div style={{ 
                 backgroundColor: 'white', 
-                borderRadius: '12px', 
+                borderRadius: '0', 
                 padding: '1.5rem',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}>
@@ -1426,7 +1426,7 @@ const BatchRegulatoryGenerator = () => {
                         backgroundColor: 'var(--color-success)',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '6px',
+                        borderRadius: '0',
                         cursor: 'pointer',
                         fontSize: '0.875rem'
                       }}
@@ -1464,7 +1464,7 @@ const BatchRegulatoryGenerator = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span style={{
                             padding: '0.25rem 0.75rem',
-                            borderRadius: '12px',
+                            borderRadius: '0',
                             fontSize: '0.75rem',
                             fontWeight: '500',
                             backgroundColor: doc.status === 'pending' ? '#f3f4f6' :
@@ -1484,7 +1484,7 @@ const BatchRegulatoryGenerator = () => {
                                 backgroundColor: 'var(--color-primary)',
                                 color: 'white',
                                 border: 'none',
-                                borderRadius: '4px',
+                                borderRadius: '0',
                                 cursor: 'pointer',
                                 fontSize: '0.75rem'
                               }}
@@ -1501,7 +1501,7 @@ const BatchRegulatoryGenerator = () => {
                           padding: '0.5rem',
                           backgroundColor: '#fef2f2',
                           border: '1px solid #fecaca',
-                          borderRadius: '4px',
+                          borderRadius: '0',
                           fontSize: '0.75rem',
                           color: '#dc2626'
                         }}>
@@ -1528,7 +1528,7 @@ const BatchRegulatoryGenerator = () => {
                     marginTop: '1rem',
                     padding: '1rem',
                     backgroundColor: '#f8f9fa',
-                    borderRadius: '6px',
+                    borderRadius: '0',
                     display: 'grid',
                     gridTemplateColumns: 'repeat(4, 1fr)',
                     gap: '1rem',

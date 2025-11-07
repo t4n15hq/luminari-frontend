@@ -18,9 +18,9 @@ const ProgressBar = memo(({ completion, activeFormSection, setActiveFormSection 
     <div style={{
       marginBottom: '2rem',
       backgroundColor: 'white',
-      borderRadius: '12px',
+      borderRadius: '0',
       padding: '1.5rem',
-      border: '1px solid #e2e8f0',
+      border: '1px solid #000000',
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     }}>
       <div style={{
@@ -63,7 +63,7 @@ const ProgressBar = memo(({ completion, activeFormSection, setActiveFormSection 
           width: '100%',
           height: '8px',
           backgroundColor: '#e2e8f0',
-          borderRadius: '4px',
+          borderRadius: '0',
           overflow: 'hidden'
         }}>
           <div style={{
@@ -96,7 +96,7 @@ const ProgressBar = memo(({ completion, activeFormSection, setActiveFormSection 
           width: '100%',
           height: '8px',
           backgroundColor: '#fef2f2',
-          borderRadius: '4px',
+          borderRadius: '0',
           overflow: 'hidden'
         }}>
           <div style={{
@@ -125,21 +125,21 @@ const ProgressBar = memo(({ completion, activeFormSection, setActiveFormSection 
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.5rem',
-              borderRadius: '6px',
+              borderRadius: '0',
               backgroundColor: activeFormSection === section.key ? '#eff6ff' : (section.isCompleted() ? '#f0fdf4' : '#f8fafc'),
-              border: `1px solid ${activeFormSection === section.key ? '#683D94' : (section.isCompleted() ? '#10b981' : '#e2e8f0')}`,
+              border: `1px solid ${activeFormSection === section.key ? '#683D94' : (section.isCompleted() ? '#10b981' : '#000000')}`,
               cursor: 'pointer',
               transition: 'all 0.2s ease',
               boxShadow: activeFormSection === section.key ? '0 2px 4px rgba(59, 130, 246, 0.2)' : 'none'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = section.isCompleted() ? '#ecfdf5' : '#f1f5f9';
-              e.currentTarget.style.border = `1px solid ${section.isCompleted() ? '#059669' : '#cbd5e1'}`;
+              e.currentTarget.style.border = `1px solid ${section.isCompleted() ? '#059669' : '#000000'}`;
               e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = activeFormSection === section.key ? '#eff6ff' : (section.isCompleted() ? '#f0fdf4' : '#f8fafc');
-              e.currentTarget.style.border = `1px solid ${activeFormSection === section.key ? '#683D94' : (section.isCompleted() ? '#10b981' : '#e2e8f0')}`;
+              e.currentTarget.style.border = `1px solid ${activeFormSection === section.key ? '#683D94' : (section.isCompleted() ? '#10b981' : '#000000')}`;
               e.currentTarget.style.boxShadow = activeFormSection === section.key ? '0 2px 4px rgba(59, 130, 246, 0.2)' : 'none';
             }}
           >
@@ -175,15 +175,15 @@ const FormSection = memo(({ title, sectionKey, children, isRequired, completion,
     <div style={{
       marginBottom: '1.5rem',
       backgroundColor: 'white',
-      borderRadius: '12px',
-      border: `2px solid ${isCompleted ? '#10b981' : '#e2e8f0'}`,
+      borderRadius: '0',
+      border: `2px solid ${isCompleted ? '#10b981' : '#000000'}`,
       overflow: 'hidden',
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     }}>
       <div style={{
         padding: '1rem 1.5rem',
         backgroundColor: '#f8fafc',
-        borderBottom: '1px solid #e2e8f0'
+        borderBottom: 'px solid #000000'
       }}>
         <h3 style={{
           fontSize: '1.25rem',
@@ -1722,8 +1722,8 @@ const ProtocolGenerator = () => {
       return (
         <div style={{ 
           padding: '1rem', 
-          border: '1px solid #e5e7eb', 
-          borderRadius: '8px', 
+          border: '1px solid #000000', 
+          borderRadius: '0', 
           backgroundColor: '#f9fafb',
           marginBottom: '1rem'
         }}>
@@ -1734,7 +1734,7 @@ const ProtocolGenerator = () => {
             gap: '10px',
             marginBottom: '10px',
             padding: '8px',
-            borderRadius: '6px',
+            borderRadius: '0',
             transition: 'background-color 0.2s'
           }}>
             <button
@@ -1742,7 +1742,7 @@ const ProtocolGenerator = () => {
               style={{
                 background: selectedProtocolSections.has('protocol-section-1') ? '#683D94' : '#f3f4f6',
                 color: selectedProtocolSections.has('protocol-section-1') ? 'white' : '#374151',
-                border: '2px solid #d1d5db',
+                border: 'px solid #000000',
                 borderRadius: '50%',
                 width: '24px',
                 height: '24px',
@@ -1786,7 +1786,7 @@ const ProtocolGenerator = () => {
             gap: '10px',
             marginBottom: '10px',
             padding: '8px',
-            borderRadius: '6px',
+            borderRadius: '0',
             transition: 'background-color 0.2s'
           }}>
             <button
@@ -1794,7 +1794,7 @@ const ProtocolGenerator = () => {
               style={{
                 background: isSelected ? '#683D94' : '#f3f4f6',
                 color: isSelected ? 'white' : '#374151',
-                border: '2px solid #d1d5db',
+                border: 'px solid #000000',
                 borderRadius: '50%',
                 width: '24px',
                 height: '24px',
@@ -1908,15 +1908,15 @@ const ProtocolGenerator = () => {
             marginBottom: '1rem',
             padding: '0.5rem',
             backgroundColor: '#f8fafc',
-            borderRadius: '8px',
-            border: '1px solid #e2e8f0'
+            borderRadius: '0',
+            border: '1px solid #000000'
           }}>
             <button
               onClick={() => handleStudyDesignSectionToggle(sectionId)}
               style={{
                 background: isSelected ? '#683D94' : '#f3f4f6',
                 color: isSelected ? 'white' : '#374151',
-                border: '2px solid #d1d5db',
+                border: 'px solid #000000',
                 borderRadius: '50%',
                 width: '24px',
                 height: '24px',
@@ -2396,7 +2396,7 @@ const ProtocolGenerator = () => {
         
         .tab-btn:hover {
           background-color: #f1f5f9;
-          border-color: #cbd5e1;
+          border-color: #000000;
         }
       `}</style>
       
@@ -2429,7 +2429,7 @@ const ProtocolGenerator = () => {
         {/* Section Tabs */}
         <div style={{ 
           display: 'flex', 
-          borderBottom: '2px solid #e2e8f0',
+          borderBottom: 'px solid #000000',
           marginBottom: '1.5rem'
         }}>
           <button
@@ -2443,7 +2443,7 @@ const ProtocolGenerator = () => {
               cursor: 'pointer',
               fontSize: '1rem',
               fontWeight: '600',
-              borderRadius: '8px 8px 0 0',
+              borderRadius: '0',
               transition: 'all 0.2s ease'
             }}
           >
@@ -2460,7 +2460,7 @@ const ProtocolGenerator = () => {
               cursor: 'pointer',
               fontSize: '1rem',
               fontWeight: '600',
-              borderRadius: '8px 8px 0 0',
+              borderRadius: '0',
               transition: 'all 0.2s ease'
             }}
           >
@@ -2472,7 +2472,7 @@ const ProtocolGenerator = () => {
       {activeSection === 'protocol' && (
         <>
           {showPreviousProtocols && (
-        <div style={{ background: '#f7fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ background: '#f7fafc', border: '1px solid #000000', borderRadius: '0', padding: '1rem', marginBottom: '1.5rem' }}>
           <h4 style={{ margin: 0, marginBottom: '0.5rem' }}>Previous Documents</h4>
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem' }}>
             <button
@@ -2510,21 +2510,21 @@ const ProtocolGenerator = () => {
                 <>
                   <ul style={{ maxHeight: '200px', overflowY: 'auto', margin: 0, padding: 0 }}>
                     {paginated.map(doc => (
-                      <li key={doc.id} style={{ marginBottom: '0.5rem', listStyle: 'none', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                      <li key={doc.id} style={{ marginBottom: '0.5rem', listStyle: 'none', borderBottom: 'px solid #000000', paddingBottom: '0.5rem' }}>
                         <strong>{doc.title}</strong> <span style={{ color: '#64748b', fontSize: '0.9em' }}>{doc.disease}</span>
-                        <button style={{ marginLeft: '1rem', padding: '2px 8px', borderRadius: '4px', background: '#64748b', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}>
+                        <button style={{ marginLeft: '1rem', padding: '2px 8px', borderRadius: '0', background: '#64748b', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}>
                           View
                         </button>
-                        <button style={{ marginLeft: '0.5rem', padding: '2px 8px', borderRadius: '4px', background: '#683D94', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => handleReferenceProtocolSelect(doc)}>
+                        <button style={{ marginLeft: '0.5rem', padding: '2px 8px', borderRadius: '0', background: '#683D94', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => handleReferenceProtocolSelect(doc)}>
                           Reference
                         </button>
                       </li>
                     ))}
                   </ul>
                   <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem' }}>
-                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} style={{ marginRight: 8, padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', background: currentPage === 1 ? '#e2e8f0' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}>Prev</button>
+                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} style={{ marginRight: 8, padding: '2px 8px', borderRadius: '0', border: '1px solid #000000', background: currentPage === 1 ? '#e2e8f0' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}>Prev</button>
                     <span style={{ alignSelf: 'center' }}>Page {currentPage} of {totalPages}</span>
-                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} style={{ marginLeft: 8, padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', background: currentPage === totalPages ? '#e2e8f0' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}>Next</button>
+                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} style={{ marginLeft: 8, padding: '2px 8px', borderRadius: '0', border: '1px solid #000000', background: currentPage === totalPages ? '#e2e8f0' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}>Next</button>
                   </div>
                 </>
               );
@@ -2545,7 +2545,7 @@ const ProtocolGenerator = () => {
           maxHeight: '80vh',
           background: '#ffffff',
           border: '2px solid #683D94',
-          borderRadius: '8px',
+          borderRadius: '0',
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
           zIndex: 1000,
           display: 'flex',
@@ -2554,7 +2554,7 @@ const ProtocolGenerator = () => {
           {/* Header */}
           <div style={{
             padding: '1rem',
-            borderBottom: '1px solid #e5e7eb',
+            borderBottom: '1px solid #000000',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -2579,7 +2579,7 @@ const ProtocolGenerator = () => {
           </div>
           
           {/* Protocol Info */}
-          <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>
+          <div style={{ padding: '1rem', borderBottom: '1px solid #000000' }}>
             <h5 style={{ margin: '0 0 0.5rem 0', color: '#374151' }}>
               {selectedReferenceProtocol.title}
             </h5>
@@ -2590,7 +2590,7 @@ const ProtocolGenerator = () => {
           
           {/* Table of Contents */}
           <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>
+            <div style={{ padding: '1rem', borderBottom: '1px solid #000000' }}>
               <h6 style={{ margin: '0 0 0.5rem 0', color: '#374151' }}>Table of Contents</h6>
               <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
                 {referenceProtocolTOC.map(section => (
@@ -2604,8 +2604,8 @@ const ProtocolGenerator = () => {
                       padding: '0.5rem',
                       margin: '0.25rem 0',
                       background: selectedReferenceSection?.id === section.id ? '#eff6ff' : 'transparent',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '4px',
+                      border: '1px solid #000000',
+                      borderRadius: '0',
                       cursor: 'pointer',
                       fontSize: '0.875rem',
                       color: selectedReferenceSection?.id === section.id ? '#1e40af' : '#374151'
@@ -2625,8 +2625,8 @@ const ProtocolGenerator = () => {
                 </h6>
                 <div style={{
                   background: '#f9fafb',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '4px',
+                  border: '1px solid #000000',
+                  borderRadius: '0',
                   padding: '0.75rem',
                   fontSize: '0.875rem',
                   lineHeight: '1.5',
@@ -2671,7 +2671,7 @@ const ProtocolGenerator = () => {
               backgroundColor: '#dc2626',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '0',
               fontSize: '1rem',
               fontWeight: '500',
               cursor: 'pointer',
@@ -2701,7 +2701,7 @@ const ProtocolGenerator = () => {
               backgroundColor: '#ef4444',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '0',
               fontSize: '1rem',
               fontWeight: '500',
               cursor: 'pointer',
@@ -3318,7 +3318,7 @@ const ProtocolGenerator = () => {
                   width: '100%',
                   height: '10px',
                   backgroundColor: '#e2e8f0',
-                  borderRadius: '5px',
+                  borderRadius: '0',
                   overflow: 'hidden',
                   boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)'
                 }}>
@@ -3397,7 +3397,7 @@ const ProtocolGenerator = () => {
                   marginTop: '2rem', 
                   padding: '1rem', 
                   border: '2px solid #683D94', 
-                  borderRadius: '8px', 
+                  borderRadius: '0', 
                   backgroundColor: '#f0f9ff' 
                 }}>
                   {/* Header with Reference Protocol Button */}
@@ -3416,7 +3416,7 @@ const ProtocolGenerator = () => {
                         background: showReferencePanel ? '#ef4444' : '#10b981',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '6px',
+                        borderRadius: '0',
                         padding: '8px 16px',
                         fontSize: '14px',
                         cursor: 'pointer',
@@ -3458,8 +3458,8 @@ const ProtocolGenerator = () => {
                             <div key={sectionId} style={{ 
                               marginBottom: '1.5rem', 
                               padding: '1rem', 
-                              border: '1px solid #d1d5db', 
-                              borderRadius: '6px', 
+                              border: 'px solid #000000', 
+                              borderRadius: '0', 
                               backgroundColor: '#ffffff' 
                             }}>
                               <div style={{ 
@@ -3478,7 +3478,7 @@ const ProtocolGenerator = () => {
                                           background: '#10b981',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -3492,7 +3492,7 @@ const ProtocolGenerator = () => {
                                           background: '#dc2626',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -3506,7 +3506,7 @@ const ProtocolGenerator = () => {
                                           background: aiEnabledSections.has(sectionId) ? '#10b981' : '#6b7280',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -3523,7 +3523,7 @@ const ProtocolGenerator = () => {
                                           background: '#683D94',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -3537,7 +3537,7 @@ const ProtocolGenerator = () => {
                                           background: '#6b7280',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -3567,8 +3567,8 @@ const ProtocolGenerator = () => {
                                     width: '100%',
                                     minHeight: '100px',
                                     padding: '0.75rem',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '4px',
+                                    border: '1px solid #000000',
+                                    borderRadius: '0',
                                     backgroundColor: '#f9fafb',
                                     fontFamily: 'inherit',
                                     fontSize: '14px',
@@ -3604,8 +3604,8 @@ const ProtocolGenerator = () => {
                             <div key={sectionId} style={{ 
                               marginBottom: '1.5rem', 
                               padding: '1rem', 
-                              border: '1px solid #d1d5db', 
-                              borderRadius: '6px', 
+                              border: 'px solid #000000', 
+                              borderRadius: '0', 
                               backgroundColor: '#ffffff' 
                             }}>
                               <div style={{ 
@@ -3624,7 +3624,7 @@ const ProtocolGenerator = () => {
                                           background: '#10b981',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -3638,7 +3638,7 @@ const ProtocolGenerator = () => {
                                           background: '#dc2626',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -3652,7 +3652,7 @@ const ProtocolGenerator = () => {
                                           background: aiEnabledSections.has(sectionId) ? '#10b981' : '#6b7280',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -3669,7 +3669,7 @@ const ProtocolGenerator = () => {
                                           background: '#683D94',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -3683,7 +3683,7 @@ const ProtocolGenerator = () => {
                                           background: '#6b7280',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -3713,8 +3713,8 @@ const ProtocolGenerator = () => {
                                     width: '100%',
                                     minHeight: '100px',
                                     padding: '0.75rem',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '4px',
+                                    border: '1px solid #000000',
+                                    borderRadius: '0',
                                     backgroundColor: '#f9fafb',
                                     fontFamily: 'inherit',
                                     fontSize: '14px',
@@ -3736,8 +3736,8 @@ const ProtocolGenerator = () => {
                       <div style={{ 
                         width: '400px',
                         background: '#ffffff',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
+                        border: 'px solid #000000',
+                        borderRadius: '0',
                         padding: '1rem'
                       }}>
                         <h5 style={{ margin: '0 0 1rem 0', color: '#374151' }}>Reference Protocol</h5>
@@ -3759,7 +3759,7 @@ const ProtocolGenerator = () => {
                         background: '#683D94',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '0',
                         padding: '8px 16px',
                         cursor: 'pointer',
                         fontSize: '14px'
@@ -3773,7 +3773,7 @@ const ProtocolGenerator = () => {
                         background: '#683D94',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '0',
                         padding: '8px 16px',
                         cursor: 'pointer',
                         fontSize: '14px'
@@ -3787,7 +3787,7 @@ const ProtocolGenerator = () => {
                         background: '#683D94',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '0',
                         padding: '8px 16px',
                         cursor: 'pointer',
                         fontSize: '14px'
@@ -3804,7 +3804,7 @@ const ProtocolGenerator = () => {
                         background: '#6b7280',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '0',
                         padding: '8px 16px',
                         cursor: 'pointer',
                         fontSize: '14px'
@@ -3826,7 +3826,7 @@ const ProtocolGenerator = () => {
                         background: '#dc2626',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '0',
                         padding: '8px 16px',
                         cursor: 'pointer',
                         fontSize: '14px'
@@ -3898,15 +3898,15 @@ const ProtocolGenerator = () => {
                   marginBottom: '1rem',
                   padding: '0.5rem',
                   backgroundColor: '#f8fafc',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0'
+                  borderRadius: '0',
+                  border: '1px solid #000000'
                 }}>
                   <button
                     onClick={() => handleStudyDesignSectionToggle('cmc-section')}
                     style={{
                       background: selectedStudyDesignSections.has('cmc-section') ? '#683D94' : '#f3f4f6',
                       color: selectedStudyDesignSections.has('cmc-section') ? 'white' : '#374151',
-                      border: '2px solid #d1d5db',
+                      border: 'px solid #000000',
                       borderRadius: '50%',
                       width: '24px',
                       height: '24px',
@@ -3951,7 +3951,7 @@ const ProtocolGenerator = () => {
                   marginTop: '2rem', 
                   padding: '1rem', 
                   border: '2px solid #683D94', 
-                  borderRadius: '8px', 
+                  borderRadius: '0', 
                   backgroundColor: '#f0f9ff' 
                 }}>
                   {/* Header with Reference Protocol Button */}
@@ -3970,7 +3970,7 @@ const ProtocolGenerator = () => {
                         background: showReferencePanel ? '#ef4444' : '#10b981',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '6px',
+                        borderRadius: '0',
                         padding: '8px 16px',
                         fontSize: '14px',
                         cursor: 'pointer'
@@ -4013,8 +4013,8 @@ const ProtocolGenerator = () => {
                               marginBottom: '1.5rem', 
                               padding: '1rem', 
                               backgroundColor: 'white', 
-                              borderRadius: '8px', 
-                              border: '1px solid #e2e8f0',
+                              borderRadius: '0', 
+                              border: '1px solid #000000',
                               boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                             }}>
                               {/* Section Header */}
@@ -4034,7 +4034,7 @@ const ProtocolGenerator = () => {
                                           background: '#10b981',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -4056,7 +4056,7 @@ const ProtocolGenerator = () => {
                                           background: aiEnabledSections.has(sectionId) ? '#683D94' : '#6b7280',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -4073,7 +4073,7 @@ const ProtocolGenerator = () => {
                                           background: '#10b981',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -4087,7 +4087,7 @@ const ProtocolGenerator = () => {
                                           background: '#ef4444',
                                           color: 'white',
                                           border: 'none',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           padding: '4px 8px',
                                           fontSize: '12px',
                                           cursor: 'pointer'
@@ -4119,8 +4119,8 @@ const ProtocolGenerator = () => {
                                 <div style={{ 
                                   padding: '0.75rem', 
                                   backgroundColor: '#f9fafb', 
-                                  borderRadius: '4px',
-                                  border: '1px solid #e5e7eb',
+                                  borderRadius: '0',
+                                  border: '1px solid #000000',
                                   minHeight: '100px',
                                   fontSize: '14px',
                                   lineHeight: '1.5',
@@ -4140,8 +4140,8 @@ const ProtocolGenerator = () => {
                         width: '50%', 
                         padding: '1rem', 
                         backgroundColor: '#f8fafc', 
-                        borderRadius: '8px', 
-                        border: '1px solid #e2e8f0',
+                        borderRadius: '0', 
+                        border: '1px solid #000000',
                         maxHeight: '600px',
                         overflowY: 'auto'
                       }}>
@@ -4156,8 +4156,8 @@ const ProtocolGenerator = () => {
                                   padding: '0.5rem',
                                   backgroundColor: selectedReferenceProtocol === protocol ? '#683D94' : 'white',
                                   color: selectedReferenceProtocol === protocol ? 'white' : '#374151',
-                                  border: '1px solid #d1d5db',
-                                  borderRadius: '4px',
+                                  border: 'px solid #000000',
+                                  borderRadius: '0',
                                   cursor: 'pointer',
                                   fontSize: '12px',
                                   textAlign: 'left'
@@ -4177,7 +4177,7 @@ const ProtocolGenerator = () => {
                   </div>
                   
                   {/* Export Options */}
-                  <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+                  <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f0f9ff', borderRadius: '0', border: '1px solid #bfdbfe' }}>
                     <h5 style={{ margin: '0 0 1rem 0', color: '#1e40af' }}>Export Selected Sections</h5>
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>
                       <button 
@@ -4189,7 +4189,7 @@ const ProtocolGenerator = () => {
                           background: '#683D94',
                           color: 'white',
                           border: 'none',
-                          borderRadius: '6px',
+                          borderRadius: '0',
                           padding: '8px 16px',
                           fontSize: '14px',
                           cursor: 'pointer'
@@ -4206,7 +4206,7 @@ const ProtocolGenerator = () => {
                           background: '#10b981',
                           color: 'white',
                           border: 'none',
-                          borderRadius: '6px',
+                          borderRadius: '0',
                           padding: '8px 16px',
                           fontSize: '14px',
                           cursor: 'pointer'
@@ -4265,9 +4265,9 @@ const ProtocolGenerator = () => {
               <div style={{ width: '100%' }}>
             <div style={{ 
               backgroundColor: 'white', 
-              borderRadius: '12px', 
+              borderRadius: '0', 
               padding: '2rem',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #000000',
               marginBottom: '2rem'
             }}>
               <h3 style={{ 
@@ -4288,8 +4288,8 @@ const ProtocolGenerator = () => {
                 style={{
                   width: '100%',
                   padding: '0.75rem',
-                  borderRadius: '8px',
-                  border: '1px solid #d1d5db',
+                  borderRadius: '0',
+                  border: 'px solid #000000',
                   fontSize: '1rem',
                   backgroundColor: 'white'
                 }}
@@ -4307,9 +4307,9 @@ const ProtocolGenerator = () => {
               <>
                 <div style={{ 
                   backgroundColor: 'white', 
-                  borderRadius: '12px', 
+                  borderRadius: '0', 
                   padding: '2rem',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid #000000',
                   marginBottom: '2rem'
                 }}>
                   <h3 style={{ 
@@ -4326,9 +4326,9 @@ const ProtocolGenerator = () => {
                 
                     <div style={{
                       backgroundColor: '#f8fafc',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       padding: '1.5rem',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid #000000',
                       marginBottom: '2rem'
                     }}>
                       <h4 style={{ 
@@ -4349,9 +4349,9 @@ const ProtocolGenerator = () => {
 
                 <div style={{
                   backgroundColor: '#f8fafc',
-                  borderRadius: '8px',
+                  borderRadius: '0',
                   padding: '1.5rem',
-                  border: '1px solid #e2e8f0'
+                  border: '1px solid #000000'
                 }}>
                   <h4 style={{ 
                     fontSize: '1.1rem', 
@@ -4375,8 +4375,8 @@ const ProtocolGenerator = () => {
                         alignItems: 'center',
                         padding: '0.75rem',
                         backgroundColor: 'white',
-                        borderRadius: '6px',
-                        border: '1px solid #e2e8f0'
+                        borderRadius: '0',
+                        border: '1px solid #000000'
                       }}>
                         <span style={{
                           fontSize: '1rem',
@@ -4401,9 +4401,9 @@ const ProtocolGenerator = () => {
                 {/* Document Upload Section */}
                 <div style={{ 
                   backgroundColor: 'white', 
-                  borderRadius: '12px', 
+                  borderRadius: '0', 
                   padding: '2rem',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid #000000',
                   marginBottom: '2rem'
                 }}>
                   <h3 style={{ 
@@ -4423,7 +4423,7 @@ const ProtocolGenerator = () => {
                     className={`dropzone ${isDragActive ? 'active' : ''}`}
                     style={{
                       border: isDragActive ? '3px dashed #683D94' : '2px dashed #94a3b8',
-                      borderRadius: '12px',
+                      borderRadius: '0',
                       padding: '3rem 2rem',
                       textAlign: 'center',
                       backgroundColor: isDragActive ? '#eff6ff' : 'white',
@@ -4468,9 +4468,9 @@ const ProtocolGenerator = () => {
                         return (
                           <div key={cat.id} className={`checklist-item ${status}`} style={{
                             padding: '1rem',
-                            borderRadius: '8px',
+                            borderRadius: '0',
                             backgroundColor: 'white',
-                            border: `2px solid ${status === 'missing' ? '#ef4444' : status === 'full' ? '#10b981' : '#e2e8f0'}`,
+                            border: `2px solid ${status === 'missing' ? '#ef4444' : status === 'full' ? '#10b981' : '#000000'}`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between'
@@ -4506,9 +4506,9 @@ const ProtocolGenerator = () => {
                       </h4>
                       <div style={{ 
                         backgroundColor: '#f8fafc', 
-                        borderRadius: '12px', 
+                        borderRadius: '0', 
                         padding: '1rem',
-                        border: '1px solid #e2e8f0'
+                        border: '1px solid #000000'
                       }}>
                         {uploadedDocuments.map(doc => (
                           <div key={doc.id} style={{
@@ -4517,7 +4517,7 @@ const ProtocolGenerator = () => {
                             justifyContent: 'space-between',
                             padding: '1rem',
                             borderBottom: '1px solid #f1f5f9',
-                            borderRadius: '8px'
+                            borderRadius: '0'
                           }}>
                             <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
                               <div style={{ flexGrow: 1 }}>
@@ -4533,8 +4533,8 @@ const ProtocolGenerator = () => {
                                 onChange={(e) => handleCategoryChange(doc.id, e.target.value)}
                                 style={{
                                   padding: '0.4rem 0.6rem',
-                                  borderRadius: '6px',
-                                  border: '1px solid #d1d5db',
+                                  borderRadius: '0',
+                                  border: 'px solid #000000',
                                   fontSize: '0.8rem',
                                   backgroundColor: 'white'
                                 }}
@@ -4551,7 +4551,7 @@ const ProtocolGenerator = () => {
                                   backgroundColor: '#ef4444',
                                   color: 'white',
                                   border: 'none',
-                                  borderRadius: '6px',
+                                  borderRadius: '0',
                                   cursor: 'pointer',
                                   fontSize: '0.8rem'
                                 }}
@@ -4574,7 +4574,7 @@ const ProtocolGenerator = () => {
                         padding: '1rem 3rem',
                         fontSize: '1.1rem',
                         fontWeight: '600',
-                        borderRadius: '12px',
+                        borderRadius: '0',
                         border: 'none',
                         backgroundColor: isReadyToCompile() && !compilerLoading ? '#10b981' : '#9ca3af',
                         color: 'white',

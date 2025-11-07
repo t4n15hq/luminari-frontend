@@ -259,12 +259,12 @@
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-body);
   color: var(--color-dark-gray);
-  border-bottom: var(--border-width) solid var(--color-light-gray);
+  border-bottom: 1px solid #000000;
 }
 
 .table td {
   padding: var(--spacing-sm);
-  border-bottom: var(--border-width) solid var(--color-light-gray);
+  border-bottom: 1px solid #000000;
   color: var(--color-dark-gray);
 }
 

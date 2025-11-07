@@ -89,11 +89,11 @@
      BORDERS & RADIUS
      ======================================== */
 
-  --border-radius-sm: 4px;
-  --border-radius-md: 6px;
-  --border-radius-lg: 8px;
-  --border-radius-xl: 12px;
-  --border-radius-pill: 999px;
+  --border-radius-sm: 0;
+  --border-radius-md: 0;
+  --border-radius-lg: 0;
+  --border-radius-xl: 0;
+  --border-radius-pill: 0;
 
   --border-width: 1px;
   --border-width-thick: 2px;

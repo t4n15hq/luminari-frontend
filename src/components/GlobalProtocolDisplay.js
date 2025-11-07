@@ -16,7 +16,7 @@ const GlobalProtocolDisplay = () => {
       right: '20px',
       backgroundColor: 'white',
       border: '2px solid #3b82f6',
-      borderRadius: '12px',
+      borderRadius: '0',
       padding: '1rem',
       boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
       zIndex: 1000,
@@ -39,7 +39,7 @@ const GlobalProtocolDisplay = () => {
           backgroundColor: '#10b981',
           color: 'white',
           padding: '0.2rem 0.5rem',
-          borderRadius: '4px',
+          borderRadius: '0',
           fontSize: '0.75rem',
           fontWeight: '500'
         }}>
@@ -69,7 +69,7 @@ const GlobalProtocolDisplay = () => {
             color: '#64748b',
             backgroundColor: '#f8fafc',
             padding: '0.5rem',
-            borderRadius: '6px',
+            borderRadius: '0',
             border: '1px solid #e2e8f0'
           }}>
             {globalProtocolResult?.protocol ? 
@@ -95,7 +95,7 @@ const GlobalProtocolDisplay = () => {
             color: '#64748b',
             backgroundColor: '#f0fdf4',
             padding: '0.5rem',
-            borderRadius: '6px',
+            borderRadius: '0',
             border: '1px solid #10b981'
           }}>
             CMC & Clinical sections available
@@ -116,7 +116,7 @@ const GlobalProtocolDisplay = () => {
             backgroundColor: '#3b82f6',
             color: 'white',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: '0',
             fontSize: '0.8rem',
             cursor: 'pointer',
             fontWeight: '500'
@@ -134,8 +134,8 @@ const GlobalProtocolDisplay = () => {
             padding: '0.5rem',
             backgroundColor: '#f1f5f9',
             color: '#64748b',
-            border: '1px solid #cbd5e1',
-            borderRadius: '6px',
+            border: '1px solid #000000',
+            borderRadius: '0',
             fontSize: '0.8rem',
             cursor: 'pointer'
           }}

@@ -113,7 +113,7 @@ const BackgroundJobs = () => {
           padding: '12px 20px',
           background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)',
           color: 'white',
-          borderRadius: '50px',
+          borderRadius: '0',
           cursor: 'pointer',
           boxShadow: '0 8px 32px rgba(79, 70, 229, 0.3), 0 4px 16px rgba(0, 0, 0, 0.1)',
           backdropFilter: 'blur(20px)',
@@ -124,7 +124,7 @@ const BackgroundJobs = () => {
           letterSpacing: '0.025em',
           userSelect: 'none',
           ...(isExpanded ? {
-            borderRadius: '16px 16px 0 0',
+            borderRadius: '0',
             background: 'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary-dark) 100%)',
             boxShadow: '0 12px 40px rgba(67, 56, 202, 0.4), 0 6px 20px rgba(0, 0, 0, 0.15)'
           } : {}),
@@ -151,7 +151,7 @@ const BackgroundJobs = () => {
         <span style={{
           background: 'rgba(255, 255, 255, 0.2)',
           padding: '4px 8px',
-          borderRadius: '12px',
+          borderRadius: '0',
           fontSize: '12px',
           fontWeight: '700',
           minWidth: '20px',
@@ -195,7 +195,7 @@ const BackgroundJobs = () => {
                 color: '#374151',
                 padding: '8px 12px',
                 background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                borderRadius: '8px',
+                borderRadius: '0',
                 border: '1px solid #f59e0b'
               }}>
                 <span>◐</span>
@@ -206,7 +206,7 @@ const BackgroundJobs = () => {
                   <div key={job.id} style={{
                     background: 'linear-gradient(135deg, #ffffff 0%, #fefefe 100%)',
                     border: '1px solid #e5e7eb',
-                    borderRadius: '12px',
+                    borderRadius: '0',
                     padding: '16px',
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                     transition: 'all 0.3s ease'
@@ -234,7 +234,7 @@ const BackgroundJobs = () => {
                           background: 'linear-gradient(135deg, var(--color-error) 0%, var(--color-error) 100%)',
                           color: 'white',
                           border: 'none',
-                          borderRadius: '6px',
+                          borderRadius: '0',
                           padding: '4px 8px',
                           fontSize: '11px',
                           fontWeight: '600',
@@ -257,14 +257,14 @@ const BackgroundJobs = () => {
                       width: '100%',
                       height: '6px',
                       background: '#e5e7eb',
-                      borderRadius: '3px',
+                      borderRadius: '0',
                       overflow: 'hidden'
                     }}>
                       <div style={{
                         width: `${job.progress || 25}%`,
                         height: '100%',
                         background: 'linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%)',
-                        borderRadius: '3px',
+                        borderRadius: '0',
                         transition: 'width 0.3s ease'
                       }} />
                     </div>
@@ -287,7 +287,7 @@ const BackgroundJobs = () => {
                 color: '#374151',
                 padding: '8px 12px',
                 background: 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)',
-                borderRadius: '8px',
+                borderRadius: '0',
                 border: '1px solid #16a34a'
               }}>
                 <span>Complete</span>
@@ -300,7 +300,7 @@ const BackgroundJobs = () => {
                       ? 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)'
                       : 'linear-gradient(135deg, #fef2f2 0%, #ffffff 100%)',
                     border: `1px solid ${job.status === 'completed' ? '#bbf7d0' : '#fecaca'}`,
-                    borderRadius: '12px',
+                    borderRadius: '0',
                     padding: '16px',
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                     transition: 'all 0.3s ease'
@@ -329,7 +329,7 @@ const BackgroundJobs = () => {
                             color: '#dc2626',
                             background: '#fef2f2',
                             padding: '4px 8px',
-                            borderRadius: '6px',
+                            borderRadius: '0',
                             border: '1px solid #fecaca'
                           }}>
                             Error: {job.error}
@@ -343,7 +343,7 @@ const BackgroundJobs = () => {
                             background: 'linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary-dark) 100%)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '6px',
+                            borderRadius: '0',
                             padding: '6px 12px',
                             fontSize: '11px',
                             fontWeight: '600',
@@ -380,7 +380,7 @@ const BackgroundJobs = () => {
                 background: 'linear-gradient(135deg, var(--color-gray-500) 0%, var(--color-gray-600) 100%)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '0',
                 padding: '10px 16px',
                 fontSize: '12px',
                 fontWeight: '600',

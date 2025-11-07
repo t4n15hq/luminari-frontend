@@ -649,7 +649,7 @@ const RegulatoryDocumentGenerator = () => {
               color: 'white',
               border: 'none',
               padding: '8px 16px',
-              borderRadius: '6px',
+              borderRadius: '0',
               cursor: 'pointer',
               fontSize: '14px',
               display: 'flex',
@@ -666,7 +666,7 @@ const RegulatoryDocumentGenerator = () => {
         </div>
       </div>
       {showPreviousDocuments && (
-        <div style={{ background: '#f7fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ background: '#f7fafc', border: '1px solid #000000', borderRadius: '0', padding: '1rem', marginBottom: '1.5rem' }}>
           <h4 style={{ margin: 0, marginBottom: '0.5rem' }}>Previous Regulatory Documents</h4>
           <input
             type="text"
@@ -692,16 +692,16 @@ const RegulatoryDocumentGenerator = () => {
                     {paginated.map(doc => (
                       <li key={doc.id} style={{ marginBottom: '0.5rem', listStyle: 'none', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
                         <strong>{doc.title}</strong> <span style={{ color: '#64748b', fontSize: '0.9em' }}>{doc.disease} {doc.country && `| ${doc.country}`}</span>
-                        <button style={{ marginLeft: '1rem', padding: '2px 8px', borderRadius: '4px', background: '#64748b', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}>
+                        <button style={{ marginLeft: '1rem', padding: '2px 8px', borderRadius: '0', background: '#64748b', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}>
                           View
                         </button>
                       </li>
                     ))}
                   </ul>
                   <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem' }}>
-                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} style={{ marginRight: 8, padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', background: currentPage === 1 ? '#e2e8f0' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}>Prev</button>
+                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} style={{ marginRight: 8, padding: '2px 8px', borderRadius: '0', border: '1px solid #000000', background: currentPage === 1 ? '#e2e8f0' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}>Prev</button>
                     <span style={{ alignSelf: 'center' }}>Page {currentPage} of {totalPages}</span>
-                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} style={{ marginLeft: 8, padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', background: currentPage === totalPages ? '#e2e8f0' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}>Next</button>
+                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} style={{ marginLeft: 8, padding: '2px 8px', borderRadius: '0', border: '1px solid #000000', background: currentPage === totalPages ? '#e2e8f0' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}>Next</button>
                   </div>
                 </>
               );
@@ -716,7 +716,7 @@ const RegulatoryDocumentGenerator = () => {
         <div style={{
           backgroundColor: '#f0fff4',
           border: '2px solid #9ae6b4',
-          borderRadius: '12px',
+          borderRadius: '0',
           padding: '20px',
           marginBottom: '25px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
@@ -733,7 +733,7 @@ const RegulatoryDocumentGenerator = () => {
                 <div key={doc.id || index} style={{
                   backgroundColor: 'white',
                   border: '1px solid #9ae6b4',
-                  borderRadius: '6px',
+                  borderRadius: '0',
                   padding: '12px 15px',
                   cursor: documentType === doc.name ? 'default' : 'pointer',
                   backgroundColor: documentType === doc.name ? '#c6f6d5' : 'white',
@@ -1026,7 +1026,7 @@ const RegulatoryDocumentGenerator = () => {
                     color: 'white',
                     border: 'none',
                     padding: '4px 8px',
-                    borderRadius: '4px',
+                    borderRadius: '0',
                     fontSize: '10px',
                     cursor: 'pointer'
                   }}
@@ -1058,7 +1058,7 @@ const RegulatoryDocumentGenerator = () => {
                     color: 'white',
                     border: 'none',
                     padding: '4px 8px',
-                    borderRadius: '4px',
+                    borderRadius: '0',
                     fontSize: '10px',
                     cursor: 'pointer'
                   }}
@@ -1155,7 +1155,7 @@ const RegulatoryDocumentGenerator = () => {
                     color: 'white',
                     border: 'none',
                     padding: '4px 8px',
-                    borderRadius: '4px',
+                    borderRadius: '0',
                     fontSize: '10px',
                     cursor: 'pointer'
                   }}
@@ -1187,7 +1187,7 @@ const RegulatoryDocumentGenerator = () => {
                     color: 'white',
                     border: 'none',
                     padding: '4px 8px',
-                    borderRadius: '4px',
+                    borderRadius: '0',
                     fontSize: '10px',
                     cursor: 'pointer'
                   }}
@@ -1305,7 +1305,7 @@ const RegulatoryDocumentGenerator = () => {
                         color: 'white',
                         border: 'none',
                         padding: '4px 8px',
-                        borderRadius: '4px',
+                        borderRadius: '0',
                         fontSize: '10px',
                         cursor: 'pointer'
                       }}
@@ -1345,7 +1345,7 @@ const RegulatoryDocumentGenerator = () => {
             minWidth: '400px',
             background: '#f8f9fa',
             border: '1px solid #e2e8f0',
-            borderRadius: '8px',
+            borderRadius: '0',
             padding: '20px',
             maxHeight: '80vh',
             overflowY: 'auto'
@@ -1362,7 +1362,7 @@ const RegulatoryDocumentGenerator = () => {
                       style={{
                         padding: '10px',
                         border: '1px solid #e2e8f0',
-                        borderRadius: '6px',
+                        borderRadius: '0',
                         marginBottom: '8px',
                         cursor: 'pointer',
                         backgroundColor: 'white'
@@ -1408,7 +1408,7 @@ const RegulatoryDocumentGenerator = () => {
                         style={{
                           padding: '8px 12px',
                           cursor: 'pointer',
-                          borderRadius: '4px',
+                          borderRadius: '0',
                           marginBottom: '4px',
                           backgroundColor: selectedReferenceSection?.id === section.id ? '#e6fffa' : 'white',
                           border: selectedReferenceSection?.id === section.id ? '1px solid #38b2ac' : '1px solid #e2e8f0'
@@ -1430,7 +1430,7 @@ const RegulatoryDocumentGenerator = () => {
                     <div style={{
                       background: 'white',
                       border: '1px solid #e2e8f0',
-                      borderRadius: '6px',
+                      borderRadius: '0',
                       padding: '15px',
                       maxHeight: '300px',
                       overflowY: 'auto',
@@ -1483,7 +1483,7 @@ const RegulatoryDocumentGenerator = () => {
                       color: 'white',
                       border: 'none',
                       padding: '6px 12px',
-                      borderRadius: '4px',
+                      borderRadius: '0',
                       fontSize: '12px',
                       cursor: 'pointer'
                     }}
@@ -1511,7 +1511,7 @@ const RegulatoryDocumentGenerator = () => {
                       color: 'white',
                       border: 'none',
                       padding: '6px 12px',
-                      borderRadius: '4px',
+                      borderRadius: '0',
                       fontSize: '12px',
                       cursor: 'pointer'
                     }}

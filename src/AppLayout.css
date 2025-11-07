@@ -16,15 +16,16 @@
    ======================================== */
 
 .app-main-wrapper {
-  margin-left: 280px;
+  margin-left: 280px !important;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
 }
 
 .app-main-wrapper.wrapper-collapsed {
-  margin-left: 70px;
+  margin-left: 70px !important;
 }
 
 /* ========================================

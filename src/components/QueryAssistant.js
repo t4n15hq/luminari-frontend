@@ -254,7 +254,7 @@ Please rephrase your question to focus on clinical trials, protocol development,
                     backgroundColor: '#fbbf24', 
                     color: '#92400e', 
                     padding: '2px 6px', 
-                    borderRadius: '4px', 
+                    borderRadius: '0', 
                     fontSize: '0.7rem' 
                   }}>
                     SCOPE NOTICE

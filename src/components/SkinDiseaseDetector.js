@@ -406,7 +406,7 @@ const SkinDiseaseDetector = () => {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0 15px', width: '200px' }}>
         <div style={{ 
           backgroundColor: '#f0f0f0', 
-          borderRadius: '8px', 
+          borderRadius: '0', 
           padding: '10px 8px',
           marginBottom: '15px',
           width: '100%',
@@ -530,7 +530,7 @@ const SkinDiseaseDetector = () => {
           <div style={{ 
             backgroundColor: 'white', 
             padding: '30px', 
-            borderRadius: '12px', 
+            borderRadius: '0', 
             boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
             marginBottom: '20px'
           }}>
@@ -543,7 +543,7 @@ const SkinDiseaseDetector = () => {
                 width: '100%',
                 padding: '12px',
                 border: '2px dashed #cbd5e0',
-                borderRadius: '8px',
+                borderRadius: '0',
                 backgroundColor: '#f7fafc',
                 cursor: 'pointer',
                 fontSize: '16px'
@@ -561,7 +561,7 @@ const SkinDiseaseDetector = () => {
                   style={{ 
                     maxWidth: '400px', 
                     maxHeight: '400px',
-                    borderRadius: '10px',
+                    borderRadius: '0',
                     border: '1px solid #e2e8f0',
                     boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
                   }} 
@@ -576,7 +576,7 @@ const SkinDiseaseDetector = () => {
           <div style={{ 
             backgroundColor: 'white', 
             padding: '30px', 
-            borderRadius: '12px', 
+            borderRadius: '0', 
             boxShadow: '0 4px 6px rgba(0,0,0,0.07)'
           }}>
             <h3 style={{ marginTop: 0, color: '#2d3748' }}>Patient Information</h3>
@@ -588,7 +588,7 @@ const SkinDiseaseDetector = () => {
                   placeholder="Patient age" 
                   value={age} 
                   onChange={(e) => setAge(e.target.value)}
-                  style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+                  style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '0' }}
                 />
               </div>
               <div>
@@ -596,7 +596,7 @@ const SkinDiseaseDetector = () => {
                 <select 
                   value={gender} 
                   onChange={(e) => setGender(e.target.value)}
-                  style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+                  style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '0' }}
                 >
                   <option value="">Select Gender</option>
                   <option>Male</option>
@@ -610,7 +610,7 @@ const SkinDiseaseDetector = () => {
                 <select 
                   value={race} 
                   onChange={(e) => setRace(e.target.value)}
-                  style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+                  style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '0' }}
                 >
                   <option value="">Select Ethnicity</option>
                   <option>White / Caucasian</option>
@@ -627,7 +627,7 @@ const SkinDiseaseDetector = () => {
                 <select 
                   value={skinColor} 
                   onChange={(e) => setSkinColor(e.target.value)}
-                  style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+                  style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '0' }}
                 >
                   <option value="">Select Skin Tone</option>
                   <option>Very Light (Fitzpatrick I)</option>
@@ -643,7 +643,7 @@ const SkinDiseaseDetector = () => {
                 <select 
                   value={skinType} 
                   onChange={(e) => setSkinType(e.target.value)}
-                  style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+                  style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '0' }}
                 >
                   <option value="">Select Skin Type</option>
                   <option>Oily</option>
@@ -682,7 +682,7 @@ const SkinDiseaseDetector = () => {
                   gap: '10px',
                   padding: '15px',
                   backgroundColor: '#f8f9fa',
-                  borderRadius: '8px',
+                  borderRadius: '0',
                   border: '1px solid #e9ecef'
                 }}>
                   {['Itching', 'Burning', 'Pain', 'Redness', 'Swelling', 'Scaling', 'Crusting', 'Bleeding'].map(symptom => (
@@ -777,7 +777,7 @@ const SkinDiseaseDetector = () => {
               <div style={{ 
                 backgroundColor: '#ffffff',
                 padding: '30px',
-                borderRadius: '12px',
+                borderRadius: '0',
                 boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                 border: '1px solid #e5e7eb'
               }}>
@@ -810,7 +810,7 @@ const SkinDiseaseDetector = () => {
                   <h4 style={{ marginBottom: '15px', color: '#2d3748' }}>Detailed Confidence Scores</h4>
                   <div style={{ 
                     border: '1px solid #e2e8f0', 
-                    borderRadius: '8px', 
+                    borderRadius: '0', 
                     overflow: 'hidden' 
                   }}>
                     {prediction.slice(0, 5).map((p, i) => (
@@ -828,14 +828,14 @@ const SkinDiseaseDetector = () => {
                             width: '100px', 
                             height: '8px', 
                             backgroundColor: '#e2e8f0', 
-                            borderRadius: '4px',
+                            borderRadius: '0',
                             overflow: 'hidden'
                           }}>
                             <div style={{ 
                               width: `${p.confidence * 100}%`, 
                               height: '100%',
                               backgroundColor: i === 0 ? '#e53e3e' : '#38b2ac',
-                              borderRadius: '4px'
+                              borderRadius: '0'
                             }} />
                           </div>
                           <span style={{ 
@@ -856,7 +856,7 @@ const SkinDiseaseDetector = () => {
                 <div style={{ 
                   backgroundColor: '#ebf8ff',
                   border: '1px solid #bee3f8',
-                  borderRadius: '8px',
+                  borderRadius: '0',
                   padding: '20px',
                   marginBottom: '25px'
                 }}>
@@ -883,7 +883,7 @@ const SkinDiseaseDetector = () => {
                       padding: '10px', 
                       backgroundColor: '#fef5e7',
                       border: '1px solid #f6e05e',
-                      borderRadius: '6px',
+                      borderRadius: '0',
                       fontSize: '0.9rem'
                     }}>
                       <strong>Important:</strong> This analysis is for clinical decision support only. 
@@ -897,7 +897,7 @@ const SkinDiseaseDetector = () => {
                   <div style={{
                     backgroundColor: '#f0fdf4',
                     border: '1px solid #86efac',
-                    borderRadius: '8px',
+                    borderRadius: '0',
                     padding: '20px',
                     marginBottom: '25px'
                   }}>
@@ -964,7 +964,7 @@ const SkinDiseaseDetector = () => {
                 width: '100%',
                 padding: '15px',
                 border: '2px dashed #cbd5e0',
-                borderRadius: '8px',
+                borderRadius: '0',
                 backgroundColor: '#f7fafc',
                 cursor: 'pointer',
                 fontSize: '16px'
@@ -1026,7 +1026,7 @@ const SkinDiseaseDetector = () => {
                 maxHeight: '600px', 
                 overflowY: 'auto', 
                 border: '1px solid #e2e8f0', 
-                borderRadius: '8px', 
+                borderRadius: '0', 
                 backgroundColor: 'white'
               }}>
                 {batchFiles.map((item) => (
@@ -1039,7 +1039,7 @@ const SkinDiseaseDetector = () => {
                           width: '80px', 
                           height: '80px', 
                           objectFit: 'cover', 
-                          borderRadius: '8px', 
+                          borderRadius: '0', 
                           marginRight: '20px',
                           border: '1px solid #e2e8f0'
                         }} 
@@ -1071,12 +1071,12 @@ const SkinDiseaseDetector = () => {
                             placeholder="Age" 
                             value={item.metadata.age}
                             onChange={(e) => updateBatchMetadata(item.id, 'age', e.target.value)}
-                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '0' }}
                           />
                           <select 
                             value={item.metadata.gender}
                             onChange={(e) => updateBatchMetadata(item.id, 'gender', e.target.value)}
-                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '0' }}
                           >
                             <option value="">Gender</option>
                             <option>Male</option>
@@ -1086,7 +1086,7 @@ const SkinDiseaseDetector = () => {
                           <select 
                             value={item.metadata.race}
                             onChange={(e) => updateBatchMetadata(item.id, 'race', e.target.value)}
-                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '0' }}
                           >
                             <option value="">Ethnicity</option>
                             <option>Caucasian</option>
@@ -1098,7 +1098,7 @@ const SkinDiseaseDetector = () => {
                           <select 
                             value={item.metadata.skinColor}
                             onChange={(e) => updateBatchMetadata(item.id, 'skinColor', e.target.value)}
-                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '0' }}
                           >
                             <option value="">Skin Tone</option>
                             <option>Very Light (I)</option>
@@ -1111,7 +1111,7 @@ const SkinDiseaseDetector = () => {
                           <select 
                             value={item.metadata.skinType}
                             onChange={(e) => updateBatchMetadata(item.id, 'skinType', e.target.value)}
-                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                            style={{ padding: '6px', border: '1px solid #d1d5db', borderRadius: '0' }}
                           >
                             <option value="">Skin Type</option>
                             <option>Oily</option>
@@ -1132,7 +1132,7 @@ const SkinDiseaseDetector = () => {
                             padding: '8px',
                             fontSize: '0.85rem',
                             border: '1px solid #d1d5db',
-                            borderRadius: '4px',
+                            borderRadius: '0',
                             resize: 'vertical',
                             marginBottom: '10px'
                           }}
@@ -1196,13 +1196,13 @@ const SkinDiseaseDetector = () => {
                   textAlign: 'center',
                   backgroundColor: 'white',
                   padding: '20px',
-                  borderRadius: '8px',
+                  borderRadius: '0',
                   border: '1px solid #e2e8f0'
                 }}>
                   <div style={{ 
                     width: '100%', 
                     backgroundColor: '#e5e7eb', 
-                    borderRadius: '8px', 
+                    borderRadius: '0', 
                     overflow: 'hidden', 
                     marginBottom: '15px',
                     height: '20px'
@@ -1213,7 +1213,7 @@ const SkinDiseaseDetector = () => {
                         height: '100%', 
                         backgroundColor: '#38b2ac', 
                         transition: 'width 0.3s ease',
-                        borderRadius: '8px'
+                        borderRadius: '0'
                       }}
                     />
                   </div>
@@ -1240,7 +1240,7 @@ const SkinDiseaseDetector = () => {
               marginTop: '15px', 
               padding: '15px', 
               backgroundColor: '#f7fafc', 
-              borderRadius: '8px',
+              borderRadius: '0',
               fontSize: '0.9rem', 
               color: '#4a5568'
             }}>
@@ -1288,7 +1288,7 @@ const SkinDiseaseDetector = () => {
               <div style={{ 
                 backgroundColor: '#f8f9fa',
                 padding: '20px',
-                borderRadius: '8px',
+                borderRadius: '0',
                 maxHeight: '300px',
                 overflowY: 'auto',
                 border: '1px solid #e9ecef',
@@ -1308,7 +1308,7 @@ const SkinDiseaseDetector = () => {
               <div style={{ 
                 backgroundColor: '#f0fff4',
                 border: '1px solid #9ae6b4',
-                borderRadius: '8px',
+                borderRadius: '0',
                 padding: '20px',
                 marginBottom: '20px'
               }}>
@@ -1326,7 +1326,7 @@ const SkinDiseaseDetector = () => {
                 <div style={{ 
                   backgroundColor: '#ebf8ff',
                   border: '1px solid #90cdf4',
-                  borderRadius: '8px',
+                  borderRadius: '0',
                   padding: '20px'
                 }}>
                   <h4 style={{ margin: '0 0 15px 0', color: '#2c5282' }}>Extracted Clinical Data</h4>
@@ -1339,7 +1339,7 @@ const SkinDiseaseDetector = () => {
                       <div key={idx} style={{ 
                         padding: '8px 12px',
                         backgroundColor: 'white',
-                        borderRadius: '6px',
+                        borderRadius: '0',
                         fontSize: '0.9rem',
                         border: '1px solid #bee3f8'
                       }}>
@@ -1368,7 +1368,7 @@ const SkinDiseaseDetector = () => {
           <div style={{
             backgroundColor: 'white',
             padding: '40px',
-            borderRadius: '12px',
+            borderRadius: '0',
             boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
             textAlign: 'center',
             maxWidth: '700px',
@@ -1387,7 +1387,7 @@ const SkinDiseaseDetector = () => {
                 width: '100%',
                 padding: '20px',
                 border: '2px dashed #cbd5e0',
-                borderRadius: '8px',
+                borderRadius: '0',
                 backgroundColor: '#f7fafc',
                 color: '#a0aec0',
                 cursor: 'not-allowed',
@@ -1404,7 +1404,7 @@ const SkinDiseaseDetector = () => {
               backgroundColor: '#fffbea',
               color: '#744210',
               padding: '8px 20px',
-              borderRadius: '20px',
+              borderRadius: '0',
               fontSize: '0.85rem',
               fontWeight: 'bold',
               border: '1px solid #f6e05e'

@@ -31,7 +31,7 @@ import './App.css';
 // Layout wrapper with Sidebar and Header
 const AppLayout = ({ children }) => {
   const location = useLocation();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
 
   // Don't show layout on login page
   if (location.pathname === '/login') {

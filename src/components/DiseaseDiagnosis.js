@@ -151,9 +151,6 @@ const DiseaseDiagnosis = () => {
           >
             {/* Card Header */}
             <div className="specialty-card-header">
-              <div className="specialty-icon">
-                {specialty.icon}
-              </div>
               <h3>{specialty.name}</h3>
             </div>
 

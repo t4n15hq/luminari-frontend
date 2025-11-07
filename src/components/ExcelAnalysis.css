@@ -9,6 +9,13 @@
   font-family: var(--font-family-primary);
 }
 
+.excel-analysis-container .container {
+  border: 1px solid #000000;
+  border-radius: 0;
+  background-color: white;
+  padding: var(--spacing-2xl);
+}
+
 /* ========================================
    HEADER
    ======================================== */
@@ -45,7 +52,7 @@
 
 .upload-zone {
   border: 2px dashed var(--color-light-gray);
-  border-radius: var(--border-radius-lg);
+  border-radius: 0;
   padding: var(--spacing-2xl);
   text-align: center;
   background-color: var(--color-background-light);
@@ -102,7 +109,7 @@
   font-weight: 600;
   font-family: var(--font-family-primary);
   border: none;
-  border-radius: var(--border-radius-md);
+  border-radius: 0;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -137,7 +144,7 @@
   padding: var(--spacing-2xl);
   text-align: center;
   background-color: var(--color-white);
-  border-radius: var(--border-radius-lg);
+  border-radius: 0;
   border: 1px solid var(--color-light-gray);
   margin-bottom: var(--spacing-xl);
 }
@@ -168,7 +175,7 @@
   font-family: var(--font-family-primary);
   padding: var(--spacing-md);
   background-color: var(--color-error-bg);
-  border-radius: var(--border-radius-md);
+  border-radius: 0;
   border-left: 4px solid var(--color-error);
 }
 
@@ -178,7 +185,7 @@
 
 .results-section {
   background-color: var(--color-white);
-  border-radius: var(--border-radius-lg);
+  border-radius: 0;
   border: 1px solid var(--color-light-gray);
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
@@ -213,7 +220,7 @@
 .metric-card {
   background-color: var(--color-background-light);
   border: 1px solid var(--color-light-gray);
-  border-radius: var(--border-radius-md);
+  border-radius: 0;
   padding: var(--spacing-lg);
   text-align: center;
   transition: all var(--transition-base);

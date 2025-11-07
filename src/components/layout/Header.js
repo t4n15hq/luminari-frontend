@@ -78,22 +78,20 @@ const Header = ({ isCollapsed }) => {
               ))}
             </nav>
           ) : (
-            <div className="header-title-container">
-              <h1 className="header-title">{getPageTitle()}</h1>
-              {isHomePage && (
-                <p className="header-subtitle">
-                  AI-driven clinical tools platform
-                </p>
-              )}
-            </div>
+            isHomePage ? (
+              <div className="header-logo-container">
+                <img
+                  src="/assets/icons/luminari-logo/luminari-logo-300px.png"
+                  alt="LUMINARI Logo"
+                  className="header-logo"
+                />
+              </div>
+            ) : (
+              <div className="header-title-container">
+                <h1 className="header-title">{getPageTitle()}</h1>
+              </div>
+            )
           )}
-        </div>
-
-        {/* Right Side - LUMINARI Branding */}
-        <div className="header-right">
-          <div className="header-brand">
-            LUMINARI
-          </div>
         </div>
       </div>
     </header>

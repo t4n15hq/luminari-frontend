@@ -18,7 +18,7 @@ const DocumentViewer = ({ open, onClose, title, content, metadata }) => {
     }}>
       <div style={{
         background: 'white',
-        borderRadius: '10px',
+        borderRadius: '0',
         maxWidth: '700px',
         width: '90vw',
         maxHeight: '80vh',
