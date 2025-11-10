@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import apiService from '../services/api';
 import PreviousDocuments from './common/PreviousDocuments';
 import { saveConversation } from '../services/documentService';
@@ -218,6 +219,59 @@ Please rephrase your question to focus on clinical trials, protocol development,
 
   return (
     <div className="query-assistant">
+      <style>{`
+        .markdown-content p {
+          margin: 0.5rem 0;
+        }
+        .markdown-content p:first-child {
+          margin-top: 0;
+        }
+        .markdown-content p:last-child {
+          margin-bottom: 0;
+        }
+        .markdown-content strong {
+          font-weight: 700;
+          color: inherit;
+        }
+        .markdown-content ul, .markdown-content ol {
+          margin: 0.75rem 0;
+          padding-left: 1.5rem;
+        }
+        .markdown-content li {
+          margin: 0.25rem 0;
+        }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+          margin: 1rem 0 0.5rem 0;
+          font-weight: 700;
+        }
+        .markdown-content h1 {
+          font-size: 1.25rem;
+        }
+        .markdown-content h2 {
+          font-size: 1.1rem;
+        }
+        .markdown-content h3 {
+          font-size: 1rem;
+        }
+        .markdown-content code {
+          background-color: rgba(0, 0, 0, 0.05);
+          padding: 0.2rem 0.4rem;
+          border-radius: 3px;
+          font-family: monospace;
+          font-size: 0.9em;
+        }
+        .markdown-content pre {
+          background-color: rgba(0, 0, 0, 0.05);
+          padding: 0.75rem;
+          border-radius: 4px;
+          overflow-x: auto;
+          margin: 0.5rem 0;
+        }
+        .markdown-content pre code {
+          background: none;
+          padding: 0;
+        }
+      `}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>
@@ -397,8 +451,8 @@ Please rephrase your question to focus on clinical trials, protocol development,
                       )}
                     </div>
                   )}
-                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '14px' }}>
-                    {message.content}
+                  <div style={{ lineHeight: '1.6', fontSize: '14px' }} className="markdown-content">
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
                   </div>
                   <div style={{
                     fontSize: '11px',
