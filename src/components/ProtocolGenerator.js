@@ -2982,7 +2982,7 @@ const ProtocolGenerator = () => {
           backgroundColor: 'white',
           borderRadius: '0',
           padding: '1.5rem',
-          border: uploadedJsonFile ? '2px solid #10b981' : '2px dashed #683D94',
+          border: uploadedJsonFile ? '2px solid #10b981' : '2px solid #000000',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           transition: 'all 0.3s ease'
         }}>
@@ -2998,7 +2998,7 @@ const ProtocolGenerator = () => {
               margin: 0,
               color: '#1e293b'
             }}>
-              📄 Upload JSON Data
+              Upload JSON Data
             </h3>
             {uploadedJsonFile && (
               <button
@@ -3021,7 +3021,7 @@ const ProtocolGenerator = () => {
                   e.target.style.backgroundColor = '#ef4444';
                 }}
               >
-                ✕ Remove JSON
+                Remove JSON
               </button>
             )}
           </div>
@@ -3056,23 +3056,19 @@ const ProtocolGenerator = () => {
             }}
             onClick={() => document.getElementById('json-upload-input').click()}
             >
-              <div style={{
-                fontSize: '3rem',
-                marginBottom: '0.5rem'
-              }}>
-                📤
-              </div>
               <p style={{
                 fontSize: '1rem',
-                fontWeight: '500',
+                fontWeight: '600',
                 color: '#1e293b',
-                marginBottom: '0.25rem'
+                marginBottom: '0.5rem',
+                marginTop: 0
               }}>
                 Click to upload or drag and drop
               </p>
               <p style={{
                 fontSize: '0.875rem',
-                color: '#64748b'
+                color: '#64748b',
+                margin: 0
               }}>
                 JSON files only
               </p>
@@ -3092,14 +3088,10 @@ const ProtocolGenerator = () => {
                   backgroundColor: '#dcfce7',
                   border: '1px solid #86efac',
                   borderRadius: '0',
-                  marginBottom: '1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
+                  marginBottom: '1rem'
                 }}>
-                  <span style={{ fontSize: '1.25rem' }}>✓</span>
-                  <span style={{ color: '#166534', fontWeight: '500' }}>
-                    JSON file processed successfully! Form fields have been populated.
+                  <span style={{ color: '#166534', fontWeight: '600', fontSize: '0.875rem' }}>
+                    SUCCESS: JSON file processed successfully! Form fields have been populated.
                   </span>
                 </div>
               )}
@@ -3107,26 +3099,20 @@ const ProtocolGenerator = () => {
                 padding: '1rem',
                 backgroundColor: '#f0fdf4',
                 border: '1px solid #bbf7d0',
-                borderRadius: '0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1rem'
+                borderRadius: '0'
               }}>
-                <div style={{ fontSize: '2rem' }}>✓</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    fontWeight: '600',
-                    color: '#166534',
-                    marginBottom: '0.25rem'
-                  }}>
-                    {uploadedJsonFile.name}
-                  </div>
-                  <div style={{
-                    fontSize: '0.875rem',
-                    color: '#15803d'
-                  }}>
-                    {(uploadedJsonFile.size / 1024).toFixed(2)} KB • Processed
-                  </div>
+                <div style={{
+                  fontWeight: '600',
+                  color: '#166534',
+                  marginBottom: '0.25rem'
+                }}>
+                  {uploadedJsonFile.name}
+                </div>
+                <div style={{
+                  fontSize: '0.875rem',
+                  color: '#15803d'
+                }}>
+                  {(uploadedJsonFile.size / 1024).toFixed(2)} KB • Processed
                 </div>
               </div>
               {jsonAdditionalContext && (
@@ -3143,7 +3129,7 @@ const ProtocolGenerator = () => {
                     marginBottom: '0.5rem',
                     fontSize: '0.875rem'
                   }}>
-                    ℹ️ Additional Context Added
+                    ADDITIONAL CONTEXT ADDED
                   </div>
                   <div style={{
                     fontSize: '0.875rem',
