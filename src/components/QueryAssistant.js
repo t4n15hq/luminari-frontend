@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../services/api';
+import PreviousDocuments from './common/PreviousDocuments';
+import { saveConversation } from '../services/documentService';
 
 const QueryAssistant = () => {
   const [question, setQuestion] = useState('');
@@ -11,6 +13,7 @@ const QueryAssistant = () => {
   const [answer, setAnswer] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showPreviousDocs, setShowPreviousDocs] = useState(false);
 
   useEffect(() => {
     fetchProtocols();
@@ -171,6 +174,39 @@ Please rephrase your question to focus on clinical trials, protocol development,
     }
   };
 
+  const handleSaveConversation = async () => {
+    if (queryHistory.length === 0) {
+      alert('No conversation to save');
+      return;
+    }
+
+    // Convert queryHistory to messages format
+    const messages = [];
+    queryHistory.reverse().forEach((item) => {
+      messages.push({ role: 'user', content: item.question });
+      messages.push({ role: 'assistant', content: item.answer });
+    });
+
+    // Generate title from first user message
+    const firstUserMsg = queryHistory[queryHistory.length - 1];
+    const title = firstUserMsg
+      ? firstUserMsg.question.substring(0, 100)
+      : 'Conversation';
+
+    const result = await saveConversation({
+      title: title,
+      description: `Chat with ${queryHistory.length} questions`,
+      messages: messages,
+      tags: ['ask-lumina', diseaseContext].filter(Boolean)
+    });
+
+    if (result.success) {
+      alert('Conversation saved successfully!');
+    } else {
+      alert('Failed to save conversation: ' + (result.error || 'Unknown error'));
+    }
+  };
+
   return (
     <div className="query-assistant">
       <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>Ask Lumina<span className="trademark">™</span></h2>
@@ -224,6 +260,37 @@ Please rephrase your question to focus on clinical trials, protocol development,
         </button>
       </form>
 
+      <div className="chat-actions" style={{ display: 'flex', gap: '1rem', margin: '1rem 0' }}>
+        <button onClick={() => setShowPreviousDocs(true)} className="btn-secondary" style={{
+          padding: '0.75rem 1.5rem',
+          fontSize: '14px',
+          fontWeight: '600',
+          color: '#683D94',
+          backgroundColor: 'white',
+          border: '2px solid #683D94',
+          borderRadius: '0',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease'
+        }}>
+          Previous Conversations
+        </button>
+        {queryHistory.length > 0 && (
+          <button onClick={handleSaveConversation} className="btn-primary" style={{
+            padding: '0.75rem 1.5rem',
+            fontSize: '14px',
+            fontWeight: '600',
+            color: 'white',
+            backgroundColor: '#683D94',
+            border: 'none',
+            borderRadius: '0',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease'
+          }}>
+            Save Conversation
+          </button>
+        )}
+      </div>
+
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">Answer received!</div>}
 
@@ -267,6 +334,34 @@ Please rephrase your question to focus on clinical trials, protocol development,
           </ul>
         </div>
       )}
+
+      <PreviousDocuments
+        isOpen={showPreviousDocs}
+        onClose={() => setShowPreviousDocs(false)}
+        documentType="CHAT"
+        onSelectDocument={(doc) => {
+          if (doc.messages && Array.isArray(doc.messages)) {
+            // Convert messages back to queryHistory format
+            const newHistory = [];
+            for (let i = 0; i < doc.messages.length; i += 2) {
+              if (doc.messages[i] && doc.messages[i + 1]) {
+                newHistory.push({
+                  question: doc.messages[i].content,
+                  answer: doc.messages[i + 1].content,
+                  timestamp: doc.createdAt,
+                  diseaseContext: doc.tags?.[1] || '',
+                  protocolId: '',
+                  isStandardized: false
+                });
+              }
+            }
+            setQueryHistory(newHistory);
+            if (newHistory.length > 0) {
+              setAnswer(newHistory[0].answer);
+            }
+          }
+        }}
+      />
     </div>
   );
 };

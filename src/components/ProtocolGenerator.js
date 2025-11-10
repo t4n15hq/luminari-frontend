@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import apiService from '../services/api';
 import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
+import PreviousDocuments from './common/PreviousDocuments';
+import { saveProtocol } from '../services/documentService';
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 import { useAuth } from '../contexts/AuthContext'; // NEW IMPORT for global state
 import { useDropzone } from 'react-dropzone'; // NEW IMPORT for document upload
@@ -333,7 +335,8 @@ const ProtocolGenerator = () => {
   const [showHelp, setShowHelp] = useState(false);
   const [showGeneratedInfo, setShowGeneratedInfo] = useState(false);
   const [showPreviousProtocols, setShowPreviousProtocols] = useState(false);
-  
+  const [showDocHistory, setShowDocHistory] = useState(false);
+
   // Compiler section state
   const [selectedCountry, setSelectedCountry] = useState('');
   const [activeSection, setActiveSection] = useState('protocol'); // 'protocol' or 'compiler'
@@ -1115,6 +1118,31 @@ const ProtocolGenerator = () => {
       } finally {
         setLoadingPrevious(false);
       }
+    }
+  };
+
+  const handleSaveProtocol = async () => {
+    if (!result && !studyDesign) {
+      alert('No protocol or study design to save');
+      return;
+    }
+
+    const content = result || studyDesign;
+    const type = result ? 'PROTOCOL' : 'STUDY_DESIGN';
+
+    const saveResult = await saveProtocol({
+      title: `${disease || 'Untitled'} - ${studyType || 'Protocol'}`,
+      description: `${studyType || ''} study for ${population || 'patients'}`,
+      disease: disease,
+      content: content,
+      formData: globalProtocolFormData,
+      studyDesign: type === 'STUDY_DESIGN' ? studyDesign : null
+    });
+
+    if (saveResult.success) {
+      alert('Protocol saved successfully!');
+    } else {
+      alert('Failed to save protocol: ' + (saveResult.error || 'Unknown error'));
     }
   };
 
@@ -2421,9 +2449,47 @@ const ProtocolGenerator = () => {
             <h2 style={{ fontSize: '36px', fontWeight: '700', marginBottom: '0.5rem', color: '#2D2D2D', textAlign: 'left', fontFamily: 'Inter, sans-serif' }}>Clinical Study Protocol Generator</h2>
             <p>Generate a complete clinical study protocol with enhanced trial design parameters</p>
           </div>
-          <button onClick={handleShowPreviousProtocols} className="btn btn-outline">
-            {showPreviousProtocols ? 'Hide Previous Protocols' : 'Previous Protocols'}
-          </button>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button onClick={handleShowPreviousProtocols} className="btn btn-outline">
+              {showPreviousProtocols ? 'Hide Previous Protocols' : 'Previous Protocols'}
+            </button>
+            <button
+              onClick={() => setShowDocHistory(true)}
+              className="btn btn-outline"
+              style={{
+                padding: '0.75rem 1.5rem',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: '#683D94',
+                backgroundColor: 'white',
+                border: '2px solid #683D94',
+                borderRadius: '0',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Document History
+            </button>
+            {(result || studyDesign) && (
+              <button
+                onClick={handleSaveProtocol}
+                className="btn btn-primary"
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: 'white',
+                  backgroundColor: '#683D94',
+                  border: 'none',
+                  borderRadius: '0',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease'
+                }}
+              >
+                Save Protocol
+              </button>
+            )}
+          </div>
         </div>
         
         {/* Section Tabs */}
@@ -4602,6 +4668,21 @@ const ProtocolGenerator = () => {
               </div>
             </div>
           )}
+
+      <PreviousDocuments
+        isOpen={showDocHistory}
+        onClose={() => setShowDocHistory(false)}
+        documentType="PROTOCOL"
+        onSelectDocument={(doc) => {
+          if (doc.formData) {
+            setGlobalProtocolFormData(doc.formData);
+          }
+          if (doc.content) {
+            setResult(doc.content);
+          }
+          setShowDocHistory(false);
+        }}
+      />
     </div>
   );
 };

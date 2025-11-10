@@ -6,6 +6,8 @@ import { useLocation } from 'react-router-dom';
 import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from 'react-simple-maps';
 import apiService from '../services/api';
 import { saveDocument, fetchDocuments } from '../services/api';
+import PreviousDocuments from './common/PreviousDocuments';
+import { saveRegulatoryDocument } from '../services/documentService';
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs';
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
@@ -389,7 +391,8 @@ const UnifiedRegulatoryGenerator = () => {
   const [previousDocs, setPreviousDocs] = useState([]);
   const [loadingPreviousDocs, setLoadingPreviousDocs] = useState(false);
   const [fetchError, setFetchError] = useState('');
-  
+  const [showDocHistory, setShowDocHistory] = useState(false);
+
   // Country Reference State
   const [showCountryReference, setShowCountryReference] = useState(false);
 
@@ -1640,6 +1643,32 @@ const UnifiedRegulatoryGenerator = () => {
     }
   };
 
+  const handleSaveDocument = async () => {
+    if (!result) {
+      alert('No document to save');
+      return;
+    }
+
+    const resultToSave = await saveRegulatoryDocument({
+      title: `${country} - ${documentType}`,
+      description: `Regulatory document for ${disease}`,
+      disease: disease,
+      country: country,
+      region: selectedRegion,
+      documentType: documentType,
+      content: result.cmc_section || result.clinical_section || result.full_document || '',
+      sections: result,
+      cmcSection: result.cmc_section,
+      clinicalSection: result.clinical_section
+    });
+
+    if (resultToSave.success) {
+      alert('Document saved successfully!');
+    } else {
+      alert('Failed to save document: ' + (resultToSave.error || 'Unknown error'));
+    }
+  };
+
   // Download Results as ZIP (for batch)
   const downloadBatchResults = async () => {
     const successfulResults = batchResults.filter(r => r.status === 'success');
@@ -2577,6 +2606,42 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
             <button onClick={resetForm} className="btn btn-secondary">
               Reset Form
             </button>
+            <button
+              onClick={() => setShowDocHistory(true)}
+              className="btn btn-outline"
+              style={{
+                padding: '0.75rem 1.5rem',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: '#683D94',
+                backgroundColor: 'white',
+                border: '2px solid #683D94',
+                borderRadius: '0',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Document History
+            </button>
+            {result && (
+              <button
+                onClick={handleSaveDocument}
+                className="btn btn-primary"
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: 'white',
+                  backgroundColor: '#683D94',
+                  border: 'none',
+                  borderRadius: '0',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease'
+                }}
+              >
+                Save Document
+              </button>
+            )}
           </div>
 
           {/* Single Document Results - Editable Sections */}
@@ -2867,6 +2932,24 @@ ${batchResults.filter(r => r.status === 'error').map((r, i) => `${i + 1}. ${r.st
           {error}
         </div>
       )}
+
+      <PreviousDocuments
+        isOpen={showDocHistory}
+        onClose={() => setShowDocHistory(false)}
+        documentType="REGULATORY"
+        onSelectDocument={(doc) => {
+          if (doc.content) {
+            setResult({
+              cmc_section: doc.cmcSection || '',
+              clinical_section: doc.clinicalSection || '',
+              full_document: doc.content
+            });
+          }
+          if (doc.disease) setDisease(doc.disease);
+          if (doc.country) setCountry(doc.country);
+          setShowDocHistory(false);
+        }}
+      />
     </div>
   );
 };
