@@ -1,345 +1,183 @@
 import React from 'react';
-import { User, Briefcase, GraduationCap, MapPin, Mail, Phone, Building, Calendar, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { MODULES, ROLE_PERMISSIONS } from '../config/permissions';
+import './Profile.css';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, checkAccess } = useAuth();
 
-  // Fallback data if user data is not available
-  const profileData = user || {
-    name: 'Dr. User Name',
-    title: 'Clinical Researcher',
-    institution: 'Medical Institution',
-    email: 'user@institution.org',
-    phone: '+1 (555) 000-0000'
+  if (!user) {
+    return <div className="profile-loading">Loading...</div>;
+  }
+
+  // Get user's accessible modules
+  const getUserModules = () => {
+    if (user.role === 'admin') {
+      return Object.values(MODULES);
+    }
+
+    if (user.role === 'custom' && user.permissions) {
+      return user.permissions;
+    }
+
+    return ROLE_PERMISSIONS[user.role] || [];
   };
+
+  const accessibleModules = getUserModules();
+
+  // Module display names
+  const moduleNames = {
+    'home': 'Home',
+    'protocol': 'Protocol & Study Design',
+    'regulatory': 'Regulatory Documents',
+    'diagnosis': 'Disease Screening',
+    'query': 'Ask Lumina',
+    'enhanced_analysis': 'Enhanced Medical Analysis',
+    'excel_analysis': 'Excel Biomarker Analysis',
+    'clinical_dossier': 'Clinical Dossier Compiler'
+  };
+
+  // Role display names
+  const roleDisplayNames = {
+    'admin': 'Administrator',
+    'full_access': 'Full Access',
+    'protocol_only': 'Protocol Only',
+    'regulatory_only': 'Regulatory Only',
+    'query_only': 'Query Only',
+    'diagnosis_only': 'Diagnosis Only',
+    'custom': 'Custom Access'
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Calculate days since join
+  const getDaysSinceJoin = () => {
+    if (!user.joinDate) return 0;
+    const joinDate = new Date(user.joinDate);
+    const today = new Date();
+    const diffTime = Math.abs(today - joinDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   return (
-    <div className="profile-container" style={{ 
-      maxWidth: '1200px', 
-      margin: '0 auto', 
-      padding: '2rem',
-      fontFamily: 'var(--font-body)'
-    }}>
-      {/* Profile Header */}
-      <div style={{
-        background: 'var(--color-background-card)',
-        borderRadius: 'var(--radius-xl)',
-        padding: '2rem',
-        marginBottom: '2rem',
-        boxShadow: 'var(--shadow-md)',
-        border: '1px solid var(--color-border)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '1.5rem' }}>
-          <div style={{
-            width: '120px',
-            height: '120px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '3rem'
-          }}>
-            <User size={48} />
-          </div>
-          <div>
-            <h1 style={{ 
-              fontSize: '2rem', 
-              fontWeight: '600', 
-              color: 'var(--color-text)', 
-              marginBottom: '0.5rem' 
-            }}>
-{profileData.name || 'Dr. User Name'}
-            </h1>
-            <p style={{ 
-              fontSize: '1.125rem', 
-              color: 'var(--color-text-secondary)', 
-              marginBottom: '0.5rem' 
-            }}>
-{profileData.title || 'Clinical Researcher'}
-            </p>
-            <p style={{ 
-              fontSize: '1rem', 
-              color: 'var(--color-text-muted)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              <MapPin size={16} />
-              {profileData.institution || 'Medical Institution'}
-            </p>
-          </div>
+    <div className="profile-container">
+      <div className="profile-header">
+        <div className="profile-avatar">
+          {user.name?.charAt(0) || 'U'}
         </div>
-        
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1.5rem',
-          padding: '1.5rem',
-          background: 'var(--color-gray-50)',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--color-border-light)'
-        }}>
-          <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--color-text)' }}>
-              Contact Information
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Mail size={18} style={{ color: 'var(--color-primary)' }} />
-                <span style={{ color: 'var(--color-text-secondary)' }}>{profileData.email || 'user@institution.org'}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Phone size={18} style={{ color: 'var(--color-primary)' }} />
-                <span style={{ color: 'var(--color-text-secondary)' }}>{profileData.phone || '+1 (555) 000-0000'}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Building size={18} style={{ color: 'var(--color-primary)' }} />
-                <span style={{ color: 'var(--color-text-secondary)' }}>{profileData.department || 'Clinical Research Department'}</span>
-              </div>
+        <div className="profile-header-info">
+          <h1 className="profile-name">{user.name || 'User'}</h1>
+          <p className="profile-role-badge">{roleDisplayNames[user.role] || user.role}</p>
+        </div>
+      </div>
+
+      <div className="profile-grid">
+        {/* Personal Information */}
+        <div className="profile-card">
+          <h2 className="profile-card-title">Personal Information</h2>
+          <div className="profile-info-group">
+            <div className="profile-info-item">
+              <span className="profile-info-label">Full Name</span>
+              <span className="profile-info-value">{user.name || 'N/A'}</span>
+            </div>
+            <div className="profile-info-item">
+              <span className="profile-info-label">Email Address</span>
+              <span className="profile-info-value">{user.email || 'N/A'}</span>
+            </div>
+            <div className="profile-info-item">
+              <span className="profile-info-label">Profession</span>
+              <span className="profile-info-value">{user.profession || 'N/A'}</span>
+            </div>
+            <div className="profile-info-item">
+              <span className="profile-info-label">Department</span>
+              <span className="profile-info-value">{user.department || 'N/A'}</span>
+            </div>
+            <div className="profile-info-item">
+              <span className="profile-info-label">Organization</span>
+              <span className="profile-info-value">{user.organization || 'N/A'}</span>
             </div>
           </div>
-          
-          <div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--color-text)' }}>
-              Professional Details
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Briefcase size={18} style={{ color: 'var(--color-primary)' }} />
-                <span style={{ color: 'var(--color-text-secondary)' }}>15+ years clinical research experience</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <GraduationCap size={18} style={{ color: 'var(--color-primary)' }} />
-                <span style={{ color: 'var(--color-text-secondary)' }}>Board Certified Dermatologist</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Calendar size={18} style={{ color: 'var(--color-primary)' }} />
-                <span style={{ color: 'var(--color-text-secondary)' }}>License Valid: 2028</span>
-              </div>
+        </div>
+
+        {/* Account Information */}
+        <div className="profile-card">
+          <h2 className="profile-card-title">Account Information</h2>
+          <div className="profile-info-group">
+            <div className="profile-info-item">
+              <span className="profile-info-label">User ID</span>
+              <span className="profile-info-value">{user.id || 'N/A'}</span>
+            </div>
+            <div className="profile-info-item">
+              <span className="profile-info-label">Role</span>
+              <span className="profile-info-value">{roleDisplayNames[user.role] || user.role}</span>
+            </div>
+            <div className="profile-info-item">
+              <span className="profile-info-label">Join Date</span>
+              <span className="profile-info-value">{formatDate(user.joinDate)}</span>
+            </div>
+            <div className="profile-info-item">
+              <span className="profile-info-label">Days Active</span>
+              <span className="profile-info-value">{getDaysSinceJoin()} days</span>
+            </div>
+            <div className="profile-info-item">
+              <span className="profile-info-label">Account Status</span>
+              <span className="profile-status-badge profile-status-active">Active</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Professional Summary */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '2fr 1fr',
-        gap: '2rem',
-        marginBottom: '2rem'
-      }}>
-        <div style={{
-          background: 'var(--color-background-card)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '2rem',
-          boxShadow: 'var(--shadow-md)',
-          border: '1px solid var(--color-border)'
-        }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--color-text)' }}>
-            Professional Summary
-          </h2>
-          <p style={{ 
-            lineHeight: '1.6', 
-            color: 'var(--color-text-secondary)', 
-            marginBottom: '1rem' 
-          }}>
-            {profileData.bio || 'Experienced clinical researcher with expertise in medical research and clinical trials. Dedicated to advancing healthcare through evidence-based medicine and innovative therapeutic approaches.'}
-          </p>
-          <p style={{ 
-            lineHeight: '1.6', 
-            color: 'var(--color-text-secondary)' 
-          }}>
-            {profileData.additionalInfo || 'Active contributor to the medical research community with focus on clinical excellence and patient safety. Committed to regulatory compliance and best practices in clinical research.'}
-          </p>
-        </div>
-
-        <div style={{
-          background: 'var(--color-background-card)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '2rem',
-          boxShadow: 'var(--shadow-md)',
-          border: '1px solid var(--color-border)'
-        }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--color-text)' }}>
-            Current Studies
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ 
-              padding: '1rem', 
-              background: 'var(--color-gray-50)', 
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--color-border-light)'
-            }}>
-              <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-primary)' }}>
-                PSORA-301 Study
-              </h4>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: '0.25rem 0' }}>
-                Phase III Psoriasis Treatment
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
-                <Clock size={12} style={{ color: 'var(--color-success)' }} />
-                <span style={{ color: 'var(--color-success)' }}>Active Enrollment</span>
+      {/* Module Access Permissions */}
+      <div className="profile-card profile-permissions-card">
+        <h2 className="profile-card-title">Module Access Permissions</h2>
+        <p className="profile-permissions-subtitle">
+          {user.role === 'admin'
+            ? 'You have full administrative access to all modules.'
+            : `You have access to ${accessibleModules.length} of ${Object.keys(MODULES).length} available modules.`}
+        </p>
+        <div className="profile-modules-grid">
+          {Object.values(MODULES).map((module) => {
+            const hasModuleAccess = checkAccess(module);
+            return (
+              <div
+                key={module}
+                className={`profile-module-item ${hasModuleAccess ? 'profile-module-accessible' : 'profile-module-restricted'}`}
+              >
+                <div className="profile-module-indicator">
+                  {hasModuleAccess ? '✓' : '✕'}
+                </div>
+                <span className="profile-module-name">{moduleNames[module]}</span>
               </div>
-            </div>
-            
-            <div style={{ 
-              padding: '1rem', 
-              background: 'var(--color-gray-50)', 
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--color-border-light)'
-            }}>
-              <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-primary)' }}>
-                DERM-202 Study
-              </h4>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: '0.25rem 0' }}>
-                Phase II Atopic Dermatitis
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
-                <Clock size={12} style={{ color: 'var(--color-warning)' }} />
-                <span style={{ color: 'var(--color-warning)' }}>Follow-up Phase</span>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Credentials & Settings */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-        gap: '2rem'
-      }}>
-        <div style={{
-          background: 'var(--color-background-card)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '2rem',
-          boxShadow: 'var(--shadow-md)',
-          border: '1px solid var(--color-border)'
-        }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text)' }}>
-            Credentials & Certifications
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Medical License (MA)</span>
-              <span style={{ 
-                padding: '0.25rem 0.75rem', 
-                background: 'var(--color-success)', 
-                color: 'white', 
-                borderRadius: 'var(--radius-full)', 
-                fontSize: '0.75rem' 
-              }}>
-                Active
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Board Certification</span>
-              <span style={{ 
-                padding: '0.25rem 0.75rem', 
-                background: 'var(--color-success)', 
-                color: 'white', 
-                borderRadius: 'var(--radius-full)', 
-                fontSize: '0.75rem' 
-              }}>
-                Current
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>GCP Certification</span>
-              <span style={{ 
-                padding: '0.25rem 0.75rem', 
-                background: 'var(--color-success)', 
-                color: 'white', 
-                borderRadius: 'var(--radius-full)', 
-                fontSize: '0.75rem' 
-              }}>
-                Valid
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>IRB Training</span>
-              <span style={{ 
-                padding: '0.25rem 0.75rem', 
-                background: 'var(--color-warning)', 
-                color: 'white', 
-                borderRadius: 'var(--radius-full)', 
-                fontSize: '0.75rem' 
-              }}>
-                Expires 2025
-              </span>
-            </div>
+      {/* Platform Statistics */}
+      <div className="profile-card profile-stats-card">
+        <h2 className="profile-card-title">Platform Statistics</h2>
+        <div className="profile-stats-grid">
+          <div className="profile-stat-item">
+            <div className="profile-stat-value">{accessibleModules.length}</div>
+            <div className="profile-stat-label">Accessible Modules</div>
           </div>
-        </div>
-
-        <div style={{
-          background: 'var(--color-background-card)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '2rem',
-          boxShadow: 'var(--shadow-md)',
-          border: '1px solid var(--color-border)'
-        }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text)' }}>
-            Platform Settings
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Email Notifications</span>
-              <button style={{
-                padding: '0.5rem 1rem',
-                background: 'var(--color-primary)',
-                color: 'white',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.875rem',
-                cursor: 'pointer'
-              }}>
-                Enabled
-              </button>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Two-Factor Authentication</span>
-              <button style={{
-                padding: '0.5rem 1rem',
-                background: 'var(--color-success)',
-                color: 'white',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.875rem',
-                cursor: 'pointer'
-              }}>
-                Active
-              </button>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Data Export Preferences</span>
-              <button style={{
-                padding: '0.5rem 1rem',
-                background: 'var(--color-gray-400)',
-                color: 'white',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.875rem',
-                cursor: 'pointer'
-              }}>
-                Configure
-              </button>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>API Access</span>
-              <button style={{
-                padding: '0.5rem 1rem',
-                background: 'var(--color-primary)',
-                color: 'white',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.875rem',
-                cursor: 'pointer'
-              }}>
-                Manage
-              </button>
-            </div>
+          <div className="profile-stat-item">
+            <div className="profile-stat-value">{getDaysSinceJoin()}</div>
+            <div className="profile-stat-label">Days Active</div>
+          </div>
+          <div className="profile-stat-item">
+            <div className="profile-stat-value">{user.role === 'admin' ? 'Full' : 'Limited'}</div>
+            <div className="profile-stat-label">Access Level</div>
           </div>
         </div>
       </div>

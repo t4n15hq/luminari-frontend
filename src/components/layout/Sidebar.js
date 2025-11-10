@@ -1,53 +1,73 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { ROUTE_MODULE_MAP } from '../../config/permissions';
 import '../../styles/designSystem.css';
 import './Sidebar.css';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const location = useLocation();
+  const { checkAccess } = useAuth();
 
   const navigationItems = [
     {
       path: '/',
       label: 'Home',
-      icon: '/assets/icons/nav-home.svg'
+      icon: '/assets/icons/nav-home.svg',
+      module: 'home'
     },
     {
       path: '/protocol',
       label: 'Protocol & Study Design',
-      icon: '/assets/icons/nav-protocol.svg'
+      icon: '/assets/icons/nav-protocol.svg',
+      module: 'protocol'
     },
     {
       path: '/unified-regulatory',
       label: 'Regulatory Documents',
-      icon: '/assets/icons/nav-regulatory.svg'
+      icon: '/assets/icons/nav-regulatory.svg',
+      module: 'regulatory'
     },
     {
       path: '/diagnosis',
       label: 'Disease Screening',
-      icon: '/assets/icons/nav-diagnosis.svg'
+      icon: '/assets/icons/nav-diagnosis.svg',
+      module: 'diagnosis'
     },
     {
       path: '/query',
       label: 'Ask Lumina™',
-      icon: '/assets/icons/nav-query.svg'
+      icon: '/assets/icons/nav-query.svg',
+      module: 'query'
     },
     {
       path: '/enhanced-analysis',
       label: 'Enhanced Medical Analysis',
-      icon: '/assets/icons/nav-analysis.svg'
+      icon: '/assets/icons/nav-analysis.svg',
+      module: 'enhanced_analysis'
     },
     {
       path: '/excel-analysis',
       label: 'Excel Biomarker Analysis',
-      icon: '/assets/icons/nav-excel.svg'
+      icon: '/assets/icons/nav-excel.svg',
+      module: 'excel_analysis'
     },
     {
       path: '/clinical-dossier',
       label: 'Clinical Dossier Compiler',
-      icon: '/assets/icons/nav-dossier.svg'
+      icon: '/assets/icons/nav-dossier.svg',
+      module: 'clinical_dossier'
+    },
+    {
+      path: '/profile',
+      label: 'Profile',
+      icon: '/assets/icons/nav-profile.svg',
+      module: 'home' // Everyone should have access to their profile
     }
   ];
+
+  // Filter navigation items based on user permissions
+  const accessibleItems = navigationItems.filter(item => checkAccess(item.module));
 
   const isActive = (path) => {
     if (path === '/') {
@@ -81,7 +101,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
         {/* Navigation Items */}
         <ul className="sidebar-nav">
-          {navigationItems.map((item) => (
+          {accessibleItems.map((item) => (
             <li key={item.path}>
               <Link
                 to={item.path}

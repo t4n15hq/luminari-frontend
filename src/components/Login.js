@@ -1,79 +1,102 @@
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import '../App.css';
+import './Login.css';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
   const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname || '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
+    setLoading(true);
 
-    try {
-      const success = await login(username, password);
-      if (success) {
-        navigate('/');
-      } else {
-        setError('Invalid username or password');
-      }
-    } catch (err) {
-      setError('Login failed. Please try again.');
-    } finally {
-      setIsLoading(false);
+    const result = await login(email, password);
+
+    if (result.success) {
+      navigate(from, { replace: true });
+    } else {
+      setError(result.error || 'Login failed. Please try again.');
     }
+
+    setLoading(false);
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
+          <h1>Luminari</h1>
+          <p>Sign in to your account</p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="login-form">
+          {error && (
+            <div className="login-error">
+              {error}
+            </div>
+          )}
+
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="email">Email</label>
             <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               required
-              disabled={isLoading}
-              autoComplete="username"
+              autoFocus
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <input
-              type="password"
               id="password"
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
               required
-              disabled={isLoading}
-              autoComplete="current-password"
             />
           </div>
-          
-          {error && <div className="error-message">{error}</div>}
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="login-button"
-            disabled={isLoading || !username || !password}
+            disabled={loading}
           >
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        <div className="login-demo-credentials">
+          <p className="demo-title">Demo Credentials:</p>
+          <div className="demo-users">
+            <div className="demo-user">
+              <strong>Admin:</strong> admin@luminari.com / admin123
+            </div>
+            <div className="demo-user">
+              <strong>Query Only:</strong> user.query@luminari.com / query123
+            </div>
+            <div className="demo-user">
+              <strong>Full Access:</strong> user.full@luminari.com / full123
+            </div>
+            <div className="demo-user">
+              <strong>Custom:</strong> user.custom@luminari.com / custom123
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

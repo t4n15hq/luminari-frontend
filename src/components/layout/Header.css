@@ -68,11 +68,40 @@
   line-height: 1.5;
 }
 
-/* Right Side - Brand */
+/* Right Side - User Section */
 .header-right {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+}
+
+.header-user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-user-email {
+  font-size: 14px;
+  color: #666666;
+  font-weight: 500;
+}
+
+.header-logout-btn {
+  padding: 0.5rem 1rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background-color: #683D94;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.header-logout-btn:hover {
+  background-color: #552F7A;
 }
 
 .header-brand {
