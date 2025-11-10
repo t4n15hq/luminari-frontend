@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import apiService from '../services/api';
 import PreviousDocuments from './common/PreviousDocuments';
 import { saveConversation } from '../services/documentService';
@@ -9,16 +9,23 @@ const QueryAssistant = () => {
   const [selectedProtocolId, setSelectedProtocolId] = useState('');
   const [protocols, setProtocols] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [queryHistory, setQueryHistory] = useState([]);
-  const [answer, setAnswer] = useState('');
+  const [messages, setMessages] = useState([]); // Changed from queryHistory to messages for chat format
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
   const [showPreviousDocs, setShowPreviousDocs] = useState(false);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     fetchProtocols();
-    // Removed auto-population from localStorage
   }, []);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const fetchProtocols = async () => {
     try {
@@ -29,9 +36,8 @@ const QueryAssistant = () => {
     }
   };
 
-  // Check if question is completely off-topic (only filter out obviously non-medical questions)
+  // Check if question is completely off-topic
   const isCompletelyOffTopic = (question) => {
-    // Use word boundaries to avoid partial matches (like "eat" in "treated")
     const offTopicKeywords = [
       'weather', 'temperature', 'climate', 'rain', 'snow', 'sunny', 'cloudy',
       'recipe', 'cooking', 'restaurant', 'meal', 'dinner', 'lunch',
@@ -42,7 +48,6 @@ const QueryAssistant = () => {
     ];
 
     const questionLower = question.toLowerCase();
-    // Use word boundaries to ensure exact word matches only
     return offTopicKeywords.some(keyword => {
       const regex = new RegExp(`\\b${keyword}\\b`, 'i');
       return regex.test(questionLower);
@@ -97,7 +102,7 @@ RELEVANT QUESTIONS I CAN HELP WITH:
 Please ask a question related to clinical trials, protocols, or regulatory affairs, and I'll provide detailed, professional guidance.`
       },
       {
-        condition: (q) => true, // Default catch-all
+        condition: (q) => true,
         response: `CLINICAL PROTOCOL ASSISTANT - QUERY SCOPE NOTICE
 
 I'm Lumina™, your specialized clinical protocol and regulatory documentation assistant. Your question appears to be outside my area of clinical and regulatory expertise.
@@ -127,76 +132,72 @@ Please rephrase your question to focus on clinical trials, protocol development,
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!question.trim()) return;
+
+    const userMessage = {
+      role: 'user',
+      content: question,
+      timestamp: new Date().toISOString()
+    };
+
+    // Add user message to chat
+    setMessages(prev => [...prev, userMessage]);
+    setQuestion(''); // Clear input immediately
     setLoading(true);
     setError('');
-    setSuccess(false);
-    setAnswer('');
 
     try {
-      // Only filter out completely off-topic questions, let the AI handle the rest
+      let responseText;
+      let isStandardized = false;
+
+      // Check if question is off-topic
       if (isCompletelyOffTopic(question)) {
-        const standardResponse = getStandardizedResponse(question);
-        setAnswer(standardResponse);
-        setQueryHistory(prev => [{
-          question,
-          answer: standardResponse,
-          timestamp: new Date().toISOString(),
-          diseaseContext,
-          protocolId: selectedProtocolId,
-          isStandardized: true
-        }, ...prev]);
-        setSuccess(true);
-        return;
+        responseText = getStandardizedResponse(question);
+        isStandardized = true;
+      } else {
+        // Send to AI API
+        const response = await apiService.queryAssistant({
+          question: userMessage.content,
+          disease_context: diseaseContext || undefined,
+          protocol_id: selectedProtocolId || undefined,
+        });
+        responseText = response.answer;
       }
 
-      // Send all other questions to the AI API
-      const response = await apiService.queryAssistant({
-        question,
-        disease_context: diseaseContext || undefined,
-        protocol_id: selectedProtocolId || undefined,
-      });
-
-      setAnswer(response.answer);
-      setQueryHistory(prev => [{
-        question,
-        answer: response.answer,
+      // Add assistant response to chat
+      const assistantMessage = {
+        role: 'assistant',
+        content: responseText,
         timestamp: new Date().toISOString(),
-        diseaseContext,
-        protocolId: selectedProtocolId,
-        isStandardized: false
-      }, ...prev]);
-      setSuccess(true);
+        isStandardized
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
     } catch (err) {
       setError('Failed to fetch answer. Please try again.');
-      // console.error(err);
+      // Remove the user message if request failed
+      setMessages(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);
     }
   };
 
   const handleSaveConversation = async () => {
-    if (queryHistory.length === 0) {
+    if (messages.length === 0) {
       alert('No conversation to save');
       return;
     }
 
-    // Convert queryHistory to messages format
-    const messages = [];
-    queryHistory.reverse().forEach((item) => {
-      messages.push({ role: 'user', content: item.question });
-      messages.push({ role: 'assistant', content: item.answer });
-    });
-
-    // Generate title from first user message
-    const firstUserMsg = queryHistory[queryHistory.length - 1];
+    // Get first user message for title
+    const firstUserMsg = messages.find(m => m.role === 'user');
     const title = firstUserMsg
-      ? firstUserMsg.question.substring(0, 100)
+      ? firstUserMsg.content.substring(0, 100)
       : 'Conversation';
 
     const result = await saveConversation({
       title: title,
-      description: `Chat with ${queryHistory.length} questions`,
-      messages: messages,
+      description: `Chat with ${Math.floor(messages.length / 2)} messages`,
+      messages: messages.map(m => ({ role: m.role, content: m.content })),
       tags: ['ask-lumina', diseaseContext].filter(Boolean)
     });
 
@@ -207,133 +208,288 @@ Please rephrase your question to focus on clinical trials, protocol development,
     }
   };
 
+  const handleNewChat = () => {
+    if (messages.length > 0 && window.confirm('Start a new conversation? Current chat will be cleared unless saved.')) {
+      setMessages([]);
+      setQuestion('');
+      setError('');
+    }
+  };
+
   return (
     <div className="query-assistant">
-      <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>Ask Lumina<span className="trademark">™</span></h2>
-      <p>Ask me anything about clinical protocols, medical research, treatment options, or health-related topics</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div>
+          <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1e293b', textAlign: 'left' }}>
+            Ask Lumina<span className="trademark">™</span>
+          </h2>
+          <p style={{ margin: 0 }}>Your AI assistant for clinical protocols and regulatory guidance</p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={() => setShowPreviousDocs(true)}
+            style={{
+              padding: '0.5rem 1rem',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#683D94',
+              backgroundColor: 'white',
+              border: '2px solid #683D94',
+              borderRadius: '0',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Previous Conversations
+          </button>
+          {messages.length > 0 && (
+            <>
+              <button
+                onClick={handleSaveConversation}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: 'white',
+                  backgroundColor: '#683D94',
+                  border: 'none',
+                  borderRadius: '0',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease'
+                }}
+              >
+                Save Conversation
+              </button>
+              <button
+                onClick={handleNewChat}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#683D94',
+                  backgroundColor: 'white',
+                  border: '2px solid #683D94',
+                  borderRadius: '0',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                New Chat
+              </button>
+            </>
+          )}
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="question" className="form-label">Your Question</label>
-          <textarea
-            id="question"
-            className="form-textarea"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="e.g., What are the symptoms of diabetes? How is psoriasis treated? What are clinical trial endpoints?"
-            rows={3}
-            required
+      {/* Optional Context Fields */}
+      <div style={{
+        display: 'flex',
+        gap: '1rem',
+        marginBottom: '1rem',
+        padding: '1rem',
+        backgroundColor: '#f8f9fa',
+        border: '1px solid #e2e8f0'
+      }}>
+        <div style={{ flex: 1 }}>
+          <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem', display: 'block' }}>
+            Disease Context (Optional)
+          </label>
+          <input
+            type="text"
+            className="form-input"
+            value={diseaseContext}
+            onChange={(e) => setDiseaseContext(e.target.value)}
+            placeholder="e.g., Psoriasis, Eczema"
+            style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', fontSize: '14px' }}
           />
         </div>
-
-        <div className="form-grid">
-          <div className="form-group">
-            <label className="form-label">Disease Context (Optional)</label>
-            <input
-              type="text"
-              className="form-input"
-              value={diseaseContext}
-              onChange={(e) => setDiseaseContext(e.target.value)}
-              placeholder="e.g., Psoriasis, Eczema"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Reference Protocol (Optional)</label>
-            <select
-              className="form-select"
-              value={selectedProtocolId}
-              onChange={(e) => setSelectedProtocolId(e.target.value)}
-            >
-              <option value="">None</option>
-              {protocols.map(protocol => (
-                <option key={protocol.protocol_id} value={protocol.protocol_id}>
-                  {protocol.disease_name} – {new Date(protocol.generation_date).toLocaleDateString()}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div style={{ flex: 1 }}>
+          <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem', display: 'block' }}>
+            Reference Protocol (Optional)
+          </label>
+          <select
+            className="form-select"
+            value={selectedProtocolId}
+            onChange={(e) => setSelectedProtocolId(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', fontSize: '14px' }}
+          >
+            <option value="">None</option>
+            {protocols.map(protocol => (
+              <option key={protocol.protocol_id} value={protocol.protocol_id}>
+                {protocol.disease_name} – {new Date(protocol.generation_date).toLocaleDateString()}
+              </option>
+            ))}
+          </select>
         </div>
+      </div>
 
-        <button type="submit" disabled={loading || !question} className={`btn btn-primary ${loading ? 'btn-loading' : ''}`}>
-          {loading ? 'Generating Answer...' : 'Submit Question'}
-        </button>
-      </form>
+      {/* Chat Messages Container */}
+      <div style={{
+        height: '500px',
+        overflowY: 'auto',
+        border: '2px solid #000000',
+        backgroundColor: '#ffffff',
+        padding: '1.5rem',
+        marginBottom: '1rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem'
+      }}>
+        {messages.length === 0 ? (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            color: '#94a3b8',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '1rem' }}>💬</div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '0.5rem', color: '#64748b' }}>
+              Start a conversation
+            </h3>
+            <p style={{ fontSize: '14px', maxWidth: '400px' }}>
+              Ask me anything about clinical protocols, regulatory documents, trial design, or medical research.
+            </p>
+          </div>
+        ) : (
+          <>
+            {messages.map((message, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: message.role === 'user' ? 'flex-end' : 'flex-start'
+                }}
+              >
+                <div
+                  style={{
+                    maxWidth: '80%',
+                    padding: '1rem',
+                    backgroundColor: message.role === 'user' ? '#683D94' : '#f1f5f9',
+                    color: message.role === 'user' ? 'white' : '#1e293b',
+                    borderRadius: '0',
+                    border: message.role === 'user' ? 'none' : '1px solid #e2e8f0',
+                    position: 'relative'
+                  }}
+                >
+                  {message.role === 'assistant' && (
+                    <div style={{
+                      fontWeight: '600',
+                      fontSize: '12px',
+                      marginBottom: '0.5rem',
+                      color: '#683D94'
+                    }}>
+                      Lumina™
+                      {message.isStandardized && (
+                        <span style={{
+                          marginLeft: '0.5rem',
+                          backgroundColor: '#fbbf24',
+                          color: '#92400e',
+                          padding: '2px 6px',
+                          fontSize: '10px',
+                          fontWeight: '700'
+                        }}>
+                          SCOPE NOTICE
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '14px' }}>
+                    {message.content}
+                  </div>
+                  <div style={{
+                    fontSize: '11px',
+                    marginTop: '0.5rem',
+                    opacity: 0.7
+                  }}>
+                    {new Date(message.timestamp).toLocaleTimeString()}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                <div style={{
+                  maxWidth: '80%',
+                  padding: '1rem',
+                  backgroundColor: '#f1f5f9',
+                  border: '1px solid #e2e8f0',
+                  color: '#64748b',
+                  fontSize: '14px'
+                }}>
+                  <div style={{ fontWeight: '600', fontSize: '12px', marginBottom: '0.5rem', color: '#683D94' }}>
+                    Lumina™
+                  </div>
+                  Thinking...
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </>
+        )}
+      </div>
 
-      <div className="chat-actions" style={{ display: 'flex', gap: '1rem', margin: '1rem 0' }}>
-        <button onClick={() => setShowPreviousDocs(true)} className="btn-secondary" style={{
-          padding: '0.75rem 1.5rem',
-          fontSize: '14px',
-          fontWeight: '600',
-          color: '#683D94',
-          backgroundColor: 'white',
-          border: '2px solid #683D94',
-          borderRadius: '0',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease'
+      {/* Error Display */}
+      {error && (
+        <div style={{
+          padding: '1rem',
+          backgroundColor: '#fee2e2',
+          border: '1px solid #ef4444',
+          color: '#991b1b',
+          marginBottom: '1rem',
+          fontSize: '14px'
         }}>
-          Previous Conversations
-        </button>
-        {queryHistory.length > 0 && (
-          <button onClick={handleSaveConversation} className="btn-primary" style={{
+          {error}
+        </div>
+      )}
+
+      {/* Input Form */}
+      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
+        <textarea
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="Ask a follow-up question..."
+          rows={3}
+          style={{
+            flex: 1,
+            padding: '0.75rem',
+            border: '2px solid #000000',
+            fontSize: '14px',
+            fontFamily: 'Inter, sans-serif',
+            resize: 'vertical'
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit(e);
+            }
+          }}
+        />
+        <button
+          type="submit"
+          disabled={loading || !question.trim()}
+          style={{
             padding: '0.75rem 1.5rem',
             fontSize: '14px',
             fontWeight: '600',
             color: 'white',
-            backgroundColor: '#683D94',
+            backgroundColor: loading || !question.trim() ? '#94a3b8' : '#683D94',
             border: 'none',
-            borderRadius: '0',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s ease'
-          }}>
-            Save Conversation
-          </button>
-        )}
+            cursor: loading || !question.trim() ? 'not-allowed' : 'pointer',
+            transition: 'background-color 0.2s ease',
+            alignSelf: 'flex-end'
+          }}
+        >
+          {loading ? 'Sending...' : 'Send'}
+        </button>
+      </form>
+
+      <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '0.5rem' }}>
+        Press Enter to send, Shift+Enter for new line
       </div>
-
-      {error && <div className="alert alert-error">{error}</div>}
-      {success && <div className="alert alert-success">Answer received!</div>}
-
-      {answer && (
-        <div className="answer-container">
-          <h3>Answer</h3>
-          <div className="answer-content">
-            {answer.split('\n').map((line, idx) => (
-              <p key={idx}>{line}</p>
-            ))}
-          </div>
-          <div className="action-buttons">
-            <button onClick={() => navigator.clipboard.writeText(answer)}>Copy to Clipboard</button>
-          </div>
-        </div>
-      )}
-
-      {queryHistory.length > 0 && (
-        <div className="query-history">
-          <h4>Past Questions</h4>
-          <ul>
-            {queryHistory.map((item, idx) => (
-              <li key={idx}>
-                <strong>Q:</strong> {item.question} 
-                {item.isStandardized && (
-                  <span style={{ 
-                    marginLeft: '10px', 
-                    backgroundColor: '#fbbf24', 
-                    color: '#92400e', 
-                    padding: '2px 6px', 
-                    borderRadius: '0', 
-                    fontSize: '0.7rem' 
-                  }}>
-                    SCOPE NOTICE
-                  </span>
-                )}
-                <br />
-                <small>{new Date(item.timestamp).toLocaleString()}</small>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       <PreviousDocuments
         isOpen={showPreviousDocs}
@@ -341,25 +497,12 @@ Please rephrase your question to focus on clinical trials, protocol development,
         documentType="CHAT"
         onSelectDocument={(doc) => {
           if (doc.messages && Array.isArray(doc.messages)) {
-            // Convert messages back to queryHistory format
-            const newHistory = [];
-            for (let i = 0; i < doc.messages.length; i += 2) {
-              if (doc.messages[i] && doc.messages[i + 1]) {
-                newHistory.push({
-                  question: doc.messages[i].content,
-                  answer: doc.messages[i + 1].content,
-                  timestamp: doc.createdAt,
-                  diseaseContext: doc.tags?.[1] || '',
-                  protocolId: '',
-                  isStandardized: false
-                });
-              }
-            }
-            setQueryHistory(newHistory);
-            if (newHistory.length > 0) {
-              setAnswer(newHistory[0].answer);
-            }
+            setMessages(doc.messages.map(m => ({
+              ...m,
+              timestamp: doc.createdAt
+            })));
           }
+          setShowPreviousDocs(false);
         }}
       />
     </div>
