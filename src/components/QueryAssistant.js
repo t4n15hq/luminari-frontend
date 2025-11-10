@@ -393,19 +393,35 @@ Please rephrase your question to focus on clinical trials, protocol development,
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
+            alignItems: 'flex-start',
+            justifyContent: 'flex-start',
             height: '100%',
-            color: '#94a3b8',
-            textAlign: 'center'
+            padding: '2rem'
           }}>
-            <div style={{ fontSize: '48px', marginBottom: '1rem' }}>💬</div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '0.5rem', color: '#64748b' }}>
-              Start a conversation
-            </h3>
-            <p style={{ fontSize: '14px', maxWidth: '400px' }}>
-              Ask me anything about clinical protocols, regulatory documents, trial design, or medical research.
-            </p>
+            <div style={{
+              fontSize: '14px',
+              color: '#64748b',
+              lineHeight: '1.8',
+              maxWidth: '600px'
+            }}>
+              <p style={{ margin: '0 0 1rem 0', color: '#1e293b', fontWeight: '500' }}>
+                Welcome to Ask Lumina™
+              </p>
+              <p style={{ margin: '0 0 0.5rem 0' }}>
+                I can help you with:
+              </p>
+              <ul style={{ margin: '0 0 1.5rem 0', paddingLeft: '1.25rem' }}>
+                <li>Clinical trial protocol design and optimization</li>
+                <li>Regulatory document requirements (IND, NDA, BLA, CTD)</li>
+                <li>Endpoint selection and statistical considerations</li>
+                <li>Patient population and inclusion/exclusion criteria</li>
+                <li>Safety monitoring and adverse event assessment</li>
+                <li>Regulatory compliance guidance (FDA, EMA, ICH)</li>
+              </ul>
+              <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>
+                Type your question below to begin.
+              </p>
+            </div>
           </div>
         ) : (
           <>
