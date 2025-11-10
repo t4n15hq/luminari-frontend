@@ -39,6 +39,11 @@ export const useBackgroundJobs = (jobType = null) => {
     refreshJobs();
   }, [refreshJobs]);
 
+  const clearJob = useCallback((jobId) => {
+    backgroundService.clearJob(jobId);
+    refreshJobs();
+  }, [refreshJobs]);
+
   const clearCompleted = useCallback(() => {
     backgroundService.clearCompleted();
     refreshJobs();
@@ -53,6 +58,7 @@ export const useBackgroundJobs = (jobType = null) => {
     completedJobs,
     startJob,
     cancelJob,
+    clearJob,
     clearCompleted,
     getJob,
     refreshJobs,

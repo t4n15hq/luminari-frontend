@@ -4,7 +4,7 @@ import { useBackgroundJobs } from '../../hooks/useBackgroundJobs';
 import jsPDF from 'jspdf';
 
 const BackgroundJobs = () => {
-  const { activeJobs, completedJobs, cancelJob, clearCompleted, hasActiveJobs, hasCompletedJobs } = useBackgroundJobs();
+  const { activeJobs, completedJobs, cancelJob, clearJob, clearCompleted, hasActiveJobs, hasCompletedJobs } = useBackgroundJobs();
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Don't render if no jobs
@@ -336,11 +336,40 @@ const BackgroundJobs = () => {
                           </div>
                         )}
                       </div>
-                      {job.status === 'completed' && (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        {job.status === 'completed' && (
+                          <button
+                            onClick={() => downloadJobResult(job)}
+                            style={{
+                              background: 'linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary-dark) 100%)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '0',
+                              padding: '6px 12px',
+                              fontSize: '11px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.transform = 'scale(1.05)';
+                              e.target.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.transform = 'scale(1)';
+                              e.target.style.boxShadow = 'none';
+                            }}
+                          >
+                            ⬇ Download
+                          </button>
+                        )}
                         <button
-                          onClick={() => downloadJobResult(job)}
+                          onClick={() => clearJob(job.id)}
                           style={{
-                            background: 'linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary-dark) 100%)',
+                            background: 'linear-gradient(135deg, var(--color-gray-500) 0%, var(--color-gray-600) 100%)',
                             color: 'white',
                             border: 'none',
                             borderRadius: '0',
@@ -355,16 +384,16 @@ const BackgroundJobs = () => {
                           }}
                           onMouseEnter={(e) => {
                             e.target.style.transform = 'scale(1.05)';
-                            e.target.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)';
+                            e.target.style.boxShadow = '0 4px 12px rgba(107, 114, 128, 0.4)';
                           }}
                           onMouseLeave={(e) => {
                             e.target.style.transform = 'scale(1)';
                             e.target.style.boxShadow = 'none';
                           }}
                         >
-                          ⬇ Download
+                          ✕ Delete
                         </button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 ))}

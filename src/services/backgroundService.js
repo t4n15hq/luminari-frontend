@@ -5,12 +5,34 @@ class BackgroundProcessingService {
     this.completedJobs = new Map();
     this.listeners = new Map();
     this.jobCounter = 0;
+    this.currentUserId = null; // Track current user
+  }
+
+  // Set current user (call this on login)
+  setCurrentUser(userId) {
+    this.currentUserId = userId;
+    // Load user's jobs from storage
+    this.initializeFromStorage();
+  }
+
+  // Clear current user (call this on logout)
+  clearCurrentUser() {
+    // Clear only current user's jobs from memory
+    const userJobs = Array.from(this.completedJobs.values())
+      .filter(job => job.userId === this.currentUserId);
+
+    userJobs.forEach(job => {
+      this.completedJobs.delete(job.id);
+    });
+
+    this.currentUserId = null;
   }
 
   // Start a background job
-  startJob(type, data, apiFunction) {
+  startJob(type, data, apiFunction, userId = null) {
     const jobId = `${type}_${++this.jobCounter}_${Date.now()}`;
-    
+    const effectiveUserId = userId || this.currentUserId;
+
     const job = {
       id: jobId,
       type,
@@ -19,7 +41,8 @@ class BackgroundProcessingService {
       startTime: Date.now(),
       progress: 0,
       result: null,
-      error: null
+      error: null,
+      userId: effectiveUserId // Associate job with user
     };
 
     this.activeJobs.set(jobId, job);
@@ -116,14 +139,18 @@ class BackgroundProcessingService {
     return this.activeJobs.get(jobId) || this.completedJobs.get(jobId) || this.loadFromStorage(jobId);
   }
 
-  // Get all active jobs
+  // Get all active jobs (filtered by current user)
   getActiveJobs() {
-    return Array.from(this.activeJobs.values());
+    const jobs = Array.from(this.activeJobs.values());
+    if (!this.currentUserId) return jobs;
+    return jobs.filter(job => job.userId === this.currentUserId);
   }
 
-  // Get all completed jobs
+  // Get all completed jobs (filtered by current user)
   getCompletedJobs() {
-    return Array.from(this.completedJobs.values());
+    const jobs = Array.from(this.completedJobs.values());
+    if (!this.currentUserId) return jobs;
+    return jobs.filter(job => job.userId === this.currentUserId);
   }
 
   // Cancel a job
@@ -140,26 +167,60 @@ class BackgroundProcessingService {
     }
   }
 
-  // Clear completed jobs
-  clearCompleted() {
-    this.completedJobs.clear();
-    this.clearStorageCompletedJobs();
+  // Clear a single job
+  clearJob(jobId) {
+    const job = this.completedJobs.get(jobId);
+    if (job) {
+      // Verify user owns this job
+      if (this.currentUserId && job.userId !== this.currentUserId) {
+        console.warn('Cannot clear job that does not belong to current user');
+        return false;
+      }
+
+      this.completedJobs.delete(jobId);
+      this.removeFromStorage(jobId);
+      return true;
+    }
+    return false;
   }
 
-  // Storage methods for persistence
+  // Clear completed jobs (only for current user)
+  clearCompleted() {
+    if (this.currentUserId) {
+      // Clear only current user's completed jobs
+      const userJobs = Array.from(this.completedJobs.entries())
+        .filter(([_, job]) => job.userId === this.currentUserId);
+
+      userJobs.forEach(([jobId, _]) => {
+        this.completedJobs.delete(jobId);
+        this.removeFromStorage(jobId);
+      });
+    } else {
+      // No user set, clear all
+      this.completedJobs.clear();
+      this.clearStorageCompletedJobs();
+    }
+  }
+
+  // Storage methods for persistence (user-scoped)
+  getStorageKey() {
+    return this.currentUserId ? `backgroundJobs_${this.currentUserId}` : 'backgroundJobs';
+  }
+
   saveToStorage(jobId, job) {
     try {
-      const stored = JSON.parse(localStorage.getItem('backgroundJobs') || '{}');
+      const storageKey = this.getStorageKey();
+      const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
       stored[jobId] = {
         ...job,
         // Don't store large result objects in localStorage
-        result: job.result ? { 
-          hasResult: true, 
+        result: job.result ? {
+          hasResult: true,
           type: job.type,
-          timestamp: job.endTime 
+          timestamp: job.endTime
         } : null
       };
-      localStorage.setItem('backgroundJobs', JSON.stringify(stored));
+      localStorage.setItem(storageKey, JSON.stringify(stored));
     } catch (error) {
       console.warn('Failed to save job to storage:', error);
     }
@@ -167,27 +228,56 @@ class BackgroundProcessingService {
 
   loadFromStorage(jobId) {
     try {
-      const stored = JSON.parse(localStorage.getItem('backgroundJobs') || '{}');
-      return stored[jobId] || null;
+      const storageKey = this.getStorageKey();
+      const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      const job = stored[jobId] || null;
+
+      // Verify user owns this job
+      if (job && this.currentUserId && job.userId !== this.currentUserId) {
+        return null;
+      }
+
+      return job;
     } catch (error) {
       console.warn('Failed to load job from storage:', error);
       return null;
     }
   }
 
+  removeFromStorage(jobId) {
+    try {
+      const storageKey = this.getStorageKey();
+      const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      delete stored[jobId];
+      localStorage.setItem(storageKey, JSON.stringify(stored));
+    } catch (error) {
+      console.warn('Failed to remove job from storage:', error);
+    }
+  }
+
   clearStorageCompletedJobs() {
     try {
-      localStorage.removeItem('backgroundJobs');
+      const storageKey = this.getStorageKey();
+      localStorage.removeItem(storageKey);
     } catch (error) {
       console.warn('Failed to clear storage:', error);
     }
   }
 
-  // Initialize from storage on page load
+  // Initialize from storage on page load (user-scoped)
   initializeFromStorage() {
     try {
-      const stored = JSON.parse(localStorage.getItem('backgroundJobs') || '{}');
+      // Clear existing completed jobs first
+      this.completedJobs.clear();
+
+      const storageKey = this.getStorageKey();
+      const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
       Object.entries(stored).forEach(([jobId, job]) => {
+        // Only load jobs for current user
+        if (this.currentUserId && job.userId !== this.currentUserId) {
+          return;
+        }
+
         if (job.status === 'completed' || job.status === 'error' || job.status === 'cancelled') {
           this.completedJobs.set(jobId, job);
         }
