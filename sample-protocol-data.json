@@ -1,0 +1,33 @@
+{
+  "disease": "Type 2 Diabetes Mellitus",
+  "targetPopulation": "Adults aged 18-75 years with HbA1c 7.5-10.5%",
+  "treatment": "Novel GLP-1 receptor agonist",
+  "drugClass": "GLP-1 receptor agonist",
+  "mechanismOfAction": "Stimulates insulin secretion and suppresses glucagon release in a glucose-dependent manner",
+  "studyType": "clinical",
+  "trialPhase": "Phase 3",
+  "trialType": "Interventional",
+  "randomization": "1:1 randomization",
+  "blinding": "Double-blind",
+  "controlGroupType": "Active comparator",
+  "sampleSize": "500",
+  "minAge": "18",
+  "maxAge": "75",
+  "gender": "All",
+  "inclusionCriteria": "Adults aged 18-75 years; Diagnosis of T2DM for at least 6 months; HbA1c between 7.5% and 10.5%; BMI 25-40 kg/m²; On stable metformin therapy for at least 3 months",
+  "exclusionCriteria": "Type 1 diabetes; History of diabetic ketoacidosis; Severe renal impairment (eGFR <30 mL/min); Active liver disease; Pregnancy or breastfeeding; History of pancreatitis",
+  "routeOfAdministration": "Subcutaneous injection",
+  "dosingFrequency": "Once weekly",
+  "comparatorDrug": "Semaglutide 1.0 mg weekly",
+  "primaryEndpoints": "Change in HbA1c from baseline to week 26",
+  "secondaryEndpoints": "Proportion achieving HbA1c <7.0%; Change in fasting plasma glucose; Change in body weight; Time to rescue medication; Safety and tolerability",
+  "outcomeMeasurementTool": "Laboratory analysis (HbA1c, FPG); Body weight measurements; Adverse event monitoring",
+  "statisticalPower": "90",
+  "significanceLevel": "0.05",
+  "studyDuration": "26 weeks treatment period plus 4 weeks safety follow-up",
+  "additionalNotes": {
+    "stratification": "Stratified by baseline HbA1c (<8.5% vs ≥8.5%)",
+    "rescueTherapy": "Available after week 12 for patients with FPG >270 mg/dL or HbA1c >10%",
+    "safetyMonitoring": "Monthly safety assessments including vital signs, ECG, and laboratory parameters"
+  }
+}

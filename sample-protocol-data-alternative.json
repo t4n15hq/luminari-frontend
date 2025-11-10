@@ -1,0 +1,39 @@
+{
+  "study_info": {
+    "condition": "Rheumatoid Arthritis",
+    "target_population": "Adults with moderate to severe RA",
+    "phase": "Phase 2b"
+  },
+  "intervention": {
+    "drug_class": "JAK inhibitor",
+    "mechanism": "Selectively inhibits JAK1 and JAK3 kinases",
+    "route": "Oral tablet",
+    "dosing": "Twice daily"
+  },
+  "design": {
+    "study_type": "clinical",
+    "trial_type": "Randomized controlled trial",
+    "randomization": "2:2:1 (low dose:high dose:placebo)",
+    "blinding": "Triple-blind",
+    "duration": "24 weeks"
+  },
+  "population": {
+    "sample_size": "300",
+    "min_age": "18",
+    "max_age": "70",
+    "gender": "All",
+    "inclusion": "Age 18-70 years; ACR criteria for RA; Disease duration ≥6 months; Active disease with DAS28-CRP ≥3.2; Inadequate response to MTX",
+    "exclusion": "Serious infections; Malignancy within 5 years; Severe hepatic impairment; Current or planned pregnancy"
+  },
+  "endpoints": {
+    "primary": "ACR20 response rate at week 12",
+    "secondary": "ACR50/70 response rates; DAS28-CRP; HAQ-DI; Radiographic progression",
+    "outcome_tools": "ACR criteria; DAS28-CRP score; HAQ-DI questionnaire; X-ray assessment"
+  },
+  "statistics": {
+    "power": "85",
+    "alpha": "0.05"
+  },
+  "comparator": "Placebo plus background MTX",
+  "special_considerations": "Prior biologics allowed if discontinued ≥8 weeks before screening"
+}
