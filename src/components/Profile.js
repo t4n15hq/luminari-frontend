@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { MODULES, ROLE_PERMISSIONS } from '../config/permissions';
+import UserManagement from './UserManagement';
 import './Profile.css';
 
 const Profile = () => {
@@ -181,6 +182,11 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* User Management Section - Admin Only */}
+      {user.role === 'admin' && (
+        <UserManagement />
+      )}
     </div>
   );
 };
