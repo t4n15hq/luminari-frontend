@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { hasAccess } from '../config/permissions';
+import backgroundService from '../services/backgroundService';
 
 const AuthContext = createContext();
 
@@ -150,10 +151,12 @@ export const AuthProvider = ({ children }) => {
       const response = await apiClient.get('/auth/verify', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.data.valid) {
         setIsAuthenticated(true);
         setUser(response.data.user);
+        // Set user in background service for job scoping
+        backgroundService.setCurrentUser(response.data.user.id);
       } else {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
@@ -185,6 +188,8 @@ export const AuthProvider = ({ children }) => {
 
         setIsAuthenticated(true);
         setUser(userData);
+        // Set user in background service for job scoping
+        backgroundService.setCurrentUser(userData.id);
 
         return { success: true };
       } catch (backendError) {
@@ -199,6 +204,8 @@ export const AuthProvider = ({ children }) => {
 
           setIsAuthenticated(true);
           setUser(userData);
+          // Set user in background service for job scoping
+          backgroundService.setCurrentUser(userData.id);
 
           return { success: true };
         }
@@ -288,6 +295,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     clearGlobalProtocolState(); // Clear protocol data on logout
+    backgroundService.clearCurrentUser(); // Clear user's jobs from memory
     setIsAuthenticated(false);
     setUser(null);
   };
