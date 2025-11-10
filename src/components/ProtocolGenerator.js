@@ -255,6 +255,8 @@ const ProtocolGenerator = () => {
     if (window.confirm('Are you sure you want to clear all fields? This action cannot be undone.')) {
       setGlobalProtocolFormData({});
       setActiveFormSection('basicInfo');
+      // Also clear JSON upload
+      clearJsonUpload();
     }
   }, [setGlobalProtocolFormData]);
 
@@ -366,7 +368,13 @@ const ProtocolGenerator = () => {
   const [referenceProtocolTOC, setReferenceProtocolTOC] = useState([]);
   const [selectedReferenceSection, setSelectedReferenceSection] = useState(null);
   const [selectedReferenceSectionContent, setSelectedReferenceSectionContent] = useState('');
-  
+
+  // JSON Upload State
+  const [uploadedJsonFile, setUploadedJsonFile] = useState(null);
+  const [jsonData, setJsonData] = useState(null);
+  const [jsonAdditionalContext, setJsonAdditionalContext] = useState('');
+  const [showJsonUploadSuccess, setShowJsonUploadSuccess] = useState(false);
+
   // Section Selection and Editing State
   const [selectedProtocolSections, setSelectedProtocolSections] = useState(new Set());
   const [selectedStudyDesignSections, setSelectedStudyDesignSections] = useState(new Set());
@@ -650,6 +658,187 @@ const ProtocolGenerator = () => {
 
   const removeDocument = (documentId) => {
     setUploadedDocuments(docs => docs.filter(doc => doc.id !== documentId));
+  };
+
+  // JSON Upload Handlers
+  const handleJsonFileUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+      alert('Please upload a valid JSON file');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const jsonContent = JSON.parse(e.target.result);
+        setJsonData(jsonContent);
+        setUploadedJsonFile(file);
+        handleJsonDataMapping(jsonContent);
+        setShowJsonUploadSuccess(true);
+        setTimeout(() => setShowJsonUploadSuccess(false), 3000);
+      } catch (error) {
+        console.error('Error parsing JSON:', error);
+        alert('Invalid JSON file. Please check the file format.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleJsonDataMapping = (data) => {
+    // Field mapping configuration
+    const fieldMapping = {
+      // Direct mappings
+      'disease': 'disease',
+      'condition': 'disease',
+      'population': 'population',
+      'targetPopulation': 'population',
+      'target_population': 'population',
+      'treatment': 'treatment',
+      'drugClass': 'drugClass',
+      'drug_class': 'drugClass',
+      'mechanism': 'mechanism',
+      'mechanismOfAction': 'mechanism',
+      'mechanism_of_action': 'mechanism',
+      'studyType': 'studyType',
+      'study_type': 'studyType',
+      'trialPhase': 'trialPhase',
+      'trial_phase': 'trialPhase',
+      'phase': 'trialPhase',
+      'trialType': 'trialType',
+      'trial_type': 'trialType',
+      'randomization': 'randomization',
+      'blinding': 'blinding',
+      'controlGroupType': 'controlGroupType',
+      'control_group_type': 'controlGroupType',
+      'controlGroup': 'controlGroupType',
+      'sampleSize': 'sampleSize',
+      'sample_size': 'sampleSize',
+      'minAge': 'minAge',
+      'min_age': 'minAge',
+      'minimumAge': 'minAge',
+      'maxAge': 'maxAge',
+      'max_age': 'maxAge',
+      'maximumAge': 'maxAge',
+      'gender': 'gender',
+      'inclusionCriteria': 'inclusionCriteria',
+      'inclusion_criteria': 'inclusionCriteria',
+      'inclusion': 'inclusionCriteria',
+      'exclusionCriteria': 'exclusionCriteria',
+      'exclusion_criteria': 'exclusionCriteria',
+      'exclusion': 'exclusionCriteria',
+      'routeOfAdministration': 'routeOfAdministration',
+      'route_of_administration': 'routeOfAdministration',
+      'route': 'routeOfAdministration',
+      'dosingFrequency': 'dosingFrequency',
+      'dosing_frequency': 'dosingFrequency',
+      'dosing': 'dosingFrequency',
+      'comparatorDrug': 'comparatorDrug',
+      'comparator_drug': 'comparatorDrug',
+      'comparator': 'comparatorDrug',
+      'primaryEndpoints': 'primaryEndpoints',
+      'primary_endpoints': 'primaryEndpoints',
+      'primary': 'primaryEndpoints',
+      'secondaryEndpoints': 'secondaryEndpoints',
+      'secondary_endpoints': 'secondaryEndpoints',
+      'secondary': 'secondaryEndpoints',
+      'outcomeMeasurementTool': 'outcomeMeasurementTool',
+      'outcome_measurement_tool': 'outcomeMeasurementTool',
+      'outcomeTools': 'outcomeMeasurementTool',
+      'statisticalPower': 'statisticalPower',
+      'statistical_power': 'statisticalPower',
+      'power': 'statisticalPower',
+      'significanceLevel': 'significanceLevel',
+      'significance_level': 'significanceLevel',
+      'alpha': 'significanceLevel',
+      'studyDuration': 'studyDuration',
+      'study_duration': 'studyDuration',
+      'duration': 'studyDuration'
+    };
+
+    const mappedData = {};
+    const unmappedData = {};
+
+    // Recursively flatten nested JSON objects
+    const flattenObject = (obj, prefix = '') => {
+      const flattened = {};
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          const value = obj[key];
+          const newKey = prefix ? `${prefix}.${key}` : key;
+
+          if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            Object.assign(flattened, flattenObject(value, newKey));
+          } else {
+            flattened[newKey] = value;
+          }
+        }
+      }
+      return flattened;
+    };
+
+    const flatData = flattenObject(data);
+
+    // Map JSON fields to form fields
+    Object.keys(flatData).forEach(key => {
+      const lowerKey = key.toLowerCase().replace(/[_\s-]/g, '');
+      let matched = false;
+
+      // Try direct mapping first
+      if (fieldMapping[key]) {
+        mappedData[fieldMapping[key]] = String(flatData[key]);
+        matched = true;
+      } else {
+        // Try case-insensitive and normalized matching
+        for (const [jsonKey, formKey] of Object.entries(fieldMapping)) {
+          const normalizedJsonKey = jsonKey.toLowerCase().replace(/[_\s-]/g, '');
+          if (lowerKey === normalizedJsonKey || lowerKey.includes(normalizedJsonKey) || normalizedJsonKey.includes(lowerKey)) {
+            mappedData[formKey] = String(flatData[key]);
+            matched = true;
+            break;
+          }
+        }
+      }
+
+      if (!matched) {
+        unmappedData[key] = flatData[key];
+      }
+    });
+
+    // Update form fields with mapped data
+    setGlobalProtocolFormData(prev => ({
+      ...prev,
+      ...mappedData
+    }));
+
+    // Store unmapped data as additional context
+    if (Object.keys(unmappedData).length > 0) {
+      const contextText = 'Additional context from JSON file:\n' +
+        Object.entries(unmappedData)
+          .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+          .join('\n');
+      setJsonAdditionalContext(contextText);
+
+      // Append to clinicalInfo if it exists, otherwise set it
+      setGlobalProtocolFormData(prev => ({
+        ...prev,
+        clinicalInfo: prev.clinicalInfo
+          ? `${prev.clinicalInfo}\n\n${contextText}`
+          : contextText
+      }));
+    }
+
+    console.log('Mapped fields:', mappedData);
+    console.log('Unmapped data:', unmappedData);
+  };
+
+  const clearJsonUpload = () => {
+    setUploadedJsonFile(null);
+    setJsonData(null);
+    setJsonAdditionalContext('');
+    setShowJsonUploadSuccess(false);
   };
 
   const getCategoryStatus = (categoryId) => {
@@ -2785,6 +2974,191 @@ const ProtocolGenerator = () => {
           >
             Clear All Fields
           </button>
+        </div>
+
+        {/* JSON Upload Section */}
+        <div style={{
+          marginBottom: '2rem',
+          backgroundColor: 'white',
+          borderRadius: '0',
+          padding: '1.5rem',
+          border: uploadedJsonFile ? '2px solid #10b981' : '2px dashed #683D94',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          transition: 'all 0.3s ease'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1rem'
+          }}>
+            <h3 style={{
+              fontSize: '1.25rem',
+              fontWeight: '600',
+              margin: 0,
+              color: '#1e293b'
+            }}>
+              📄 Upload JSON Data
+            </h3>
+            {uploadedJsonFile && (
+              <button
+                onClick={clearJsonUpload}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#dc2626';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#ef4444';
+                }}
+              >
+                ✕ Remove JSON
+              </button>
+            )}
+          </div>
+
+          <p style={{
+            fontSize: '0.9rem',
+            color: '#64748b',
+            marginBottom: '1rem'
+          }}>
+            Upload a JSON file to automatically populate form fields. Unmapped data will be added as additional context.
+          </p>
+
+          {!uploadedJsonFile ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '2rem',
+              border: '2px dashed #cbd5e1',
+              borderRadius: '0',
+              backgroundColor: '#f8fafc',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#683D94';
+              e.currentTarget.style.backgroundColor = '#f1f5f9';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#cbd5e1';
+              e.currentTarget.style.backgroundColor = '#f8fafc';
+            }}
+            onClick={() => document.getElementById('json-upload-input').click()}
+            >
+              <div style={{
+                fontSize: '3rem',
+                marginBottom: '0.5rem'
+              }}>
+                📤
+              </div>
+              <p style={{
+                fontSize: '1rem',
+                fontWeight: '500',
+                color: '#1e293b',
+                marginBottom: '0.25rem'
+              }}>
+                Click to upload or drag and drop
+              </p>
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#64748b'
+              }}>
+                JSON files only
+              </p>
+              <input
+                id="json-upload-input"
+                type="file"
+                accept=".json,application/json"
+                onChange={handleJsonFileUpload}
+                style={{ display: 'none' }}
+              />
+            </div>
+          ) : (
+            <div>
+              {showJsonUploadSuccess && (
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: '#dcfce7',
+                  border: '1px solid #86efac',
+                  borderRadius: '0',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <span style={{ fontSize: '1.25rem' }}>✓</span>
+                  <span style={{ color: '#166534', fontWeight: '500' }}>
+                    JSON file processed successfully! Form fields have been populated.
+                  </span>
+                </div>
+              )}
+              <div style={{
+                padding: '1rem',
+                backgroundColor: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}>
+                <div style={{ fontSize: '2rem' }}>✓</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontWeight: '600',
+                    color: '#166534',
+                    marginBottom: '0.25rem'
+                  }}>
+                    {uploadedJsonFile.name}
+                  </div>
+                  <div style={{
+                    fontSize: '0.875rem',
+                    color: '#15803d'
+                  }}>
+                    {(uploadedJsonFile.size / 1024).toFixed(2)} KB • Processed
+                  </div>
+                </div>
+              </div>
+              {jsonAdditionalContext && (
+                <div style={{
+                  marginTop: '1rem',
+                  padding: '1rem',
+                  backgroundColor: '#fef3c7',
+                  border: '1px solid #fde68a',
+                  borderRadius: '0'
+                }}>
+                  <div style={{
+                    fontWeight: '600',
+                    color: '#92400e',
+                    marginBottom: '0.5rem',
+                    fontSize: '0.875rem'
+                  }}>
+                    ℹ️ Additional Context Added
+                  </div>
+                  <div style={{
+                    fontSize: '0.875rem',
+                    color: '#78350f',
+                    fontFamily: 'monospace',
+                    whiteSpace: 'pre-wrap',
+                    maxHeight: '150px',
+                    overflowY: 'auto'
+                  }}>
+                    {jsonAdditionalContext}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Basic Information Section */}
