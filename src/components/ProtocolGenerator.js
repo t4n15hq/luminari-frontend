@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import apiService from '../services/api';
 import { saveDocument } from '../services/api';
 import PreviousDocuments from './common/PreviousDocuments';
-import { saveProtocol, getMyDocuments } from '../services/documentService';
+import { saveProtocol, saveStudyDesign, getMyDocuments } from '../services/documentService';
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 import { useAuth } from '../contexts/AuthContext'; // NEW IMPORT for global state
 import { useDropzone } from 'react-dropzone'; // NEW IMPORT for document upload
@@ -1210,42 +1210,47 @@ const ProtocolGenerator = () => {
             // Save protocol to backend with error handling
             if (protocolJob.result) {
               try {
-                await saveDocument({
-                  type: 'PROTOCOL',
+                await saveProtocol({
                   title: `Protocol for ${disease}`,
+                  description: `${studyType || 'Clinical'} study protocol for ${population || disease}`,
                   disease,
                   content: protocolJob.result.protocol,
-                  protocolId: protocolJob.result.protocol_id,
-                  // add more fields as needed
+                  formData: globalProtocolFormData
                 });
                 console.log('✅ Protocol saved successfully');
               } catch (saveError) {
                 console.error('❌ Failed to save protocol:', saveError.message);
                 // Don't block the UI - protocol is still generated and viewable
-                // Could show a toast notification here if available
-                setError(`Protocol generated but could not be saved: ${saveError.message}`);
+                // Gracefully handle 413 errors and other save failures
+                if (saveError.response?.status === 413) {
+                  console.warn('⚠️ Protocol too large for backend storage (413). Document available locally.');
+                } else {
+                  console.warn('⚠️ Could not save protocol to backend. Document available locally.');
+                }
               }
             }
             
             // Save study design to backend with error handling
             if (studyDesignJob.result) {
               try {
-                await saveDocument({
-                  type: 'STUDY_DESIGN',
+                await saveStudyDesign({
                   title: `Study Design for ${disease}`,
+                  description: `${trialPhase || 'Clinical'} study design for ${disease}`,
                   disease,
                   cmcSection: studyDesignJob.result.cmc_section,
                   clinicalSection: studyDesignJob.result.clinical_section,
                   content: `CMC SECTION:\n${studyDesignJob.result.cmc_section}\n\nCLINICAL SECTION:\n${studyDesignJob.result.clinical_section}`,
-                  // add more fields as needed
+                  formData: globalProtocolFormData
                 });
                 console.log('✅ Study design saved successfully');
               } catch (saveError) {
                 console.error('❌ Failed to save study design:', saveError.message);
                 // Don't block the UI - study design is still generated and viewable
-                // Could show a toast notification here if available
-                if (!error) { // Only set error if not already set from protocol save
-                  setError(`Study design generated but could not be saved: ${saveError.message}`);
+                // Gracefully handle 413 errors and other save failures
+                if (saveError.response?.status === 413) {
+                  console.warn('⚠️ Study design too large for backend storage (413). Document available locally.');
+                } else {
+                  console.warn('⚠️ Could not save study design to backend. Document available locally.');
                 }
               }
             }

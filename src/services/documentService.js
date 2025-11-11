@@ -95,15 +95,15 @@ export const saveProtocol = async ({
       tags: [disease || formData.disease, formData.studyType, 'protocol'].filter(Boolean)
     };
 
-    // Check payload size and truncate if necessary (limit to 8MB to account for JSON overhead)
+    // Check payload size and truncate if necessary (limit to 4MB to prevent 413 errors)
     const payloadSize = JSON.stringify(protocolData).length;
-    const maxSize = 8 * 1024 * 1024; // 8MB
+    const maxSize = 4 * 1024 * 1024; // 4MB conservative limit
 
     if (payloadSize > maxSize) {
       console.warn(`Protocol payload (${Math.round(payloadSize / 1024 / 1024 * 100) / 100}MB) exceeds limit. Truncating content...`);
 
       // Calculate how much we need to truncate
-      const maxContentLength = Math.floor(maxSize * 0.7); // Use 70% of limit for content field
+      const maxContentLength = Math.floor(maxSize * 0.6); // Use 60% of limit for content field
       if (protocolData.fullProtocol && protocolData.fullProtocol.length > maxContentLength) {
         protocolData.fullProtocol = protocolData.fullProtocol.substring(0, maxContentLength) + '\n\n[CONTENT TRUNCATED DUE TO SIZE LIMIT - PROTOCOL TOO LARGE]';
       }
@@ -186,15 +186,15 @@ export const saveStudyDesign = async ({
       tags: [disease || formData.disease, formData.studyPhase, 'study_design'].filter(Boolean)
     };
 
-    // Check payload size and truncate if necessary (limit to 8MB)
+    // Check payload size and truncate if necessary (limit to 4MB to prevent 413 errors)
     const payloadSize = JSON.stringify(studyDesignData).length;
-    const maxSize = 8 * 1024 * 1024; // 8MB
+    const maxSize = 4 * 1024 * 1024; // 4MB conservative limit
 
     if (payloadSize > maxSize) {
       console.warn(`Study design payload (${Math.round(payloadSize / 1024 / 1024 * 100) / 100}MB) exceeds limit. Truncating content...`);
 
       // Truncate large fields proportionally
-      const maxContentLength = Math.floor(maxSize * 0.25); // 25% for each major field
+      const maxContentLength = Math.floor(maxSize * 0.2); // 20% for each major field
       if (studyDesignData.fullDocument && studyDesignData.fullDocument.length > maxContentLength) {
         studyDesignData.fullDocument = studyDesignData.fullDocument.substring(0, maxContentLength) + '\n\n[CONTENT TRUNCATED DUE TO SIZE LIMIT]';
       }
@@ -291,9 +291,9 @@ export const saveRegulatoryDocument = async ({
       tags: [disease, country, documentType].filter(Boolean)
     };
 
-    // Check payload size and truncate if necessary (limit to 8MB)
+    // Check payload size and truncate if necessary (limit to 4MB to prevent 413 errors)
     const payloadSize = JSON.stringify(regulatoryData).length;
-    const maxSize = 8 * 1024 * 1024; // 8MB
+    const maxSize = 4 * 1024 * 1024; // 4MB conservative limit
 
     if (payloadSize > maxSize) {
       console.warn(`Regulatory document payload (${Math.round(payloadSize / 1024 / 1024 * 100) / 100}MB) exceeds limit. Truncating content...`);
@@ -307,7 +307,7 @@ export const saveRegulatoryDocument = async ({
         'clinicalOverview', 'clinicalSummary', 'clinicalStudyReports', 'clinicalEfficacy', 'clinicalSafety'
       ];
 
-      const maxFieldLength = Math.floor(maxSize * 0.15); // 15% per field
+      const maxFieldLength = Math.floor(maxSize * 0.1); // 10% per field (more aggressive)
       largeFields.forEach(field => {
         if (regulatoryData[field] && regulatoryData[field].length > maxFieldLength) {
           regulatoryData[field] = regulatoryData[field].substring(0, maxFieldLength) + '\n\n[CONTENT TRUNCATED DUE TO SIZE LIMIT]';

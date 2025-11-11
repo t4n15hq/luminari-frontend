@@ -60,12 +60,28 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
+    const savedUser = localStorage.getItem('user');
+
+    // Load user from localStorage as fallback
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setUser(userData);
+        setIsAuthenticated(true);
+        backgroundService.setCurrentUser(userData.id);
+      } catch (error) {
+        console.error('Error parsing saved user data:', error);
+        localStorage.removeItem('user');
+      }
+    }
+
+    // Verify token with backend if available
     if (token) {
       verifyToken(token);
     } else {
       setIsLoading(false);
     }
-    
+
     // Load global protocol state from localStorage
     loadGlobalProtocolState();
   }, []);
@@ -158,13 +174,16 @@ export const AuthProvider = ({ children }) => {
         // Set user in background service for job scoping
         backgroundService.setCurrentUser(response.data.user.id);
       } else {
+        // Token is invalid, clear everything
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
+        setIsAuthenticated(false);
+        setUser(null);
       }
     } catch (error) {
-      console.error('Token verification failed:', error);
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
+      console.error('Token verification failed (backend may be unavailable):', error);
+      // Don't clear localStorage on network errors - allow fallback to saved user data
+      // The user was already loaded from localStorage in useEffect
     } finally {
       setIsLoading(false);
     }
