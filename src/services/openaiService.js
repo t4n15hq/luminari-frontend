@@ -1010,6 +1010,9 @@ const openaiService = {
     };
 
     const docInfo = docTypeMap[docType];
+    if (!docInfo) {
+      throw new Error(`Document type '${docType}' is not supported. Supported types: ${Object.keys(docTypeMap).join(', ')}`);
+    }
     const systemPrompt = createSystemPrompt(
       docInfo.role,
       docType,
