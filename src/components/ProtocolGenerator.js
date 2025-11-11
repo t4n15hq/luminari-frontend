@@ -5034,11 +5034,45 @@ const ProtocolGenerator = () => {
         onClose={() => setShowDocHistory(false)}
         documentType="PROTOCOL"
         onSelectDocument={(doc) => {
-          if (doc.formData) {
-            setGlobalProtocolFormData(doc.formData);
+          // Extract individual form fields from the protocol document
+          if (doc) {
+            // Reconstruct formData from individual protocol fields
+            const formData = {
+              disease: doc.disease,
+              indication: doc.indication,
+              studyType: doc.studyType,
+              studyPhase: doc.studyPhase,
+              trialType: doc.trialType,
+              blinding: doc.blinding,
+              randomization: doc.randomization,
+              population: doc.population,
+              minAge: doc.minAge,
+              maxAge: doc.maxAge,
+              gender: doc.gender,
+              targetSampleSize: doc.targetSampleSize,
+              inclusionCriteria: doc.inclusionCriteria,
+              exclusionCriteria: doc.exclusionCriteria,
+              treatment: doc.treatment,
+              drugClass: doc.drugClass,
+              mechanism: doc.mechanism,
+              routeOfAdmin: doc.routeOfAdmin,
+              dosingRegimen: doc.dosingRegimen,
+              comparatorDrug: doc.comparatorDrug,
+              controlGroup: doc.controlGroup,
+              primaryEndpoints: doc.primaryEndpoints,
+              secondaryEndpoints: doc.secondaryEndpoints,
+              outcomeMeasures: doc.outcomeMeasures,
+              statisticalPower: doc.statisticalPower,
+              significanceLevel: doc.significanceLevel,
+              studyDuration: doc.studyDuration,
+              animalModel: doc.animalModel,
+              animalStrain: doc.animalStrain
+            };
+            setGlobalProtocolFormData(formData);
           }
-          if (doc.content) {
-            setResult(doc.content);
+          // Load the full protocol content
+          if (doc.fullProtocol) {
+            setResult(doc.fullProtocol);
           }
           setShowDocHistory(false);
         }}

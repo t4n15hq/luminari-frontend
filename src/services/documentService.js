@@ -31,29 +31,73 @@ const getUserId = () => {
 
 /**
  * Save a protocol document
+ * Maps formData to specific Protocol schema fields
  */
 export const saveProtocol = async ({
   title,
   description,
   disease,
   content,
-  formData,
+  formData = {},
   studyDesign
 }) => {
   try {
+    // Map formData to specific protocol fields
+    const protocolData = {
+      title: title || `Protocol for ${formData.disease || disease || 'Untitled'}`,
+      description: description || `${formData.studyType || ''} study for ${formData.population || ''}`.trim(),
+      disease: disease || formData.disease || '',
+      indication: formData.indication,
+
+      // Study Design
+      studyType: formData.studyType,
+      studyPhase: formData.studyPhase,
+      trialType: formData.trialType,
+      blinding: formData.blinding,
+      randomization: formData.randomization,
+
+      // Population
+      population: formData.population,
+      minAge: formData.minAge ? parseInt(formData.minAge) : null,
+      maxAge: formData.maxAge ? parseInt(formData.maxAge) : null,
+      gender: formData.gender,
+      targetSampleSize: formData.targetSampleSize ? parseInt(formData.targetSampleSize) : null,
+      inclusionCriteria: formData.inclusionCriteria,
+      exclusionCriteria: formData.exclusionCriteria,
+
+      // Treatment
+      treatment: formData.treatment,
+      drugClass: formData.drugClass,
+      mechanism: formData.mechanism,
+      routeOfAdmin: formData.routeOfAdmin,
+      dosingRegimen: formData.dosingRegimen,
+      comparatorDrug: formData.comparatorDrug,
+      controlGroup: formData.controlGroup,
+
+      // Endpoints
+      primaryEndpoints: formData.primaryEndpoints,
+      secondaryEndpoints: formData.secondaryEndpoints,
+      outcomeMeasures: formData.outcomeMeasures,
+
+      // Statistical
+      statisticalPower: formData.statisticalPower,
+      significanceLevel: formData.significanceLevel,
+      studyDuration: formData.studyDuration,
+
+      // Preclinical
+      animalModel: formData.animalModel,
+      animalStrain: formData.animalStrain,
+
+      // Content
+      fullProtocol: content,
+
+      // Metadata
+      tags: [disease || formData.disease, formData.studyType, 'protocol'].filter(Boolean)
+    };
+
     const response = await axios.post(
-      `${API_BASE_URL}/documents`,
-      {
-        type: 'PROTOCOL',
-        title,
-        description,
-        disease,
-        content,
-        formData,
-        studyDesign,
-        userId: getUserId(),
-        tags: [disease, 'protocol'].filter(Boolean)
-      },
+      `${API_BASE_URL}/protocols`,
+      protocolData,
       getAuthHeaders()
     );
 
@@ -65,7 +109,80 @@ export const saveProtocol = async ({
 };
 
 /**
+ * Save a study design
+ * Maps formData and sections to specific StudyDesign schema fields
+ */
+export const saveStudyDesign = async ({
+  title,
+  description,
+  disease,
+  content,
+  formData = {},
+  cmcSection,
+  clinicalSection
+}) => {
+  try {
+    // Map formData to specific study design fields
+    const studyDesignData = {
+      title: title || `Study Design for ${formData.disease || disease || 'Untitled'}`,
+      description: description || `${formData.studyPhase || ''} ${formData.studyType || ''} study`.trim(),
+      disease: disease || formData.disease || '',
+
+      // Study Parameters
+      studyPhase: formData.studyPhase,
+      studyType: formData.studyType,
+      blinding: formData.blinding,
+      randomization: formData.randomization,
+      controlGroup: formData.controlGroup,
+
+      // Population
+      population: formData.population,
+      minAge: formData.minAge ? parseInt(formData.minAge) : null,
+      maxAge: formData.maxAge ? parseInt(formData.maxAge) : null,
+      targetSampleSize: formData.targetSampleSize ? parseInt(formData.targetSampleSize) : null,
+      inclusionCriteria: formData.inclusionCriteria,
+      exclusionCriteria: formData.exclusionCriteria,
+
+      // Treatment
+      drugName: formData.drugName || formData.treatment,
+      drugClass: formData.drugClass,
+      mechanism: formData.mechanism,
+      routeOfAdmin: formData.routeOfAdmin,
+      dosingFrequency: formData.dosingFrequency || formData.dosingRegimen,
+      treatmentDuration: formData.treatmentDuration || formData.studyDuration,
+
+      // Endpoints
+      primaryEndpoints: formData.primaryEndpoints,
+      secondaryEndpoints: formData.secondaryEndpoints,
+      safetyMonitoring: formData.safetyMonitoring,
+
+      // CMC and Clinical sections
+      cmcFull: cmcSection,
+      clinicalFull: clinicalSection,
+
+      // Complete Document
+      fullDocument: content,
+
+      // Metadata
+      tags: [disease || formData.disease, formData.studyPhase, 'study_design'].filter(Boolean)
+    };
+
+    const response = await axios.post(
+      `${API_BASE_URL}/study-designs`,
+      studyDesignData,
+      getAuthHeaders()
+    );
+
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Save study design error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
  * Save a regulatory document
+ * Maps sections to specific RegulatoryDocument schema fields
  */
 export const saveRegulatoryDocument = async ({
   title,
@@ -75,28 +192,64 @@ export const saveRegulatoryDocument = async ({
   region,
   documentType,
   content,
-  sections,
+  sections = {},
   cmcSection,
   clinicalSection
 }) => {
   try {
+    // Map sections to specific regulatory document fields
+    const regulatoryData = {
+      title: title || `${documentType || 'Regulatory Document'} for ${disease || 'Untitled'}`,
+      description: description || `${documentType} submission for ${country}`.trim(),
+      documentType: documentType || 'IND',
+
+      // Geographic
+      country: country || 'US',
+      region: region,
+
+      // Drug Info
+      disease: disease,
+      drugName: sections.drugName,
+      drugClass: sections.drugClass,
+      indication: sections.indication,
+
+      // Sections
+      executiveSummary: sections.executive_summary || sections.executiveSummary,
+      coverLetter: sections.cover_letter || sections.coverLetter,
+      formsFDA: sections.forms_fda || sections.formsFDA,
+      ctdSummary: sections.ctd_summary || sections.ctdSummary,
+      overallSummary: sections.overall_summary || sections.overallSummary,
+
+      // CMC sections
+      cmcDrugSubstance: sections.cmc_drug_substance || sections.cmcDrugSubstance,
+      cmcDrugProduct: sections.cmc_drug_product || sections.cmcDrugProduct,
+      cmcManufacturing: sections.cmc_manufacturing || sections.cmcManufacturing,
+      cmcControls: sections.cmc_controls || sections.cmcControls,
+      cmcStability: sections.cmc_stability || sections.cmcStability,
+      cmcFull: cmcSection || sections.cmc_section || sections.cmcFull,
+
+      // Nonclinical
+      nonclinicalPharmacology: sections.nonclinical_pharmacology || sections.nonclinicalPharmacology,
+      nonclinicalToxicology: sections.nonclinical_toxicology || sections.nonclinicalToxicology,
+
+      // Clinical
+      clinicalOverview: sections.clinical_overview || sections.clinicalOverview,
+      clinicalSummary: sections.clinical_summary || sections.clinicalSummary,
+      clinicalStudyReports: sections.clinical_study_reports || sections.clinicalStudyReports,
+      clinicalEfficacy: sections.clinical_efficacy || sections.clinicalEfficacy,
+      clinicalSafety: sections.clinical_safety || sections.clinicalSafety,
+      clinicalFull: clinicalSection || sections.clinical_section || sections.clinicalFull,
+
+      // Full document
+      fullDocument: content || sections.full_document || sections.fullDocument,
+
+      // Metadata
+      tags: [disease, country, documentType].filter(Boolean)
+    };
+
     const response = await axios.post(
-      `${API_BASE_URL}/documents`,
-      {
-        type: 'REGULATORY',
-        title,
-        description,
-        disease,
-        country,
-        region,
-        documentType,
-        content,
-        sections,
-        cmcSection,
-        clinicalSection,
-        userId: getUserId(),
-        tags: [disease, country, documentType].filter(Boolean)
-      },
+      `${API_BASE_URL}/regulatory-documents`,
+      regulatoryData,
       getAuthHeaders()
     );
 
@@ -198,6 +351,7 @@ export const toggleDocumentStar = async (documentId, starred, isConversation = f
 
 export default {
   saveProtocol,
+  saveStudyDesign,
   saveRegulatoryDocument,
   saveConversation,
   getMyDocuments,
