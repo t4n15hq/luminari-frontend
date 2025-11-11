@@ -119,13 +119,35 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log('Document details response:', response.data);
+      console.log('Available fields:', Object.keys(response.data));
 
       // Normalize content field name based on document type
       const docData = response.data;
-      if (documentType === 'PROTOCOL' && docData.fullProtocol && !docData.content) {
-        docData.content = docData.fullProtocol;
-      } else if ((documentType === 'STUDY_DESIGN' || documentType === 'REGULATORY') && docData.fullDocument && !docData.content) {
-        docData.content = docData.fullDocument;
+      if (documentType === 'PROTOCOL') {
+        // Try multiple possible field names for protocol content
+        if (!docData.content) {
+          docData.content = docData.fullProtocol || docData.full_protocol || docData.protocol || '';
+          console.log('Protocol content field used:',
+            docData.fullProtocol ? 'fullProtocol' :
+            docData.full_protocol ? 'full_protocol' :
+            docData.protocol ? 'protocol' : 'NONE FOUND');
+          console.log('Protocol content length:', docData.content?.length || 0);
+        }
+      } else if (documentType === 'STUDY_DESIGN') {
+        // Try multiple possible field names for study design content
+        if (!docData.content) {
+          docData.content = docData.fullDocument || docData.full_document ||
+            (docData.cmcFull && docData.clinicalFull ?
+              `CMC SECTION:\n\n${docData.cmcFull}\n\nCLINICAL SECTION:\n\n${docData.clinicalFull}` :
+              docData.cmcFull || docData.clinicalFull || '');
+          console.log('Study design content length:', docData.content?.length || 0);
+        }
+      } else if (documentType === 'REGULATORY') {
+        // Try multiple possible field names for regulatory document content
+        if (!docData.content) {
+          docData.content = docData.fullDocument || docData.full_document || '';
+          console.log('Regulatory content length:', docData.content?.length || 0);
+        }
       }
 
       setSelectedDoc(docData);
@@ -373,7 +395,28 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
                     </div>
                   ) : (
                     <div className="previous-doc-content">
-                      <pre>{selectedDoc.content}</pre>
+                      {selectedDoc.content ? (
+                        <pre>{selectedDoc.content}</pre>
+                      ) : (
+                        <div className="previous-doc-no-content">
+                          <p>No content available for this document.</p>
+                          <p style={{ fontSize: '0.9em', color: '#666', marginTop: '1rem' }}>
+                            This document may have been saved without content or the content field is missing from the database.
+                          </p>
+                          <details style={{ marginTop: '1rem', fontSize: '0.85em', color: '#999' }}>
+                            <summary>Debug Info (click to expand)</summary>
+                            <pre style={{ marginTop: '0.5rem', fontSize: '0.8em' }}>
+                              {JSON.stringify({
+                                id: selectedDoc.id,
+                                title: selectedDoc.title,
+                                availableFields: Object.keys(selectedDoc).filter(k =>
+                                  !['id', 'title', 'createdAt', 'updatedAt', 'userId'].includes(k)
+                                )
+                              }, null, 2)}
+                            </pre>
+                          </details>
+                        </div>
+                      )}
                     </div>
                   )}
 
