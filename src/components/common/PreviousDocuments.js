@@ -37,12 +37,24 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
         });
         setConversations(response.data);
       } else {
-        // Fetch documents
+        // Fetch documents from specific endpoints based on type
         const params = new URLSearchParams();
-        if (documentType) params.append('type', documentType);
         if (filterStarred) params.append('starred', 'true');
 
-        const response = await axios.get(`${API_BASE_URL}/my-documents?${params}`, {
+        let endpoint;
+        if (documentType === 'PROTOCOL') {
+          endpoint = '/protocols';
+        } else if (documentType === 'STUDY_DESIGN') {
+          endpoint = '/study-designs';
+        } else if (documentType === 'REGULATORY') {
+          endpoint = '/regulatory-documents';
+        } else {
+          // Fallback to generic endpoint for other types
+          endpoint = '/my-documents';
+          if (documentType) params.append('type', documentType);
+        }
+
+        const response = await axios.get(`${API_BASE_URL}${endpoint}?${params}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setDocuments(response.data);
@@ -59,9 +71,19 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      const endpoint = documentType === 'CHAT'
-        ? `/my-conversations/${doc.id}`
-        : `/my-documents/${doc.id}`;
+
+      let endpoint;
+      if (documentType === 'CHAT') {
+        endpoint = `/my-conversations/${doc.id}`;
+      } else if (documentType === 'PROTOCOL') {
+        endpoint = `/protocols/${doc.id}`;
+      } else if (documentType === 'STUDY_DESIGN') {
+        endpoint = `/study-designs/${doc.id}`;
+      } else if (documentType === 'REGULATORY') {
+        endpoint = `/regulatory-documents/${doc.id}`;
+      } else {
+        endpoint = `/my-documents/${doc.id}`;
+      }
 
       const response = await axios.get(`${API_BASE_URL}${endpoint}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -82,9 +104,19 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
 
     try {
       const token = localStorage.getItem('authToken');
-      const endpoint = documentType === 'CHAT'
-        ? `/my-conversations/${doc.id}/star`
-        : `/my-documents/${doc.id}/star`;
+
+      let endpoint;
+      if (documentType === 'CHAT') {
+        endpoint = `/my-conversations/${doc.id}/star`;
+      } else if (documentType === 'PROTOCOL') {
+        endpoint = `/protocols/${doc.id}/star`;
+      } else if (documentType === 'STUDY_DESIGN') {
+        endpoint = `/study-designs/${doc.id}/star`;
+      } else if (documentType === 'REGULATORY') {
+        endpoint = `/regulatory-documents/${doc.id}/star`;
+      } else {
+        endpoint = `/my-documents/${doc.id}/star`;
+      }
 
       await axios.patch(
         `${API_BASE_URL}${endpoint}`,
@@ -162,7 +194,7 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
               ? `Previous ${getDocumentTypeLabel(documentType)}s`
               : 'Document Details'}
           </h2>
-          <button onClick={onClose} className="previous-docs-close">◊</button>
+          <button onClick={onClose} className="previous-docs-close">ÔøΩ</button>
         </div>
 
         {error && (
@@ -243,7 +275,7 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
             {/* Document Detail View */}
             <div className="previous-doc-detail">
               <button onClick={handleBackToList} className="previous-doc-back">
-                ê Back to List
+                ÔøΩ Back to List
               </button>
 
               {loading ? (
