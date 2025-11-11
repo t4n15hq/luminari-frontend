@@ -4,7 +4,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
-import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
+import { saveDocument } from '../services/api';
+import { getMyDocuments } from '../services/documentService';
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
@@ -169,8 +170,12 @@ const RegulatoryDocumentGenerator = () => {
     if (!showPreviousDocuments && previousDocuments.length === 0) {
       setLoadingPrevious(true);
       try {
-        const docs = await fetchDocuments('REGULATORY_DOCUMENT');
-        setPreviousDocuments(docs || []);
+        const result = await getMyDocuments('REGULATORY');
+        if (result.success) {
+          setPreviousDocuments(result.data || []);
+        } else {
+          throw new Error(result.error);
+        }
       } catch (error) {
         console.error('Error fetching previous documents:', error);
         setFetchError('Failed to load previous documents');

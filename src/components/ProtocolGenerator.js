@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import apiService from '../services/api';
-import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
+import { saveDocument } from '../services/api';
 import PreviousDocuments from './common/PreviousDocuments';
-import { saveProtocol } from '../services/documentService';
+import { saveProtocol, getMyDocuments } from '../services/documentService';
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 import { useAuth } from '../contexts/AuthContext'; // NEW IMPORT for global state
 import { useDropzone } from 'react-dropzone'; // NEW IMPORT for document upload
@@ -1299,8 +1299,12 @@ const ProtocolGenerator = () => {
       setLoadingPrevious(true);
       setFetchError('');
       try {
-        const docs = await fetchDocuments();
-        setPreviousProtocols(docs);
+        const result = await getMyDocuments('PROTOCOL');
+        if (result.success) {
+          setPreviousProtocols(result.data);
+        } else {
+          throw new Error(result.error);
+        }
       } catch (err) {
         setPreviousProtocols([]);
         setFetchError('Error fetching previous protocols. Please try again later.');

@@ -5,9 +5,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from 'react-simple-maps';
 import apiService from '../services/api';
-import { saveDocument, fetchDocuments } from '../services/api';
+import { saveDocument } from '../services/api';
 import PreviousDocuments from './common/PreviousDocuments';
-import { saveRegulatoryDocument } from '../services/documentService';
+import { saveRegulatoryDocument, getMyDocuments } from '../services/documentService';
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs';
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
@@ -1628,8 +1628,12 @@ const UnifiedRegulatoryGenerator = () => {
       setLoadingPreviousDocs(true);
       setFetchError('');
       try {
-        const docs = await fetchDocuments();
-        setPreviousDocs(docs.filter(doc => doc.type === 'REGULATORY'));
+        const result = await getMyDocuments('REGULATORY');
+        if (result.success) {
+          setPreviousDocs(result.data);
+        } else {
+          throw new Error(result.error);
+        }
       } catch (err) {
         setPreviousDocs([]);
         if (err.response?.status === 401) {

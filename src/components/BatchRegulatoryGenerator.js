@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
-import { saveDocument, fetchDocuments } from '../services/api'; // <-- update import
+import { saveDocument } from '../services/api';
+import { getMyDocuments } from '../services/documentService';
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs'; // NEW IMPORT
 import jsPDF from 'jspdf';
 import DocumentViewer from './common/DocumentViewer';
@@ -431,8 +432,12 @@ const BatchRegulatoryGenerator = () => {
       setLoadingPreviousDocs(true);
       setFetchError('');
       try {
-        const docs = await fetchDocuments();
-        setPreviousDocs(docs.filter(doc => doc.type === 'REGULATORY'));
+        const result = await getMyDocuments('REGULATORY');
+        if (result.success) {
+          setPreviousDocs(result.data);
+        } else {
+          throw new Error(result.error);
+        }
       } catch (err) {
         setPreviousDocs([]);
         setFetchError('Error fetching previous regulatory documents. Please try again later.');

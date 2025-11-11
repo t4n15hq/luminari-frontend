@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../services/api';
-import { saveDocument, fetchDocuments } from '../services/api';
+import { saveDocument } from '../services/api';
 import { useBackgroundJobs } from '../hooks/useBackgroundJobs';
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
