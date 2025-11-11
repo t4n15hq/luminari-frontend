@@ -27,6 +27,12 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
     try {
       const token = localStorage.getItem('authToken');
 
+      if (!token) {
+        setError('Authentication required. Please log in.');
+        setLoading(false);
+        return;
+      }
+
       if (documentType === 'CHAT') {
         // Fetch conversations for Ask Lumina
         const params = new URLSearchParams();
@@ -35,6 +41,7 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
         const response = await axios.get(`${API_BASE_URL}/my-conversations?${params}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        console.log('Conversations response:', response.data);
         setConversations(response.data);
       } else {
         // Fetch documents from specific endpoints based on type
@@ -54,14 +61,36 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
           if (documentType) params.append('type', documentType);
         }
 
+        console.log(`Fetching ${documentType} documents from: ${API_BASE_URL}${endpoint}?${params}`);
         const response = await axios.get(`${API_BASE_URL}${endpoint}?${params}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setDocuments(response.data);
+        console.log(`${documentType} response:`, response.data);
+
+        // Handle both array and object responses
+        const data = Array.isArray(response.data) ? response.data : (response.data.documents || response.data.data || []);
+        console.log(`Processed ${documentType} documents:`, data);
+        setDocuments(data);
       }
     } catch (err) {
       console.error('Fetch documents error:', err);
-      setError('Failed to load previous documents');
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        endpoint: err.config?.url
+      });
+
+      let errorMessage = 'Failed to load previous documents';
+      if (err.response?.status === 404) {
+        errorMessage = 'Document endpoint not found. Please check backend configuration.';
+      } else if (err.response?.status === 401) {
+        errorMessage = 'Authentication failed. Please log in again.';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -85,15 +114,38 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
         endpoint = `/my-documents/${doc.id}`;
       }
 
+      console.log(`Fetching document details from: ${API_BASE_URL}${endpoint}`);
       const response = await axios.get(`${API_BASE_URL}${endpoint}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('Document details response:', response.data);
 
-      setSelectedDoc(response.data);
+      // Normalize content field name based on document type
+      const docData = response.data;
+      if (documentType === 'PROTOCOL' && docData.fullProtocol && !docData.content) {
+        docData.content = docData.fullProtocol;
+      } else if ((documentType === 'STUDY_DESIGN' || documentType === 'REGULATORY') && docData.fullDocument && !docData.content) {
+        docData.content = docData.fullDocument;
+      }
+
+      setSelectedDoc(docData);
       setViewMode('detail');
     } catch (err) {
       console.error('View document error:', err);
-      setError('Failed to load document details');
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+
+      let errorMessage = 'Failed to load document details';
+      if (err.response?.status === 404) {
+        errorMessage = 'Document not found';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -132,7 +184,15 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
 
   const handleSelectDocument = (doc) => {
     if (onSelectDocument) {
-      onSelectDocument(doc);
+      // Normalize content field name before passing to callback
+      const normalizedDoc = { ...doc };
+      if (documentType === 'PROTOCOL' && doc.fullProtocol && !doc.content) {
+        normalizedDoc.content = doc.fullProtocol;
+      } else if ((documentType === 'STUDY_DESIGN' || documentType === 'REGULATORY') && doc.fullDocument && !doc.content) {
+        normalizedDoc.content = doc.fullDocument;
+      }
+
+      onSelectDocument(normalizedDoc);
       onClose();
     }
   };
