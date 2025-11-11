@@ -43,7 +43,7 @@ export const saveProtocol = async ({
 }) => {
   try {
     // Map formData to specific protocol fields
-    const protocolData = {
+    let protocolData = {
       title: title || `Protocol for ${formData.disease || disease || 'Untitled'}`,
       description: description || `${formData.studyType || ''} study for ${formData.population || ''}`.trim(),
       disease: disease || formData.disease || '',
@@ -95,16 +95,35 @@ export const saveProtocol = async ({
       tags: [disease || formData.disease, formData.studyType, 'protocol'].filter(Boolean)
     };
 
+    // Check payload size and truncate if necessary (limit to 8MB to account for JSON overhead)
+    const payloadSize = JSON.stringify(protocolData).length;
+    const maxSize = 8 * 1024 * 1024; // 8MB
+
+    if (payloadSize > maxSize) {
+      console.warn(`Protocol payload (${Math.round(payloadSize / 1024 / 1024 * 100) / 100}MB) exceeds limit. Truncating content...`);
+
+      // Calculate how much we need to truncate
+      const maxContentLength = Math.floor(maxSize * 0.7); // Use 70% of limit for content field
+      if (protocolData.fullProtocol && protocolData.fullProtocol.length > maxContentLength) {
+        protocolData.fullProtocol = protocolData.fullProtocol.substring(0, maxContentLength) + '\n\n[CONTENT TRUNCATED DUE TO SIZE LIMIT - PROTOCOL TOO LARGE]';
+      }
+    }
+
     const response = await axios.post(
       `${API_BASE_URL}/protocols`,
       protocolData,
-      getAuthHeaders()
+      {
+        ...getAuthHeaders(),
+        timeout: 30000, // 30 second timeout for large documents
+        maxContentLength: maxSize,
+        maxBodyLength: maxSize
+      }
     );
 
     return { success: true, data: response.data };
   } catch (error) {
     console.error('Save protocol error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error.response?.data?.message || error.message };
   }
 };
 
@@ -123,7 +142,7 @@ export const saveStudyDesign = async ({
 }) => {
   try {
     // Map formData to specific study design fields
-    const studyDesignData = {
+    let studyDesignData = {
       title: title || `Study Design for ${formData.disease || disease || 'Untitled'}`,
       description: description || `${formData.studyPhase || ''} ${formData.studyType || ''} study`.trim(),
       disease: disease || formData.disease || '',
@@ -167,16 +186,41 @@ export const saveStudyDesign = async ({
       tags: [disease || formData.disease, formData.studyPhase, 'study_design'].filter(Boolean)
     };
 
+    // Check payload size and truncate if necessary (limit to 8MB)
+    const payloadSize = JSON.stringify(studyDesignData).length;
+    const maxSize = 8 * 1024 * 1024; // 8MB
+
+    if (payloadSize > maxSize) {
+      console.warn(`Study design payload (${Math.round(payloadSize / 1024 / 1024 * 100) / 100}MB) exceeds limit. Truncating content...`);
+
+      // Truncate large fields proportionally
+      const maxContentLength = Math.floor(maxSize * 0.25); // 25% for each major field
+      if (studyDesignData.fullDocument && studyDesignData.fullDocument.length > maxContentLength) {
+        studyDesignData.fullDocument = studyDesignData.fullDocument.substring(0, maxContentLength) + '\n\n[CONTENT TRUNCATED DUE TO SIZE LIMIT]';
+      }
+      if (studyDesignData.cmcFull && studyDesignData.cmcFull.length > maxContentLength) {
+        studyDesignData.cmcFull = studyDesignData.cmcFull.substring(0, maxContentLength) + '\n\n[CONTENT TRUNCATED DUE TO SIZE LIMIT]';
+      }
+      if (studyDesignData.clinicalFull && studyDesignData.clinicalFull.length > maxContentLength) {
+        studyDesignData.clinicalFull = studyDesignData.clinicalFull.substring(0, maxContentLength) + '\n\n[CONTENT TRUNCATED DUE TO SIZE LIMIT]';
+      }
+    }
+
     const response = await axios.post(
       `${API_BASE_URL}/study-designs`,
       studyDesignData,
-      getAuthHeaders()
+      {
+        ...getAuthHeaders(),
+        timeout: 30000,
+        maxContentLength: maxSize,
+        maxBodyLength: maxSize
+      }
     );
 
     return { success: true, data: response.data };
   } catch (error) {
     console.error('Save study design error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error.response?.data?.message || error.message };
   }
 };
 
@@ -198,7 +242,7 @@ export const saveRegulatoryDocument = async ({
 }) => {
   try {
     // Map sections to specific regulatory document fields
-    const regulatoryData = {
+    let regulatoryData = {
       title: title || `${documentType || 'Regulatory Document'} for ${disease || 'Untitled'}`,
       description: description || `${documentType} submission for ${country}`.trim(),
       documentType: documentType || 'IND',
@@ -247,16 +291,45 @@ export const saveRegulatoryDocument = async ({
       tags: [disease, country, documentType].filter(Boolean)
     };
 
+    // Check payload size and truncate if necessary (limit to 8MB)
+    const payloadSize = JSON.stringify(regulatoryData).length;
+    const maxSize = 8 * 1024 * 1024; // 8MB
+
+    if (payloadSize > maxSize) {
+      console.warn(`Regulatory document payload (${Math.round(payloadSize / 1024 / 1024 * 100) / 100}MB) exceeds limit. Truncating content...`);
+
+      // Truncate large fields
+      const largeFields = [
+        'fullDocument', 'cmcFull', 'clinicalFull',
+        'executiveSummary', 'coverLetter', 'ctdSummary', 'overallSummary',
+        'cmcDrugSubstance', 'cmcDrugProduct', 'cmcManufacturing', 'cmcControls', 'cmcStability',
+        'nonclinicalPharmacology', 'nonclinicalToxicology',
+        'clinicalOverview', 'clinicalSummary', 'clinicalStudyReports', 'clinicalEfficacy', 'clinicalSafety'
+      ];
+
+      const maxFieldLength = Math.floor(maxSize * 0.15); // 15% per field
+      largeFields.forEach(field => {
+        if (regulatoryData[field] && regulatoryData[field].length > maxFieldLength) {
+          regulatoryData[field] = regulatoryData[field].substring(0, maxFieldLength) + '\n\n[CONTENT TRUNCATED DUE TO SIZE LIMIT]';
+        }
+      });
+    }
+
     const response = await axios.post(
       `${API_BASE_URL}/regulatory-documents`,
       regulatoryData,
-      getAuthHeaders()
+      {
+        ...getAuthHeaders(),
+        timeout: 30000,
+        maxContentLength: maxSize,
+        maxBodyLength: maxSize
+      }
     );
 
     return { success: true, data: response.data };
   } catch (error) {
     console.error('Save regulatory document error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error.response?.data?.message || error.message };
   }
 };
 
