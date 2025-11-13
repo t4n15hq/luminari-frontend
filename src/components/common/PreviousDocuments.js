@@ -122,11 +122,18 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
 
       // Normalize content field name based on document type
       const docData = response.data;
-      if (documentType === 'PROTOCOL' && docData.fullProtocol && !docData.content) {
+      if (documentType === 'PROTOCOL' && docData.fullProtocol) {
         docData.content = docData.fullProtocol;
-      } else if ((documentType === 'STUDY_DESIGN' || documentType === 'REGULATORY') && docData.fullDocument && !docData.content) {
+      } else if ((documentType === 'STUDY_DESIGN' || documentType === 'REGULATORY') && docData.fullDocument) {
         docData.content = docData.fullDocument;
       }
+
+      console.log('Normalized document:', {
+        hasContent: !!docData.content,
+        hasFullProtocol: !!docData.fullProtocol,
+        hasFullDocument: !!docData.fullDocument,
+        contentLength: docData.content?.length || 0
+      });
 
       setSelectedDoc(docData);
       setViewMode('detail');
@@ -209,12 +216,13 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
 
         // Normalize content field name before passing to callback
         const normalizedDoc = { ...fullDoc };
-        if (documentType === 'PROTOCOL' && fullDoc.fullProtocol && !fullDoc.content) {
+        if (documentType === 'PROTOCOL' && fullDoc.fullProtocol) {
           normalizedDoc.content = fullDoc.fullProtocol;
-        } else if ((documentType === 'STUDY_DESIGN' || documentType === 'REGULATORY') && fullDoc.fullDocument && !fullDoc.content) {
+        } else if ((documentType === 'STUDY_DESIGN' || documentType === 'REGULATORY') && fullDoc.fullDocument) {
           normalizedDoc.content = fullDoc.fullDocument;
         }
 
+        console.log('Selecting document with content length:', normalizedDoc.content?.length || 0);
         onSelectDocument(normalizedDoc);
         onClose();
       } catch (err) {
