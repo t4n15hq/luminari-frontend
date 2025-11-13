@@ -2231,7 +2231,7 @@ const ProtocolGenerator = () => {
     setShowReferencePanel(true);
 
     // Generate TOC for the selected protocol
-    const protocolContent = protocol.fullProtocol || protocol.fullDocument || '';
+    const protocolContent = protocol.fullProtocol || protocol.fullDocument || protocol.content || '';
     if (protocolContent) {
       const lines = protocolContent.split('\n');
       const toc = [];
@@ -2257,7 +2257,7 @@ const ProtocolGenerator = () => {
     setSelectedReferenceSection(section);
 
     // Extract content for the selected section
-    const protocolContent = selectedReferenceProtocol?.fullProtocol || selectedReferenceProtocol?.fullDocument || '';
+    const protocolContent = selectedReferenceProtocol?.fullProtocol || selectedReferenceProtocol?.fullDocument || selectedReferenceProtocol?.content || '';
     if (protocolContent) {
       const lines = protocolContent.split('\n');
       const sectionNumber = section.number;
@@ -2789,7 +2789,7 @@ const ProtocolGenerator = () => {
               );
             })()
           )}
-          <DocumentViewer open={viewerOpen} onClose={() => setViewerOpen(false)} title={viewerDoc?.title} content={viewerDoc?.fullProtocol || viewerDoc?.fullDocument || ''} metadata={{ disease: viewerDoc?.disease, protocolId: viewerDoc?.protocolId, cmcSection: viewerDoc?.cmcSection, clinicalSection: viewerDoc?.clinicalSection }} />
+          <DocumentViewer open={viewerOpen} onClose={() => setViewerOpen(false)} title={viewerDoc?.title} content={viewerDoc?.fullProtocol || viewerDoc?.fullDocument || viewerDoc?.content || ''} metadata={{ disease: viewerDoc?.disease, protocolId: viewerDoc?.protocolId, cmcSection: viewerDoc?.cmcSection, clinicalSection: viewerDoc?.clinicalSection }} />
         </div>
       )}
       
@@ -5075,8 +5075,9 @@ const ProtocolGenerator = () => {
             setGlobalProtocolFormData(formData);
           }
           // Load the full protocol content
-          if (doc.fullProtocol) {
-            setResult(doc.fullProtocol);
+          const protocolContent = doc.fullProtocol || doc.fullDocument || doc.content;
+          if (protocolContent) {
+            setResult(protocolContent);
           }
           setShowDocHistory(false);
         }}
