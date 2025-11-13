@@ -182,18 +182,45 @@ const PreviousDocuments = ({ isOpen, onClose, documentType, onSelectDocument }) 
     }
   };
 
-  const handleSelectDocument = (doc) => {
+  const handleSelectDocument = async (doc) => {
     if (onSelectDocument) {
-      // Normalize content field name before passing to callback
-      const normalizedDoc = { ...doc };
-      if (documentType === 'PROTOCOL' && doc.fullProtocol && !doc.content) {
-        normalizedDoc.content = doc.fullProtocol;
-      } else if ((documentType === 'STUDY_DESIGN' || documentType === 'REGULATORY') && doc.fullDocument && !doc.content) {
-        normalizedDoc.content = doc.fullDocument;
-      }
+      try {
+        // Fetch full document content first
+        const token = localStorage.getItem('authToken');
 
-      onSelectDocument(normalizedDoc);
-      onClose();
+        let endpoint;
+        if (documentType === 'CHAT') {
+          endpoint = `/my-conversations/${doc.id}`;
+        } else if (documentType === 'PROTOCOL') {
+          endpoint = `/protocols/${doc.id}`;
+        } else if (documentType === 'STUDY_DESIGN') {
+          endpoint = `/study-designs/${doc.id}`;
+        } else if (documentType === 'REGULATORY') {
+          endpoint = `/regulatory-documents/${doc.id}`;
+        } else {
+          endpoint = `/my-documents/${doc.id}`;
+        }
+
+        const response = await axios.get(`${API_BASE_URL}${endpoint}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const fullDoc = response.data;
+
+        // Normalize content field name before passing to callback
+        const normalizedDoc = { ...fullDoc };
+        if (documentType === 'PROTOCOL' && fullDoc.fullProtocol && !fullDoc.content) {
+          normalizedDoc.content = fullDoc.fullProtocol;
+        } else if ((documentType === 'STUDY_DESIGN' || documentType === 'REGULATORY') && fullDoc.fullDocument && !fullDoc.content) {
+          normalizedDoc.content = fullDoc.fullDocument;
+        }
+
+        onSelectDocument(normalizedDoc);
+        onClose();
+      } catch (err) {
+        console.error('Error fetching full document:', err);
+        setError('Failed to load full document content');
+      }
     }
   };
 
