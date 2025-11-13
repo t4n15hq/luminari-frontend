@@ -897,13 +897,6 @@ const ProtocolGenerator = () => {
     }
   };
 
-  // Save form data to localStorage whenever it changes
-  useEffect(() => {
-    if (globalProtocolFormData) {
-      saveGlobalProtocolState(globalProtocolResult, globalStudyDesign, globalProtocolFormData);
-    }
-  }, [globalProtocolFormData]);
-
   // Function to calculate section completion (memoized for performance)
   const getSectionCompletion = useMemo(() => {
     const calculateCompletion = () => {
