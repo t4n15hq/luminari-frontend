@@ -4298,7 +4298,7 @@ const ProtocolGenerator = () => {
               <div className="document-header">
                 <h3>Study Design (Main Document)</h3>
                 <div className="document-meta">
-                  <span>Study ID: SD-{result ? result.protocol_id.substring(5) : Date.now()}</span>
+                  <span>Study ID: SD-{result && result.protocol_id ? result.protocol_id.substring(5) : Date.now()}</span>
                   <span>Version: 1.0</span>
                   <span>Date: {new Date().toLocaleDateString()}</span>
                 </div>
@@ -4677,7 +4677,7 @@ const ProtocolGenerator = () => {
               
               <div className="document-footer">
                 <p>This enhanced document was generated with comprehensive trial design parameters according to ICH E6(R2) Good Clinical Practice guidelines and meets professional industry standards.</p>
-                <p>Document Generated: {new Date().toLocaleString()} | Study ID: SD-{result ? result.protocol_id.substring(5) : Date.now()}</p>
+                <p>Document Generated: {new Date().toLocaleString()} | Study ID: SD-{result && result.protocol_id ? result.protocol_id.substring(5) : Date.now()}</p>
               </div>
             </div>
         </div>
