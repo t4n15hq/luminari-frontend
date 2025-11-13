@@ -2229,10 +2229,11 @@ const ProtocolGenerator = () => {
   const handleReferenceProtocolSelect = (protocol) => {
     setSelectedReferenceProtocol(protocol);
     setShowReferencePanel(true);
-    
+
     // Generate TOC for the selected protocol
-    if (protocol.content) {
-      const lines = protocol.content.split('\n');
+    const protocolContent = protocol.fullProtocol || protocol.fullDocument || '';
+    if (protocolContent) {
+      const lines = protocolContent.split('\n');
       const toc = [];
       
       lines.forEach((line, index) => {
@@ -2254,10 +2255,11 @@ const ProtocolGenerator = () => {
 
   const handleReferenceSectionClick = (section) => {
     setSelectedReferenceSection(section);
-    
+
     // Extract content for the selected section
-    if (selectedReferenceProtocol && selectedReferenceProtocol.content) {
-      const lines = selectedReferenceProtocol.content.split('\n');
+    const protocolContent = selectedReferenceProtocol?.fullProtocol || selectedReferenceProtocol?.fullDocument || '';
+    if (protocolContent) {
+      const lines = protocolContent.split('\n');
       const sectionNumber = section.number;
       let inSection = false;
       let sectionContent = [];
@@ -2787,7 +2789,7 @@ const ProtocolGenerator = () => {
               );
             })()
           )}
-          <DocumentViewer open={viewerOpen} onClose={() => setViewerOpen(false)} title={viewerDoc?.title} content={viewerDoc?.content} metadata={{ disease: viewerDoc?.disease, protocolId: viewerDoc?.protocolId, cmcSection: viewerDoc?.cmcSection, clinicalSection: viewerDoc?.clinicalSection }} />
+          <DocumentViewer open={viewerOpen} onClose={() => setViewerOpen(false)} title={viewerDoc?.title} content={viewerDoc?.fullProtocol || viewerDoc?.fullDocument || ''} metadata={{ disease: viewerDoc?.disease, protocolId: viewerDoc?.protocolId, cmcSection: viewerDoc?.cmcSection, clinicalSection: viewerDoc?.clinicalSection }} />
         </div>
       )}
       
