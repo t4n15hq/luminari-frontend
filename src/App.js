@@ -119,7 +119,7 @@ const AppContent = () => {
 
 function App() {
   return (
-    <Router>
+    <Router basename="/lumipath">
       <AuthProvider>
         <AppContent />
       </AuthProvider>

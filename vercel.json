@@ -1,0 +1,18 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "rewrites": [
+    { "source": "/lumipath/(.*)", "destination": "/lumipath/$1" },
+    { "source": "/lumipath", "destination": "/lumipath/index.html" }
+  ],
+  "routes": [
+    {
+      "src": "/lumipath/static/(.*)",
+      "dest": "/lumipath/static/$1"
+    },
+    {
+      "src": "/lumipath/(.*)",
+      "dest": "/lumipath/index.html"
+    }
+  ]
+}
