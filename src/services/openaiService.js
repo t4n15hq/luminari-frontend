@@ -4532,10 +4532,7 @@ Create detailed, technical content that addresses all requirements for this spec
   
   queryAssistant: async (queryData) => {
     try {
-      // Check if API key is available
-      if (!OPENAI_API_KEY) {
-        throw new Error('OpenAI API key is not configured');
-      }
+      // API key is now handled by backend, no need to check here
 
       // Enhanced theme restriction - only allow medical/clinical/regulatory questions
       const allowedThemes = [
