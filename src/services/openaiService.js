@@ -2,12 +2,13 @@
 
 import axios from 'axios';
 
-const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
+// Use backend API instead of direct OpenAI calls
+const BACKEND_URL = process.env.REACT_APP_DOCUMENTS_API_URL || 'http://localhost:4000';
 
-// Check if API key is available
-if (!OPENAI_API_KEY) {
-  console.warn('OpenAI API key not found. AI features will not work. Please set REACT_APP_OPENAI_API_KEY environment variable.');
-}
+// Get auth token from localStorage
+const getAuthToken = () => {
+  return localStorage.getItem('token');
+};
 
 
 // Enhanced OpenAI Configuration for Optimal Content Generation
@@ -375,14 +376,22 @@ QUALITY STANDARDS:
 - ALWAYS explain the reasoning behind your recommendations for transparency`;
 };
 
-// Create an Axios instance for OpenAI API with extended timeout
+// Create an Axios instance for backend API calls
 const openaiApi = axios.create({
-  baseURL: 'https://api.openai.com/v1/',
+  baseURL: BACKEND_URL,
   headers: {
-    'Authorization': `Bearer ${OPENAI_API_KEY}`,
     'Content-Type': 'application/json',
   },
   timeout: 120000, // 2 minutes timeout for individual API calls
+});
+
+// Add auth token to all requests
+openaiApi.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 const openaiService = {
@@ -1046,7 +1055,7 @@ Generate 800-1500 words that address ONLY the scope of ${sectionDef.title}.`
     );
 
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: config.model,
         max_tokens: Math.min(config.max_tokens, 2000),
         temperature: 0.1, // Very low temperature for focused, consistent output
@@ -1486,7 +1495,7 @@ CRITICAL STANDARDS:
     );
 
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: config.model,
         max_tokens: Math.min(config.max_tokens, 2000), // Smaller token limit per section
         temperature: config.temperature,
@@ -1636,7 +1645,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateCTA_RU: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o", // UPGRADED
         messages: [
           {
@@ -1701,7 +1710,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateRD_RU: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o", // UPGRADED
         messages: [
           {
@@ -1767,7 +1776,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateGMP_RU: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o", // UPGRADED
         messages: [
           {
@@ -1865,7 +1874,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateCTA_CA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o", // UPGRADED
         messages: [
           {
@@ -1926,7 +1935,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateNDS: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -1988,7 +1997,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateNOC: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2054,7 +2063,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateCOFEPRIS_CTA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2116,7 +2125,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateCOFEPRIS_NDA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2182,7 +2191,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateCTA_UK: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2244,7 +2253,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateMA_UK: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2305,7 +2314,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateVIE: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2370,7 +2379,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateCTA_CH: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2432,7 +2441,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateMA_CH: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2500,7 +2509,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateCTN_JP: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2566,7 +2575,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateJNDA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2623,7 +2632,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generatePMDA_CONSULTATION: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2690,7 +2699,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateIND_CH: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2754,7 +2763,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateNDA_CH: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2811,7 +2820,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateDRUG_LICENSE_CH: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2878,7 +2887,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateIND_KR: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -2940,7 +2949,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateNDA_KR: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3002,7 +3011,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateKGMP: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3066,7 +3075,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateCTN_AU: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3130,7 +3139,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateAUS: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3191,7 +3200,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateTGA_GMP: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3254,7 +3263,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateCTA_SG: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3318,7 +3327,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generatePRODUCT_LICENSE_SG: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3383,7 +3392,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateCTA_IN: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3447,7 +3456,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateNDA_IN: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3508,7 +3517,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateIMPORT_LICENSE_IN: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3575,7 +3584,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateIND_TW: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3637,7 +3646,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateNDA_TW: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3703,7 +3712,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateANVISA_CTA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3765,7 +3774,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateANVISA_NDA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3827,7 +3836,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateANVISA_GMP: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3887,7 +3896,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateANMAT_CTA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -3949,7 +3958,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateANMAT_NDA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4010,7 +4019,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateINVIMA_CTA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4055,7 +4064,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateINVIMA_NDA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4090,7 +4099,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateISP_CTA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4125,7 +4134,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateISP_NDA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4164,7 +4173,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateSAHPRA_CTA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4208,7 +4217,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateSAHPRA_NDA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4252,7 +4261,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateMOH_ISRAEL_CTA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4297,7 +4306,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateMOH_ISRAEL_NDA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4342,7 +4351,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateSFDA_CTA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4387,7 +4396,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateSFDA_NDA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4432,7 +4441,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateDHA_CTA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4477,7 +4486,7 @@ Create detailed, technical content that addresses all requirements for this spec
    */
   generateMOH_UAE_NDA: async (diseaseData) => {
     try {
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4573,7 +4582,7 @@ Create detailed, technical content that addresses all requirements for this spec
         };
       }
   
-      const response = await openaiApi.post('chat/completions', {
+      const response = await openaiApi.post('/openai/generate', {
         model: "gpt-4o",
         messages: [
           {
@@ -4779,7 +4788,7 @@ Consider that this document will be submitted to regulatory authorities and must
   }
 }`;
 
-    const response = await openaiApi.post('chat/completions', {
+    const response = await openaiApi.post('/openai/generate', {
       model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
       ...OPENAI_CONFIG.ANALYTICAL,
@@ -4871,7 +4880,7 @@ chatWithResults: async (chatData) => {
       content: msg.text
     }));
 
-    const response = await openaiApi.post('chat/completions', {
+    const response = await openaiApi.post('/openai/generate', {
       model: "gpt-4o",
       messages: [
         {
@@ -4912,7 +4921,7 @@ generateTextImprovement: async (userPrompt) => {
   try {
     console.log('generateTextImprovement called with:', userPrompt);
     
-    const response = await openaiApi.post('chat/completions', {
+    const response = await openaiApi.post('/openai/generate', {
       model: "gpt-4o",
       messages: [
         {
